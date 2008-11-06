@@ -1,0 +1,143 @@
+2008-11-06:
+===========
+
+- Paint.Web is now an open-source project. I picked the GPLv3 license.
+- The project is now hosted at Google Code:
+  http://code.google.com/p/paintweb
+- Updated www.robodesign.ro to include Paint.Web.
+- Packaged Paint.Web version 0.5 alpha, build 20081106.
+
+
+2008-10-24:
+===========
+
+- New: CMYK color space (without visualisation).
+- New: color palettes in the color editor. The available palettes are imported from Photoshop.
+- Updated color editor GUI which now includes the color palettes.
+- Added the active and old color preview.
+- Added close, cancel and save color. Saved colors are added to a custom colors palette. The changes made are not persistent (I should use HTML 5 Storage).
+- Added the possibility to double-click on the color visualisation to toggle double-size mode. The same applies to the color palettes tab.
+- Fixed the color picker tool.
+- Some HTML code reorganization and associated CSS changes.
+- Some code clean ups, and changes. More would be needed, given the fact the application grew beyond initial expectations.
+
+2008-10-15:
+===========
+
+- Completely new Color editor replacing the ugly one.
+  - It uses canvas to plot a color visualisation for each active input. This is done using Canvas. Color visualisations are available for HSV, RGB and CIE Lab.
+  - Color inputs for HSV, RGB, CIE Lab, HEX, and Alpha.
+  - New GUI, which is still a work in progress. It will change in the upcoming version.
+  - Color palettes support, with imported Adobe Color Palettes (.aco files from Photoshop). This is not yet implemented.
+  - Lots of things are customizable: the canvas size (color visualisation), the input min/max values, CIE Lab settings, and more.
+
+- New: Shadows API support. This was very recently implemented in Firefox 3.1 nightlies. It was a breeze to add this. ;)
+  - Shadows work with any drawing tool.
+
+- Overall improvements for keyboard shortcuts implementation. Added support for using the up/down keys in inputs of type=number.
+- Improvements for canvas resizing. Now the state is saved before the resize, and restored after resize.
+- Improved compatibility with the latest WebKitGTK svn trunk builds - keyboard shortcuts and box dragging. Still, keyboard shortcuts don't work entirely. ;)
+
+- Some code reorganization:
+  - moved some code from init() into a new init_properties() method.
+  - also all color-related code has been rewritten/moved into the _me.coloreditor object which has its own initialization routine.
+
+
+2008-09-21:
+===========
+
+- The user interface is now faster: all the buttons have "CSS sprites". This means that the hover/active/disabled icons are all in the same file, per icon. So, now when the user hovers, say, the rectangle icon, only the background position changes. Previously, it had to load a separate PNG file.
+- Improved graphics for the Properties and the Help windows/boxes.
+- Changed the default shape type to "both".
+- Stroke color is now blue by default.
+- Added the Shift key modifier to the Curve tool for snapping the second point on the X/Y axis.
+- Added a status message to the polygon tool which informs the user how to end drawing the shape. This shows after 3 points have been drawn.
+- Renamed the canvas_mevent() method to ev_canvas().
+- Renamed the keypress() method to ev_keypress().
+- Implemented draggable windows. The tool bar, the main, properties and the help windows can all be dragged now. The user can now easily reposition them as desired. The implementation is in the _me.boxes object.
+- The color picker now changes the title automatically when the user picks the fill or the stroke color. If the user clicks the fill/stroke colors, then the color picker shows on screen and the title properly tells which color is about to be changed. In the previous builds, it was quite confusing: you never knew which color you were changing. ;)
+- Added the "Close" button to the color picker and to the Help window.
+- Added the X global keyboard shortcut. Similar to Photoshop: this swaps the fill and stroke colors.
+- Now the polygon tool draws blue squares in the place of each point added by the user, to provide additional visual feedback - similar to the way the Curve tool works.
+- Some minor bug fixes for the Curve tool.
+- The color picker tool now allows Shift+Click for changing the stroke color. Until now the tool allow a click for changing the fill color, and a right-click for the stroke color. In Opera right-click doesn't work. As such, Shift+Click is more convenient for Opera users.
+- Bug fixes to the Selection tool. For example: in previous build the pasted image data would always be positioned at x and y 0, irrespective of the zoom level and scroll position. Because of that, the Paste option seemed not to work "where's the pasted image?". Now, the tool determines the scroll position and the zoom level, and it properly picks the initial position for the pasted image.
+- Renamed the ev._char property to ev._key. This is the property added by the ev_keypress(ev) method to the DOM Event object, for use by the event handlers called for any configured keyboard shortcut.
+- Implemented proper support for keyboard shortcuts per tool:
+-- Each keypress event is handled only by ev_keypress().
+-- The method adds two properties: ev._kid and ev._key. For example:
+_kid: alt-backspace ; _key: backspace
+_kid: shift-s ; _key: s
+
+-- Then the method calls ev_canvas(ev) which checks if there's any event handler within the current tool, for the keypress event.
+-- If there's one, the keypress event handler of the tool is executed, otherwise the ev_canvas() method simply returns false.
+-- Based on _kid and _key, the event handler of any tool can determine which actions to execute. For example: if (ev._kid == 'alt-backspace') { img.fillRect() }
+-- If the tool does not have any action for the exact key combination, the event handler must return false.
+-- When the tool keypress event handler returns false, the ev_canvas() method also returns false.
+-- When ev_canvas() returns false, the ev_keypress() method uses the _kid to check if there's any global keyboard shortcut configured (_me.kshortcuts). If yes, then it activates and/or it calls the configured tool/function.
+-- The default action of keypress events is prevented only when any key combination is recognized by the event handler of the active tool, or by the ev_keypress() method (global shortcut). The active tool takes precedence: it can override global keyboard shortcuts.
+
+Ugly ( :) ) scheme of the keypress event:
+
+ev_keypress:
+  - _kid and _key added to ev
+  - ev_canvas(ev) executed:
+    - tool.keypress available
+	  - tool.keypress(ev) executed
+	    - tool.keypress(ev) return false
+		  - ev_canvas(ev) return false
+		    - ev_keypress() checks kshortcuts
+		- tool.keypress(ev) return true
+		  - ev_canvas(ev) return true
+		    - ev_keypress() execution stops
+	- tool.keypress not available
+	  - ev_canvas(ev) return false
+	    - ev_keypress() checks kshortcuts
+
+- Added the Escape key for tools:
+  - drop selection
+  - cancel drawing rectangle, ellipse, line, polygon, curve
+  - cancel insert image / add text
+  - cancel color picker
+  - cancel Hand tool (go back to the previous tool)
+
+- Added the Return key for tools:
+  - Selection: transformation mode toggle (enable/disable). This allows the user to quickly draw a selection, press Enter, and start manipulating the selected image data (pixels).
+  - Polygon: end drawing the polygon, by accepting the shape. 
+
+- The Delete key deletes the selected pixels.
+- The Alt-Backspace key combination fills the selection with a flat color (fillStyle). This works only when the transformation mode is disabled.
+
+
+2008-09-13:
+===========
+
+- (near) final version 0.5
+- New: a working GUI :) designed by Marius
+- New: keyboard shortcuts across the board
+- New: Zoom image
+- New: Cut/Copy/Paste selection
+- New: Insert image
+- New: Save image (to PNG)
+- New: Insert text (only in Firefox 3.1 for now)
+- New: Clear image (with the Shift key modifier)
+- New: Canvas resizer
+- New: Drag tool
+- New: Help option
+- Fixes for the Curve tool
+- Some fixes/improvements for the Selection tool
+- Changes to the way tools get activated
+- Changes to the way the canvas mouse X/Y coordinates events are passed to the tools
+
+
+2008-04-14:
+===========
+
+- initial release
+- incomplete feature-set
+- no GUI
+
+
+-- 
+vim:set spell spl=en fenc=utf-8 ff=unix: 
+

@@ -1,0 +1,16 @@
+Copyright (C) 2008 Mihai Şucan
+
+$URL: http://code.google.com/p/paintweb $
+$Date: 2008-11-06 22:00:18 +0200 $
+
+
+You don't need to install this Web application. Just run src/index.html in your Web browser.
+
+Warning: Internet Explorer is unsupported!
+
+
+
+-- 
+vim:set spell spl=en fenc=utf-8 ff=unix: 
+
+

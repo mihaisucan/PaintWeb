@@ -1,0 +1,35 @@
+$Author: Mihai Şucan $
+$URL: http://code.google.com/p/paintweb $
+$Date: 2008-11-06 21:43:00 +0200 $
+
+
+TODO:
+
+- This project grew a lot more than initially expected, as such, I need to:
+
+* Reorganize the code according to a broader vision;
+* I must split my code into multiple files, into more robust JavaScript objects;
+* Change the code comments to use a standard format (maybe JSDoc);
+* Define some coding standards/guidelines. Currently I use tabs instead of spaces (having a width of 4 spaces), and non-wrapping lines. I should most likely adhere to stricter guidelines: word-wrapping at 80 chars, and 2 spaces instead of tabs, like the majority of code.
+
+These are #1 priorities before further work can be done.
+
+- I need to implement a proper GUI framework which uses SVG mainly, nicely integrating HTML and CSS. I will most likely not use jQuery, MooTools or other open-source JavaScript libraries because they are purely based on JS for animation effects. I want SVG.
+- The GUI framework will be a separate open-source project which is expected to be used for my other project: my WYSIWYG editor. I want a unified user interface. At that time I will probably open-source the WYSIWYG editor as well.
+- Paint.Web will switch to using the new GUI framework. Onwards I want to implement:
+
+* hybrid undo system, not like now (storing ImageDatas);
+* hybrid drawing: vectorial + bitmap drawing;
+* layers;
+* non-destructive filters;
+* color gradients and fill patterns.
+
+That should be all for now. Huh, lots of work to do.
+
+Volunteers are needed! Please contact me if you want to help. Thank you! ;)
+
+
+
+-- 
+vim:set spell spl=en fenc=utf-8 ff=unix: 
+
