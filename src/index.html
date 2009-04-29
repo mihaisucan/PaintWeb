@@ -1,322 +1,405 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<title>Paint.Web</title>
-		<link rel="author" type="text/html" href="http://www.robodesign.ro" title="Marius and Mihai Şucan, ROBO Design">
-		<link rel="stylesheet" type="text/css" href="index.css">
-		<!-- $URL: http://code.google.com/p/paintweb $
-		     $Date: 2008-11-06 21:35:41 +0200 $ -->
-	</head>
-	<body>
+  <head>
+    <meta charset="utf-8">
+    <title>PaintWeb</title>
+    <link rel="author" type="text/html" href="http://www.robodesign.ro" 
+    title="Marius and Mihai Şucan, ROBO Design">
+    <link rel="stylesheet" type="text/css" href="index.css">
+    <!-- $URL: http://code.google.com/p/paintweb $
+         $Date: 2009-04-29 13:13:48 +0300 $ -->
+  </head>
+  <body>
 
-		<div id="toolbar">
-			<h1>Tools</h1>
+    <div id="toolbar">
+      <h1>Tools</h1>
 
-			<ul id="tools">
-				<li id="btn-undo">Undo</li>
-				<li id="btn-redo">Redo</li>
-				<li id="btn-clear">Clear image</li>
-				<li id="btn-save">Save image</li>
-				<li class="separator">...</li>
-				<li id="tool-select">Selection</li>
-				<li id="tool-drag">Drag image</li>
-				<li id="tool-rect">Rectangle</li>
-				<li id="tool-ellipse">Ellipse</li>
-				<li id="tool-poly">Polygon</li>
-				<li id="tool-line">Line</li>
-				<li id="tool-text">Text</li>
-				<li id="tool-curve">Curve</li>
-				<li id="tool-insertimg">Image</li>
-				<li id="tool-pencil">Pencil</li>
-				<li id="tool-cpicker">Color picker</li>
-				<li id="tool-eraser">Eraser</li>
-			</ul> <!-- #tools -->
+      <ul id="tools">
+        <li id="btn-undo">Undo</li>
+        <li id="btn-redo">Redo</li>
+        <li id="btn-clear">Clear image</li>
+        <li id="btn-save">Save image</li>
+        <li class="separator">...</li>
+        <li id="tool-select">Selection</li>
+        <li id="tool-drag">Drag image</li>
+        <li id="tool-rect">Rectangle</li>
+        <li id="tool-ellipse">Ellipse</li>
+        <li id="tool-poly">Polygon</li>
+        <li id="tool-line">Line</li>
+        <li id="tool-text">Text</li>
+        <li id="tool-curve">Curve</li>
+        <li id="tool-insertimg">Image</li>
+        <li id="tool-pencil">Pencil</li>
+        <li id="tool-cpicker">Color picker</li>
+        <li id="tool-eraser">Eraser</li>
+      </ul> <!-- #tools -->
 
-			<div class="separator">...</div>
+      <div class="separator">...</div>
 
-			<div id="colors-fill-stroke">
-				<p><span id="opt-strokeStyle">Stroke</span> <span class="colorpreview" id="in-strokeStyle" title="Stroke color">&nbsp;</span></p>
-				<p><span id="opt-fillStyle">Fill</span> <span class="colorpreview" id="in-fillStyle" title="Fill color">&nbsp;</span></p>
-			</div>
+      <div id="colors-fill-stroke">
+        <p>
+          <span id="opt-strokeStyle">Stroke</span>
+          <span class="colorpreview" id="in-strokeStyle" title="Stroke 
+            color">&nbsp;</span>
+        </p>
+        <p>
+          <span id="opt-fillStyle">Fill</span>
+          <span class="colorpreview" id="in-fillStyle" title="Fill 
+            color">&nbsp;</span>
+        </p>
+      </div>
 
-		</div> <!-- #toolbar -->
+    </div> <!-- #toolbar -->
 
-		<div id="coloreditor">
-			<h1>Color editor</h1>
+    <div id="coloreditor">
+      <h1>Color editor</h1>
 
-			<ol id="coloreditor-preview">
-				<li id="coloreditor-activec"><span>Active</span></li>
-				<li id="coloreditor-oldc"><span>Old</span></li>
-			</ol>
+      <ol id="coloreditor-preview">
+        <li id="coloreditor-activec"><span>Active</span></li>
+        <li id="coloreditor-oldc"><span>Old</span></li>
+      </ol>
 
-			<ol id="coloreditor-actions">
-				<li id="btn-ce-close">Close</li>
-				<li id="btn-ce-cancel">Cancel</li>
-				<li id="btn-ce-savec">Save color</li>
-			</ol>
+      <ol id="coloreditor-actions">
+        <li id="btn-ce-close">Close</li>
+        <li id="btn-ce-cancel">Cancel</li>
+        <li id="btn-ce-savec">Save color</li>
+      </ol>
 
-			<ol class="coloreditor-tabs">
-				<li id="btn-cmixer"    title="Color space visualisation">Mixer</li>
-				<li id="btn-cpalettes" title="Predefined color palettes">Palettes</li>
-			</ol>
+      <ol class="coloreditor-tabs">
+        <li id="btn-cmixer"    title="Color space visualisation">Mixer</li>
+        <li id="btn-cpalettes" title="Predefined color palettes">Palettes</li>
+      </ol>
 
-			<div id="coloreditor-cmixer">
-				<canvas id="coloreditor-canvas" width="200" height="170">Your browser does not support Canvas.</canvas>
-				<div id="coloreditor-controls"><span id="coloreditor-chart_pos"></span><span id="coloreditor-slider_pos"></span></div>
-			</div>
+      <div id="coloreditor-cmixer">
+        <canvas id="coloreditor-canvas" width="200" height="170">Your browser 
+        does not support Canvas.</canvas>
+        <div id="coloreditor-controls"><span 
+            id="coloreditor-chart_pos"></span><span 
+            id="coloreditor-slider_pos"></span></div>
+      </div>
 
-			<div id="coloreditor-cpalettes">
-				<select id="in-cpalette"></select>
-				<ol id="out-cpalette"></ol>
-			</div>
+      <div id="coloreditor-cpalettes">
+        <select id="in-cpalette"></select>
+        <ol id="out-cpalette"></ol>
+      </div>
 
-			<form id="coloreditor-inputs">
-				<ol class="coloreditor-tabs">
-					<li id="btn-rgb"  title="sRGB: Standard Red, Green and Blue">RGB</li>
-					<li id="btn-hsv"  title="Hue, Saturation and Value">HSV</li>
-					<li id="btn-lab"  title="CIE Lab: Standard observer 2° D65">Lab</li>
-					<li id="btn-cmyk" title="Cyan, Magenta, Yellow and Key (Black)">CMYK</li>
-				</ol>
+      <form id="coloreditor-inputs">
+        <ol class="coloreditor-tabs">
+          <li id="btn-rgb"  title="sRGB: Standard Red, Green and Blue">RGB</li>
+          <li id="btn-hsv"  title="Hue, Saturation and Value">HSV</li>
+          <li id="btn-lab"  title="CIE Lab: Standard observer 2° D65">Lab</li>
+          <li id="btn-cmyk" title="Cyan, Magenta, Yellow and Key 
+          (Black)">CMYK</li>
+        </ol>
 
-				<ol id="coloreditor-rgb" class="ce-inputs">
-					<li>
-						<input name="in-ckey"       value="red"   type="radio">
-						<label>Red
-						<input name="in-ckey-red"   value="0"     type="number" min="0" max="255" step="1"></label>
-					</li>
-					<li>
-						<input name="in-ckey"       value="green" type="radio">
-						<label>Green
-						<input name="in-ckey-green" value="0"     type="number" min="0" max="255" step="1"></label>
-					</li>
-					<li>
-						<input name="in-ckey"       value="blue"  type="radio">
-						<label>Blue
-						<input name="in-ckey-blue"  value="0"     type="number" min="0" max="255" step="1"></label>
-					</li>
-				</ol> <!-- #coloreditor-rgb -->
+        <ol id="coloreditor-rgb" class="ce-inputs">
+          <li>
+            <input name="in-ckey" value="red" type="radio">
+            <label>Red
+            <input name="in-ckey-red" value="0" type="number" min="0" max="255" 
+            step="1"></label>
+          </li>
+          <li>
+            <input name="in-ckey" value="green" type="radio">
+            <label>Green
+            <input name="in-ckey-green" value="0" type="number" min="0" 
+            max="255" step="1"></label>
+          </li>
+          <li>
+            <input name="in-ckey" value="blue" type="radio">
+            <label>Blue
+            <input name="in-ckey-blue" value="0" type="number" min="0" max="255" 
+            step="1"></label>
+          </li>
+        </ol> <!-- #coloreditor-rgb -->
 
-				<ol id="coloreditor-hsv" class="ce-inputs">
-					<li>
-						<input name="in-ckey"      value="hue" type="radio">
-						<label>Hue
-						<input name="in-ckey-hue"  value="0"   type="number" min="0" max="360" step="1"></label>
-					</li>
-					<li>
-						<input name="in-ckey"      value="sat" type="radio">
-						<label>Saturation
-						<input name="in-ckey-sat"  value="0"   type="number" min="0" max="255" step="1"></label>
-					</li>
-					<li>
-						<input name="in-ckey"      value="val" type="radio">
-						<label>Value
-						<input name="in-ckey-val"  value="0"   type="number" min="0" max="255" step="1"></label>
-					</li>
-				</ol> <!-- #coloreditor-hsv -->
+        <ol id="coloreditor-hsv" class="ce-inputs">
+          <li>
+            <input name="in-ckey" value="hue" type="radio">
+            <label>Hue
+            <input name="in-ckey-hue" value="0" type="number" min="0" max="360" 
+            step="1"></label>
+          </li>
+          <li>
+            <input name="in-ckey" value="sat" type="radio">
+            <label>Saturation
+            <input name="in-ckey-sat" value="0" type="number" min="0" max="255" 
+            step="1"></label>
+          </li>
+          <li>
+            <input name="in-ckey" value="val" type="radio">
+            <label>Value
+            <input name="in-ckey-val" value="0" type="number" min="0" max="255" 
+            step="1"></label>
+          </li>
+        </ol> <!-- #coloreditor-hsv -->
 
-				<ol id="coloreditor-lab" class="ce-inputs">
-					<li>
-						<input name="in-ckey"       value="cie_l" type="radio">
-						<label>Lightness
-						<input name="in-ckey-cie_l" value="0"     type="number" min="0"    max="100" step="1"></label>
-					</li>
-					<li>
-						<input name="in-ckey"       value="cie_a" type="radio">
-						<label>a*
-						<input name="in-ckey-cie_a" value="0"     type="number" min="-85"  max="94"  step="1"></label>
-					</li>
-					<li>
-						<input name="in-ckey"       value="cie_b" type="radio">
-						<label>b*
-						<input name="in-ckey-cie_b" value="0"     type="number" min="-109" max="95"  step="1"></label>
-					</li>
-				</ol> <!-- #coloreditor-lab -->
+        <ol id="coloreditor-lab" class="ce-inputs">
+          <li>
+            <input name="in-ckey" value="cie_l" type="radio">
+            <label>Lightness
+            <input name="in-ckey-cie_l" value="0" type="number" min="0"    
+            max="100" step="1"></label>
+          </li>
+          <li>
+            <input name="in-ckey" value="cie_a" type="radio">
+            <label>a*
+            <input name="in-ckey-cie_a" value="0" type="number" min="-85"  
+            max="94" step="1"></label>
+          </li>
+          <li>
+            <input name="in-ckey" value="cie_b" type="radio">
+            <label>b*
+            <input name="in-ckey-cie_b" value="0" type="number" min="-109" 
+            max="95" step="1"></label>
+          </li>
+        </ol> <!-- #coloreditor-lab -->
 
-				<ol id="coloreditor-cmyk" class="ce-inputs">
-					<li>
-						<label>Cyan
-						<input name="in-ckey-cyan"    value="0" type="number" min="0" max="100" step="1"></label>
-					</li>
-					<li>
-						<label>Magenta
-						<input name="in-ckey-magenta" value="0" type="number" min="0" max="100" step="1"></label>
-					</li>
-					<li>
-						<label>Yellow
-						<input name="in-ckey-yellow"  value="0" type="number" min="0" max="100" step="1"></label>
-					</li>
-					<li>
-						<label>Key (Black)
-						<input name="in-ckey-black"   value="0" type="number" min="0" max="100" step="1"></label>
-					</li>
-				</ol> <!-- #coloreditor-cmyk -->
+        <ol id="coloreditor-cmyk" class="ce-inputs">
+          <li>
+            <label>Cyan
+            <input name="in-ckey-cyan" value="0" type="number" min="0" max="100" 
+            step="1"></label>
+          </li>
+          <li>
+            <label>Magenta
+            <input name="in-ckey-magenta" value="0" type="number" min="0" 
+            max="100" step="1"></label>
+          </li>
+          <li>
+            <label>Yellow
+            <input name="in-ckey-yellow" value="0" type="number" min="0" 
+            max="100" step="1"></label>
+          </li>
+          <li>
+            <label>Key (Black)
+            <input name="in-ckey-black" value="0" type="number" min="0" 
+            max="100" step="1"></label>
+          </li>
+        </ol> <!-- #coloreditor-cmyk -->
 
-				<ol id="coloreditor-hexalpha">
-					<li><label>HEX
-						<input name="in-ckey-hex"   value="#RRGGBB" type="text" maxlength="7" pattern="#[a-f0-9]{6}"></label>
-					</li>
-					<li><label>Alpha
-						<input name="in-ckey-alpha" value="100"     type="number" min="0" max="100" step="1"></label>
-					</li>
-				</ol>
-			</form> <!-- #coloreditor-inputs -->
+        <ol id="coloreditor-hexalpha">
+          <li><label>HEX
+            <input name="in-ckey-hex" value="#RRGGBB" type="text" maxlength="7" 
+            pattern="#[a-f0-9]{6}"></label>
+          </li>
+          <li><label>Alpha
+            <input name="in-ckey-alpha" value="100" type="number" min="0" 
+            max="100" step="1"></label>
+          </li>
+        </ol>
+      </form> <!-- #coloreditor-inputs -->
 
-		</div> <!-- #coloreditor -->
+    </div> <!-- #coloreditor -->
 
-		<div id="main">
-			<div id="main-top"></div>
-			<div id="main-tleft"></div>
-			<div id="main-tright"></div>
-			<h1>Paint.Web</h1>
+    <div id="main">
+      <div id="main-top"></div>
+      <div id="main-tleft"></div>
+      <div id="main-tright"></div>
+      <h1>PaintWeb</h1>
 
-			<ul id="toolbar-main">
-				<li id="btn-cut">Cut selection</li>
-				<li id="btn-copy">Copy selection</li>
-				<li id="btn-paste">Paste image data</li>
-				<li id="btn-help">Help</li>
-			</ul>
+      <ul id="toolbar-main">
+        <li id="btn-cut">Cut selection</li>
+        <li id="btn-copy">Copy selection</li>
+        <li id="btn-paste">Paste image data</li>
+        <li id="btn-help">Help</li>
+      </ul>
 
-			<div id="container">
-				<canvas id="imageView" width="400" height="300">Your browser does not support &lt;canvas&gt;. You cannot use this Web application.</canvas>
-			</div>
+      <div id="container">
+        <canvas id="imageLayer" width="400" height="300">Your browser does not 
+        support &lt;canvas&gt;. You cannot use this Web application.</canvas>
+      </div>
 
-			<p id="status">Status</p>
+      <p id="status">Status</p>
 
-			<div id="main-bottom"></div>
-			<div id="main-bleft"></div>
-			<div id="main-bright"></div>
+      <div id="main-bottom"></div>
+      <div id="main-bleft"></div>
+      <div id="main-bright"></div>
 
-			<p id="opt-zoom" title="Zoom image"><label for="in-zoom">Zoom</label> <input id="in-zoom" type="number" min="20" max="400" value="100" step="10"></p>
+      <p id="opt-zoom" title="Zoom image">
+        <label for="in-zoom">Zoom</label>
+        <input id="in-zoom" type="number" min="20" max="400" value="100" 
+        step="10">
+      </p>
 
-			<div id="resizer" title="Resize image"></div>
-		</div> <!-- #main -->
+      <div id="resizer" title="Resize image"></div>
+    </div> <!-- #main -->
 
-		<div id="help">
-			<div id="help-top"></div>
-			<div id="help-tleft"></div>
-			<div id="help-tright"></div>
-			<h1>Help</h1>
-			<p id="btn-help_close" class="btn_close">Close</p>
+    <div id="help">
+      <div id="help-top"></div>
+      <div id="help-tleft"></div>
+      <div id="help-tright"></div>
+      <h1>Help</h1>
+      <p id="btn-help_close" class="btn_close">Close</p>
 
-			<div id="help1"><div id="help2"><div id="help3">
+      <div id="help1"><div id="help2"><div id="help3">
 
-			<h2>Paint.Web</h2>
-			<p id="ver">Version: </p>
-			<p>Authors: <a href="http://www.robodesign.ro">Marius and Mihai Şucan (ROBO Design)</a></p>
-			<p>Project site: <a href="http://code.google.com/p/paintweb">code.google.com/p/paintweb</a></p>
-			<p>Code license: <a href="http://www.gnu.org/licenses/gpl-3.0.html" title="GNU General Public License, version 3">GPLv3</a></p>
+      <h2>PaintWeb</h2>
+      <p id="ver">Version: </p>
+      <p>Authors: <a href="http://www.robodesign.ro">Marius and Mihai Şucan 
+        (ROBO Design)</a></p>
+      <p>Project site: <a 
+        href="http://code.google.com/p/paintweb">code.google.com/p/paintweb</a></p>
+      <p>Code license: <a href="http://www.gnu.org/licenses/gpl-3.0.html" 
+        title="GNU General Public License, version 3">GPLv3</a></p>
 
-			<h2>Details</h2>
-			<p>This Web application uses the <a href="http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas.html">Canvas <abbr title="Application Programmable Interface">API</abbr></a> defined by the HTML 5 specification. You have the canvas and the tools, with their properties. You can resize the canvas using the bottom right corner handler.</p>
-			<p><strong>Clear image</strong> (<kbd>Ctrl-N</kbd>). Click the button holding the <kbd>Shift</kbd> key down, or press <kbd>Ctrl-Shift-N</kbd>, if you want to manually define the resolution of the image.</p>
-			<p><strong>Save image</strong> (<kbd>Ctrl-S</kbd>) will open a new tab/window with the image saved using the <abbr title="Portable Network Graphics">PNG</abbr> format. Right-click the image and save it to your disk using the Web browser.</p>
-			<p><strong>Insert image</strong> does only allow <em>data:</em> and <em>http://</em> addresses. Due to security restrictions defined in the specification, you cannot insert images from third-party hosts.</p>
-			<p>The <strong>Text</strong> tool and the <strong>Shadow properties</strong> only work in Firefox 3.1+, since both features were recently implemented.</p>
-			<p>Safari and Opera 9.2 (or older) do not implement the <code>get/putImageData</code> methods. As such, they get no support for history (Undo/Redo), no color picker, no <abbr title="Commission Internationale de l'Éclairage">CIE</abbr> L*a*b* color visualisation, and no support for non-transparent selection backgrounds.</p>
-			<p>Opera 9.2 does not have support for globalCompositeOperation 'lighter', which makes the <abbr title="Red, Green, Blue">RGB</abbr> color visualisation to fail.</p>
+      <h2>Details</h2>
+      <p>This Web application uses the <a 
+        href="http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas.html">Canvas 
+        <abbr title="Application Programmable Interface">API</abbr></a> defined 
+      by the HTML 5 specification. You have the canvas and the tools, with their 
+      properties. You can resize the canvas using the bottom right corner 
+      handler.</p>
+      <p><strong>Clear image</strong> (<kbd>Ctrl-N</kbd>). Click the button 
+      holding the <kbd>Shift</kbd> key down, or press <kbd>Ctrl-Shift-N</kbd>, 
+      if you want to manually define the resolution of the image.</p>
+      <p><strong>Save image</strong> (<kbd>Ctrl-S</kbd>) will open a new 
+      tab/window with the image saved using the <abbr title="Portable Network 
+        Graphics">PNG</abbr> format. Right-click the image and save it to your 
+      disk using the Web browser.</p>
+      <p><strong>Insert image</strong> does only allow <em>data:</em> and 
+      <em>http://</em> addresses. Due to security restrictions defined in the 
+      specification, you cannot insert images from third-party hosts.</p>
+      <p>The <strong>Text</strong> tool and the <strong>Shadow 
+        properties</strong> only work in Firefox 3.1+, since both features were 
+      recently implemented.</p>
+      <p>Safari and Opera 9.2 (or older) do not implement the 
+      <code>get/putImageData</code> methods. As such, they get no support for 
+      history (Undo/Redo), no color picker, no <abbr title="Commission 
+        Internationale de l'Éclairage">CIE</abbr> L*a*b* color visualisation, 
+      and no support for non-transparent selection backgrounds.</p>
+      <p>Opera 9.2 does not have support for globalCompositeOperation 'lighter', 
+      which makes the <abbr title="Red, Green, Blue">RGB</abbr> color 
+      visualisation to fail.</p>
 
-			</div></div></div> <!-- #help3, #help2, #help1 -->
+      </div></div></div> <!-- #help3, #help2, #help1 -->
 
-			<div id="help-bottom"></div>
-			<div id="help-bleft"></div>
-			<div id="help-bright"></div>
-		</div> <!-- #help -->
+      <div id="help-bottom"></div>
+      <div id="help-bleft"></div>
+      <div id="help-bright"></div>
+    </div> <!-- #help -->
 
-		<div id="properties">
-			<div id="prop-top"></div>
-			<div id="prop-tleft"></div>
-			<div id="prop-tright"></div>
-			<h1>Properties</h1>
+    <div id="properties">
+      <div id="prop-top"></div>
+      <div id="prop-tleft"></div>
+      <div id="prop-tright"></div>
+      <h1>Properties</h1>
 
-			<div id="props1"><div id="props2"><div id="props3">
+      <div id="props1"><div id="props2"><div id="props3">
 
-			<div id="lineOptions">
-			<h2>Line</h2>
-			<p class="inputText"><label>Stroke width <input id="in-lineWidth"  type="number" min="1" value="1"></label></p>
-			<p class="inputText"><label>Miter limit <input  id="in-miterLimit" type="number" min="1" value="10"></label></p>
-			<div id="in-shapeType" class="inputIcon">
-				<p>Shape type</p>
-				<div id="shapeType-both">Both</div>
-				<div id="shapeType-fill">Fill</div>
-				<div id="shapeType-stroke">Stroke</div>
-			</div>
-			<div id="in-lineCap" class="inputIcon">
-				<p>Line cap</p> 
-				<div id="lineCap-square">Square</div>
-				<div id="lineCap-round">Round</div>
-			</div>
-			<div id="in-lineJoin" class="inputIcon">
-				<p>Line join</p> 
-				<div id="lineJoin-miter">Miter</div>
-				<div id="lineJoin-round">Round</div>
-				<div id="lineJoin-bevel">Bevel</div>
-			</div>
-			</div> <!-- #lineOptions -->
+      <div id="lineOptions">
+      <h2>Line</h2>
+      <p class="inputText"><label>Stroke width <input id="in-lineWidth"  
+        type="number" min="1" value="1"></label></p>
+      <p class="inputText"><label>Miter limit <input  id="in-miterLimit" 
+        type="number" min="1" value="10"></label></p>
+      <div id="in-shapeType" class="inputIcon">
+        <p>Shape type</p>
+        <div id="shapeType-both">Both</div>
+        <div id="shapeType-fill">Fill</div>
+        <div id="shapeType-stroke">Stroke</div>
+      </div>
+      <div id="in-lineCap" class="inputIcon">
+        <p>Line cap</p> <div id="lineCap-square">Square</div>
+        <div id="lineCap-round">Round</div>
+      </div>
+      <div id="in-lineJoin" class="inputIcon">
+        <p>Line join</p> <div id="lineJoin-miter">Miter</div>
+        <div id="lineJoin-round">Round</div>
+        <div id="lineJoin-bevel">Bevel</div>
+      </div>
+      </div> <!-- #lineOptions -->
 
-			<div id="selectionOptions">
-			<h2>Selection</h2>
-			<p class="inputInline">
-				<label title="When enabled, the background of the selection will be the current fill color. The background color is only visible when you enable the transformation mode as well.">
-				<input id="in-selTransparent" type="checkbox" value="1" checked="checked"> 
-				Transparent background</label>
-			</p>
-			<p class="inputInline">
-				<label title="When enabled, dragging/resizing the selection also causes the selected pixels to be dragged/resized. [Enter]">
-				<input id="in-selTransform" type="checkbox" value="1">
-				Transformation mode</label>
-			</p>
-			</div> <!-- #selectionOptions -->
+      <div id="selectionOptions">
+      <h2>Selection</h2>
+      <p class="inputInline">
+        <label title="When enabled, the background of the selection will be the 
+          current fill color. The background color is only visible when you 
+          enable the transformation mode as well.">
+        <input id="in-selTransparent" type="checkbox" value="1" 
+        checked="checked"> Transparent background</label>
+      </p>
+      <p class="inputInline">
+        <label title="When enabled, dragging/resizing the selection also causes 
+          the selected pixels to be dragged/resized. [Enter]">
+        <input id="in-selTransform" type="checkbox" value="1">
+        Transformation mode</label>
+      </p>
+      </div> <!-- #selectionOptions -->
 
-			<div id="textOptions">
-			<h2>Text</h2>
-			<div id="textStyle" class="inputIcon">
-				<div id="in-textBold">Bold</div>
-				<div id="in-textItalic">Italic</div>
-				<div id="in-textAlign"><p>Text align</p> 
-					<div id="textAlign-left">Left</div>
-					<div id="textAlign-center">Center</div>
-					<div id="textAlign-right">Right</div>
-				</div>
-			</div>
+      <div id="textOptions">
+      <h2>Text</h2>
+      <div id="textStyle" class="inputIcon">
+        <div id="in-textBold">Bold</div>
+        <div id="in-textItalic">Italic</div>
+        <div id="in-textAlign"><p>Text align</p> <div 
+            id="textAlign-left">Left</div>
+          <div id="textAlign-center">Center</div>
+          <div id="textAlign-right">Right</div>
+        </div>
+      </div>
 
-			<p id="opt-textString" class="inputText"><label for="in-textString">String</label>
-				<input id="in-textString" type="text" value="Hello world!"></label></p>
+      <p id="opt-textString" class="inputText">
+        <label for="in-textString">String</label>
+        <input id="in-textString" type="text" value="Hello world!"></label>
+      </p>
 
-			<p class="inputText"><label>Font family 
-				<select id="in-textFont">
-					<option value="sans-serif" selected="selected">sans-serif</option>
-					<option value="serif">serif</option>
-					<option value="cursive">cursive</option>
-					<option value="fantasy">fantasy</option>
-					<option value="monospace">monospace</option>
-					<option value="+">Another font...</option>
-				</select></label>
-			</p>
-			<p class="inputText"><label>Font size <input id="in-textSize" type="number" min="1" max="72" value="10" title="pixels"></label></p>
-			</div> <!-- #textOptions -->
+      <p class="inputText"><label>Font family
+        <select id="in-textFont">
+          <option value="sans-serif" selected="selected">sans-serif</option>
+          <option value="serif">serif</option>
+          <option value="cursive">cursive</option>
+          <option value="fantasy">fantasy</option>
+          <option value="monospace">monospace</option>
+          <option value="+">Another font...</option>
+        </select></label>
+      </p>
 
-			<div id="shadowOptions">
-			<h2>Shadow</h2>
-			<p class="inputInline"><label><input id="in-shadow_active" type="checkbox" value="1"> Draw shadows</label></p>
+      <p class="inputText">
+        <label>Font size
+          <input id="in-textSize" type="number" min="1" max="72" value="10" 
+          title="pixels">
+        </label>
+      </p>
+      </div> <!-- #textOptions -->
 
-			<p class="inputText"><label>Offset X <input id="in-shadowOffsetX" type="number" value="5"></label></p>
-			<p class="inputText"><label>Offset Y <input id="in-shadowOffsetY" type="number" value="5"></label></p>
-			<p class="inputText"><label>Blur     <input id="in-shadowBlur"    type="number" value="5" min="0"></label></p>
-			<p class="inputColor">Color <span><span id="in-shadowColor" title="Shadow color">&nbsp;</span></span></p>
-			</div> <!-- #shadowOptions -->
+      <div id="shadowOptions">
+      <h2>Shadow</h2>
+      <p class="inputInline"><label><input id="in-shadowActive" type="checkbox" 
+        value="1"> Draw shadows</label></p>
 
-			<div style="clear:both"></div>
+      <p class="inputText">
+        <label>Offset X
+          <input id="in-shadowOffsetX" type="number" value="5">
+        </label>
+      </p>
+      <p class="inputText">
+        <label>Offset Y
+          <input id="in-shadowOffsetY" type="number" value="5">
+        </label>
+      </p>
+      <p class="inputText">
+        <label>Blur
+          <input id="in-shadowBlur" type="number" value="5" min="0">
+        </label>
+      </p>
+      <p class="inputColor">Color <span><span id="in-shadowColor" title="Shadow 
+          color">&nbsp;</span></span></p>
+      </div> <!-- #shadowOptions -->
 
-			</div></div></div> <!-- #props3, #props2, #props1 -->
+      <div style="clear:both"></div>
 
-			<div id="prop-bottom"></div>
-			<div id="prop-bleft"></div>
-			<div id="prop-bright"></div>
+      </div></div></div> <!-- #props3, #props2, #props1 -->
 
-		</div> <!-- #properties -->
+      <div id="prop-bottom"></div>
+      <div id="prop-bleft"></div>
+      <div id="prop-bright"></div>
 
-		<script type="text/javascript" src="index.js"></script>
-	</body>
-	<!-- vim:set spell spl=en ts=4 sw=4 sts=4 sta noet fenc=utf-8 ff=unix: -->
+    </div> <!-- #properties -->
+
+    <script type="text/javascript" src="lib.js"></script>
+    <script type="text/javascript" src="tools.js"></script>
+    <script type="text/javascript" src="index.js"></script>
+  </body>
+  <!-- vim:set spell spl=en fo=tcroqwanl1 tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix: -->
 </html>

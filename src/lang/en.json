@@ -1,0 +1,58 @@
+{
+  // $Date: 2009-04-29 15:54:01 +0300 $
+
+  "messages": {
+    "toString": "PaintWeb v%ver% (build %build%)",
+    "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
+    "errorInitContext": "Error while initializing the canvas context.",
+    "errorElementNotFound": "Error: the following element was not found: %id%.",
+    "errorInitGetComputedStyle": "Error: window.getComputedStyle is not available.",
+    "errorInitXMLHttpRequest": "Error: window.XMLHttpRequest is not available.",
+    "errorInitJSON": "Error: window.JSON is not available.",
+    "errorToolActivate": "Error: the tool you want could not be properly activated!",
+    "errorCpickerUnsupported": "Error: your browser does not support get/putImageData! The color picker tool cannot be used.",
+    "errorClipboardUnsupported": "Error: your browser does not support get/putImageData! Clipboard operations like cut/copy/paste cannot be used.",
+    "errorTextUnsupported": "Error: your browser does not implement the Canvas Text API! The text tool cannot be used.",
+    "errorInsertimg": "The image could not be inserted. Maybe the address does not point to an image.",
+    "errorInsertimgHost": "The URL you provided points to a different host. The image cannot be added for security reasons.",
+    "errorInsertimgLoaded": "The image did not load yet, or the URL you provided does not point to an image.",
+    "promptInsertimg": "Type the address of the image you want to insert:",
+    "promptImageDimensions": "Please input the new image dimensions you want.",
+    "promptTextFont": "Type the name of the font you want:",
+    "colorEditorTitle": "Color editor"
+  },
+
+  "status": {
+    "cpickerNormal": "Click to change the fill color, and Shift+Click to change the stroke color.",
+    "cpickerFillStyle": "Click to pick the fill color.",
+    "cpickerStrokeStyle": "Click to pick the stroke color.",
+    "curveActive": "Click four times to draw the curve: start, end and two control points.",
+    "curveSnapping": "Hold the Shift key down for vertical/horizontal snapping.",
+    "dragActive": "Click and drag the image to scroll.",
+    "ellipseActive": "Click and drag to draw an ellipse.",
+    "ellipseMousedown": "Hold the Shift key down to draw a circle.",
+    "eraserActive": "Click and drag to erase.",
+    "hoverBtnClear": "Clear image. Hold Shift to manually change the resolution of the image.",
+    "hoverToolSelect": "Rectangle selection",
+    "hoverToolCurve": "Bézier curve",
+    "insertimgActive": "Waiting for the image to load...",
+    "insertimgLoaded": "Pick where you want to place the image. Click and drag to resize the image.",
+    "insertimgResize": "Hold the Shift key down to preserve the aspect ratio.",
+    "lineActive": "Click anywhere to start drawing a line.",
+    "lineMousedown": "Hold the Shift key down for vertical/horizontal snapping.",
+    "pencilActive": "Click and drag to draw.",
+    "polyActive": "Click anywhere to start drawing a polygon.",
+    "polyMousedown": "Hold the Shift key down for vertical/horizontal snapping.",
+    "polyEnd": "To end drawing the polygon simply click in the same place as the last point.",
+    "rectActive": "Click and drag to draw a rectangle.", 
+    "rectMousedown": "Hold the Shift key down to draw a square.",
+    "selectActive": "Click and drag to draw a selection.",
+    "selectDraw": "Hold the Shift key down to draw a square selection.",
+    "selectAvailable": "Drag or resize the selection.",
+    "selectDrag": "Hold the Shift key down for vertical/horizontal snapping.",
+    "selectResize": "Hold the Shift key down to preserve the aspect ratio.",
+    "textActive": "Pick where you want to place the text. Make sure you adjust the properties as desired."
+  }
+
+  // vim:set spell spl=en fo=wan1croql tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix ft=javascript:
+}
