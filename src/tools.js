@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-04-28 22:51:12 +0300 $
+ * $Date: 2009-05-04 16:12:07 +0300 $
  */
 
 /**
@@ -32,18 +32,17 @@ var PaintTools = {};
 
 // TODO: more jsdoc comments and code reorg
 
-var _me = window.PaintWebInstance;
-
 /**
  * @class The rectangle tool.
  *
  * @param {PaintWeb} app Reference to the main paint application object.
  */
 PaintTools.rect = function (app) {
-  var context     = app.buffer.context,
+  var config      = app.config,
+      context     = app.buffer.context,
+      image       = app.image,
       layerUpdate = app.layerUpdate,
       mouse       = app.mouse,
-      image       = app.image,
       statusShow  = app.statusShow;
 
   /**
@@ -74,7 +73,7 @@ PaintTools.rect = function (app) {
     x0 = ev.x_;
     y0 = ev.y_;
 
-    statusShow('rect-mousedown');
+    statusShow('rectMousedown');
 
     return true;
   };
@@ -118,12 +117,11 @@ PaintTools.rect = function (app) {
       }
     }
 
-    // FIXME: ...
-    if (_me.shapeType != 'stroke') {
+    if (config.shapeType != 'stroke') {
       context.fillRect(x, y, w, h);
     }
 
-    if (_me.shapeType != 'fill') {
+    if (config.shapeType != 'fill') {
       context.strokeRect(x, y, w, h);
     }
 
@@ -146,7 +144,7 @@ PaintTools.rect = function (app) {
     }*/
 
     layerUpdate();
-    statusShow('rect-active');
+    statusShow('rectActive');
 
     return true;
   };
@@ -165,7 +163,9 @@ PaintTools.rect = function (app) {
     }
 
     context.clearRect(0, 0, image.width, image.height);
-    statusShow('rect-active');
+    mouse.buttonDown = false;
+
+    statusShow('rectActive');
 
     return true;
   };
@@ -181,9 +181,10 @@ PaintTools.rect = function (app) {
  */
 PaintTools.line = function (app) {
   var context     = app.buffer.context,
+      image       = app.image,
       layerUpdate = app.layerUpdate,
       mouse       = app.mouse,
-      image       = app.image,
+      snapXY      = app.toolSnapXY,
       statusShow  = app.statusShow;
 
   /**
@@ -214,7 +215,7 @@ PaintTools.line = function (app) {
     x0 = ev.x_;
     y0 = ev.y_;
 
-    statusShow('line-mousedown');
+    statusShow('lineMousedown');
 
     return true;
   };
@@ -235,9 +236,9 @@ PaintTools.line = function (app) {
 
     context.clearRect(0, 0, image.width, image.height);
 
-    // FIXME: Snapping on the X/Y axis.
+    // Snapping on the X/Y axis.
     if (ev.shiftKey) {
-      _me.tool_snapXY(ev, x0, y0);
+      snapXY(ev, x0, y0);
     }
 
     context.beginPath();
@@ -264,7 +265,7 @@ PaintTools.line = function (app) {
       return true;
     }*/
 
-    statusShow('line-active');
+    statusShow('lineActive');
     layerUpdate();
 
     return true;
@@ -284,7 +285,8 @@ PaintTools.line = function (app) {
     }
 
     context.clearRect(0, 0, image.width, image.height);
-    statusShow('line-active');
+    statusShow('lineActive');
+    mouse.buttonDown = false;
 
     return true;
   };
@@ -336,10 +338,6 @@ PaintTools.pencil = function (app) {
    * @param {Event} ev The DOM Event object.
    */
   this.mousedown = function (ev) {
-    if (mouse.buttonDown) {
-      return false;
-    }
-
     x0 = ev.x_;
     y0 = ev.y_;
 
@@ -359,8 +357,7 @@ PaintTools.pencil = function (app) {
       return false;
     }
 
-    // TODO: check this...
-    //context.clearRect(0, 0, image.width, image.height);
+    context.clearRect(0, 0, image.width, image.height);
     context.lineTo(ev.x_, ev.y_);
     context.stroke();
 
@@ -373,10 +370,6 @@ PaintTools.pencil = function (app) {
    * @param {Event} ev The DOM Event object.
    */
   this.mouseup = function (ev) {
-    if (!mouse.buttonDown) {
-      return false;
-    }
-
     if (ev.x_ == x0 && ev.y_ == y0) {
       context.lineTo(ev.x_, ev.y_ + 1);
       context.stroke();
@@ -397,15 +390,17 @@ PaintTools.pencil = function (app) {
  *
  * @param {PaintWeb} app Reference to the main paint application object.
  */
+// TODO: Merge behaviour with line tool, and improve usability (mousedown and
+// mouseup feedback).
 PaintTools.poly = function (app) {
   var _self       = this,
+      config      = app.config,
       context     = app.buffer.context,
-      mouse       = app.mouse,
       image       = app.image,
       layerUpdate = app.layerUpdate,
+      mouse       = app.mouse,
+      snapXY      = app.toolSnapXY,
       statusShow  = app.statusShow;
-
-  // FIXME: this tool needs fixes
 
   /**
    * Holds the points in the polygon being drawn.
@@ -415,17 +410,28 @@ PaintTools.poly = function (app) {
    */
   this.points = [];
 
-  this.deactivate = function () {
-    _self.points = [];
+  /**
+   * Tells if the drawing operation has been started or not.
+   *
+   * @private
+   * @type Boolean
+   */
+  this.started = false;
 
-    return true;
-  };
-
+  /**
+   * The <code>click</code> event handler.
+   *
+   * <p>This method adds the points in the polygon shape. If the mouse 
+   * coordinates are close to the first/last point, then the drawing operation 
+   * is ended.
+   *
+   * @param {Event} ev The DOM Event object.
+   * @returns {Boolean} True if the event handler executed, or false if not.
+   */
   this.click = function (ev) {
-    if (mouse.buttonDown) {
-      // FIXME: Snapping on the X/Y axis.
+    if (_self.started) {
       if (ev.shiftKey) {
-        _me.tool_snapXY(ev, _self.x1, _self.y1);
+        snapXY(ev, _self.x1, _self.y1);
       }
 
       var diffx1 = Math.abs(ev.x_ - _self.x0),
@@ -440,8 +446,9 @@ PaintTools.poly = function (app) {
 
         _self.mousemove();
         _self.points = [];
+        _self.started = false;
 
-        statusShow('poly-active');
+        statusShow('polyActive');
         layerUpdate();
 
         return true;
@@ -452,19 +459,21 @@ PaintTools.poly = function (app) {
     _self.x1 = ev.x_;
     _self.y1 = ev.y_;
 
-    if (!mouse.buttonDown) {
+    if (!_self.started) {
+      _self.started = true;
+
       // Remember the first pointer position.
       _self.x0 = ev.x_;
       _self.y0 = ev.y_;
 
-      statusShow('poly-mousedown');
+      statusShow('polyMousedown');
     }
 
     _self.points.push([ev.x_, ev.y_]);
 
     // Users need to know how to end drawing the polygon.
     if (_self.points.length > 3) {
-      statusShow('poly-end');
+      statusShow('polyEnd');
     }
 
     _self.mousemove();
@@ -472,12 +481,18 @@ PaintTools.poly = function (app) {
     return true;
   };
 
+  /**
+   * The <code>mousemove</code> event handler. This method performs the actual 
+   * polygon drawing operation.
+   *
+   * @param {Event} ev The DOM Event object.
+   * @returns {Boolean} True if the polygon was drawn, false if not.
+   */
   this.mousemove = function (ev) {
-    var p, i,
-        n         = _self.points.length,
+    var p, i, n   = _self.points.length,
         fillStyle = context.fillStyle;
 
-    if (!mouse.buttonDown || !n || (n == 1 && !ev)) {
+    if (!_self.started || !n || (n == 1 && !ev)) {
       return false;
     }
 
@@ -489,7 +504,7 @@ PaintTools.poly = function (app) {
 
     // Snapping on the X/Y axis for the current point (if available).
     if (ev && ev.shiftKey) {
-      _me.tool_snapXY(ev, _self.x1, _self.y1);
+      snapXY(ev, _self.x1, _self.y1);
     }
 
     context.clearRect(0, 0, image.width, image.height);
@@ -507,16 +522,16 @@ PaintTools.poly = function (app) {
       context.lineTo(ev.x_, ev.y_);
     }
 
-    if (_me.shapeType != 'stroke') {
+    if (config.shapeType != 'stroke') {
       context.fill();
     }
 
-    if (_me.shapeType != 'fill' || n == 1) {
+    if (config.shapeType != 'fill' || n == 1) {
       // In the case where we only have a straight line, draw a stroke even if no stroke should be drawn, such that the user has better visual feedback.
 
-      if (n == 1 && ev && _me.shapeType == 'fill') {
+      if (n == 1 && ev && config.shapeType == 'fill') {
         var strokeStyle = context.strokeStyle,
-          lineWidth   = context.lineWidth;
+            lineWidth   = context.lineWidth;
 
         context.strokeStyle = context.fillStyle;
         context.lineWidth   = 1;
@@ -543,15 +558,24 @@ PaintTools.poly = function (app) {
     return true;
   };
 
-  // Escape cancels the current polygon.
-  // Return completes drawing the current polygon.
+  /**
+   * The <code>keydown</code> event handler. This method allows the user to 
+   * cancel drawing the current polygon, using the <kbd>Escape</kbd> key. The 
+   * <kbd>Enter</kbd> key can be used to accept the current polygon shape, and 
+   * end the drawing operation.
+   *
+   * @param {Event} ev The DOM Event object.
+   * @returns {Boolean} True if the keyboard shortcut was recognized, or false 
+   * if not.
+   */
   this.keydown = function (ev) {
-    if (!mouse.buttonDown || (ev.kid_ != 'Escape' && ev.kid_ != 'Enter')) {
+    if (!_self.started || (ev.kid_ != 'Escape' && ev.kid_ != 'Enter')) {
       return false;
     }
 
     if (ev.kid_ == 'Escape') {
       context.clearRect(0, 0, image.width, image.height);
+
     } else if (ev.kid_ == 'Enter') {
       // Add the point of the last mousemove event, and the start point, to complete the polygon.
       _self.points.push([_self.ex, _self.ey]);
@@ -562,8 +586,9 @@ PaintTools.poly = function (app) {
     }
 
     _self.points = [];
+    _self.started = false;
 
-    statusShow('poly-active');
+    statusShow('polyActive');
 
     return true;
   };
@@ -579,44 +604,64 @@ PaintTools.poly = function (app) {
  */
 PaintTools.curve = function (app) {
   var _self       = this,
+      config      = app.config,
       context     = app.buffer.context,
-      mouse       = app.mouse,
       image       = app.image,
       layerUpdate = app.layerUpdate,
+      mouse       = app.mouse,
+      snapXY      = app.toolSnapXY,
       statusShow  = app.statusShow;
 
+  /**
+   * Holds the points in the Bézier curve being drawn.
+   *
+   * @private
+   * @type Array
+   */
   _self.points = [];
 
+  /**
+   * The tool deactivation method, used for clearing the buffer.
+   */
   this.deactivate = function () {
     context.clearRect(0, 0, image.width, image.height);
-    _self.points = [];
-    delete _self.mousemove;
 
     return true;
   };
 
+  /**
+   * The <code>mousedown</code> event handler.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.mousedown = function (ev) {
     _self.mousemove = _self.draw;
 
     return _self.draw(ev);
   };
 
+  /**
+   * The <code>mouseup</code> event handler. This method stores the current 
+   * mouse coordinates as a point to be used for drawing the Bézier curve.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.mouseup = function (ev) {
     if (!mouse.buttonDown) {
       return false;
     }
 
     if (_self.points.length == 0) {
-      statusShow('curve-snapping');
+      statusShow('curveSnapping');
     }
 
     if (_self.points.length == 1) {
-      // FIXME: Snapping on the X/Y axis for the current point.
+      // Snapping on the X/Y axis for the current point.
       if (ev.shiftKey) {
-        _me.tool_snapXY(ev, _self.points[0][0], _self.points[0][1]);
+        snapXY(ev, _self.points[0][0], _self.points[0][1]);
       }
 
-      statusShow('curve-active');
+      statusShow('curveActive');
     }
 
     // We need 4 points to draw the Bézier curve: start, end, and two control points.
@@ -638,6 +683,13 @@ PaintTools.curve = function (app) {
     return true;
   };
 
+  /**
+   * Draw the Bézier curve, using the available points.
+   *
+   * @param {Event} ev The DOM Event object.
+   *
+   * @returns {Boolean} True if the curve has been drawn, or false if not.
+   */
   _self.draw = function (ev) {
     var y, i, p     = _self.points;
     var n           = p.length,
@@ -660,7 +712,7 @@ PaintTools.curve = function (app) {
     if (n == 2) {
       // Snapping on the X/Y axis for the current point (if available).
       if (ev && ev.shiftKey) {
-        _me.tool_snapXY(ev, p[0][0], p[0][1]);
+        snapXY(ev, p[0][0], p[0][1]);
       }
 
       context.beginPath();
@@ -720,11 +772,10 @@ PaintTools.curve = function (app) {
       p4[0], p4[1],
       p[1][0], p[1][1]);
 
-    // FIXME
-    if (_me.shapeType != 'stroke') {
+    if (config.shapeType != 'stroke') {
       context.fill();
     }
-    if (_me.shapeType != 'fill') {
+    if (config.shapeType != 'fill') {
       context.stroke();
     }
 
@@ -733,14 +784,24 @@ PaintTools.curve = function (app) {
     return true;
   };
 
-  // Escape cancels drawing the current curve.
+  /**
+   * The <code>keydown</code> event handler. This method allows the user to 
+   * press the <kbd>Escape</kbd> key to cancel the current drawing operation.
+   *
+   * @param {Event} ev The DOM Event object.
+   * @returns {Boolean} True if the keyboard shortcut was recognized, or false 
+   * if not.
+   */
   this.keydown = function (ev) {
-    if (!mouse.buttonDown || ev.kid_ != 'Escape') {
+    if (ev.kid_ != 'Escape') {
       return false;
     }
 
-    _self.deactivate(ev);
-    statusShow('curve-active');
+    context.clearRect(0, 0, image.width, image.height);
+    _self.points = [];
+    delete _self.mousemove;
+
+    statusShow('curveActive');
 
     return true;
   };
@@ -750,16 +811,18 @@ PaintTools.curve = function (app) {
 };
 
 /**
- * @class The Bézier curve tool.
+ * @class The ellipse tool.
  *
  * @param {PaintWeb} app Reference to the main paint application object.
  */
 PaintTools.ellipse = function (app) {
   var _self       = this,
+      config      = app.config,
       context     = app.buffer.context,
       mouse       = app.mouse,
       image       = app.image,
       layerUpdate = app.layerUpdate,
+      snapXY      = app.toolSnapXY,
       statusShow  = app.statusShow;
 
   var K = 4*((Math.SQRT2-1)/3);
@@ -782,16 +845,30 @@ PaintTools.ellipse = function (app) {
    */
   var y0 = 0;
 
+  /**
+   * Initialize the drawing operation, by storing the location of the pointer, 
+   * the start position.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.mousedown = function (ev) {
     // The mouse start position
     x0 = ev.x_;
     y0 = ev.y_;
 
-    statusShow('ellipse-mousedown');
+    statusShow('ellipseMousedown');
 
     return true;
   };
 
+  /**
+   * Perform the drawing operation, while the user moves the mouse.
+   *
+   * <p>Hold down the <kbd>Shift</kbd> key to draw a circle.
+   * <p>Press <kbd>Escape</kbd> to cancel the drawing operation.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.mousemove = function (ev) {
     if (!mouse.buttonDown) {
       return false;
@@ -859,11 +936,10 @@ PaintTools.ellipse = function (app) {
     context.bezierCurveTo(cx - rx, recty1, rectx0, cy + ry, rectx0, cy);
     context.bezierCurveTo(rectx0, cy - ry, cx - rx, recty0, cx, recty0);
 
-    // FIXME
-    if (_me.shapeType != 'stroke') {
+    if (config.shapeType != 'stroke') {
       context.fill();
     }
-    if (_me.shapeType != 'fill') {
+    if (config.shapeType != 'fill') {
       context.stroke();
     }
 
@@ -872,6 +948,11 @@ PaintTools.ellipse = function (app) {
     return true;
   };
 
+  /**
+   * End the drawing operation, once the user releases the mouse button.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.mouseup = function (ev) {
     if (!mouse.buttonDown) {
       return false;
@@ -882,12 +963,19 @@ PaintTools.ellipse = function (app) {
       return true;
     }*/
 
-    statusShow('ellipse-active');
+    statusShow('ellipseActive');
 
     return layerUpdate();
   };
 
-  // Escape cancels drawing the current ellipse.
+  /**
+   * Allows the user to press <kbd>Escape</kbd> to cancel the drawing operation.
+   *
+   * @param {Event} ev The DOM Event object.
+   *
+   * @returns {Boolean} True if the drawing operation was cancelled, or false if 
+   * not.
+   */
   this.keydown = function (ev) {
     if (!mouse.buttonDown || ev.kid_ != 'Escape') {
       return false;
@@ -895,7 +983,7 @@ PaintTools.ellipse = function (app) {
 
     context.clearRect(0, 0, image.width, image.height);
 
-    statusShow('ellipse-active');
+    statusShow('ellipseActive');
 
     return true;
   };
@@ -1080,87 +1168,160 @@ PaintTools.cpicker = function (app) {
  * @param {PaintWeb} app Reference to the main paint application object.
  */
 PaintTools.eraser = function (app) {
-  var _self = this;
+  var _self        = this,
+      context      = app.buffer.context,
+      layerContext = app.layer.context,
+      layerUpdate  = app.layerUpdate,
+      mouse        = app.mouse,
+      image        = app.image;
 
-  if (!_me.tools || !_me.tools.pencil) {
-    alert( _me.getMsg('error-tool-activate') );
-    _tool._cancel = true;
-    return false;
-  }
+  /**
+   * Holds the starting point on the <var>x</var> axis of the image, for the 
+   * current drawing operation.
+   *
+   * @private
+   * @type Number
+   */
+  var x0 = 0;
 
-  // The eraser actually uses the pencil tool with some changes.
-  _tool.pencil = new _me.tools.pencil();
-  _tool.strokeStyle = context.strokeStyle;
+  /**
+   * Holds the starting point on the <var>y</var> axis of the image, for the 
+   * current drawing operation.
+   *
+   * @private
+   * @type Number
+   */
+  var y0 = 0;
 
-  // Activation code. This is run after the tool construction and after the deactivation of the previous tool.
-  _tool.activate = function () {
-    // Disable the canvas shadow.
-    if (_me.inputs.shadowActive) {
-      _tool.shadowActive = _me.inputs.shadowActive.checked;
-      _me.shadowDisable();
-      _me.inputs.shadowActive.disabled = true;
+  _self.strokeStyle = context.strokeStyle;
+
+  this.deactivate = function () {
+    if (mouse.buttonDown) {
+      context.closePath();
     }
 
-    return true;
-  };
-
-  this.deactivate = function (ev) {
-    _tool.pencil.deactivate(ev);
-
-    if (_tool.strokeStyle) {
-      context.strokeStyle = _tool.strokeStyle;
+    if (_self.strokeStyle) {
+      context.strokeStyle = _self.strokeStyle;
     }
 
     // Enable canvas shadow.
-    if (_me.inputs.shadowActive) {
-      _me.inputs.shadowActive.disabled = false;
-      if (_tool.shadowActive) {
-        _me.shadowEnable();
+    if (app.inputs.shadowActive) {
+      app.inputs.shadowActive.disabled = false;
+      if (_self.shadowActive) {
+        app.shadowEnable();
       }
     }
 
     return true;
   };
 
-  // The mousedown event remembers the current strokeStyle and sets a white colored stroke (same as the background), such that the user gets live feedback of what he/she erases.
+  // Activation code. This is run after the tool construction and after the 
+  // deactivation of the previous tool.
+  this.activate = function () {
+    // Disable the canvas shadow.
+    if (app.inputs.shadowActive) {
+      _self.shadowActive = app.inputs.shadowActive.checked;
+      app.shadowDisable();
+      app.inputs.shadowActive.disabled = true;
+    }
+
+    return true;
+  };
+
+  /**
+   * Initialize the drawing operation.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.mousedown = function (ev) {
-    _tool.strokeStyle = context.strokeStyle;
+    // The mousedown event remembers the current strokeStyle and sets a white 
+    // colored stroke (same as the background), such that the user gets live 
+    // feedback of what he/she erases.
+
+    _self.strokeStyle = context.strokeStyle;
+    // FIXME: ...
     context.strokeStyle = 'rgb(255,255,255)';
 
-    _tool.pencil.mousedown(ev);
+    x0 = ev.x_;
+    y0 = ev.y_;
 
-    if (_tool.pencil.mousemove) {
-      _tool.mousemove = _tool.pencil.mousemove;
-    }
-    if (_tool.pencil.mouseup) {
-      _tool.mouseup = _tool._mouseup;
-    }
+    context.beginPath();
+    context.moveTo(ev.x_, ev.y_);
 
     return true;
   };
 
-  // The mouseup event function changes the globalCompositeOperation to destination-out such that the white pencil path drawn by the user cuts out/clears the destination image
+  /**
+   * Perform the drawing operation, while the user moves the mouse.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
+  this.mousemove = function (ev) {
+    if (!mouse.buttonDown) {
+      return false;
+    }
+
+    context.clearRect(0, 0, image.width, image.height);
+    context.lineTo(ev.x_, ev.y_);
+    context.stroke();
+
+    return true;
+  };
+
+  /**
+   * End the drawing operation, once the user releases the mouse button.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.mouseup = function (ev) {
-    if (_tool.pencil.mouseup) {
-      var op = _me.img.globalCompositeOperation;
-      _me.img.globalCompositeOperation = 'destination-out';
-      _tool.pencil.mouseup(ev);
-      _me.img.globalCompositeOperation = op;
+    // The mouseup event handler changes the globalCompositeOperation to 
+    // destination-out such that the white pencil path drawn by the user cuts 
+    // out/clears the destination image
+
+    if (ev.x_ == x0 && ev.y_ == y0) {
+      context.lineTo(ev.x_, ev.y_ + 1);
+      context.stroke();
     }
 
-    context.strokeStyle = _tool.strokeStyle;
-    delete _tool.mousemove, _tool.mouseup;
+    var op = layerContext.globalCompositeOperation;
+    layerContext.globalCompositeOperation = 'destination-out';
+
+    context.closePath();
+    layerUpdate();
+
+    layerContext.globalCompositeOperation = op;
+
+    context.strokeStyle = _self.strokeStyle;
 
     return true;
   };
 
+  // TODO: check this...
   return true;
 };
 
+/**
+ * @class The selection tool.
+ *
+ * @param {PaintWeb} app Reference to the main paint application object.
+ */
+// TODO: improve the implementation.
 PaintTools.select = function (app) {
-  var _self = this;
+  var _self         = this,
+      bufferCanvas  = app.buffer.canvas,
+      bufferContext = app.buffer.context,
+      config        = app.config,
+      elems         = app.elems,
+      image         = app.image,
+      historyAdd    = app.historyAdd,
+      inputs        = app.inputs,
+      layerCanvas   = app.layer.canvas,
+      layerContext  = app.layer.context,
+      snapXY        = app.toolSnapXY,
+      statusShow    = app.statusShow;
 
-  /* Steps:
+  /*
+   * Steps:
    * -1 - selection dropped after mousedown. The script can switch to step 1 (drawing) if the mouse moves, or to step 0 if it does not (allowing to completely drop the selection).
    * 0 - no selection
    * 1 - drawing selection rectangle
@@ -1170,111 +1331,107 @@ PaintTools.select = function (app) {
    * 5 - dragging ImageData
    * 6 - resizing ImageData
    */
-  _tool.step = 0;
+  this.step = 0;
 
   // The following properties are initialised more for the purpose of explaining them
 
   // The start position for any operation
-  _tool.x0 = false;
-  _tool.y0 = false;
+  this.x0 = false;
+  this.y0 = false;
 
   // The selection start position and the end position, including and excluding borders
-  _tool.sx0b = _tool.sx0 = false;
-  _tool.sy0b = _tool.sy0 = false;
-  _tool.sx1b = _tool.sx1 = false;
-  _tool.sy1b = _tool.sy1 = false;
+  this.sx0b = this.sx0 = false;
+  this.sy0b = this.sy0 = false;
+  this.sx1b = this.sx1 = false;
+  this.sy1b = this.sy1 = false;
 
   // The inner selection width/height (sw1/sh1).
   // The normal selection width/height (sw2/sh2) are the values used by strokeRect(). They include the lineWidth.
-  _tool.sw1 =_tool.sh1 = _tool.sw2 =_tool.sh2 = false;
+  this.sw1 = this.sh1 = this.sw2 = this.sh2 = false;
 
   // During step 2 (selection available) the mouse position can be: inside, outside, or on the border/resizer of the selection rectangle.
-  _tool.mpos = false; // 'in' || 'out' || 'r'
+  this.mpos = false; // 'in' || 'out' || 'r'
 
   // During steps 4 and 6 (resizing selection/ImageData) the resizer can be: n, ne, e, s, sw, w, nw.
-  _tool.resizer = false;
+  this.resizer = false;
 
-  // The last context.lineWidth, and ceil(lineWidth/2)
-  _tool.lineWidth = _tool.lineWidth2 = false;
+  // The last bufferContext.lineWidth, and ceil(lineWidth/2)
+  this.lineWidth = this.lineWidth2 = false;
 
-  // Remember if the selected ImageData from _me.img has been cut out or not.
-  _tool.cleared = false;
-
-  // Check the availability of important properties and elements.
-  if (!context || !canvas || !canvas.style || !_me.inputs || !_me.inputs.selTransparent || !_me.inputs.selTransform || !_me.doc || !_me.img || !_me.img.canvas || !_me.container || !_me.inputs.strokeStyle || !_me.inputs.strokeStyle._value || !_me.elems.selectionOptions) {
-    alert( _me.getMsg('error-tool-activate') );
-    _tool._cancel = true;
-    return false;
-  }
+  // Remember if the selected ImageData from layerContext has been cut out or not.
+  this.cleared = false;
 
   // Show the selection options.
-  _me.elems.selectionOptions.className = '';
+  elems.selectionOptions.className = '';
 
-  _tool.canvasStyle = canvas.style;
+  this.canvasStyle = bufferCanvas.style;
 
-  if (!_me.img.putImageData || !_me.img.getImageData) {
-    _me.inputs.selTransparent.checked = true;
+  // Older browsers do not support get/putImageData, thus non-transparent 
+  // selections cannot be used.
+  if (!layerContext.putImageData || !layerContext.getImageData) {
+    inputs.selTransparent.checked = true;
   }
-  _tool.transparency = _me.inputs.selTransparent.checked;
-  _tool.transform = _me.inputs.selTransform.checked;
+  this.transparency = inputs.selTransparent.checked;
+  this.transform = inputs.selTransform.checked;
 
   // Make sure that the selection rectangle is visible enough
-  var strokeStyle = _me.inputs.strokeStyle;
-  if (parseFloat(strokeStyle._value.a) < 0.5) {
+  var strokeStyle = inputs.strokeStyle;
+  if (strokeStyle && parseFloat(strokeStyle._value.a) < 0.5) {
     strokeStyle._value.a = 1;
     strokeStyle.style.opacity = 1;
-    context[strokeStyle._prop] = 'rgb(' + strokeStyle._value.r + ',' + strokeStyle._value.g + ',' + strokeStyle._value.b + ')';
+    bufferContext[strokeStyle._prop] = 'rgb(' + strokeStyle._value.r + ',' + strokeStyle._value.g + ',' + strokeStyle._value.b + ')';
   }
   delete strokeStyle;
 
   // The selection buffer
-  _tool.selbuffer = _me.doc.createElement('canvas');
-  if (!_tool.selbuffer) {
-    alert( _me.getMsg('error-tool-activate') );
-    _tool._cancel = true;
+  this.selbuffer = app.doc.createElement('canvas');
+  if (!this.selbuffer) {
+    alert(lang.errorToolActivate);
+    this._cancel = true;
     return false;
   }
-  _tool.selbuffer.id = 'selBuffer';
-  _tool.selbuffer.width = image.width;
-  _tool.selbuffer.height = image.height;
 
-  _me.container.appendChild(_tool.selbuffer);
+  this.selbuffer.id = 'selBuffer';
+  this.selbuffer.width = image.width;
+  this.selbuffer.height = image.height;
 
-  _tool.selbuffer = _tool.selbuffer.getContext('2d');
-  if (!_tool.selbuffer) {
-    alert( _me.getMsg('error-tool-activate') );
-    _tool._cancel = true;
+  elems.container.appendChild(this.selbuffer);
+
+  this.selbuffer = this.selbuffer.getContext('2d');
+  if (!this.selbuffer) {
+    alert(lang.errorToolActivate);
+    this._cancel = true;
     return false;
   }
 
   // Activation code. This is run after the tool construction and after the deactivation of the previous tool.
-  _tool.activate = function () {
-    // Disable the canvas shadow.
-    if (_me.inputs.shadowActive) {
-      _tool.shadowActive = _me.inputs.shadowActive.checked;
-      _me.shadowDisable();
-      _me.inputs.shadowActive.disabled = true;
+  this.activate = function () {
+    // Disable the bufferCanvas shadow.
+    if (inputs.shadowActive) {
+      _self.shadowActive = inputs.shadowActive.checked;
+      app.shadowDisable();
+      inputs.shadowActive.disabled = true;
     }
 
     return true;
   };
 
   this.deactivate = function (ev) {
-    _tool.selbuffer_merge(ev);
+    _self.selbuffer_merge(ev);
 
-    _me.container.removeChild(_tool.selbuffer.canvas);
-    delete _tool.selbuffer;
+    elems.container.removeChild(_self.selbuffer.canvas);
+    delete _self.selbuffer;
 
-    _me.inputs.selTransparent.removeEventListener('change', _tool.update_transparency, false);
+    inputs.selTransparent.removeEventListener('change', _self.update_transparency, false);
 
     // Minimize the selection options.
-    _me.elems.selectionOptions.className = 'minimized';
+    elems.selectionOptions.className = 'minimized';
 
     // Enable canvas shadow.
-    if (_me.inputs.shadowActive) {
-      _me.inputs.shadowActive.disabled = false;
-      if (_tool.shadowActive) {
-        _me.shadowEnable();
+    if (inputs.shadowActive) {
+      inputs.shadowActive.disabled = false;
+      if (_self.shadowActive) {
+        app.shadowEnable();
       }
     }
 
@@ -1284,19 +1441,19 @@ PaintTools.select = function (app) {
   this.mousedown = function (ev) {
     // While drawing/dragging/resizing the selection/ImageData, mousedown has no effect.
     // This is needed for allowing operations via click+mousemove+click, instead of just mousedown+mousemove+mouseup
-    if (_tool.step != 0 && _tool.step != 2) {
+    if (_self.step != 0 && _self.step != 2) {
       return false;
     }
 
     // Update the current mouse position, this is used as the start position for most of the operations.
-    _tool.x0 = ev.x_;
-    _tool.y0 = ev.y_;
+    _self.x0 = ev.x_;
+    _self.y0 = ev.y_;
 
     // No selection is available, then start drawing a selection (step 1)
-    if (_tool.step == 0) {
-      _tool.update_lineWidth(ev);
-      _tool.step = 1;
-      statusShow('select-draw');
+    if (_self.step == 0) {
+      _self.update_lineWidth(ev);
+      _self.step = 1;
+      statusShow('selectDraw');
 
       return true;
     }
@@ -1304,58 +1461,58 @@ PaintTools.select = function (app) {
 
     // Step 2: selection available.
 
-    _tool.update_mpos(ev);
-    _tool.update_lineWidth(ev);
+    _self.update_mpos(ev);
+    _self.update_lineWidth(ev);
 
-    // The user clicked outside the selection: drop the selection, go back to step -1, clear img_temp and put the current _tool.selbuffer on the final image.
+    // The user clicked outside the selection: drop the selection, go back to step -1, clear img_temp and put the current _self.selbuffer on the final image.
     // If the user moves the mouse without taking the finger off the mouse button, then a new selection rectangle will start to be drawn: the script will switch to step 1 - drawing selection.
     // If the user simply takes the finger off the mouse button (mouseup), then the script will only switch to step 0 (no selection available).
-    if (_tool.mpos == 'out') {
-      _tool.step = -1;
-      statusShow('select-active');
-      return _tool.selbuffer_merge(ev);
+    if (_self.mpos == 'out') {
+      _self.step = -1;
+      statusShow('selectActive');
+      return _self.selbuffer_merge(ev);
     }
 
     // Depending on the selection mode the script will manipulate the ImageData or just the selection rectangle, when dragging/resizing.
-    _tool.transform = _me.inputs.selTransform.checked;
+    _self.transform = inputs.selTransform.checked;
 
     // The mouse position: 'in' for drag.
-    if (_tool.mpos == 'in') {
-      if (!_tool.transform) {
-        _tool.step = 3; // dragging selection
+    if (_self.mpos == 'in') {
+      if (!_self.transform) {
+        _self.step = 3; // dragging selection
       } else {
-        _tool.step = 5; // dragging ImageData
+        _self.step = 5; // dragging ImageData
       }
-      statusShow('select-drag');
+      statusShow('selectDrag');
 
-    } else if (_tool.mpos == 'r') {
+    } else if (_self.mpos == 'r') {
       // 'r' for resize (the user clicked on the borders)
 
-      if (!_tool.transform) {
-        _tool.step = 4; // resizing selection
+      if (!_self.transform) {
+        _self.step = 4; // resizing selection
       } else {
-        _tool.step = 6; // resizing ImageData
+        _self.step = 6; // resizing ImageData
       }
-      statusShow('select-resize');
+      statusShow('selectResize');
     }
 
-    // If there's any ImageData currently in memory, which was "cut" out from _me.img, then put the current ImageData on the final image (_me.img), when dragging/resizing the selection
-    if (_tool.cleared && (_tool.step == 3 || _tool.step == 4)) {
-      _tool.selbuffer_merge(ev);
+    // If there's any ImageData currently in memory, which was "cut" out from layerContext, then put the current ImageData on the final image (layerContext), when dragging/resizing the selection
+    if (_self.cleared && (_self.step == 3 || _self.step == 4)) {
+      _self.selbuffer_merge(ev);
     }
 
-    // When the user drags/resizes the ImageData: cut out the current selection from _me.img
-    if (!_tool.cleared && (_tool.step == 5 || _tool.step == 6)) {
-      _tool.selbuffer_init(ev);
+    // When the user drags/resizes the ImageData: cut out the current selection from layerContext
+    if (!_self.cleared && (_self.step == 5 || _self.step == 6)) {
+      _self.selbuffer_init(ev);
     }
 
-    _tool.sx0 -= _tool.lineWidth2;
-    _tool.sy0 -= _tool.lineWidth2;
+    _self.sx0 -= _self.lineWidth2;
+    _self.sy0 -= _self.lineWidth2;
 
     // Dragging selection (3) or ImageData (5)
-    if (_tool.step == 3 || _tool.step == 5) {
-      _tool.sx0 -= _tool.x0;
-      _tool.sy0 -= _tool.y0;
+    if (_self.step == 3 || _self.step == 5) {
+      _self.sx0 -= _self.x0;
+      _self.sy0 -= _self.y0;
     }
 
     return true;
@@ -1363,26 +1520,26 @@ PaintTools.select = function (app) {
 
   this.mousemove = function (ev) {
     // Selection dropped, then mouse moves? If yes, switch to drawing a selection (1)
-    if (_tool.step == -1) {
-      _tool.step = 1;
-      statusShow('select-draw');
+    if (_self.step == -1) {
+      _self.step = 1;
+      statusShow('selectDraw');
     }
 
     // Selection available
-    if (_tool.step == 2) {
-      return _tool.update_mpos(ev);
-    } else if (_tool.step < 1 || _tool.step > 6) {
+    if (_self.step == 2) {
+      return _self.update_mpos(ev);
+    } else if (_self.step < 1 || _self.step > 6) {
       return false; // Unknown step
     }
 
-    context.clearRect(0, 0, image.width, image.height);
+    bufferContext.clearRect(0, 0, image.width, image.height);
 
     // Drawing selection rectangle
-    if (_tool.step == 1) {
-      var x = Math.min(ev.x_,  _tool.x0),
-        y = Math.min(ev.y_,  _tool.y0),
-        w = Math.abs(ev.x_ - _tool.x0),
-        h = Math.abs(ev.y_ - _tool.y0);
+    if (_self.step == 1) {
+      var x = Math.min(ev.x_,  _self.x0),
+          y = Math.min(ev.y_,  _self.y0),
+          w = Math.abs(ev.x_ - _self.x0),
+          h = Math.abs(ev.y_ - _self.y0);
 
       // Constrain the shape to a square
       if (ev.shiftKey) {
@@ -1399,28 +1556,28 @@ PaintTools.select = function (app) {
         }
       }
 
-    } else if (_tool.step == 3 || _tool.step == 5) {
+    } else if (_self.step == 3 || _self.step == 5) {
       // Dragging selection (3) or ImageData (5)
 
       // Snapping on the X/Y axis
       if (ev.shiftKey) {
-        _me.tool_snapXY(ev, _tool.x0, _tool.y0);
+        snapXY(ev, _self.x0, _self.y0);
       }
 
-      var x = _tool.sx0 + ev.x_,
-        y = _tool.sy0 + ev.y_,
-        w = _tool.sw2,
-        h = _tool.sh2;
+      var x = _self.sx0 + ev.x_,
+          y = _self.sy0 + ev.y_,
+          w = _self.sw2,
+          h = _self.sh2;
 
-      if (_tool.step == 5) {
-        var dw = _tool.sw1,
-          dh = _tool.sh1;
+      if (_self.step == 5) {
+        var dw = _self.sw1,
+            dh = _self.sh1;
       }
 
-    } else if (_tool.step == 4 || _tool.step == 6) {
+    } else if (_self.step == 4 || _self.step == 6) {
       // Resizing selection (4) or ImageData (6)
 
-      var param = _tool.calc_resize(ev);
+      var param = _self.calc_resize(ev);
 
       // The rectangle is too small
       if (!param) {
@@ -1428,13 +1585,13 @@ PaintTools.select = function (app) {
       }
 
       var x = param[0],
-        y = param[1],
-        w = param[2],
-        h = param[3];
+          y = param[1],
+          w = param[2],
+          h = param[3];
 
-      if (_tool.step == 6) {
-        var dw = w - _tool.lineWidth,
-          dh = h - _tool.lineWidth;
+      if (_self.step == 6) {
+        var dw = w - _self.lineWidth,
+            dh = h - _self.lineWidth;
       }
     }
 
@@ -1443,168 +1600,168 @@ PaintTools.select = function (app) {
     }
 
     // Dragging (5) or resizing (6) ImageData
-    if (dw && dh && (_tool.step == 5 || _tool.step == 6)) {
-      var sb = _tool.selbuffer;
+    if (dw && dh && (_self.step == 5 || _self.step == 6)) {
+      var sb = _self.selbuffer;
 
       // Parameters:
       // source image, src x, src y, src width, src height, dest x, dest y, dest w, dest h
-      context.drawImage(sb.canvas, 0, 0, sb._sw, sb._sh,
-        x + _tool.lineWidth2, y + _tool.lineWidth2,
+      bufferContext.drawImage(sb.canvas, 0, 0, sb._sw, sb._sh,
+        x + _self.lineWidth2, y + _self.lineWidth2,
         dw, dh);
     }
 
-    context.strokeRect(x, y, w, h);
+    bufferContext.strokeRect(x, y, w, h);
 
     return true;
   };
 
   this.mouseup = function (ev) {
     // Selection dropped? If yes, switch to no selection.
-    if (_tool.step == -1) {
-      _tool.step = 0;
-      statusShow('select-active');
+    if (_self.step == -1) {
+      _self.step = 0;
+      statusShow('selectActive');
       return true;
     }
 
     // Allow click+mousemove+click, not only mousedown+move+up
-    if (ev.x_ == _tool.x0 && ev.y_ == _tool.y0) {
+    if (ev.x_ == _self.x0 && ev.y_ == _self.y0) {
       return true;
     }
 
     // Skip any unknown step
-    if (_tool.step < 1 || _tool.step > 6 || _tool.step == 2) {
+    if (_self.step < 1 || _self.step > 6 || _self.step == 2) {
       return false;
 
-    } else if (_tool.step == 4 || _tool.step == 6) {
+    } else if (_self.step == 4 || _self.step == 6) {
       // Resizing selection (4) or ImageData (6)  
 
-      var newVal = _tool.calc_resize(ev);
+      var newVal = _self.calc_resize(ev);
       if (!newVal) {
-        _tool.step = 0;
-        _me.btn_cut(-1);
-        _me.btn_copy(-1);
+        _self.step = 0;
+        app.btn_cut(-1);
+        app.btn_copy(-1);
         return false;
       }
 
-      _tool.sx0 = newVal[0];
-      _tool.sy0 = newVal[1];
-      _tool.sw2 = newVal[2];
-      _tool.sh2 = newVal[3];
+      _self.sx0 = newVal[0];
+      _self.sy0 = newVal[1];
+      _self.sw2 = newVal[2];
+      _self.sh2 = newVal[3];
     }
 
     // Update all the selection info
-    _tool.calc_selinfo(ev);
+    _self.calc_selinfo(ev);
 
     // Back to step 2: selection available
-    _tool.step = 2;
-    _me.btn_cut(1);
-    _me.btn_copy(1);
-    statusShow('select-available');
+    _self.step = 2;
+    app.btn_cut(1);
+    app.btn_copy(1);
+    statusShow('selectAvailable');
 
     return true;
   };
 
   // Determine the mouse position: if it's inside/outside the selection rectangle, or on the border
-  _tool.update_mpos = function (ev) {
+  this.update_mpos = function (ev) {
     var ncur = '';
 
-    _tool.mpos = 'out';
+    _self.mpos = 'out';
 
     // Inside the rectangle
-    if (ev.x_ < _tool.sx1 && ev.y_ < _tool.sy1 && ev.x_ > _tool.sx0 && ev.y_ > _tool.sy0) {
+    if (ev.x_ < _self.sx1 && ev.y_ < _self.sy1 && ev.x_ > _self.sx0 && ev.y_ > _self.sy0) {
       ncur = 'move';
-      _tool.mpos = 'in';
+      _self.mpos = 'in';
     } else {
       // On one of the borders (north/south)
-      if (ev.x_ >= _tool.sx0b && ev.x_ <= _tool.sx1b && ev.y_ >= _tool.sy0b && ev.y_ <= _tool.sy0) {
+      if (ev.x_ >= _self.sx0b && ev.x_ <= _self.sx1b && ev.y_ >= _self.sy0b && ev.y_ <= _self.sy0) {
         ncur = 'n';
-      } else if (ev.x_ >= _tool.sx0b && ev.x_ <= _tool.sx1b && ev.y_ >= _tool.sy1 && ev.y_ <= _tool.sy1b) {
+      } else if (ev.x_ >= _self.sx0b && ev.x_ <= _self.sx1b && ev.y_ >= _self.sy1 && ev.y_ <= _self.sy1b) {
         ncur = 's';
       }
 
       // West/east
-      if (ev.y_ >= _tool.sy0b && ev.y_ <= _tool.sy1b && ev.x_ >= _tool.sx0b && ev.x_ <= _tool.sx0) {
+      if (ev.y_ >= _self.sy0b && ev.y_ <= _self.sy1b && ev.x_ >= _self.sx0b && ev.x_ <= _self.sx0) {
         ncur += 'w';
-      } else if (ev.y_ >= _tool.sy0b && ev.y_ <= _tool.sy1b && ev.x_ >= _tool.sx1 && ev.x_ <= _tool.sx1b) {
+      } else if (ev.y_ >= _self.sy0b && ev.y_ <= _self.sy1b && ev.x_ >= _self.sx1 && ev.x_ <= _self.sx1b) {
         ncur += 'e';
       }
 
       if (ncur != '') {
-        _tool.resizer = ncur;
+        _self.resizer = ncur;
         ncur += '-resize';
-        _tool.mpos = 'r';
+        _self.mpos = 'r';
       }
     }
 
     // Due to bug 126457 Opera will not automatically update the cursor, therefore Opera users will not see any visual feedback.
-    if (ncur != _tool.canvasStyle.cursor) {
-      _tool.canvasStyle.cursor = ncur;
+    if (ncur != _self.canvasStyle.cursor) {
+      _self.canvasStyle.cursor = ncur;
     }
 
     return true;
   };
 
-  // Used to update _tool.lineWidth, handling all the cases
-  _tool.update_lineWidth = function (ev) {
-    if (_tool.lineWidth == context.lineWidth) {
+  // Used to update _self.lineWidth, handling all the cases
+  _self.update_lineWidth = function (ev) {
+    if (_self.lineWidth == bufferContext.lineWidth) {
       return false;
     }
 
-    _tool.lineWidth = context.lineWidth;
+    _self.lineWidth = bufferContext.lineWidth;
     // When lineWidth is an odd number ... tiny pixel errors show
-    if ((_tool.lineWidth % 2) != 0) {
-      _tool.lineWidth++;
-      context.lineWidth = _tool.lineWidth;
-      _me.inputs.lineWidth.value = _tool.lineWidth;
+    if ((_self.lineWidth % 2) != 0) {
+      _self.lineWidth++;
+      bufferContext.lineWidth = _self.lineWidth;
+      inputs.lineWidth.value = _self.lineWidth;
     }
-    _tool.lineWidth2 = _tool.lineWidth/2;
+    _self.lineWidth2 = _self.lineWidth/2;
 
     // Selection available (2)
-    if (_tool.step < 2) {
+    if (_self.step < 2) {
       return true;
     }
 
     // Continue with updating the selection info
 
-    _tool.sx0 -= _tool.lineWidth2;
-    _tool.sy0 -= _tool.lineWidth2;
-    _tool.sw2 = _tool.sw1 + _tool.lineWidth;
-    _tool.sh2 = _tool.sh1 + _tool.lineWidth;
+    _self.sx0 -= _self.lineWidth2;
+    _self.sy0 -= _self.lineWidth2;
+    _self.sw2 = _self.sw1 + _self.lineWidth;
+    _self.sh2 = _self.sh1 + _self.lineWidth;
 
-    return _tool.calc_selinfo(ev);
+    return _self.calc_selinfo(ev);
   };
 
   // This method handles enabling/disabling selection transparency
-  _tool.update_transparency = function (ev) {
-    _tool.transform = _me.inputs.selTransform.checked;
+  this.update_transparency = function (ev) {
+    _self.transform = inputs.selTransform.checked;
 
     // Selection available (step 2)
-    if (!_tool.transform || _tool.step != 2 || this.checked == _tool.transparency) {
+    if (!_self.transform || _self.step != 2 || this.checked == _self.transparency) {
       return false;
     }
 
-    if (!_me.img.getImageData || !_me.img.putImageData) {
-      _tool.transparency = this.checked = true;
+    if (!layerContext.getImageData || !layerContext.putImageData) {
+      _self.transparency = this.checked = true;
       return false;
     }
 
-    _tool.transparency = this.checked;
+    _self.transparency = this.checked;
 
-    var sb = _tool.selbuffer;
+    var sb = _self.selbuffer;
 
-    if (!_tool.cleared) {
-      _tool.selbuffer_init(ev);
+    if (!_self.cleared) {
+      _self.selbuffer_init(ev);
 
       // Parameters:
       // source image, src x, src y, src width, src height, dest x, dest y, dest w, dest h
-      context.drawImage(sb.canvas, 0, 0, sb._sw, sb._sh,
-        _tool.sx0 + _tool.lineWidth2, _tool.sy0 + _tool.lineWidth2,
-        _tool.sw1, _tool.sh1);
+      bufferContext.drawImage(sb.canvas, 0, 0, sb._sw, sb._sh,
+        _self.sx0 + _self.lineWidth2, _self.sy0 + _self.lineWidth2,
+        _self.sw1, _self.sh1);
     }
 
-    context.clearRect(0, 0, image.width, image.height);
+    bufferContext.clearRect(0, 0, image.width, image.height);
 
-    if (_tool.transparency) {
+    if (_self.transparency) {
       // If we have the original ImageData, then put it into the selection buffer
       if (sb._imgd) {
         sb.putImageData(sb._imgd, 0, 0);
@@ -1613,36 +1770,37 @@ PaintTools.select = function (app) {
       sb._imgd = false;
     } else {
       // Draw the selection background and put the ImageData on top.
-      context.fillRect(0, 0, sb._sw, sb._sh);
-      context.drawImage(sb.canvas, 0, 0);
+      bufferContext.fillRect(0, 0, sb._sw, sb._sh);
+      bufferContext.drawImage(sb.canvas, 0, 0);
 
       // Store the original ImageData
       sb._imgd = sb.getImageData(0, 0, sb._sw, sb._sh);
 
       // Copy the selection background with the ImageData merged on top, in the selection buffer
       sb.clearRect(0, 0, sb._sw, sb._sh);
-      sb.drawImage(canvas, 0, 0);
+      sb.drawImage(bufferCanvas, 0, 0);
 
-      context.clearRect(0, 0, sb._sw, sb._sh);
+      bufferContext.clearRect(0, 0, sb._sw, sb._sh);
 
       // Side note: simply drawing the background and using putImageData does not work, because putImageData replaces all the pixels on the destination. putImageData does not draw the ImageData on top of the destination.
     }
 
     // Draw the updated selection
-    context.drawImage(sb.canvas, 0, 0, sb._sw, sb._sh, _tool.sx0, _tool.sy0, _tool.sw1, _tool.sh1);
-    context.strokeRect(_tool.sx0b + _tool.lineWidth2, _tool.sy0b + _tool.lineWidth2, _tool.sw2, _tool.sh2);
+    bufferContext.drawImage(sb.canvas, 0, 0, sb._sw, sb._sh, _self.sx0, _self.sy0, _self.sw1, _self.sh1);
+    bufferContext.strokeRect(_self.sx0b + _self.lineWidth2, _self.sy0b + _self.lineWidth2, _self.sw2, _self.sh2);
 
     return true;
   };
-  _me.inputs.selTransparent.addEventListener('change', _tool.update_transparency, false);
+  inputs.selTransparent.addEventListener('change', this.update_transparency, 
+      false);
 
   // Calculate the new coordinates of the selection rectangle, and the dimension, based on the mouse position
-  _tool.calc_resize = function (ev) {
-    var diffx = ev.x_ - _tool.x0,
-      diffy = ev.y_ - _tool.y0,
-      x = _tool.sx0, y = _tool.sy0,
-      w = _tool.sw2, h = _tool.sh2,
-      r = _tool.resizer;
+  this.calc_resize = function (ev) {
+    var diffx = ev.x_ - _self.x0,
+        diffy = ev.y_ - _self.y0,
+        x = _self.sx0, y = _self.sy0,
+        w = _self.sw2, h = _self.sh2,
+        r = _self.resizer;
 
     if (r.charAt(0) == 'n') {
       y += diffy;
@@ -1664,7 +1822,7 @@ PaintTools.select = function (app) {
 
     // Constrain the rectangle to have the same aspect ratio as the initial rectangle.
     if (ev.shiftKey) {
-      var p = _tool.sw2 / _tool.sh2,
+      var p = _self.sw2 / _self.sh2,
         w2 = w, h2 = h;
 
       if (r.charAt(0) == 'n' || r.charAt(0) == 's') {
@@ -1695,73 +1853,73 @@ PaintTools.select = function (app) {
   };
 
   // This method calculates all the needed selection boundaries. Most of these boundaries are used by other methods, while resizing, dragging, etc. For better performance while performing "intensive" operations, it's best that the UA does as little as possible during mousemove
-  _tool.calc_selinfo = function (ev) {
+  this.calc_selinfo = function (ev) {
     // Drawing selection rectangle
-    if (_tool.step == 1) {
-      var minX = Math.min(ev.x_, _tool.x0),
-        minY = Math.min(ev.y_, _tool.y0),
-        maxX = Math.max(ev.x_, _tool.x0),
-        maxY = Math.max(ev.y_, _tool.y0);
+    if (_self.step == 1) {
+      var minX = Math.min(ev.x_, _self.x0),
+          minY = Math.min(ev.y_, _self.y0),
+          maxX = Math.max(ev.x_, _self.x0),
+          maxY = Math.max(ev.y_, _self.y0);
 
-    } else if (_tool.step == 3 || _tool.step == 5) {
+    } else if (_self.step == 3 || _self.step == 5) {
       // Dragging selection (3) or ImageData (5)
 
       // Snapping on the X/Y axis
       if (ev.shiftKey) {
-        _me.tool_snapXY(ev, _tool.x0, _tool.y0);
+        snapXY(ev, _self.x0, _self.y0);
       }
 
-      var minX = _tool.sx0 + ev.x_,
-        minY = _tool.sy0 + ev.y_;
+      var minX = _self.sx0 + ev.x_,
+          minY = _self.sy0 + ev.y_;
 
-    } else if (_tool.step == 2 || _tool.step == 4 || _tool.step == 6) {
+    } else if (_self.step == 2 || _self.step == 4 || _self.step == 6) {
       // Selection available (2), resizing selection (4), resizing ImageData (6)
 
-      var minX = _tool.sx0,
-        minY = _tool.sy0;
+      var minX = _self.sx0,
+          minY = _self.sy0;
 
     } else {
       return false;
     }
 
-    if (_tool.step != 1) {
-      var maxX = minX + _tool.sw2,
-        maxY = minY + _tool.sh2;
+    if (_self.step != 1) {
+      var maxX = minX + _self.sw2,
+          maxY = minY + _self.sh2;
     }
 
     // Store the selection start and end pos
-    _tool.sx0 = minX + _tool.lineWidth2;
-    _tool.sy0 = minY + _tool.lineWidth2;
-    _tool.sx1 = maxX - _tool.lineWidth2;
-    _tool.sy1 = maxY - _tool.lineWidth2;
+    _self.sx0 = minX + _self.lineWidth2;
+    _self.sy0 = minY + _self.lineWidth2;
+    _self.sx1 = maxX - _self.lineWidth2;
+    _self.sy1 = maxY - _self.lineWidth2;
 
     // ... including the borders
-    _tool.sx0b = minX - _tool.lineWidth2;
-    _tool.sy0b = minY - _tool.lineWidth2;
-    _tool.sx1b = maxX + _tool.lineWidth2;
-    _tool.sy1b = maxY + _tool.lineWidth2;
+    _self.sx0b = minX - _self.lineWidth2;
+    _self.sy0b = minY - _self.lineWidth2;
+    _self.sx1b = maxX + _self.lineWidth2;
+    _self.sy1b = maxY + _self.lineWidth2;
 
     // inner width and height
-    _tool.sw1 = _tool.sx1 - _tool.sx0;
-    _tool.sh1 = _tool.sy1 - _tool.sy0;
+    _self.sw1 = _self.sx1 - _self.sx0;
+    _self.sh1 = _self.sy1 - _self.sy0;
 
-    if (_tool.step == 1) {
+    if (_self.step == 1) {
       // "normal" width and height (as used by the strokeRect method)
-      _tool.sw2 = maxX - minX;
-      _tool.sh2 = maxY - minY;
+      _self.sw2 = maxX - minX;
+      _self.sh2 = maxY - minY;
     }
 
     return true;
   };
 
   // Initialize the selection buffer, when the user starts dragging (5) or resizing (6) ImageData
-  _tool.selbuffer_init = function (ev) {
-    var x = _tool.sx0, y = _tool.sy0,
-      w = _tool.sw1, h = _tool.sh1,
-      sumX = _tool.sx0 + _tool.sw1,
-      sumY = _tool.sy0 + _tool.sh1,
-      dx = 0, dy = 0,
-      sb = _tool.selbuffer;
+  this.selbuffer_init = function (ev) {
+    var x = _self.sx0, y = _self.sy0,
+        w = _self.sw1, h = _self.sh1,
+        sumX = _self.sx0 + _self.sw1,
+        sumY = _self.sy0 + _self.sh1,
+        dx = 0, dy = 0,
+        sb = _self.selbuffer;
 
     sb._sw = w;
     sb._sh = h;
@@ -1784,174 +1942,174 @@ PaintTools.select = function (app) {
       h -= sumY - image.height;
     }
 
-    // Copy the currently selected ImageData into the temporary canvas (img_temp)
-    context.drawImage(_me.img.canvas, x, y, w, h, x, y, w, h);
+    // Copy the currently selected ImageData into the buffer canvas
+    bufferContext.drawImage(layerCanvas, x, y, w, h, x, y, w, h);
 
     sb.clearRect(0, 0, image.width, image.height);
 
     // Set a non-transparent background for the selection buffer, if the user does not want the selection to have a transparent background.
     sb._imgd = false;
-    if (!_tool.transparency && _me.img.getImageData) {
+    if (!_self.transparency && layerContext.getImageData) {
       // Store the selection ImageData as-is
-      sb._imgd = _me.img.getImageData(x, y, w, h);
-      sb.fillStyle = context.fillStyle;
+      sb._imgd = layerContext.getImageData(x, y, w, h);
+      sb.fillStyle = bufferContext.fillStyle;
       sb.fillRect(0, 0, sb._sw, sb._sh);
     }
 
-    // Also put the selected ImageData into the selection buffer canvas (selbuffer).
+    // Also put the selected ImageData into the selection buffer bufferCanvas (selbuffer).
     // Parameters: source image, src x, src y, src width, src height, dest x, dest y, dest w, dest h
-    sb.drawImage(_me.img.canvas, x, y, w, h, dx, dy, w, h);
+    sb.drawImage(layerCanvas, x, y, w, h, dx, dy, w, h);
 
     // Clear the selected pixels from the image
-    _me.img.clearRect(x, y, w, h);
-    _tool.cleared = true;
+    layerContext.clearRect(x, y, w, h);
+    _self.cleared = true;
 
-    _me.historyAdd();
+    historyAdd();
 
     return true;
   };
 
   // Merge the ImageData from the selection buffer, when the user stops dragging (5) or resizing (6) ImageData.
-  _tool.selbuffer_merge = function (ev) {
-    var sb = _tool.selbuffer;
+  this.selbuffer_merge = function (ev) {
+    var sb = _self.selbuffer;
     if (!sb) {
       return false;
     }
 
-    if (_tool.step == 3 || _tool.step == 4) {
-      context.clearRect(_tool.sx0, _tool.sy0, _tool.sw1, _tool.sh1);
+    if (_self.step == 3 || _self.step == 4) {
+      bufferContext.clearRect(_self.sx0, _self.sy0, _self.sw1, _self.sh1);
     } else {
-      context.clearRect(0, 0, image.width, image.height);
+      bufferContext.clearRect(0, 0, image.width, image.height);
     }
 
-    if (_tool.cleared && sb._sw && sb._sh) {
-      _me.img.drawImage(sb.canvas, 0, 0, sb._sw, sb._sh, _tool.sx0, _tool.sy0, _tool.sw1, _tool.sh1);
-      _me.historyAdd();
-      _tool.cleared = false;
+    if (_self.cleared && sb._sw && sb._sh) {
+      layerContext.drawImage(sb.canvas, 0, 0, sb._sw, sb._sh, _self.sx0, _self.sy0, _self.sw1, _self.sh1);
+      historyAdd();
+      _self.cleared = false;
     }
 
     sb._imgd = false;
-    _tool.canvasStyle.cursor = '';
-    _me.btn_cut(-1);
-    _me.btn_copy(-1);
+    _self.canvasStyle.cursor = '';
+    app.btn_cut(-1);
+    app.btn_copy(-1);
 
     return true;
   };
 
-  _tool.sel_cut = function (ev) {
-    if (!_tool.sel_copy(ev)) {
+  this.sel_cut = function (ev) {
+    if (!_self.sel_copy(ev)) {
       return false;
     }
 
-    context.clearRect(0, 0, image.width, image.height);
-    _tool.selbuffer.clearRect(0, 0, image.width, image.height);
+    bufferContext.clearRect(0, 0, image.width, image.height);
+    _self.selbuffer.clearRect(0, 0, image.width, image.height);
 
-    if (!_tool.cleared) {
-      _me.img.clearRect(_tool.sx0, _tool.sy0, _tool.sw1, _tool.sh1);
-      _me.historyAdd();
+    if (!_self.cleared) {
+      layerContext.clearRect(_self.sx0, _self.sy0, _self.sw1, _self.sh1);
+      historyAdd();
     }
 
     _tool_cleared = false;
-    _tool.selbuffer._imgd = false;
-    _tool.step = 0;
-    _tool.canvasStyle.cursor = '';
+    _self.selbuffer._imgd = false;
+    _self.step = 0;
+    _self.canvasStyle.cursor = '';
 
-    _me.btn_cut(-1);
-    _me.btn_copy(-1);
-    statusShow('select-active');
+    app.btn_cut(-1);
+    app.btn_copy(-1);
+    statusShow('selectActive');
 
     return true;
   };
 
-  _tool.sel_copy = function (ev) {
-    if (_tool.step != 2) {
+  this.sel_copy = function (ev) {
+    if (_self.step != 2) {
       return false;
     }
 
-    if (!_me.img.getImageData || !_me.img.putImageData) {
-      alert(_me.getMsg('error-clipboard-unsupported'));
+    if (!layerContext.getImageData || !layerContext.putImageData) {
+      alert(lang.errorClipboardUnsupported);
       return false;
     }
 
-    if (!_tool.cleared) {
-      _me.clipboard = _me.img.getImageData(_tool.sx0, _tool.sy0, _tool.sw1, _tool.sh1);
-      return _me.btn_paste(1);
+    if (!_self.cleared) {
+      app.clipboard = layerContext.getImageData(_self.sx0, _self.sy0, _self.sw1, _self.sh1);
+      return app.btn_paste(1);
     }
 
-    var sb = _tool.selbuffer;
+    var sb = _self.selbuffer;
 
     if (sb._imgd) {
-      _me.clipboard = sb._imgd;
+      app.clipboard = sb._imgd;
     } else {
-      _me.clipboard = sb.getImageData(0, 0, sb._sw, sb._sh);
+      app.clipboard = sb.getImageData(0, 0, sb._sw, sb._sh);
     }
 
-    return _me.btn_paste(1);
+    return app.btn_paste(1);
   };
 
-  _tool.sel_paste = function (ev) {
-    if (_tool.step != 0 && _tool.step != 2) {
+  this.sel_paste = function (ev) {
+    if (_self.step != 0 && _self.step != 2) {
       return false;
     }
 
-    if (!_me.img.getImageData || !_me.img.putImageData) {
-      alert(_me.getMsg('error-clipboard-unsupported'));
+    if (!layerContext.getImageData || !layerContext.putImageData) {
+      alert(lang.errorClipboardUnsupported);
       return false;
     }
 
     // The default position for the pasted image is the top left corner of the visible area, taking into consideration the zoom level.
-    var sb = _tool.selbuffer,
-      x = Math.round(_me.container.scrollLeft / _me.zoom),
-      y = Math.round(_me.container.scrollTop  / _me.zoom),
-      w = _me.clipboard.width,
-      h = _me.clipboard.height;
+    var sb = _self.selbuffer,
+        x = Math.round(elems.container.scrollLeft / image.zoom),
+        y = Math.round(elems.container.scrollTop  / image.zoom),
+        w = app.clipboard.width,
+        h = app.clipboard.height;
 
-    x += _tool.lineWidth;
-    y += _tool.lineWidth;
+    x += _self.lineWidth;
+    y += _self.lineWidth;
 
-    if (_tool.step == 2) {
-      context.clearRect(0, 0, image.width, image.height);
-      _tool.canvasStyle.cursor = '';
+    if (_self.step == 2) {
+      bufferContext.clearRect(0, 0, image.width, image.height);
+      _self.canvasStyle.cursor = '';
       sb._imgd = false;
     }
 
     // The following code block sucks:
     // you can't use negative values, nor do you have a good globalCompositeOperation
-    sb.putImageData(_me.clipboard, 0, 0);
-    if (_tool.transparency) {
-      context.putImageData(_me.clipboard, x, y);
+    sb.putImageData(app.clipboard, 0, 0);
+    if (_self.transparency) {
+      bufferContext.putImageData(app.clipboard, x, y);
     } else {
-      context.fillRect(x, y, w, h);
-      context.drawImage(sb.canvas, x, y);
-      sb._imgd = context.getImageData(x, y, w, h);
+      bufferContext.fillRect(x, y, w, h);
+      bufferContext.drawImage(sb.canvas, x, y);
+      sb._imgd = bufferContext.getImageData(x, y, w, h);
 
       sb.putImageData(sb._imgd, 0, 0);
-      sb._imgd = _me.clipboard;
+      sb._imgd = app.clipboard;
     }
 
-    sb._sw = _tool.sw1 = w;
-    sb._sh = _tool.sh1 = h;
-    _tool.sw2 = w + _tool.lineWidth2;
-    _tool.sh2 = h + _tool.lineWidth2;
-    _tool.sx0 = x;
-    _tool.sy0 = y;
-    _tool.sx0b = x - _tool.lineWidth;
-    _tool.sy0b = y - _tool.lineWidth;
-    _tool.sx1 = w + x;
-    _tool.sy1 = h + y;
-    _tool.sx1b = _tool.sx1 + _tool.lineWidth;
-    _tool.sy1b = _tool.sy1 + _tool.lineWidth;
-    _tool.transform = _me.inputs.selTransform.checked = true;
-    _tool.cleared = true;
-    _tool.step = 2;
+    sb._sw = _self.sw1 = w;
+    sb._sh = _self.sh1 = h;
+    _self.sw2 = w + _self.lineWidth2;
+    _self.sh2 = h + _self.lineWidth2;
+    _self.sx0 = x;
+    _self.sy0 = y;
+    _self.sx0b = x - _self.lineWidth;
+    _self.sy0b = y - _self.lineWidth;
+    _self.sx1 = w + x;
+    _self.sy1 = h + y;
+    _self.sx1b = _self.sx1 + _self.lineWidth;
+    _self.sy1b = _self.sy1 + _self.lineWidth;
+    _self.transform = inputs.selTransform.checked = true;
+    _self.cleared = true;
+    _self.step = 2;
 
-    _me.btn_cut(1);
-    _me.btn_copy(1);
-    statusShow('select-available');
+    app.btn_cut(1);
+    app.btn_copy(1);
+    statusShow('selectAvailable');
 
-    context.strokeRect(_tool.sx0b + _tool.lineWidth2, _tool.sy0b + _tool.lineWidth2, _tool.sw2, _tool.sh2);
+    bufferContext.strokeRect(_self.sx0b + _self.lineWidth2, _self.sy0b + _self.lineWidth2, _self.sw2, _self.sh2);
 
-    _tool.update_mpos(ev);
+    _self.update_mpos(ev);
 
     return true;
   };
@@ -1962,35 +2120,35 @@ PaintTools.select = function (app) {
   // Alt-Backspace: fill the selection with a flat color (fillStyle). This only works when transformation mode is disabled.
   this.keydown = function (ev) {
     // Toggle transformation mode
-    if (ev.kid_ == 'return') {
-      _tool.transform = !_me.inputs.selTransform.checked;
-      _me.inputs.selTransform.checked = _tool.transform;
+    if (ev.kid_ == 'Enter') {
+      _self.transform = !inputs.selTransform.checked;
+      inputs.selTransform.checked = _self.transform;
 
-    } else if ((ev.kid_ == 'delete' || ev.kid_ == 'escape') && _tool.step == 2) {
+    } else if ((ev.kid_ == 'Delete' || ev.kid_ == 'Escape') && _self.step == 2) {
       // Delete the selected pixels and/or drop the selection (when the selection is available).
 
       // Delete the pixels from the image if they are not deleted already.
-      if (!_tool.cleared && ev.kid_ == 'delete') {
-        _me.img.clearRect(_tool.sx0, _tool.sy0, _tool.sw1, _tool.sh1);
-        _me.historyAdd();
+      if (!_self.cleared && ev.kid_ == 'Delete') {
+        layerContext.clearRect(_self.sx0, _self.sy0, _self.sw1, _self.sh1);
+        historyAdd();
       }
 
-      _tool.step = 0;
-      _tool.cleared = false;
-      _tool.canvasStyle.cursor = '';
-      _tool.selbuffer._imgd = false;
+      _self.step = 0;
+      _self.cleared = false;
+      _self.canvasStyle.cursor = '';
+      _self.selbuffer._imgd = false;
 
-      context.clearRect(0, 0, image.width, image.height);
-      _me.btn_cut(-1);
-      _me.btn_copy(-1);
-      statusShow('select-active');
+      bufferContext.clearRect(0, 0, image.width, image.height);
+      app.btn_cut(-1);
+      app.btn_copy(-1);
+      statusShow('selectActive');
 
-    } else if (ev.kid_ == 'alt-backspace' && !_tool.transform) {
+    } else if (ev.kid_ == 'Alt Backspace' && !_self.transform) {
       // Fill the selection with a flat color (fillStyle).
 
-      _me.img.fillStyle = context.fillStyle;
-      _me.img.fillRect(_tool.sx0, _tool.sy0, _tool.sw1, _tool.sh1);
-      _me.historyAdd();
+      layerContext.fillStyle = bufferContext.fillStyle;
+      layerContext.fillRect(_self.sx0, _self.sy0, _self.sw1, _self.sh1);
+      historyAdd();
 
     } else {
       return false;
@@ -1999,36 +2157,91 @@ PaintTools.select = function (app) {
     return true;
   };
 
-  _tool.update_lineWidth();
+  this.update_lineWidth();
 
   return true;
 };
 
+/**
+ * @class The "Insert image" tool.
+ *
+ * @param {PaintWeb} app Reference to the main paint application object.
+ */
+// TODO: allow inserting images from a different host, using server-side magic.
 PaintTools.insertimg = function (app) {
-  var _self = this;
+  var _self        = this,
+      canvasImage  = app.image,
+      container    = app.elems.container,
+      context      = app.buffer.context,
+      layerUpdate  = app.layerUpdate,
+      mouse        = app.mouse,
+      statusShow   = app.statusShow,
+      toolActivate = app.toolActivate;
 
-  if (!_me.img || !_me.img.canvas || !_me.container || !context || !_me.tool || !_me.tool._id) {
-    alert( _me.getMsg('error-tool-activate') );
-    _tool._cancel = true;
+  /**
+   * Holds the previous tool ID.
+   *
+   * @private
+   * @type String
+   */
+  var prevTool = app.tool._id;
+
+  /**
+   * Holds the starting point on the <var>x</var> axis of the image, for the 
+   * current drawing operation.
+   *
+   * @private
+   * @type Number
+   */
+  var x0 = 0;
+
+  /**
+   * Holds the starting point on the <var>y</var> axis of the image, for the 
+   * current drawing operation.
+   *
+   * @private
+   * @type Number
+   */
+  var y0 = 0;
+
+  /**
+   * Tells if the image element loaded or not.
+   *
+   * @private
+   * @type Boolean
+   */
+  var imageLoaded = false;
+
+  /**
+   * Holds the image aspect ratio, used by the resize method.
+   *
+   * @private
+   * @type Number
+   */
+  var imageRatio = 1;
+
+  /**
+   * Holds the image address.
+   * @type String
+   */
+  this.url = prompt(lang.promptInsertimg, this.url || 'http://');
+
+  if (!this.url || this.url.toLowerCase() == 'http://' ||
+      this.url.substr(0, 7).toLowerCase() != 'http://') {
+    this._cancel = true;
     return false;
   }
 
-  // Once the image is inserted, the user goes back to the previous tool.
-  _tool.prev_tool = _me.tool._id;
+  // Remember the URL.
+  lib.extend(true, this.constructor.prototype, {url: this.url});
 
-  // The default URL
-  if (!_me.tools.insertimg._url) {
-    _me.tools.insertimg._url = 'http://';
-  }
-
-  _tool.url = prompt(_me.getMsg('prompt-insertimg'), _me.tools.insertimg._url);
-  if (!_tool.url || _tool.url.toLowerCase() == 'http://' || _tool.url.substr(0, 7).toLowerCase() != 'http://') {
-    _tool._cancel = true;
-    return false;
-  }
-  _me.tools.insertimg._url = _tool.url;
-
-  _tool.get_host = function (url) {
+  /**
+   * Determine the host from the given HTTP address.
+   *
+   * @param {String} url The HTTP address.
+   * @returns {String} The host name.
+   */
+  function getHost (url) {
     url = url.substr(7);
     var pos = url.indexOf('/');
     if (pos > -1) {
@@ -2038,118 +2251,142 @@ PaintTools.insertimg = function (app) {
     return url;
   };
 
-  if (_tool.get_host(_tool.url) != _me.win.location.host) {
-    alert( _me.getMsg('error-insertimg-host') );
-    _tool._cancel = true;
+  if (getHost(this.url) != app.win.location.host) {
+    alert(lang.errorInsertimgHost);
+    this._cancel = true;
     return false;
   }
 
-  // Make sure the image dimensions are synchronized with the zoom level.
-  _tool.ev_img_load = function (ev) {
+  /**
+   * The <code>load</code> event handler for the image element. This method 
+   * makes sure the image dimensions are synchronized with the zoom level, and 
+   * draws the image on the canvas.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
+  function ev_imageLoaded (ev) {
     // Did the image already load?
-    if (_tool.img_loaded) {
+    if (imageLoaded) {
       return true;
     }
 
     // The default position for the inserted image is the top left corner of the visible area, taking into consideration the zoom level.
-    var x = Math.round(_me.container.scrollLeft / _me.zoom),
-      y = Math.round(_me.container.scrollTop  / _me.zoom);
+    var x = Math.round(container.scrollLeft / canvasImage.zoom),
+        y = Math.round(container.scrollTop  / canvasImage.zoom);
 
-    context.clearRect(0, 0, image.width, image.height);
+    context.clearRect(0, 0, canvasImage.width, canvasImage.height);
 
     try {
-      context.drawImage(_tool.img, x, y);
-      _tool.img_loaded = true;
-      statusShow('insertimg-loaded');
+      context.drawImage(imageElement, x, y);
+      imageLoaded = true;
+      statusShow('insertimgLoaded');
     } catch (err) {
-      alert( _me.getMsg('error-insertimg') );
+      alert(lang.errorInsertimg);
     }
 
     return true;
   };
-  _tool.img_loaded = false;
 
-  // The mouse start position, used when the user also resizes the image with the mousdown+mousemove+mouseup sequence.
-  _tool._x = _tool._y = 0;
+  /**
+   * Holds the DOM image element.
+   *
+   * @private
+   * @type Element
+   */
+  var imageElement = new Image();
+  imageElement.addEventListener('load', ev_imageLoaded, false);
+  imageElement.src = this.url;
 
-  _tool.img = new Image();
-  _tool.img.addEventListener('load', _tool.ev_img_load, false);
-  _tool.img.src = _tool.url;
-
+  /**
+   * The <code>mousedown</code> event handler. This method stores the current 
+   * mouse location and the image aspect ratio for later reuse by the 
+   * <code>mousemove</code> event handler.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.mousedown = function (ev) {
-    if (!_tool.img_loaded) {
-      alert(_me.getMsg('error-insertimg-not-loaded'));
+    if (!imageLoaded) {
+      alert(lang.errorInsertimgNotLoaded);
       return false;
     }
 
-    _tool._x = ev.x_;
-    _tool._y = ev.y_;
+    x0 = ev.x_;
+    y0 = ev.y_;
 
-    _tool.mousemove_img(ev);
+    // The image aspect ratio - used by the mousemove method when the user holds 
+    // the Shift key down.
+    imageRatio = imageElement.width / imageElement.height;
 
-    // Switch to the image resize "mode" of the tool.
-    _tool.mousemove = _tool.mousemove_resize;
-
-    // The image aspect ratio - used by the resizer when the user holds the Shift key down.
-    _tool.imgar = _tool.img.width / _tool.img.height;
-
-    statusShow('insertimg-resize');
+    statusShow('insertimgResize');
 
     if (ev.stopPropagation) {
       ev.stopPropagation();
     }
   };
 
-  // This is the initial mousemove event handler. It keeps the image position in sync with the mouse, such that the user can pick where to put the image on the canvas.
-  _tool.mousemove_img = function (ev) {
-    if (!_tool.img_loaded) {
+  /**
+   * The <code>mousemove</code> event handler. When the mouse button is not 
+   * down, the user is allowed to pick where he/she wants to insert the image 
+   * element, inside the canvas. Once the <code>mousedown</code> event is fired, 
+   * this method allows the user to resize the image inside the canvas.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
+  this.mousemove = function (ev) {
+    if (!imageLoaded) {
       return false;
     }
 
-    context.clearRect(0, 0, image.width, image.height);
-    context.drawImage(_tool.img, ev.x_, ev.y_);
-  };
-  _tool.mousemove = _tool.mousemove_img;
+    context.clearRect(0, 0, canvasImage.width, canvasImage.height);
 
-  // After mousedown the mousemove event handler becomes this function. By doing so, users are allowed to resize the image.
-  _tool.mousemove_resize = function (ev) {
-    var w = Math.abs(ev.x_ - _tool._x),
-      h = Math.abs(ev.y_ - _tool._y),
-      x = Math.min(ev.x_, _tool._x),
-      y = Math.min(ev.y_, _tool._y);
+    // If the user is holding down the mouse button, then allow him/her to 
+    // resize the image.
+    if (mouse.buttonDown) {
+      var w = Math.abs(ev.x_ - x0),
+          h = Math.abs(ev.y_ - y0),
+          x = Math.min(ev.x_,  x0),
+          y = Math.min(ev.y_,  y0);
 
-    // Constrain the image to have the same aspect ratio as the original
-    if (ev.shiftKey) {
-      if (w > h) {
-        if (y == ev.y_) {
-          y -= w-h;
+      // If the Shift key is down, constrain the image to have the same aspect 
+      // ratio as the original image element.
+      if (ev.shiftKey) {
+        if (w > h) {
+          if (y == ev.y_) {
+            y -= w-h;
+          }
+          h = Math.round(w/imageRatio);
+        } else {
+          if (x == ev.x_) {
+            x -= h-w;
+          }
+          w = Math.round(h*imageRatio);
         }
-        h = Math.round(w/_tool.imgar);
-      } else {
-        if (x == ev.x_) {
-          x -= h-w;
-        }
-        w = Math.round(h*_tool.imgar);
       }
-    }
 
-    context.clearRect(0, 0, image.width, image.height);
-    context.drawImage(_tool.img, x, y, w, h);
+      context.drawImage(imageElement, x, y, w, h);
+    } else {
+      // If the mouse button is not down, simply allow the user to pick where 
+      // he/she wants to insert the image element.
+      context.drawImage(imageElement, ev.x_, ev.y_);
+    }
   };
 
+  /**
+   * The <code>mouseup</code> event handler. This method completes the drawing 
+   * operation by inserting the image in the layer canvas, and by activating the 
+   * previous tool.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.mouseup = function (ev) {
-    if (!_tool.img_loaded) {
+    if (!imageLoaded) {
       return false;
-    }
-
-    if (ev.x_ != _tool._x || ev.y_ != _tool._y) {
-      _tool.mousemove_resize(ev);
     }
 
     layerUpdate();
 
-    if (_tool.prev_tool) {
-      toolActivate(_tool.prev_tool, ev);
+    if (prevTool) {
+      toolActivate(prevTool, ev);
     }
 
     if (ev.stopPropagation) {
@@ -2157,192 +2394,309 @@ PaintTools.insertimg = function (app) {
     }
   };
 
-  this.deactivate = function (ev) {
-    if (_tool.img) {
-      _tool.img = null;
-      delete _tool.img;
+  /**
+   * The tool deactivation event handler.
+   */
+  this.deactivate = function () {
+    if (imageElement) {
+      imageElement = null;
+      delete imageElement;
     }
 
-    context.clearRect(0, 0, image.width, image.height);
+    context.clearRect(0, 0, canvasImage.width, canvasImage.height);
 
     return true;
   };
 
-  // Escape returns to the previous tool.
+  /**
+   * The <code>keydown</code> event handler allows users to press the 
+   * <kbd>Escape</kbd> key to cancel the drawing operation and return to the 
+   * previous tool.
+   *
+   * @param {Event} ev The DOM Event object.
+   * @returns {Boolean} True if the key was recognized, or false if not.
+   */
   this.keydown = function (ev) {
-    if (!_tool.prev_tool || ev.kid_ != 'escape') {
+    if (!prevTool || ev.kid_ != 'Escape') {
       return false;
     }
 
-    toolActivate(_tool.prev_tool, ev);
+    mouse.buttonDown = false;
+
+    toolActivate(prevTool, ev);
+
     return true;
   };
 
+  // TODO: check this ...
   return true;
 };
 
+/**
+ * @class The text tool.
+ *
+ * @param {PaintWeb} app Reference to the main paint application object.
+ */
+// TODO: make this tool nicer to use and make it work in Opera.
 PaintTools.text = function (app) {
-  var _self = this;
+  var _self        = this,
+      config       = app.config,
+      container    = app.elems.container,
+      context      = app.buffer.context,
+      elems        = app.elems,
+      image        = app.image,
+      inputs       = app.inputs,
+      layerUpdate  = app.layerUpdate,
+      mouse        = app.mouse,
+      statusShow   = app.statusShow,
+      toolActivate = app.toolActivate;
 
-  if (!_me.img || !_me.img.canvas || !_me.container || !context || !_me.resizer || !_me.resizer.elem || !_me.tool || !_me.tool._id || !_me.inputs || !_me.inputs.textString || !_me.elems.textOptions) {
-    alert( _me.getMsg('error-tool-activate') );
-    _tool._cancel = true;
+  if (!context.fillText || !context.strokeText) {
+    alert(lang.errorTextUnsupported);
+    this._cancel = true;
     return false;
   }
 
-  if (!_me.img.fillText || !_me.img.strokeText) {
-    alert( _me.getMsg('error-text-unsupported') );
-    _tool._cancel = true;
-    return false;
-  }
+  /**
+   * Holds the previous tool ID.
+   *
+   * @private
+   * @type String
+   */
+  var prevTool = app.tool._id;
 
-  // Once the text is inserted, the user goes back to the previous tool
-  _tool.prev_tool = _me.tool._id;
-
-  // The last text position, but by default it's in the center of the image.
-  _tool.x = Math.round(image.width / 2);
-  _tool.y = Math.round(image.height / 2);
+  // Reset mouse coordinates in the center of the image, for the purpose of 
+  // placing the text there.
+  mouse.x = Math.round(image.width / 2);
+  mouse.y = Math.round(image.height / 2);
 
   // Show the text options.
-  _me.elems.textOptions.className = '';
+  elems.textOptions.className = '';
 
-  // The event handler for the text field and the other text options.
-  _tool.text_update = function (ev) {
+  /**
+   * The event handler for the text field and the other text options.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
+  this.textUpdate = function (ev) {
     if (!ev) {
       ev = {};
     }
 
-    ev.x_ = _tool.x;
-    ev.y_ = _tool.y;
+    ev.x_ = mouse.x;
+    ev.y_ = mouse.y;
 
-    _tool.mousemove(ev);
+    _self.mousemove(ev);
   };
 
-  _tool.setup_events = function (act) {
+  /**
+   * Setup the <code>textUpdate()</code> event handler for several inputs. This 
+   * allows the text rendering to be updated automatically when some value 
+   * changes.
+   *
+   * @param {String} act The action to perform: 'add' or 'remove' the event 
+   * listeners.
+   */
+  function setup (act) {
     var ev, i, listeners = ['textString', 'textFont', 'textSize', 'lineWidth'];
 
     for (i in listeners) {
       i = listeners[i];
-      i = _me.inputs[i];
+      i = inputs[i];
       if (!i) {
         continue;
       }
+
       if (i.tagName.toLowerCase() == 'select' || i.type == 'checkbox') {
         ev = 'change';
       } else {
         ev = 'input';
       }
+
       if (act == 'add') {
-        i.addEventListener(ev, _tool.text_update, false);
+        i.addEventListener(ev,    _self.textUpdate, false);
       } else {
-        i.removeEventListener(ev, _tool.text_update, false);
+        i.removeEventListener(ev, _self.textUpdate, false);
       }
     }
   };
-  _tool.setup_events('add');
 
+  setup('add');
+
+  /**
+   * The <code>mousemove</code> event handler. This method tracks the mouse 
+   * location and updates the text accordingly.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.mousemove = function (ev) {
     context.clearRect(0, 0, image.width, image.height);
 
-    if (_me.shapeType != 'stroke') {
-      context.fillText(_me.inputs.textString.value, ev.x_, ev.y_);
+    if (config.shapeType != 'stroke') {
+      context.fillText(inputs.textString.value, ev.x_, ev.y_);
     }
 
-    if (_me.shapeType != 'fill') {
-      context.strokeText(_me.inputs.textString.value, ev.x_, ev.y_);
+    if (config.shapeType != 'fill') {
+      context.strokeText(inputs.textString.value, ev.x_, ev.y_);
     }
-
-    _tool.x = ev.x_;
-    _tool.y = ev.y_;
   };
 
+  /**
+   * The <code>click</code> event handler. This method completes the drawing 
+   * operation by inserting the text into the layer canvas, and by activating 
+   * the previous tool.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.click = function (ev) {
-    _tool.mousemove(ev);
+    _self.mousemove(ev);
 
     layerUpdate();
 
-    toolActivate(_tool.prev_tool, ev);
+    if (prevTool) {
+      toolActivate(prevTool, ev);
+    }
 
     if (ev.stopPropagation) {
       ev.stopPropagation();
     }
   };
 
-  // The following event handler runs post-construction and post-deactivation of the previous tool.
-  _tool.activate = _tool.text_update;
+  /**
+   * The tool activation code. This runs after the text tool is constructed, and 
+   * after the previous tool has been destructed. This method simply references 
+   * the <code>textUpdate()</code> method.
+   */
+  this.activate = this.textUpdate;
 
-  this.deactivate = function (ev) {
-    _tool.setup_events('remove');
+  /**
+   * The tool deactivation simply consists of removing the event listeners added 
+   * when the tool was constructed, and clearing the buffer canvas.
+   */
+  this.deactivate = function () {
+    setup('remove');
 
     context.clearRect(0, 0, image.width, image.height);
 
     // Minimize the text options.
-    _me.elems.textOptions.className = 'minimized';
+    elems.textOptions.className = 'minimized';
 
     return true;
   };
 
-  // Escape returns to the previous tool.
+  /**
+   * The <code>keydown</code> event handler allows users to press the 
+   * <kbd>Escape</kbd> key to cancel the drawing operation and return to the 
+   * previous tool.
+   *
+   * @param {Event} ev The DOM Event object.
+   * @returns {Boolean} True if the key was recognized, or false if not.
+   */
   this.keydown = function (ev) {
-    if (!_tool.prev_tool || ev.kid_ != 'escape') {
+    if (!prevTool || ev.kid_ != 'Escape') {
       return false;
     }
 
-    toolActivate(_tool.prev_tool, ev);
+    mouse.buttonDown = false;
+    toolActivate(prevTool, ev);
+
     return true;
   };
 
+  // TODO: check this..
   return true;
 };
 
+/**
+ * @class The canvas drag tool. This tool allows the user to drag the canvas 
+ * inside the viewport.
+ *
+ * @param {PaintWeb} app Reference to the main paint application object.
+ */
 PaintTools.drag = function (app) {
-  var _self = this;
+  var _self        = this,
+      canvasStyle  = app.buffer.canvas.style,
+      container    = app.elems.container,
+      image        = app.image,
+      mouse        = app.mouse,
+      toolActivate = app.toolActivate;
 
-  if (!context || !_me.doc || !_me.doc.body) {
-    alert( _me.getMsg('error-tool-activate') );
-    _tool._cancel = true;
-    return false;
-  }
+  canvasStyle.cursor = 'move';
 
-  mouse.buttonDown = false;
-  canvas.style.cursor = 'move';
+  /**
+   * Holds the previous tool ID.
+   *
+   * @private
+   * @type String
+   */
+  var prevTool = app.tool._id;
 
-  // If Escape key is pressed, the user goes back to the previous tool
-  _tool.prev_tool = _me.tool._id;
+  /**
+   * Holds the starting point on the <var>x</var> axis of the image, for the 
+   * current drawing operation.
+   *
+   * @private
+   * @type Number
+   */
+  var x0 = 0;
 
+  /**
+   * Holds the starting point on the <var>y</var> axis of the image, for the 
+   * current drawing operation.
+   *
+   * @private
+   * @type Number
+   */
+  var y0 = 0;
+
+  /**
+   * Initialize the canvas drag.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.mousedown = function (ev) {
-    _tool.x0 = Math.round(ev.x_ * _me.zoom);
-    _tool.y0 = Math.round(ev.y_ * _me.zoom);
-    mouse.buttonDown = true;
+    x0 = Math.round(ev.x_ * image.zoom);
+    y0 = Math.round(ev.y_ * image.zoom);
   };
 
+  /**
+   * Perform the canvas drag, while the user moves the mouse.
+   *
+   * <p>Press <kbd>Escape</kbd> to stop dragging and to get back to the previous 
+   * tool.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.mousemove = function (ev) {
     if (!mouse.buttonDown) {
       return false;
     }
 
-    var dx = Math.round(ev.x_ * _me.zoom) - _tool.x0,
-      dy = Math.round(ev.y_ * _me.zoom) - _tool.y0;
+    var dx = Math.round(ev.x_ * image.zoom) - x0,
+        dy = Math.round(ev.y_ * image.zoom) - y0;
 
-    _me.container.scrollTop -= dy;
-    _me.container.scrollLeft -= dx;
-  };
-
-  this.mouseup = function (ev) {
-    mouse.buttonDown = false;
+    container.scrollTop  -= dy;
+    container.scrollLeft -= dx;
   };
 
   this.deactivate = function (ev) {
-    canvas.style.cursor = '';
+    canvasStyle.cursor = '';
   };
 
-  // Escape returns to the previous tool.
+  /**
+   * Allows the user to press <kbd>Escape</kbd> to stop dragging the canvas, and 
+   * to return to the previous tool.
+   *
+   * @param {Event} ev The DOM Event object.
+   *
+   * @returns {Boolean} True if the key was recognized, or false if not.
+   */
   this.keydown = function (ev) {
-    if (!_tool.prev_tool || ev.kid_ != 'escape') {
+    if (!prevTool || ev.kid_ != 'Escape') {
       return false;
     }
 
-    toolActivate(_tool.prev_tool, ev);
+    toolActivate(prevTool, ev);
     return true;
   };
 

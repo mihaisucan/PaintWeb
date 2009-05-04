@@ -1,26 +1,23 @@
 {
-  // $Date: 2009-04-29 15:54:01 +0300 $
+  // $Date: 2009-04-30 21:17:00 +0300 $
 
-  "messages": {
-    "toString": "PaintWeb v%ver% (build %build%)",
-    "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
-    "errorInitContext": "Error while initializing the canvas context.",
-    "errorElementNotFound": "Error: the following element was not found: %id%.",
-    "errorInitGetComputedStyle": "Error: window.getComputedStyle is not available.",
-    "errorInitXMLHttpRequest": "Error: window.XMLHttpRequest is not available.",
-    "errorInitJSON": "Error: window.JSON is not available.",
-    "errorToolActivate": "Error: the tool you want could not be properly activated!",
-    "errorCpickerUnsupported": "Error: your browser does not support get/putImageData! The color picker tool cannot be used.",
-    "errorClipboardUnsupported": "Error: your browser does not support get/putImageData! Clipboard operations like cut/copy/paste cannot be used.",
-    "errorTextUnsupported": "Error: your browser does not implement the Canvas Text API! The text tool cannot be used.",
-    "errorInsertimg": "The image could not be inserted. Maybe the address does not point to an image.",
-    "errorInsertimgHost": "The URL you provided points to a different host. The image cannot be added for security reasons.",
-    "errorInsertimgLoaded": "The image did not load yet, or the URL you provided does not point to an image.",
-    "promptInsertimg": "Type the address of the image you want to insert:",
-    "promptImageDimensions": "Please input the new image dimensions you want.",
-    "promptTextFont": "Type the name of the font you want:",
-    "colorEditorTitle": "Color editor"
-  },
+  "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
+  "errorInitContext": "Error while initializing the canvas context.",
+  "errorElementNotFound": "Error: the following element was not found: %id%.",
+  "errorInitGetComputedStyle": "Error: window.getComputedStyle is not available.",
+  "errorInitXMLHttpRequest": "Error: window.XMLHttpRequest is not available.",
+  "errorInitJSON": "Error: window.JSON is not available.",
+  "errorToolActivate": "Error: the tool you want could not be properly activated!",
+  "errorCpickerUnsupported": "Error: your browser does not support get/putImageData! The color picker tool cannot be used.",
+  "errorClipboardUnsupported": "Error: your browser does not support get/putImageData! Clipboard operations like cut/copy/paste cannot be used.",
+  "errorTextUnsupported": "Error: your browser does not implement the Canvas Text API! The text tool cannot be used.",
+  "errorInsertimg": "The image could not be inserted. Maybe the address does not point to an image.",
+  "errorInsertimgHost": "The URL you provided points to a different host. The image cannot be added for security reasons.",
+  "errorInsertimgLoaded": "The image did not load yet, or the URL you provided does not point to an image.",
+  "promptInsertimg": "Type the address of the image you want to insert:",
+  "promptImageDimensions": "Please input the new image dimensions you want.",
+  "promptTextFont": "Type the name of the font you want:",
+  "colorEditorTitle": "Color editor",
 
   "status": {
     "cpickerNormal": "Click to change the fill color, and Shift+Click to change the stroke color.",

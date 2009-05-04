@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-04-29 15:35:17 +0300 $
+  // $Date: 2009-05-04 12:40:55 +0300 $
 
   /**
    * Language file.
@@ -118,9 +118,17 @@
    * @see PaintTools The object holding all the drawing tools.
    */
   "keys": {
+    "E": { "tool": "ellipse" },
+    "G": { "tool": "poly" },
+    "H": { "tool": "drag" },
+    "I": { "tool": "insertimg" },
     "L": { "tool": "line" },
+    "O": { "tool": "eraser" },
     "P": { "tool": "pencil" },
-    "R": { "tool": "rect" }
+    "R": { "tool": "rect" },
+    "S": { "tool": "select" },
+    "T": { "tool": "text" },
+    "V": { "tool": "curve" }
   }
 
   /***** FIXME old keyboard shortcuts from PaintWeb 0.5. Will be updated soon.

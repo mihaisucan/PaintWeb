@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-04-29 16:00:16 +0300 $
+ * $Date: 2009-05-04 13:38:16 +0300 $
  */
 
 /**
@@ -32,11 +32,23 @@
 /**
  * Holds all language strings used within PaintWeb.
  */
-var lang = {};
+// Here we include a minimal set of strings, used in case the language file will 
+// not load.
+var lang = {
+  "errorElementNotFound": "Error: the following element was not found: %id%.",
+  "errorInitGetComputedStyle": "Error: window.getComputedStyle is not available.",
+  "errorInitXMLHttpRequest": "Error: window.XMLHttpRequest is not available.",
+  "errorInitJSON": "Error: window.JSON is not available."
+};
 
+/**
+ * The PaintWeb application object.
+ *
+ * @param {Window} [win_=window] The window object to use.
+ * @param {Document} [doc_=document] The document object to use.
+ */
 function PaintWeb (win_, doc_) {
   var _self = this;
-  var _me = this; // TODO: remove this
 
   /**
    * PaintWeb version.
@@ -48,7 +60,7 @@ function PaintWeb (win_, doc_) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090425;
+  this.build = 20090504;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -190,6 +202,25 @@ function PaintWeb (win_, doc_) {
   this.clipboard = false;
 
   /**
+   * Application initialization state. This property can be in one of the 
+   * following states:
+   *
+   * <ul>
+   *   <li>{@link PaintWeb.INIT_NOT_STARTED} - The initialization is not 
+   *   started.
+   *
+   *   <li>{@link PaintWeb.INIT_STARTED} - The initialization process is 
+   *   running.
+   *
+   *   <li>{@link PaintWeb.INIT_DONE} - The initialization process has completed 
+   *   successfully.
+   *
+   *   <li>{@link PaintWeb.INIT_ERROR} - The initialization process has failed.
+   * </ul>
+   */
+  this.initialized = PaintWeb.INIT_NOT_STARTED;
+
+  /**
    * Holds the keyboard event listener object.
    *
    * @private
@@ -213,8 +244,13 @@ function PaintWeb (win_, doc_) {
   /**
    * Initialize PaintWeb.
    *
-   * @returns {Boolean} True if the initialization was successful, or false if 
-   * not.
+   * <p>This method asynchronous, meaning that it will return much sooner before 
+   * the application initialization is completed. Please use the {@link 
+   * PaintWeb.initialized} state property to check if initialization is complete 
+   * or not.
+   *
+   * @returns {Boolean} True if the initialization has been started 
+   * successfully, or false if not.
    */
   this.init = function () {
     // Basic functionality used within the Web application.
@@ -233,18 +269,37 @@ function PaintWeb (win_, doc_) {
       return false;
     }
 
+    this.initialized = PaintWeb.INIT_STARTED;
+
     this.configLoad();
+
     return true;
   };
 
+  /**
+   * Asynchronously load the configuration file. This method issues an 
+   * XMLHttpRequest to load the JSON file.
+   *
+   * @see PaintWeb.config.configFile The configuration file.
+   * @see lib#xhrLoad The library function being used for creating the 
+   * XMLHttpRequest object.
+   */
   this.configLoad = function () {
-    xhr_ = new XMLHttpRequest();
-    xhr_.onreadystatechange = this.configReady;
-    xhr_.open('GET', this.config.configFile);
-    xhr_.send('');
+    lib.xhrLoad(this.config.configFile, this.configReady);
   };
 
-  this.configReady = function () {
+  /**
+   * The configuration reader. This is the event handler for the XMLHttpRequest 
+   * object, for the <code>onreadystatechange</code> event.
+   *
+   * @private
+   *
+   * @param {XMLHttpRequest} xhr The XMLHttpRequest object being handled.
+   *
+   * @see PaintWeb#configLoad The method which issues the XMLHttpRequest request 
+   * for loading the configuration file.
+   */
+  this.configReady = function (xhr) {
     /*
      * readyState values:
      *   0 UNINITIALIZED open() has not been called yet.
@@ -253,40 +308,60 @@ function PaintWeb (win_, doc_) {
      *   3 INTERACTIVE Downloading, responseText holds the partial data.
      *   4 COMPLETED Finished with all operations.
      */
-    if (xhr_.readyState != 4 || xhr_.status != 200 || !xhr_.responseText) {
+    if (!xhr || xhr.readyState != 4 || xhr.status != 200 || !xhr.responseText) {
       return;
     }
 
-    var config = lib.jsonParse(xhr_.responseText);
+    var config = lib.jsonParse(xhr.responseText);
 
-    lib.extend(_self.config, config);
+    // Overwrite any existing configuration.
+    lib.extend(true, _self.config, config);
 
-    xhr_ = null;
-
-    _self.langLoad();
+    if (_self.initialized == PaintWeb.INIT_STARTED) {
+      _self.langLoad();
+    }
   };
 
+  /**
+   * Asynchronously load the language file. This method issues an XMLHttpRequest 
+   * to load the JSON file.
+   *
+   * @see PaintWeb.config.langFile The language file.
+   * @see lib#xhrLoad The library function being used for creating the 
+   * XMLHttpRequest object.
+   */
   this.langLoad = function () {
-    xhr_ = new XMLHttpRequest();
-    xhr_.onreadystatechange = _self.langReady;
-    xhr_.open('GET', _self.config.langFile);
-    xhr_.send('');
+    lib.xhrLoad(this.config.langFile, this.langReady);
   };
 
-  this.langReady = function () {
-    if (xhr_.readyState != 4 || xhr_.status != 200 || !xhr_.responseText) {
+  /**
+   * The language file reader. This is the event handler for the XMLHttpRequest 
+   * object, for the <code>onreadystatechange</code> event.
+   *
+   * @private
+   *
+   * @param {XMLHttpRequest} xhr The XMLHttpRequest object being handled.
+   *
+   * @see PaintWeb#langLoad The method which issues the XMLHttpRequest request 
+   * for loading the language file.
+   */
+  this.langReady = function (xhr) {
+    if (!xhr || xhr.readyState != 4 || xhr.status != 200 || !xhr.responseText) {
       return;
     }
 
-    var lang_new = lib.jsonParse(xhr_.responseText);
+    var lang_new = lib.jsonParse(xhr.responseText);
 
     lib.extend(lang, lang_new);
 
-    xhr_ = null;
-
-    _self.initPostConfig();
+    if (_self.initialized == PaintWeb.INIT_STARTED) {
+      _self.initPostConfig();
+    }
   };
 
+  /**
+   * Initialization procedure post-configuration and post-language file load.
+   */
   this.initPostConfig = function () {
     var layerCanvas = $(this.config.layerCanvasID);
     if (!layerCanvas) {
@@ -312,7 +387,8 @@ function PaintWeb (win_, doc_) {
     this.image.width     = layerCanvas.width;
     this.image.height    = layerCanvas.height;
 
-    this.elems.container = layerCanvas.parentNode;
+    var container = layerCanvas.parentNode;
+    this.elems.container = container;
 
     // Create the buffer canvas.
     var bufferCanvas = this.doc.createElement('canvas');
@@ -327,11 +403,11 @@ function PaintWeb (win_, doc_) {
     bufferCanvas.height = layerCanvas.height;
 
     // Add the buffer canvas to the main document.
-    this.elems.container.insertBefore(bufferCanvas, layerCanvas.nextSibling);
+    container.insertBefore(bufferCanvas, layerCanvas.nextSibling);
 
     var layerStyle     = layerCanvas.style,
         bufferStyle    = bufferCanvas.style,
-        containerStyle = this.elems.container.style;
+        containerStyle = container.style;
 
     layerStyle.width = bufferStyle.width = containerStyle.width  
       = this.image.width  + 'px';
@@ -455,6 +531,8 @@ function PaintWeb (win_, doc_) {
       return false;
     }
 
+    this.initialized = PaintWeb.INIT_DONE;
+
     return true;
   };
 
@@ -483,7 +561,7 @@ function PaintWeb (win_, doc_) {
       }
 
       elem._tool = tool_id;
-      elem.addEventListener('click',     this.tool_click,     false);
+      elem.addEventListener('click',     this.toolClick,     false);
       elem.addEventListener('mouseover', this.item_mouseover, false);
       elem.addEventListener('mouseout',  this.item_mouseout,  false);
 
@@ -649,7 +727,7 @@ function PaintWeb (win_, doc_) {
         }
 
         elem.addEventListener('click', this.opt_textStyle, false);
-        _me[id] = false;
+        this[id] = false;
       }
     }
 
@@ -854,7 +932,7 @@ function PaintWeb (win_, doc_) {
 
   // This simply goes back to the previous status message.
   this.item_mouseout = function (ev) {
-    return this.statusShow(-1, ev);
+    return _self.statusShow(-1, ev);
   };
 
   // This function changes the status message as needed. The optional event 
@@ -920,7 +998,6 @@ function PaintWeb (win_, doc_) {
     if (!id) {
       return false;
     }
-
     if (_self.tool && _self.tool._id == id) {
       return true;
     }
@@ -989,17 +1066,11 @@ function PaintWeb (win_, doc_) {
   // element. The event handler will call any tool-specific event handler 
   // available. For example, for mousemove that would be tool.mousemove(ev).
   // This function also provides two additional properties for the DOM Event 
-  // object: _x and _y. They represent the mouse position relative to the canvas 
+  // object: x_ and y_. They represent the mouse position relative to the canvas 
   // element, taking into account the current zoom level and image scroll 
   // position. The two values can be used directly by code logic in any tool to 
   // draw at the mouse position.
   this.ev_canvas = function (ev) {
-    // The event handler of the current tool.
-    var event_action = _self.tool[ev.type];
-    if (typeof event_action != 'function') {
-      return false;
-    }
-
     /*
      * If the mouse is down already, skip the event.
      * This is needed to allow the user to go out of the drawing canvas, release 
@@ -1049,7 +1120,13 @@ function PaintWeb (win_, doc_) {
       _self.mouse.buttonDown = true;
     }
 
-    var result = event_action(ev);
+    // The event handler of the current tool.
+    var result = false,
+        event_action = _self.tool[ev.type];
+
+    if (typeof event_action == 'function') {
+      result = event_action(ev);
+    }
 
     if (ev.type == 'mouseup') {
       _self.mouse.buttonDown = false;
@@ -1287,17 +1364,17 @@ function PaintWeb (win_, doc_) {
   // FIXME
   this.key_zoom = function (ev) {
     if (ev.key_ == '*') {
-      return _self.zoom_to(1);
+      return _self.zoomTo(1);
     }
 
     if (ev.shiftKey) {
-      _self.zoom_step *= 2;
+      _self.config.zoomStep *= 2;
     }
 
-    _self.zoom_to(ev.key_);
+    _self.zoomTo(ev.key_);
 
     if (ev.shiftKey) {
-      _self.zoom_step /= 2;
+      _self.config.zoomStep /= 2;
     }
   };
 
@@ -1306,56 +1383,59 @@ function PaintWeb (win_, doc_) {
     if (!_self.ev_input_nr(ev)) {
       return false;
     } else {
-      return _self.zoom_to(this.value/100);
+      return _self.zoomTo(this.value/100);
     }
   };
 
   // The function which changes the zoom of the image.
-  this.zoom_to = function (level) {
+  this.zoomTo = function (level) {
+    var image  = _self.image,
+        config = _self.config;
+
     if (!level) {
       return false;
     } else if (level == '+') {
-      level = _self.zoom + _self.zoom_step;
+      level = image.zoom + config.zoomStep;
     } else if (level == '-') {
-      level = _self.zoom - _self.zoom_step;
+      level = image.zoom - config.zoomStep;
     } else if (isNaN(level)) {
       return false;
     }
 
-    if (level > _self.zoom_max) {
-      level = _self.zoom_max;
-    } else if (level < _self.zoom_min) {
-      level = _self.zoom_min;
+    if (level > config.zoomMax) {
+      level = config.zoomMax;
+    } else if (level < config.zoomMin) {
+      level = config.zoomMin;
     }
 
-    if (level == _self.zoom) {
+    if (level == image.zoom) {
       return true;
     }
 
     var input = _self.inputs.zoom,
-      w = (_self.image.width * level) + 'px',
-      h = (_self.image.height * level) + 'px',
-      style1 = _self.img_temp.canvas.style,
-      style2 = _self.img.canvas.style,
-      stylec = _self.container.style;
+        w = (image.width  * level) + 'px',
+        h = (image.height * level) + 'px',
+        bufferStyle = _self.buffer.canvas.style,
+        layerStyle = _self.layer.canvas.style,
+        containerStyle = _self.elems.container.style;
 
     if (input.value != level*100) {
       input.value = Math.round(level*100);
     }
 
-    style1.width  = style2.width  = w;
-    style1.height = style2.height = h;
+    bufferStyle.width  = layerStyle.width  = w;
+    bufferStyle.height = layerStyle.height = h;
 
     // The container should only be smaller than the image dimensions
     if (level < 1) {
-      stylec.width  = w;
-      stylec.height = h;
-    } else if (_self.zoom < 1) {
-      stylec.width  = _self.image.width + 'px';
-      stylec.height = _self.image.height + 'px';
+      containerStyle.width  = w;
+      containerStyle.height = h;
+    } else if (image.zoom < 1) {
+      containerStyle.width  = image.width  + 'px';
+      containerStyle.height = image.height + 'px';
     }
 
-    _self.zoom = level;
+    image.zoom = level;
 
     return true;
   };
@@ -1438,7 +1518,7 @@ function PaintWeb (win_, doc_) {
       var w = Math.round((r.w + dx) / _self.image.zoom),
           h = Math.round((r.h + dy) / _self.image.zoom);
 
-      _self.resize_canvas(w, h, true);
+      _self.resizeCanvas(w, h, true);
 
       return r.done(ev);
     },
@@ -1463,7 +1543,7 @@ function PaintWeb (win_, doc_) {
   };
 
   // This function resizes the canvas to the desired dimensions.
-  this.resize_canvas = function (w, h, resizer) {
+  this.resizeCanvas = function (w, h, resizer) {
     if (!w || !h || isNaN(w) || isNaN(h)) {
       return false;
     }
@@ -1602,8 +1682,8 @@ function PaintWeb (win_, doc_) {
 
     this.className = 'active';
 
-    if (_self.tool && _self.tool._id == 'text' && _self.tool.text_update) {
-      _self.tool.text_update();
+    if (_self.tool && _self.tool._id == 'text' && _self.tool.textUpdate) {
+      _self.tool.textUpdate();
     }
 
     return true;
@@ -1698,8 +1778,8 @@ function PaintWeb (win_, doc_) {
 
     _self.layer.context.font = _self.buffer.context.font = prop;
 
-    if (_self.tool && _self.tool._id == 'text' && _self.tool.text_update) {
-      _self.tool.text_update();
+    if (_self.tool && _self.tool._id == 'text' && _self.tool.textUpdate) {
+      _self.tool.textUpdate();
     }
 
     return true;
@@ -1830,11 +1910,11 @@ function PaintWeb (win_, doc_) {
   this.btn_help_close = _self.btn_help;
 
   this.btn_undo = function (ev) {
-    this.historyGoto('-');
+    _self.historyGoto('undo');
   };
 
   this.btn_redo = function (ev) {
-    this.historyGoto('+');
+    _self.historyGoto('redo');
   };
 
   // This event handler simply clears the image. If the user holds the Shift key 
@@ -1870,7 +1950,7 @@ function PaintWeb (win_, doc_) {
     }
 
     var w = parseInt(res[0]),
-       h = parseInt(res[1]);
+        h = parseInt(res[1]);
 
     if (w > 1500) {
       w = 1500;
@@ -2113,7 +2193,7 @@ function PaintWeb (win_, doc_) {
     return true;
   };
 
-  this.tool_snapXY = function (ev, x, y) {
+  this.toolSnapXY = function (ev, x, y) {
     var diffx = Math.abs(ev.x_ - x),
         diffy = Math.abs(ev.y_ - y);
 
@@ -2181,11 +2261,35 @@ function PaintWeb (win_, doc_) {
   };
 
   this.toString = function () {
-    return lib.lang('toString', {'build' : _self.build, 'ver' : _self.version});
+    return 'PaintWeb v' + this.version + ' (build ' + this.build + ')';
   };
 
   this.init();
 };
+
+/**
+ * Application initialization not started.
+ * @constant
+ */
+PaintWeb.INIT_NOT_STARTED = 0;
+
+/**
+ * Application initialization started.
+ * @constant
+ */
+PaintWeb.INIT_STARTED = 1;
+
+/**
+ * Application initialization completed successfully.
+ * @constant
+ */
+PaintWeb.INIT_DONE = 2;
+
+/**
+ * Application initialization failed.
+ * @constant
+ */
+PaintWeb.INIT_ERROR = -1;
 
 if(window.addEventListener) {
 window.addEventListener('load', function () {

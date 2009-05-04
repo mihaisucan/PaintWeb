@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-04-29 15:59:50 +0300 $
+ * $Date: 2009-05-01 13:49:12 +0300 $
  */
 
 /**
@@ -140,6 +140,34 @@ lib.jsonParse = function (str) {
             replace(/^\s*\/\/.*$/gm,        '');
 
   return JSON.parse(str);
+};
+
+/**
+ * This method allows you to load some URL using XMLHttpRequest.
+ *
+ * @param {String} url The URL you want to load.
+ *
+ * @param {Function} handler The <code>onreadystatechange</code> event handler 
+ * for the XMLHttpRequest object. Your event handler will always receive the 
+ * XMLHttpRequest object as the first parameter.
+ *
+ * @param {String} [method="GET"] The HTTP method to use for loading the URL.
+ *
+ * @param {String} [send] The string you want to send in an HTTP POST request.
+ *
+ * @returns {XMLHttpRequest} The XMLHttpRequest object created by this method.
+ */
+lib.xhrLoad = function (url, handler, method, send) {
+  if (!method) {
+    method = 'GET';
+  }
+
+  var xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function () { handler(xhr); };
+  xhr.open(method || 'GET', url);
+  xhr.send(send);
+
+  return xhr;
 };
 
 /**
