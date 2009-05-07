@@ -7,6 +7,10 @@ follow.
 operation (drag/resize). This allows the user to toggle the selection 
 transformation mode easier and quicker. Thanks to Martin Langhoff for the 
 suggestion.
+- Did split the entire tools.js into multiple files. Each tool is in its own 
+file now. Made the main code load tools individually.
+- Conditional loading of json2.js. It won't load in those browsers with native 
+JSON support.
 
 2009-05-04:
 ===========

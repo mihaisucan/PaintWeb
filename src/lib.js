@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-05-01 13:49:12 +0300 $
+ * $Date: 2009-05-07 22:44:49 +0300 $
  */
 
 /**
@@ -143,7 +143,7 @@ lib.jsonParse = function (str) {
 };
 
 /**
- * This method allows you to load some URL using XMLHttpRequest.
+ * Load a file from a given URL using XMLHttpRequest.
  *
  * @param {String} url The URL you want to load.
  *

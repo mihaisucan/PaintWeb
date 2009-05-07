@@ -1,5 +1,6 @@
 {
-  // $Date: 2009-05-04 12:40:55 +0300 $
+  // $Date: 2009-05-07 22:55:21 +0300 $
+  // TODO: try jsdoc-toolkit on this json (!)
 
   /**
    * Language file.
@@ -30,7 +31,8 @@
    *
    * @type String
    * @default "line"
-   * @see PaintTools The object holding all the drawing tools.
+   * @see this.tools The array holding the list of drawing tools you want 
+   * loaded.
    */
   "toolDefault": "line",
 
@@ -79,8 +81,29 @@
   "zoomMin": 0.2,
 
   /**
+   * Holds the list of drawing tools you want to load.
+   * @type Array
+   */
+  "tools": ["cpicker", "curve", "drag", "ellipse", "eraser", "insertimg", "line", "pencil", "poly", "rect", "select", "text"],
+
+  /**
+   * Tools folder.
+   * @type String
+   * @default 'tools'
+   */
+  "toolsFolder": "tools",
+
+  /**
+   * Holds the list of extensions you want to load.
+   * @type Array
+   */
+  // TODO: Make this work
+  "extensions": [],
+
+  /**
    * @namespace Holds the MouseKeys extension options.
    */
+  // TODO: actually implement support into MouseKeys for all this.
   "mousekeys": {
     /**
      * The mouse keys movement acceleration.
@@ -117,6 +140,7 @@
    * @type Object
    * @see PaintTools The object holding all the drawing tools.
    */
+  // TODO: several keyboard shortcuts are still missing. See below.
   "keys": {
     "E": { "tool": "ellipse" },
     "G": { "tool": "poly" },

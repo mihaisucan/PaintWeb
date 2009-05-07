@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-07 18:24:22 +0300 $
+ * $Date: 2009-05-07 23:50:07 +0300 $
  */
 
 /**
@@ -85,10 +85,29 @@ function PaintWeb (win_, doc_) {
    * The instance of the active tool object.
    *
    * @type Object
-   * @see PainterConfig.tool_default holds the ID of the tool which is activated 
-   * when the application loads.
+   *
+   * @see PaintWeb.config.toolDefault holds the ID of the tool which is 
+   * activated when the application loads.
+   * @see PaintWeb.tools holds the installed drawing tools.
+   * @see PaintWeb#toolActivate Activate a drawing tool by ID.
    */
   this.tool = null;
+
+  /**
+   * Holds the implementation of each drawing tool.
+   *
+   * @private
+   * @type Object
+   *
+   * @see PaintWeb#toolAdd Add a new drawing tool.
+   * @see PaintWeb#toolActivate Activate a drawing tool.
+   * @see PaintWeb#toolRemove Remove a drawing tool.
+   *
+   * @see PaintWeb.config.toolDefault The default tool being activated.
+   * @see PaintWeb.config.tools Holds the list of tools to be loaded 
+   * automatically.
+   */
+  this.tools = {};
 
   /**
    * Holds references to DOM elements.
@@ -121,6 +140,8 @@ function PaintWeb (win_, doc_) {
    * @type Object
    * @see PaintWeb#extensionInstall Install a new extension.
    * @see PaintWeb#extensionRemove Remove an extension.
+   * @see PaintWeb.config.extensions Holds the list of extensions to be loaded 
+   * automatically.
    */
   this.extensions = {};
 
@@ -267,9 +288,9 @@ function PaintWeb (win_, doc_) {
       return false;
     }
 
-    this.initialized = PaintWeb.INIT_STARTED;
+    _self.initialized = PaintWeb.INIT_STARTED;
 
-    this.configLoad();
+    _self.configLoad();
 
     return true;
   };
@@ -359,6 +380,9 @@ function PaintWeb (win_, doc_) {
 
   /**
    * Initialization procedure post-configuration and post-language file load.
+   *
+   * @private
+   * @returns {Boolean} True if initialization was successful, or false if not.
    */
   this.initPostConfig = function () {
     var layerCanvas = $(this.config.layerCanvasID);
@@ -508,8 +532,8 @@ function PaintWeb (win_, doc_) {
       return false;
     }
 
-    // The tool bar.
-    if (!this.init_tools()) {
+    // Load the drawing tools.
+    if (!this.initTools()) {
       return false;
     }
 
@@ -534,47 +558,33 @@ function PaintWeb (win_, doc_) {
     return true;
   };
 
-  // This finds all the tools in the document, and sets up the event listeners, making the tool bar(s) interactive.
-  this.init_tools = function () {
-    var elem, tool_id, tools, proto;
+  /**
+   * Load all the configured drawing tools. Note that the loading is done 
+   * asynchronously.
+   *
+   * @private
+   * @returns {Boolean} True if the drawing tools started loading, or false if 
+   * not.
+   */
+  this.initTools = function () {
+    var i    = 0,
+        n    = this.config.tools.length,
+        base = this.config.toolsFolder + '/',
+        id   = '';
 
-    if ( !(tools = $('tools')) ) {
-      return false;
+    for (; i < n; i++) {
+      id = this.config.tools[i];
+      this.scriptInsert(base + id + '.js');
     }
 
-    // Setup the events and the tools
-    for (elem = tools.firstChild; elem; elem = elem.nextSibling) {
-      if (!elem.id || elem.nodeType != Node.ELEMENT_NODE) {
-        continue;
-      }
-
-      // Get the tool ID
-      tool_id = elem.id.replace('tool-', '');
-      if (!tool_id || tool_id == elem.id || !PaintTools[tool_id]) {
-        continue;
-      }
-
-      if (!elem.title && elem.textContent) {
-        elem.title = elem.textContent;
-      }
-
-      elem._tool = tool_id;
-      elem.addEventListener('click',     this.toolClick,     false);
-      elem.addEventListener('mouseover', this.item_mouseover, false);
-      elem.addEventListener('mouseout',  this.item_mouseout,  false);
-
-      proto = PaintTools[tool_id].prototype;
-      proto._elem = elem;
-      proto._id = tool_id;
-    }
-
-    return this.toolActivate(this.config.toolDefault);
+    return true;
   };
 
   // This function does the following:
   // - adds the keyboard shortcuts to the status messages and to the title of 
   // each affected element.
   // - adds the global keyboard event listener.
+  // TODO: change all this
   this.init_keys = function () {
     var i, k, elem2,
       updateTitle = function (elem) {
@@ -596,7 +606,7 @@ function PaintWeb (win_, doc_) {
     for (i in this.config.keys) {
       k = this.config.keys[i];
 
-      if (k.tool && PaintTools[k.tool]) {
+      if (k.tool && this.tools[k.tool]) {
         updateTitle(PaintTools[k.tool].prototype._elem);
       }
 
@@ -621,7 +631,7 @@ function PaintWeb (win_, doc_) {
   };
 
   // This function prepares all the inputs in the Properties box.
-  // TODO: FIXME: fix all this...
+  // TODO: fix all this... (will do it with the new GUI)
   this.init_properties = function () {
     var i, elem,
 
@@ -773,6 +783,7 @@ function PaintWeb (win_, doc_) {
   };
 
   // Initialize and handle the dragging of the GUI boxes.
+  // TODO: GUI stuff
   this.boxes = {
     'drag' : false,
     'elem' : false,
@@ -938,6 +949,7 @@ function PaintWeb (win_, doc_) {
   // The msg parameter can be an ID from _self.status_texts or directly the 
   // message desired to show. msg can also be -1 when you want to get back to 
   // the previous message.
+  // TODO: GUI stuff
   this.statusShow = function (msg, ev) {
     var elem = _self.elems.status;
     if (!elem || (msg == -1 && elem._prevText === false)) {
@@ -973,12 +985,11 @@ function PaintWeb (win_, doc_) {
     return true;
   };
 
-  // Call this function to activate any tool you want by providing the tool ID. 
   /**
    * Activate a drawing tool by ID.
    *
-   * <p>The <var>id</var> provided must be available in the global {@link 
-   * PaintTools} object.
+   * <p>The <var>id</var> provided must be of an existing drawing tool, one that  
+   * has been installed.
    *
    * <p>The <var>ev</var> argument is an optional DOM Event object which is 
    * useful when dealing with different types of tool activation, either by 
@@ -990,7 +1001,9 @@ function PaintWeb (win_, doc_) {
    *
    * @returns {Boolean} True if the tool has been activated, or false if not.
    *
-   * @see PaintTools The object holding all the drawing tools.
+   * @see PaintWeb.tools The object holding all the installed drawing tools.
+   * @see PaintWeb#toolAdd Adds a new drawing tool tool.
+   * @see PaintWeb#toolRemove Removes a drawing tool.
    */
   this.toolActivate = function (id, ev) {
     if (!id) {
@@ -1000,9 +1013,9 @@ function PaintWeb (win_, doc_) {
       return true;
     }
 
-    var tool = PaintTools[id];
+    var tool = _self.tools[id];
     if (!tool || tool.prototype._elem && tool.prototype._elem.className == 
-        'disabld') {
+        'disabled') {
       return false;
     }
 
@@ -1052,6 +1065,7 @@ function PaintWeb (win_, doc_) {
   };
 
   // This is called when any tool is clicked.
+  // TODO: move into GUI code
   this.toolClick = function (ev) {
     if (!this._tool) {
       return false;
@@ -1060,14 +1074,26 @@ function PaintWeb (win_, doc_) {
     }
   };
 
-  // This is the handler for all the important events fired at the canvas 
-  // element. The event handler will call any tool-specific event handler 
-  // available. For example, for mousemove that would be tool.mousemove(ev).
-  // This function also provides two additional properties for the DOM Event 
-  // object: x_ and y_. They represent the mouse position relative to the canvas 
-  // element, taking into account the current zoom level and image scroll 
-  // position. The two values can be used directly by code logic in any tool to 
-  // draw at the mouse position.
+  /**
+   * The Canvas events handler.
+   * 
+   * <p>This method determines the mouse position relative to the canvas 
+   * element, after which it invokes the method of the currently active tool 
+   * with the same name as the current event type. For example, for the 
+   * <code>mousedown</code> event the <code><var>tool</var>.mousedown()</code> 
+   * method is invoked.
+   *
+   * <p>The mouse coordinates are added to the <var>ev</var> DOM Event object: 
+   * <var>ev.x_</var> and <var>ev.y_</var>. These properties take into account 
+   * the current zoom level and the image scroll.
+   *
+   * @private
+   *
+   * @param {Event} ev The DOM Event object.
+   *
+   * @returns The result returned by the event handler of the current tool. If 
+   * no event handler was executed, false is returned.
+   */
   this.ev_canvas = function (ev) {
     /*
      * If the mouse is down already, skip the event.
@@ -1257,6 +1283,7 @@ function PaintWeb (win_, doc_) {
   // various inputs. The return value (true/false) is used to check if the event 
   // target value has been updated or not, while making sure the value is 
   // a valid number.
+  // FIXME
   this.ev_input_nr = function (ev) {
     if (!ev || !ev.target) {
       return false;
@@ -1385,7 +1412,21 @@ function PaintWeb (win_, doc_) {
     }
   };
 
-  // The function which changes the zoom of the image.
+  /**
+   * Zoom image to the given level.
+   *
+   * @param {Number|String} The level you want to zoom the image to.
+   * 
+   * <p>If the value is a number, it must be a floating point positive number, 
+   * where 1 means 100% (normal) zoom, 4 means 400% and so on.
+   *
+   * <p>If the value is a string it must be "+" or "-". This means that the zoom 
+   * level will increase/decrease using the configured {@link 
+   * this.config.zoomStep}.
+   *
+   * @returns {Boolean} True if the image zoom level changed successfully, or 
+   * false if not.
+   */
   this.zoomTo = function (level) {
     var image  = _self.image,
         config = _self.config;
@@ -1439,6 +1480,7 @@ function PaintWeb (win_, doc_) {
   };
 
   // This is the set of functions associated with the canvas resize handler.
+  // TODO: GUI stuff
   this.resizer = {
     'elem' : false,
     'resizing' : false,
@@ -1704,7 +1746,9 @@ function PaintWeb (win_, doc_) {
     return _self.update_textProps(ev);
   };
 
-  // This is event handler for changes to the text font input. If the user wants to pick another font, then he/she can type the new font name to easily add it to the list of available fonts.
+  // This is event handler for changes to the text font input. If the user wants 
+  // to pick another font, then he/she can type the new font name to easily add 
+  // it to the list of available fonts.
   this.opt_textFont = function (ev) {
     if (this.value != '+') {
       return _self.update_textProps(ev);
@@ -1880,8 +1924,8 @@ function PaintWeb (win_, doc_) {
     return true;
   };
 
-
-  // What follows are the event handlers for several buttons used in the application.
+  // What follows are the event handlers for several buttons used in the 
+  // application.
 
   this.btn_help = function (ev) {
     var elem = _self.elems.help.style,
@@ -2056,10 +2100,12 @@ function PaintWeb (win_, doc_) {
     }
   };
 
-  // This function is used by most of the tools once the user completes the 
-  // drawing action on the image buffer (img_temp). What it does is a simple 
-  // merge of img_temp into img, after which img_temp is cleared, and the image 
-  // is added to history.
+  /**
+   * Update the current image layer by moving the pixels from the buffer onto 
+   * the layer. This method also adds a point into the history.
+   *
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   */
   this.layerUpdate = function () {
     _self.layer.context.drawImage(_self.buffer.canvas, 0, 0);
     _self.buffer.context.clearRect(0, 0, _self.image.width, _self.image.height);
@@ -2068,10 +2114,15 @@ function PaintWeb (win_, doc_) {
     return true;
   };
 
-  // Add the current image to the history.
+  /**
+   * Add the current image layer to the history.
+   *
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   */
+  // TODO: some day it would be nice to implement a hybrid history system.
   this.historyAdd = function () {
     var layerContext = _self.layer.context,
-        history = _self.history;
+        history      = _self.history;
 
     // The get/putImageData methods do not work in Opera Merlin, nor in Safari 
     // (tested with 20080324 svn trunk, webkitgtk). However, in webkit svn trunk 
@@ -2113,9 +2164,18 @@ function PaintWeb (win_, doc_) {
     return true;
   };
 
-  // Jump to any ImageData in the history. The position parameter can be 
-  // specified as 'undo'/'-'/'redo'/'+' as well, for the purpose of navigating 
-  // the history.
+  /**
+   * Jump to any ImageData/position in the history.
+   *
+   * @param {Number|String} pos The history position to jump to.
+   * 
+   * <p>If the value is a number, then it must point to an existing index in the  
+   * {@link this.history.states} array.
+   *
+   * <p>If the value is a string, it must be "undo" or "redo".
+   *
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   */
   this.historyGoto = function (pos) {
     var layerContext = _self.layer.context,
         history      = _self.history;
@@ -2203,6 +2263,71 @@ function PaintWeb (win_, doc_) {
   };
 
   /**
+   * Install a new drawing tool into PaintWeb.
+   *
+   * @param {String} id The ID of the new tool.
+   * @param {Function} func The constructor function of the new tool object.
+   * @param {Boolean} [overwrite=false] Tells to overwrite or not an existing 
+   * tool with the same ID.
+   *
+   * @returns {Boolean} True if the tool was successfully added, or false if 
+   * not.
+   *
+   * @see PaintWeb#toolRemove allows you to remove tools.
+   */
+  this.toolAdd = function (id, tool, overwrite) {
+    if (typeof id != 'string' || typeof tool != 'function' || (this.tools[id] && 
+          !overwrite)) {
+      return false;
+    }
+
+    tool.prototype._id = id;
+
+    // TODO: move this to GUI code.
+    var elem = this.doc.getElementById('tool-' + id);
+    if (elem) {
+      tool.prototype._elem = elem;
+
+      if (!elem.title && elem.textContent) {
+        elem.title = elem.textContent;
+      }
+
+      elem._tool = id;
+      elem.addEventListener('click',     this.toolClick,      false);
+      elem.addEventListener('mouseover', this.item_mouseover, false);
+      elem.addEventListener('mouseout',  this.item_mouseout,  false);
+    }
+
+    this.tools[id] = tool;
+
+    if (!this.tool && id == this.config.toolDefault) {
+      return this.toolActivate(id);
+    }
+
+    return true;
+  };
+
+  /**
+   * Remove a drawing tool from PaintWeb.
+   *
+   * @param {String} id The ID of the tool you want to remove.
+   *
+   * @returns {Boolean} True if the tool was removed, or false if it does not 
+   * exist or some error occurred.
+   *
+   * @see PaintWeb#toolAdd allows you to install new drawing tools.
+   */
+  this.toolRemove = function (id) {
+    if (!id || !_self.tools[id]) {
+      return false;
+    }
+
+    delete _self.tools[id];
+
+    return true;
+  };
+
+  /**
    * Install a new extension to PaintWeb.
    *
    * @param {String} id The ID of the new extension.
@@ -2227,7 +2352,6 @@ function PaintWeb (win_, doc_) {
 
     return this.extensions[id] ? true : false;
   };
-
 
   /**
    * Remove an extension from PaintWeb.
@@ -2258,11 +2382,23 @@ function PaintWeb (win_, doc_) {
     return true;
   };
 
+  /**
+   * Insert a script into the document.
+   *
+   * @param {String} url The script URL you want to insert.
+   */
+  this.scriptInsert = function (url) {
+    var elem = _self.doc.createElement('script');
+    elem.src = url;
+
+    _self.elems.head.appendChild(elem);
+  };
+
   this.toString = function () {
     return 'PaintWeb v' + this.version + ' (build ' + this.build + ')';
   };
 
-  this.init();
+  this.elems.head = this.doc.getElementsByTagName('head')[0] || document.body;
 };
 
 /**
@@ -2289,13 +2425,14 @@ PaintWeb.INIT_DONE = 2;
  */
 PaintWeb.INIT_ERROR = -1;
 
-if(window.addEventListener) {
-window.addEventListener('load', function () {
-  if (window.PaintWeb) {
-    // Create a PaintWeb instance.
-    window.PaintWebInstance = new PaintWeb();
-  }
-}, false); }
+// Create a PaintWeb instance.
+window.PaintWebInstance = new PaintWeb();
+
+if (!window.JSON) {
+  PaintWebInstance.scriptInsert('json2.js');
+}
+
+window.addEventListener('load', PaintWebInstance.init, false);
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
 
