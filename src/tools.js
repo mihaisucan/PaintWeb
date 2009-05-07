@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-04 16:12:07 +0300 $
+ * $Date: 2009-05-07 18:12:56 +0300 $
  */
 
 /**
@@ -1305,110 +1305,307 @@ PaintTools.eraser = function (app) {
  *
  * @param {PaintWeb} app Reference to the main paint application object.
  */
-// TODO: improve the implementation.
 PaintTools.select = function (app) {
   var _self         = this,
       bufferCanvas  = app.buffer.canvas,
       bufferContext = app.buffer.context,
+      bufferStyle   = app.buffer.canvas.style,
       config        = app.config,
       elems         = app.elems,
-      image         = app.image,
       historyAdd    = app.historyAdd,
+      image         = app.image,
       inputs        = app.inputs,
       layerCanvas   = app.layer.canvas,
       layerContext  = app.layer.context,
+      mouse         = app.mouse,
       snapXY        = app.toolSnapXY,
       statusShow    = app.statusShow;
 
-  /*
-   * Steps:
-   * -1 - selection dropped after mousedown. The script can switch to step 1 (drawing) if the mouse moves, or to step 0 if it does not (allowing to completely drop the selection).
-   * 0 - no selection
-   * 1 - drawing selection rectangle
-   * 2 - selection rectangle available
-   * 3 - dragging selection
-   * 4 - resizing selection
-   * 5 - dragging ImageData
-   * 6 - resizing ImageData
+  /**
+   * The selection has been dropped, and the mouse button is down. The user has 
+   * two choices: he releases the mouse button, thus the selection is dropped 
+   * and the tool switches to STATE_NONE, or he moves the mouse in order to 
+   * start a new selection (STATE_DRAWING).
+   * @constant
    */
-  this.step = 0;
+  this.STATE_PENDING = -1;
 
-  // The following properties are initialised more for the purpose of explaining them
+  /**
+   * No selection is available.
+   * @constant
+   */
+  this.STATE_NONE = 0;
 
-  // The start position for any operation
-  this.x0 = false;
-  this.y0 = false;
+  /**
+   * The user is drawing a selection.
+   * @constant
+   */
+  this.STATE_DRAWING = 1;
 
-  // The selection start position and the end position, including and excluding borders
-  this.sx0b = this.sx0 = false;
-  this.sy0b = this.sy0 = false;
-  this.sx1b = this.sx1 = false;
-  this.sy1b = this.sy1 = false;
+  /**
+   * The selection rectangle is available.
+   * @constant
+   */
+  this.STATE_SELECTED = 2;
 
-  // The inner selection width/height (sw1/sh1).
-  // The normal selection width/height (sw2/sh2) are the values used by strokeRect(). They include the lineWidth.
-  this.sw1 = this.sh1 = this.sw2 = this.sh2 = false;
+  /**
+   * The user is dragging/moving the selection rectangle.
+   * @constant
+   */
+  this.STATE_DRAGGING = 3;
 
-  // During step 2 (selection available) the mouse position can be: inside, outside, or on the border/resizer of the selection rectangle.
-  this.mpos = false; // 'in' || 'out' || 'r'
+  /**
+   * The user is resizing the selection rectangle.
+   * @constant
+   */
+  this.STATE_RESIZING = 4;
 
-  // During steps 4 and 6 (resizing selection/ImageData) the resizer can be: n, ne, e, s, sw, w, nw.
-  this.resizer = false;
+  /**
+   * Selection state. Known states:
+   *
+   * <ul>
+   *   <li>{@link this.STATE_PENDING} - Selection dropped after the 
+   *   <code>mousedown</code> event is fired. The script can switch to 
+   *   STATE_DRAWING if the mouse moves, or to STATE_NONE if it does not 
+   *   (allowing the user to drop the selection).
+   *
+   *   <li>{@link this.STATE_NONE} - No selection is available.
+   *
+   *   <li>{@link this.STATE_DRAWING} - The user is drawing the selection 
+   *   rectangle.
+   *
+   *   <li>{@link this.STATE_SELECTED} - The selection rectangle is available.
+   *
+   *   <li>{@link this.STATE_DRAGGING} - The user is dragging/moving the current 
+   *   selection.
+   *
+   *   <li>{@link this.STATE_RESIZING} - The user is resizing the current 
+   *   selection.
+   * </ul>
+   *
+   * @type Number
+   * @default this.STATE_NONE
+   */
+  this.state = this.STATE_NONE;
 
-  // The last bufferContext.lineWidth, and ceil(lineWidth/2)
-  this.lineWidth = this.lineWidth2 = false;
+  /**
+   * Holds the starting point on the <var>x</var> axis of the image, for any 
+   * ongoing operation.
+   *
+   * @private
+   * @type Number
+   */
+  var x0 = 0;
 
-  // Remember if the selected ImageData from layerContext has been cut out or not.
-  this.cleared = false;
+  /**
+   * Holds the starting point on the <var>y</var> axis of the image, for the any  
+   * ongoing operation.
+   *
+   * @private
+   * @type Number
+   */
+  var y0 = 0;
 
-  // Show the selection options.
-  elems.selectionOptions.className = '';
+  /**
+   * Holds selection information and image.
+   * @type Object
+   */
+  this.selection = {
+    /**
+     * Selection start point, on the <var>x</var> axis.
+     * @type Number
+     */
+    x: 0,
 
-  this.canvasStyle = bufferCanvas.style;
+    /**
+     * Selection start point, on the <var>y</var> axis.
+     * @type Number
+     */
+    y: 0,
 
-  // Older browsers do not support get/putImageData, thus non-transparent 
-  // selections cannot be used.
-  if (!layerContext.putImageData || !layerContext.getImageData) {
-    inputs.selTransparent.checked = true;
-  }
-  this.transparency = inputs.selTransparent.checked;
-  this.transform = inputs.selTransform.checked;
+    /**
+     * Selection width.
+     * @type Number
+     */
+    width: 0,
 
-  // Make sure that the selection rectangle is visible enough
-  var strokeStyle = inputs.strokeStyle;
-  if (strokeStyle && parseFloat(strokeStyle._value.a) < 0.5) {
-    strokeStyle._value.a = 1;
-    strokeStyle.style.opacity = 1;
-    bufferContext[strokeStyle._prop] = 'rgb(' + strokeStyle._value.r + ',' + strokeStyle._value.g + ',' + strokeStyle._value.b + ')';
-  }
-  delete strokeStyle;
+    /**
+     * Selection height.
+     * @type Number
+     */
+    height: 0,
 
-  // The selection buffer
-  this.selbuffer = app.doc.createElement('canvas');
-  if (!this.selbuffer) {
-    alert(lang.errorToolActivate);
-    this._cancel = true;
-    return false;
-  }
+    /**
+     * Selection original width. The user can make a selection rectangle of 
+     * a given width and height, but after that he/she can resize the selection.
+     * @type Number
+     */
+    widthOriginal: 0,
 
-  this.selbuffer.id = 'selBuffer';
-  this.selbuffer.width = image.width;
-  this.selbuffer.height = image.height;
+    /**
+     * Selection original height. The user can make a selection rectangle of 
+     * a given width and height, but after that he/she can resize the selection.
+     * @type Number
+     */
+    heightOriginal: 0,
 
-  elems.container.appendChild(this.selbuffer);
+    /**
+     * The last <var>bufferContext.lineWidth</var>, used for drawing the 
+     * selection rectangle border.
+     * @type Number
+     */
+    lineWidth: 0,
 
-  this.selbuffer = this.selbuffer.getContext('2d');
-  if (!this.selbuffer) {
-    alert(lang.errorToolActivate);
-    this._cancel = true;
-    return false;
-  }
+    /**
+     * Tells if the selected ImageData has been cut out or not from the 
+     * layerContext.
+     *
+     * @type Boolean
+     * @default false
+     */
+    layerCleared: false,
 
-  // Activation code. This is run after the tool construction and after the deactivation of the previous tool.
+    /**
+     * Tells if the selection background is transparent or not.
+     *
+     * @type Boolean
+     * @default false
+     */
+    transparent: false,
+
+    /**
+     * Tells if the selection transformation mode is active or not. During 
+     * transformation mode any drag/resize operation will also cause the 
+     * dragging/resizing to be applied to the selected pixels. Otherwise, only 
+     * the selection rectangle itself is affected.
+     *
+     * @type Boolean
+     * @default false
+     */
+    transform: false,
+
+    /**
+     * Selection buffer context which holds the selected pixels.
+     * @type CanvasRenderingContext2D
+     */
+    context: null,
+
+    /**
+     * Selection buffer canvas which holds the selected pixels.
+     * @type HTMLCanvasElement
+     */
+    canvas: null
+  };
+
+  /**
+   * The area type under the current mouse location.
+   * 
+   * <p>During state 2 (selection available) the mouse location can be on 
+   * top/inside the selection rectangle, on the border of the selection, or 
+   * outside the selection.
+   *
+   * <p>Possible values: 'in', 'out', 'border'.
+   *
+   * @private
+   * @type String
+   * @default 'out'
+   */
+  var mouseArea = 'out';
+
+  /**
+   * The resize type. If the mouse is on top of the selection border, then the 
+   * selection can be resized. The direction of the resize operation is 
+   * determined by the location of the mouse.
+   * 
+   * <p>During the states 4 and 6 (resizing selection/ImageData) the property 
+   * can hold the following values: 'n' (North), 'ne' (North-East), 'e' (East), 
+   * 'se' (South-East), 's' (South), 'sw' (South-West), 'w' (West), 'nw' 
+   * (North-West).
+   *
+   * @private
+   * @type String
+   * @default null
+   */
+  var mouseResize = null;
+
+  /**
+   * Tells if the shadow effect was enabled before activating the selection 
+   * tool.
+   *
+   * @private
+   * @type Boolean
+   * @default false
+   */
+  var shadowActive = false;
+
+  /**
+   * Tool initialization logic. This method is run automatically when the tool 
+   * object is instanced/constructed.
+   *
+   * @private
+   */
+  function init () {
+    var sel = _self.selection;
+
+    // Show the selection options.
+    elems.selectionOptions.className = '';
+
+    // Older browsers do not support get/putImageData, thus non-transparent 
+    // selections cannot be used.
+    if (!layerContext.putImageData || !layerContext.getImageData) {
+      inputs.selTransparent.checked = true;
+    }
+
+    sel.transparent = inputs.selTransparent.checked;
+    sel.transform   = inputs.selTransform.checked;
+
+    // Make sure that the selection rectangle is visible enough.
+    var strokeStyle = inputs.strokeStyle;
+    if (strokeStyle && parseFloat(strokeStyle._value.a) < 0.5) {
+      // FIXME: this is not working, at the moment. Needs the ColorEditor 
+      // extension.
+      strokeStyle._value.a = 1;
+      strokeStyle.style.opacity = 1;
+      bufferContext[strokeStyle._prop] = 'rgb(' + strokeStyle._value.r + ',' 
+          + strokeStyle._value.g + ',' + strokeStyle._value.b + ')';
+    }
+
+    // The selection image buffer.
+    sel.canvas = app.doc.createElement('canvas');
+    if (!sel.canvas) {
+      alert(lang.errorToolActivate);
+      _self._cancel = true;
+      return false;
+    }
+
+    sel.canvas.id     = 'selBuffer';
+    sel.canvas.width  = image.width;
+    sel.canvas.height = image.height;
+
+    elems.container.appendChild(sel.canvas);
+
+    sel.context = sel.canvas.getContext('2d');
+    if (!sel.context) {
+      alert(lang.errorToolActivate);
+      _self._cancel = true;
+      return false;
+    }
+
+    inputs.selTransparent.addEventListener('change', transparencyChange, false);
+
+    lineWidthUpdate();
+
+    return true;
+  };
+
+  /**
+   * The tool activation code. This is run after the tool construction and after 
+   * the previous tool object is destructed.
+   */
   this.activate = function () {
     // Disable the bufferCanvas shadow.
     if (inputs.shadowActive) {
-      _self.shadowActive = inputs.shadowActive.checked;
+      shadowActive = inputs.shadowActive.checked;
       app.shadowDisable();
       inputs.shadowActive.disabled = true;
     }
@@ -1416,21 +1613,27 @@ PaintTools.select = function (app) {
     return true;
   };
 
-  this.deactivate = function (ev) {
-    _self.selbuffer_merge(ev);
+  /**
+   * The tool deactivation code.
+   */
+  this.deactivate = function () {
+    selectionBufferMerge();
 
-    elems.container.removeChild(_self.selbuffer.canvas);
-    delete _self.selbuffer;
+    var sel = _self.selection;
 
-    inputs.selTransparent.removeEventListener('change', _self.update_transparency, false);
+    elems.container.removeChild(sel.canvas);
+    delete sel.context, sel.canvas;
+
+    inputs.selTransparent.removeEventListener('change', transparencyChange, 
+        false);
 
     // Minimize the selection options.
     elems.selectionOptions.className = 'minimized';
 
-    // Enable canvas shadow.
+    // Re-enable canvas shadow.
     if (inputs.shadowActive) {
       inputs.shadowActive.disabled = false;
-      if (_self.shadowActive) {
+      if (shadowActive) {
         app.shadowEnable();
       }
     }
@@ -1438,222 +1641,194 @@ PaintTools.select = function (app) {
     return true;
   };
 
+  /**
+   * The <code>mousedown</code> event handler. Depending on the mouse location, 
+   * this method does initiate different selection operations: drawing, 
+   * dropping, dragging or resizing.
+   *
+   * <p>Hold the <kbd>Control</kbd> key down to temporarily toggle the 
+   * transformation mode.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.mousedown = function (ev) {
-    // While drawing/dragging/resizing the selection/ImageData, mousedown has no effect.
-    // This is needed for allowing operations via click+mousemove+click, instead of just mousedown+mousemove+mouseup
-    if (_self.step != 0 && _self.step != 2) {
+    if (_self.state != _self.STATE_NONE &&
+        _self.state != _self.STATE_SELECTED) {
       return false;
     }
 
     // Update the current mouse position, this is used as the start position for most of the operations.
-    _self.x0 = ev.x_;
-    _self.y0 = ev.y_;
+    x0 = ev.x_;
+    y0 = ev.y_;
 
-    // No selection is available, then start drawing a selection (step 1)
-    if (_self.step == 0) {
-      _self.update_lineWidth(ev);
-      _self.step = 1;
+    lineWidthUpdate();
+
+    // No selection is available, then start drawing a selection.
+    if (_self.state == _self.STATE_NONE) {
+      _self.state = _self.STATE_DRAWING;
       statusShow('selectDraw');
 
       return true;
     }
 
+    // STATE_SELECTED: selection available.
+    mouseAreaUpdate(ev);
 
-    // Step 2: selection available.
+    var sel = _self.selection;
 
-    _self.update_mpos(ev);
-    _self.update_lineWidth(ev);
+    /*
+     * Check if the user clicked outside the selection: drop the selection, 
+     * switch to STATE_PENDING, clear the image buffer and put the current 
+     * selection buffer in the image layer.
+     *
+     * If the user moves the mouse without taking the finger off the mouse 
+     * button, then a new selection rectangle will start to be drawn: the script 
+     * will switch to STATE_DRAWING.
+     *
+     * If the user simply takes the finger off the mouse button (mouseup), then 
+     * the script will switch to STATE_NONE (no selection available).
+     */
+    switch (mouseArea) {
+      case 'out':
+        _self.state = _self.STATE_PENDING;
+        statusShow('selectActive');
+        return selectionBufferMerge(); // done
 
-    // The user clicked outside the selection: drop the selection, go back to step -1, clear img_temp and put the current _self.selbuffer on the final image.
-    // If the user moves the mouse without taking the finger off the mouse button, then a new selection rectangle will start to be drawn: the script will switch to step 1 - drawing selection.
-    // If the user simply takes the finger off the mouse button (mouseup), then the script will only switch to step 0 (no selection available).
-    if (_self.mpos == 'out') {
-      _self.step = -1;
-      statusShow('selectActive');
-      return _self.selbuffer_merge(ev);
+      case 'in':
+        // The mouse area: 'in' for drag.
+        _self.state = _self.STATE_DRAGGING;
+        statusShow('selectDrag');
+        break;
+
+      case 'border':
+        // 'border' for resize (the user is clicking on the borders).
+        _self.state = _self.STATE_RESIZING;
+        statusShow('selectResize');
     }
 
-    // Depending on the selection mode the script will manipulate the ImageData or just the selection rectangle, when dragging/resizing.
-    _self.transform = inputs.selTransform.checked;
+    // Update the boolean from the input.
+    sel.transform = inputs.selTransform.checked;
 
-    // The mouse position: 'in' for drag.
-    if (_self.mpos == 'in') {
-      if (!_self.transform) {
-        _self.step = 3; // dragging selection
-      } else {
-        _self.step = 5; // dragging ImageData
-      }
-      statusShow('selectDrag');
-
-    } else if (_self.mpos == 'r') {
-      // 'r' for resize (the user clicked on the borders)
-
-      if (!_self.transform) {
-        _self.step = 4; // resizing selection
-      } else {
-        _self.step = 6; // resizing ImageData
-      }
-      statusShow('selectResize');
+    // Temporarily toggle the transformation mode if the user holds the Control 
+    // key down.
+    if (ev.ctrlKey) {
+      sel.transform = !sel.transform;
     }
 
-    // If there's any ImageData currently in memory, which was "cut" out from layerContext, then put the current ImageData on the final image (layerContext), when dragging/resizing the selection
-    if (_self.cleared && (_self.step == 3 || _self.step == 4)) {
-      _self.selbuffer_merge(ev);
+    // If there's any ImageData currently in memory, which was "cut" out from 
+    // the current layer, then put it back on the layer. This needs to be done 
+    // only when the selection.transform mode is not active - that's when the 
+    // drag/resize operation only changes the selection, not the pixels 
+    // themselves.
+    if (sel.layerCleared && !sel.transform) {
+      selectionBufferMerge(true);
     }
 
-    // When the user drags/resizes the ImageData: cut out the current selection from layerContext
-    if (!_self.cleared && (_self.step == 5 || _self.step == 6)) {
-      _self.selbuffer_init(ev);
-    }
-
-    _self.sx0 -= _self.lineWidth2;
-    _self.sy0 -= _self.lineWidth2;
-
-    // Dragging selection (3) or ImageData (5)
-    if (_self.step == 3 || _self.step == 5) {
-      _self.sx0 -= _self.x0;
-      _self.sy0 -= _self.y0;
+    // When the user starts dragging/resizing the ImageData we must cut out the 
+    // current selection from the image layer.
+    if (!sel.layerCleared && sel.transform) {
+      selectionBufferInit();
     }
 
     return true;
   };
 
+  /**
+   * The <code>mousemove</code> event handler. When the mouse button is down, 
+   * this method performs the dragging/resizing operation. When the mouse button 
+   * is not down, this method simply tracks the mouse location for the purpose 
+   * of determining the area being pointed at: the selection, the borders, or if 
+   * the mouse is outside the selection.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.mousemove = function (ev) {
-    // Selection dropped, then mouse moves? If yes, switch to drawing a selection (1)
-    if (_self.step == -1) {
-      _self.step = 1;
-      statusShow('selectDraw');
-    }
+    switch (_self.state) {
+      case _self.STATE_PENDING:
+        // selection dropped, switch to draw selection
+        _self.state = _self.STATE_DRAWING;
+        statusShow('selectDraw');
 
-    // Selection available
-    if (_self.step == 2) {
-      return _self.update_mpos(ev);
-    } else if (_self.step < 1 || _self.step > 6) {
-      return false; // Unknown step
-    }
+      case _self.STATE_DRAWING:
+        return selectionDraw(ev);
 
-    bufferContext.clearRect(0, 0, image.width, image.height);
+      case _self.STATE_SELECTED:
+        return mouseAreaUpdate(ev);
 
-    // Drawing selection rectangle
-    if (_self.step == 1) {
-      var x = Math.min(ev.x_,  _self.x0),
-          y = Math.min(ev.y_,  _self.y0),
-          w = Math.abs(ev.x_ - _self.x0),
-          h = Math.abs(ev.y_ - _self.y0);
+      case _self.STATE_DRAGGING:
+        return selectionDrag(ev);
 
-      // Constrain the shape to a square
-      if (ev.shiftKey) {
-        if (w > h) {
-          if (y == ev.y_) {
-            y -= w-h;
-          }
-          h = w;
-        } else {
-          if (x == ev.x_) {
-            x -= h-w;
-          }
-          w = h;
-        }
-      }
+      case _self.STATE_RESIZING:
+        return selectionResize(ev);
 
-    } else if (_self.step == 3 || _self.step == 5) {
-      // Dragging selection (3) or ImageData (5)
-
-      // Snapping on the X/Y axis
-      if (ev.shiftKey) {
-        snapXY(ev, _self.x0, _self.y0);
-      }
-
-      var x = _self.sx0 + ev.x_,
-          y = _self.sy0 + ev.y_,
-          w = _self.sw2,
-          h = _self.sh2;
-
-      if (_self.step == 5) {
-        var dw = _self.sw1,
-            dh = _self.sh1;
-      }
-
-    } else if (_self.step == 4 || _self.step == 6) {
-      // Resizing selection (4) or ImageData (6)
-
-      var param = _self.calc_resize(ev);
-
-      // The rectangle is too small
-      if (!param) {
+      default: // unknown state
         return false;
-      }
-
-      var x = param[0],
-          y = param[1],
-          w = param[2],
-          h = param[3];
-
-      if (_self.step == 6) {
-        var dw = w - _self.lineWidth,
-            dh = h - _self.lineWidth;
-      }
     }
-
-    if (!w || !h) {
-      return false;
-    }
-
-    // Dragging (5) or resizing (6) ImageData
-    if (dw && dh && (_self.step == 5 || _self.step == 6)) {
-      var sb = _self.selbuffer;
-
-      // Parameters:
-      // source image, src x, src y, src width, src height, dest x, dest y, dest w, dest h
-      bufferContext.drawImage(sb.canvas, 0, 0, sb._sw, sb._sh,
-        x + _self.lineWidth2, y + _self.lineWidth2,
-        dw, dh);
-    }
-
-    bufferContext.strokeRect(x, y, w, h);
-
-    return true;
   };
 
+  /**
+   * The <code>mouseup</code> event handler. This method ends any selection 
+   * operation.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.mouseup = function (ev) {
-    // Selection dropped? If yes, switch to no selection.
-    if (_self.step == -1) {
-      _self.step = 0;
-      statusShow('selectActive');
-      return true;
-    }
-
     // Allow click+mousemove+click, not only mousedown+move+up
-    if (ev.x_ == _self.x0 && ev.y_ == _self.y0) {
+    if (_self.state != _self.STATE_PENDING &&
+        ev.x_ == x0 && ev.y_ == y0) {
       return true;
     }
 
-    // Skip any unknown step
-    if (_self.step < 1 || _self.step > 6 || _self.step == 2) {
-      return false;
+    var result = null,
+        sel = _self.selection;
 
-    } else if (_self.step == 4 || _self.step == 6) {
-      // Resizing selection (4) or ImageData (6)  
+    switch (_self.state) {
+      case _self.STATE_PENDING:
+        // Selection dropped? If yes, switch to the no selection state.
+        _self.state = _self.STATE_NONE;
+        statusShow('selectActive');
+        return true;
 
-      var newVal = _self.calc_resize(ev);
-      if (!newVal) {
-        _self.step = 0;
-        app.btn_cut(-1);
-        app.btn_copy(-1);
+      case _self.STATE_DRAWING:
+        result = selectionDraw(ev);
+        if (result) {
+          result[0] += sel.lineWidth / 2;
+          result[1] += sel.lineWidth / 2;
+          result[2] -= sel.lineWidth;
+          result[2] -= sel.lineWidth;
+        }
+
+        break;
+
+      case _self.STATE_DRAGGING:
+        result = selectionDrag(ev);
+        break;
+
+      case _self.STATE_RESIZING:
+        result = selectionResize(ev);
+        break;
+
+      default:
         return false;
-      }
-
-      _self.sx0 = newVal[0];
-      _self.sy0 = newVal[1];
-      _self.sw2 = newVal[2];
-      _self.sh2 = newVal[3];
     }
 
-    // Update all the selection info
-    _self.calc_selinfo(ev);
+    if (!result) {
+      _self.state = _self.STATE_NONE;
+      app.btn_cut(-1);
+      app.btn_copy(-1);
+      return false;
+    }
 
-    // Back to step 2: selection available
-    _self.step = 2;
+    sel.x = result[0];
+    sel.y = result[1];
+
+    if (result.length == 4) {
+      sel.width  = result[2];
+      sel.height = result[3];
+    }
+
+    _self.state = _self.STATE_SELECTED;
+
     app.btn_cut(1);
     app.btn_copy(1);
     statusShow('selectAvailable');
@@ -1661,159 +1836,149 @@ PaintTools.select = function (app) {
     return true;
   };
 
-  // Determine the mouse position: if it's inside/outside the selection rectangle, or on the border
-  this.update_mpos = function (ev) {
-    var ncur = '';
+  /**
+   * Perform the selection rectangle drawing operation.
+   *
+   * @private
+   *
+   * @param {Event} ev The DOM Event object.
+   *
+   * @returns {false|Array} False is returned if the selection is too small, 
+   * otherwise an array of four elements is returned. The array holds the 
+   * selection information: x, y, width and height.
+   */
+  function selectionDraw (ev) {
+    var x = Math.min(ev.x_,  x0),
+        y = Math.min(ev.y_,  y0),
+        w = Math.abs(ev.x_ - x0),
+        h = Math.abs(ev.y_ - y0);
 
-    _self.mpos = 'out';
-
-    // Inside the rectangle
-    if (ev.x_ < _self.sx1 && ev.y_ < _self.sy1 && ev.x_ > _self.sx0 && ev.y_ > _self.sy0) {
-      ncur = 'move';
-      _self.mpos = 'in';
-    } else {
-      // On one of the borders (north/south)
-      if (ev.x_ >= _self.sx0b && ev.x_ <= _self.sx1b && ev.y_ >= _self.sy0b && ev.y_ <= _self.sy0) {
-        ncur = 'n';
-      } else if (ev.x_ >= _self.sx0b && ev.x_ <= _self.sx1b && ev.y_ >= _self.sy1 && ev.y_ <= _self.sy1b) {
-        ncur = 's';
+    // Constrain the shape to a square.
+    if (ev.shiftKey) {
+      if (w > h) {
+        if (y == ev.y_) {
+          y -= w-h;
+        }
+        h = w;
+      } else {
+        if (x == ev.x_) {
+          x -= h-w;
+        }
+        w = h;
       }
-
-      // West/east
-      if (ev.y_ >= _self.sy0b && ev.y_ <= _self.sy1b && ev.x_ >= _self.sx0b && ev.x_ <= _self.sx0) {
-        ncur += 'w';
-      } else if (ev.y_ >= _self.sy0b && ev.y_ <= _self.sy1b && ev.x_ >= _self.sx1 && ev.x_ <= _self.sx1b) {
-        ncur += 'e';
-      }
-
-      if (ncur != '') {
-        _self.resizer = ncur;
-        ncur += '-resize';
-        _self.mpos = 'r';
-      }
-    }
-
-    // Due to bug 126457 Opera will not automatically update the cursor, therefore Opera users will not see any visual feedback.
-    if (ncur != _self.canvasStyle.cursor) {
-      _self.canvasStyle.cursor = ncur;
-    }
-
-    return true;
-  };
-
-  // Used to update _self.lineWidth, handling all the cases
-  _self.update_lineWidth = function (ev) {
-    if (_self.lineWidth == bufferContext.lineWidth) {
-      return false;
-    }
-
-    _self.lineWidth = bufferContext.lineWidth;
-    // When lineWidth is an odd number ... tiny pixel errors show
-    if ((_self.lineWidth % 2) != 0) {
-      _self.lineWidth++;
-      bufferContext.lineWidth = _self.lineWidth;
-      inputs.lineWidth.value = _self.lineWidth;
-    }
-    _self.lineWidth2 = _self.lineWidth/2;
-
-    // Selection available (2)
-    if (_self.step < 2) {
-      return true;
-    }
-
-    // Continue with updating the selection info
-
-    _self.sx0 -= _self.lineWidth2;
-    _self.sy0 -= _self.lineWidth2;
-    _self.sw2 = _self.sw1 + _self.lineWidth;
-    _self.sh2 = _self.sh1 + _self.lineWidth;
-
-    return _self.calc_selinfo(ev);
-  };
-
-  // This method handles enabling/disabling selection transparency
-  this.update_transparency = function (ev) {
-    _self.transform = inputs.selTransform.checked;
-
-    // Selection available (step 2)
-    if (!_self.transform || _self.step != 2 || this.checked == _self.transparency) {
-      return false;
-    }
-
-    if (!layerContext.getImageData || !layerContext.putImageData) {
-      _self.transparency = this.checked = true;
-      return false;
-    }
-
-    _self.transparency = this.checked;
-
-    var sb = _self.selbuffer;
-
-    if (!_self.cleared) {
-      _self.selbuffer_init(ev);
-
-      // Parameters:
-      // source image, src x, src y, src width, src height, dest x, dest y, dest w, dest h
-      bufferContext.drawImage(sb.canvas, 0, 0, sb._sw, sb._sh,
-        _self.sx0 + _self.lineWidth2, _self.sy0 + _self.lineWidth2,
-        _self.sw1, _self.sh1);
     }
 
     bufferContext.clearRect(0, 0, image.width, image.height);
 
-    if (_self.transparency) {
-      // If we have the original ImageData, then put it into the selection buffer
-      if (sb._imgd) {
-        sb.putImageData(sb._imgd, 0, 0);
+    if (!w || !h) {
+      return false;
+    }
+
+    bufferContext.strokeRect(x, y, w, h);
+
+    return [x, y, w, h];
+  };
+
+  /**
+   * Perform the selection drag operation.
+   *
+   * @private
+   *
+   * @param {Event} ev The DOM Event object.
+   *
+   * @returns {false|Array} False is returned if the selection is too small, 
+   * otherwise an array of two elements is returned. The array holds the 
+   * selection coordinates, x and y.
+   */
+  function selectionDrag (ev) {
+    // Snapping on the X/Y axis
+    if (ev.shiftKey) {
+      snapXY(ev, x0, y0);
+    }
+
+    var sel = _self.selection;
+
+    var x = sel.x + ev.x_ - x0,
+        y = sel.y + ev.y_ - y0;
+
+    bufferContext.clearRect(0, 0, image.width, image.height);
+
+    // Dragging the ImageData
+    if (sel.transform) {
+      if (!sel.transparent) {
+        bufferContext.fillRect(x, y, sel.width, sel.height);
       }
 
-      sb._imgd = false;
-    } else {
-      // Draw the selection background and put the ImageData on top.
-      bufferContext.fillRect(0, 0, sb._sw, sb._sh);
-      bufferContext.drawImage(sb.canvas, 0, 0);
-
-      // Store the original ImageData
-      sb._imgd = sb.getImageData(0, 0, sb._sw, sb._sh);
-
-      // Copy the selection background with the ImageData merged on top, in the selection buffer
-      sb.clearRect(0, 0, sb._sw, sb._sh);
-      sb.drawImage(bufferCanvas, 0, 0);
-
-      bufferContext.clearRect(0, 0, sb._sw, sb._sh);
-
-      // Side note: simply drawing the background and using putImageData does not work, because putImageData replaces all the pixels on the destination. putImageData does not draw the ImageData on top of the destination.
+      // Parameters:
+      // source image, src x, src y, src width, src height, dest x, dest y, dest w, dest h
+      bufferContext.drawImage(sel.canvas, 0, 0, sel.widthOriginal, 
+          sel.heightOriginal, x, y, sel.width, sel.height);
     }
 
-    // Draw the updated selection
-    bufferContext.drawImage(sb.canvas, 0, 0, sb._sw, sb._sh, _self.sx0, _self.sy0, _self.sw1, _self.sh1);
-    bufferContext.strokeRect(_self.sx0b + _self.lineWidth2, _self.sy0b + _self.lineWidth2, _self.sw2, _self.sh2);
+    bufferContext.strokeRect(x - sel.lineWidth / 2, y - sel.lineWidth / 2, 
+        sel.width + sel.lineWidth, sel.height + sel.lineWidth);
 
-    return true;
+    return [x, y];
   };
-  inputs.selTransparent.addEventListener('change', this.update_transparency, 
-      false);
 
-  // Calculate the new coordinates of the selection rectangle, and the dimension, based on the mouse position
-  this.calc_resize = function (ev) {
-    var diffx = ev.x_ - _self.x0,
-        diffy = ev.y_ - _self.y0,
-        x = _self.sx0, y = _self.sy0,
-        w = _self.sw2, h = _self.sh2,
-        r = _self.resizer;
+  /**
+   * Perform the selection resize operation.
+   *
+   * @private
+   *
+   * @param {Event} ev The DOM Event object.
+   *
+   * @returns {false|Array} False is returned if the selection is too small, 
+   * otherwise an array of four elements is returned. The array holds the 
+   * selection information: x, y, width and height.
+   */
+  function selectionResize (ev) {
+    var sel = _self.selection;
 
-    if (r.charAt(0) == 'n') {
-      y += diffy;
-      h -= diffy;
-    } else if (r.charAt(0) == 's') {
-      h += diffy;
-    }
+    var diffx = ev.x_ - x0,
+        diffy = ev.y_ - y0,
+        x     = sel.x,
+        y     = sel.y,
+        w     = sel.width,
+        h     = sel.height;
 
-    if (r == 'e' || r == 'se' || r == 'ne') {
-      w += diffx;
-    } else if (r == 'w' || r == 'nw' || r == 'sw') {
-      x += diffx;
-      w -= diffx;
+    switch (mouseResize) {
+      case 'nw':
+        x += diffx;
+        y += diffy;
+        w -= diffx;
+        h -= diffy;
+        break;
+      case 'n':
+        y += diffy;
+        h -= diffy;
+        break;
+      case 'ne':
+        y += diffy;
+        w += diffx;
+        h -= diffy;
+        break;
+      case 'e':
+        w += diffx;
+        break;
+      case 'se':
+        w += diffx;
+        h += diffy;
+        break;
+      case 's':
+        h += diffy;
+        break;
+      case 'sw':
+        x += diffx;
+        w -= diffx;
+        h += diffy;
+        break;
+      case 'w':
+        x += diffx;
+        w -= diffx;
+        break;
+      default:
+        return false;
     }
 
     if (!w || !h) {
@@ -1822,18 +1987,23 @@ PaintTools.select = function (app) {
 
     // Constrain the rectangle to have the same aspect ratio as the initial rectangle.
     if (ev.shiftKey) {
-      var p = _self.sw2 / _self.sh2,
-        w2 = w, h2 = h;
+      var p = sel.width / sel.height,
+          w2 = w, h2 = h;
 
-      if (r.charAt(0) == 'n' || r.charAt(0) == 's') {
-        w2 = (w < 0 ? -1 : 1) * Math.abs(Math.round(h*p));
-      } else {
-        h2 = (h < 0 ? -1 : 1) * Math.abs(Math.round(w/p));
+      switch (mouseResize.charAt(0)) {
+        case 'n':
+        case 's':
+          w2 = Math.round(h*p);
+          break;
+        default:
+          h2 = Math.round(w/p);
       }
 
-      if (r == 'nw' || r == 'sw') {
-        x -= w2 - w;
-        y -= h2 - h;
+      switch (mouseResize) {
+        case 'nw':
+        case 'sw':
+          x -= w2 - w;
+          y -= h2 - h;
       }
 
       w = w2;
@@ -1842,87 +2012,173 @@ PaintTools.select = function (app) {
 
     if (w < 0) {
       x += w;
-      w = Math.abs(w);
+      w *= -1;
     }
     if (h < 0) {
       y += h;
-      h = Math.abs(h);
+      h *= -1;
     }
+
+    bufferContext.clearRect(0, 0, image.width, image.height);
+
+    // Resizing the ImageData
+    if (sel.transform) {
+      if (!sel.transparent) {
+        bufferContext.fillRect(x, y, w, h);
+      }
+
+      // Parameters:
+      // source image, src x, src y, src width, src height, dest x, dest y, dest w, dest h
+      bufferContext.drawImage(sel.canvas, 0, 0, sel.widthOriginal, 
+          sel.heightOriginal, x, y, w, h);
+    }
+
+    bufferContext.strokeRect(x - sel.lineWidth / 2, y - sel.lineWidth / 2, 
+        w + sel.lineWidth, h + sel.lineWidth);
 
     return [x, y, w, h];
   };
 
-  // This method calculates all the needed selection boundaries. Most of these boundaries are used by other methods, while resizing, dragging, etc. For better performance while performing "intensive" operations, it's best that the UA does as little as possible during mousemove
-  this.calc_selinfo = function (ev) {
-    // Drawing selection rectangle
-    if (_self.step == 1) {
-      var minX = Math.min(ev.x_, _self.x0),
-          minY = Math.min(ev.y_, _self.y0),
-          maxX = Math.max(ev.x_, _self.x0),
-          maxY = Math.max(ev.y_, _self.y0);
+  /**
+   * Determine the are where the mouse is located: if it is inside or outside of 
+   * the selection rectangle, or on the selection border.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
+  function mouseAreaUpdate (ev) {
+    var cursor = '',
+        sel    = _self.selection;
 
-    } else if (_self.step == 3 || _self.step == 5) {
-      // Dragging selection (3) or ImageData (5)
+    var x1     = sel.x  + sel.width,
+        y1     = sel.y  + sel.height;
 
-      // Snapping on the X/Y axis
-      if (ev.shiftKey) {
-        snapXY(ev, _self.x0, _self.y0);
-      }
+    var x0_out = sel.x  - sel.lineWidth,
+        y0_out = sel.y  - sel.lineWidth,
+        x1_out =     x1 + sel.lineWidth,
+        y1_out =     y1 + sel.lineWidth;
 
-      var minX = _self.sx0 + ev.x_,
-          minY = _self.sy0 + ev.y_;
+    mouseArea = 'out';
 
-    } else if (_self.step == 2 || _self.step == 4 || _self.step == 6) {
-      // Selection available (2), resizing selection (4), resizing ImageData (6)
-
-      var minX = _self.sx0,
-          minY = _self.sy0;
+    // Inside the rectangle
+    if (ev.x_ <     x1 && ev.y_ <     y1 &&
+        ev.x_ > sel.x  && ev.y_ > sel.y) {
+      cursor = 'move';
+      mouseArea = 'in';
 
     } else {
+      // On one of the borders (north/south)
+      if (ev.x_ >= x0_out && ev.x_ <= x1_out &&
+          ev.y_ >= y0_out && ev.y_ <= sel.y) {
+        cursor = 'n';
+
+      } else if (ev.x_ >= x0_out && ev.x_ <= x1_out &&
+                 ev.y_ >= y1     && ev.y_ <= y1_out) {
+        cursor = 's';
+      }
+
+      // West/east
+      if (ev.y_ >= y0_out && ev.y_ <= y1_out &&
+          ev.x_ >= x0_out && ev.x_ <= sel.x) {
+        cursor += 'w';
+
+      } else if (ev.y_ >= y0_out && ev.y_ <= y1_out &&
+                 ev.x_ >= x1     && ev.x_ <= x1_out) {
+        cursor += 'e';
+      }
+
+      if (cursor != '') {
+        mouseResize = cursor;
+        cursor += '-resize';
+        mouseArea = 'border';
+      }
+    }
+
+    // Due to bug 126457 Opera will not automatically update the cursor, 
+    // therefore they will not see any visual feedback.
+    if (cursor != bufferStyle.cursor) {
+      bufferStyle.cursor = cursor;
+    }
+  };
+
+  /**
+   * Update <var>selection.lineWidth</var>.
+   *
+   * @private
+   */
+  function lineWidthUpdate () {
+    var sel = _self.selection;
+    if (sel.lineWidth == bufferContext.lineWidth) {
+      return;
+    }
+
+    sel.lineWidth = bufferContext.lineWidth;
+
+    // When lineWidth is an odd number ... tiny pixel errors show
+    if ((sel.lineWidth % 2) != 0) {
+      sel.lineWidth++;
+      bufferContext.lineWidth = sel.lineWidth;
+      inputs.lineWidth.value = sel.lineWidth;
+    }
+  };
+
+  /**
+   * The <code>change</code> event handler for the selection transparency 
+   * check-box input element.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
+  function transparencyChange (ev) {
+    var sel = _self.selection;
+
+    sel.transparent = this.checked;
+
+    // Continue only if the selection rectangle is available.
+    if (!sel.transform || _self.state != _self.STATE_SELECTED) {
       return false;
     }
 
-    if (_self.step != 1) {
-      var maxX = minX + _self.sw2,
-          maxY = minY + _self.sh2;
+    if (!sel.layerCleared) {
+      selectionBufferInit();
     }
 
-    // Store the selection start and end pos
-    _self.sx0 = minX + _self.lineWidth2;
-    _self.sy0 = minY + _self.lineWidth2;
-    _self.sx1 = maxX - _self.lineWidth2;
-    _self.sy1 = maxY - _self.lineWidth2;
+    bufferContext.clearRect(0, 0, image.width, image.height);
 
-    // ... including the borders
-    _self.sx0b = minX - _self.lineWidth2;
-    _self.sy0b = minY - _self.lineWidth2;
-    _self.sx1b = maxX + _self.lineWidth2;
-    _self.sy1b = maxY + _self.lineWidth2;
-
-    // inner width and height
-    _self.sw1 = _self.sx1 - _self.sx0;
-    _self.sh1 = _self.sy1 - _self.sy0;
-
-    if (_self.step == 1) {
-      // "normal" width and height (as used by the strokeRect method)
-      _self.sw2 = maxX - minX;
-      _self.sh2 = maxY - minY;
+    if (!sel.transparent) {
+      bufferContext.fillRect(sel.x, sel.y, sel.width, sel.height);
     }
+
+    // Draw the updated selection
+    bufferContext.drawImage(sel.canvas, 0, 0,
+        sel.widthOriginal, sel.heightOriginal,
+        sel.x, sel.y, sel.width, sel.height);
+
+    bufferContext.strokeRect(sel.x - sel.lineWidth / 2, sel.y - sel.lineWidth / 2,
+        sel.width + sel.lineWidth, sel.height + sel.lineWidth);
 
     return true;
   };
 
-  // Initialize the selection buffer, when the user starts dragging (5) or resizing (6) ImageData
-  this.selbuffer_init = function (ev) {
-    var x = _self.sx0, y = _self.sy0,
-        w = _self.sw1, h = _self.sh1,
-        sumX = _self.sx0 + _self.sw1,
-        sumY = _self.sy0 + _self.sh1,
-        dx = 0, dy = 0,
-        sb = _self.selbuffer;
+  /**
+   * Initialize the selection buffer, when the user starts dragging or resizing 
+   * the selected pixels.
+   *
+   * @private
+   */
+  function selectionBufferInit () {
+    var sel = _self.selection;
 
-    sb._sw = w;
-    sb._sh = h;
+    var x = sel.x,
+        y = sel.y,
+        w = sel.width,
+        h = sel.height,
+        sumX = sel.x + sel.width,
+        sumY = sel.y + sel.height,
+        dx = 0, dy = 0;
+
+    sel.widthOriginal  = w;
+    sel.heightOriginal = h;
 
     if (x < 0) {
       w += x;
@@ -1936,83 +2192,85 @@ PaintTools.select = function (app) {
     }
 
     if (sumX > image.width) {
-      w -= sumX - image.width;
+      w = image.width - sel.x;
     }
     if (sumY > image.height) {
-      h -= sumY - image.height;
+      h = image.height - sel.y;
+    }
+
+    if (!sel.transparent) {
+      bufferContext.fillRect(x, y, w, h);
     }
 
     // Copy the currently selected ImageData into the buffer canvas
     bufferContext.drawImage(layerCanvas, x, y, w, h, x, y, w, h);
 
-    sb.clearRect(0, 0, image.width, image.height);
+    sel.context.clearRect(0, 0, image.width, image.height);
 
-    // Set a non-transparent background for the selection buffer, if the user does not want the selection to have a transparent background.
-    sb._imgd = false;
-    if (!_self.transparency && layerContext.getImageData) {
-      // Store the selection ImageData as-is
-      sb._imgd = layerContext.getImageData(x, y, w, h);
-      sb.fillStyle = bufferContext.fillStyle;
-      sb.fillRect(0, 0, sb._sw, sb._sh);
-    }
-
-    // Also put the selected ImageData into the selection buffer bufferCanvas (selbuffer).
+    // Also put the selected ImageData into the selection buffer.
     // Parameters: source image, src x, src y, src width, src height, dest x, dest y, dest w, dest h
-    sb.drawImage(layerCanvas, x, y, w, h, dx, dy, w, h);
+    sel.context.drawImage(layerCanvas, x, y, w, h, dx, dy, w, h);
 
     // Clear the selected pixels from the image
     layerContext.clearRect(x, y, w, h);
-    _self.cleared = true;
+    sel.layerCleared = true;
 
     historyAdd();
-
-    return true;
   };
 
-  // Merge the ImageData from the selection buffer, when the user stops dragging (5) or resizing (6) ImageData.
-  this.selbuffer_merge = function (ev) {
-    var sb = _self.selbuffer;
-    if (!sb) {
-      return false;
-    }
+  /**
+   * Merge the ImageData from the selection buffer, when the user stops dragging 
+   * or resizing the selection.
+   *
+   * @private
+   * @param {Boolean} [onlyMerge=false] Only merge the selection buffer onto the 
+   * image layer. Do not clear the image buffer.
+   */
+  function selectionBufferMerge (onlyMerge) {
+    var sel = _self.selection;
 
-    if (_self.step == 3 || _self.step == 4) {
-      bufferContext.clearRect(_self.sx0, _self.sy0, _self.sw1, _self.sh1);
-    } else {
+    if (!onlyMerge) {
       bufferContext.clearRect(0, 0, image.width, image.height);
+      bufferStyle.cursor = '';
+      app.btn_cut(-1);
+      app.btn_copy(-1);
     }
 
-    if (_self.cleared && sb._sw && sb._sh) {
-      layerContext.drawImage(sb.canvas, 0, 0, sb._sw, sb._sh, _self.sx0, _self.sy0, _self.sw1, _self.sh1);
+    if (sel.layerCleared) {
+      if (!sel.transparent) {
+        layerContext.fillRect(sel.x, sel.y, sel.width, sel.height);
+      }
+
+      layerContext.drawImage(sel.canvas, 0, 0, sel.widthOriginal, 
+          sel.heightOriginal, sel.x, sel.y, sel.width, sel.height);
+
       historyAdd();
-      _self.cleared = false;
+      sel.layerCleared = false;
     }
-
-    sb._imgd = false;
-    _self.canvasStyle.cursor = '';
-    app.btn_cut(-1);
-    app.btn_copy(-1);
-
-    return true;
   };
 
-  this.sel_cut = function (ev) {
-    if (!_self.sel_copy(ev)) {
+  /**
+   * Cut the selected pixels. The associated ImageData is stored in 
+   * <var>app.clipboard</var.
+   */
+  this.selectionCut = function () {
+    if (!_self.selectionCopy()) {
       return false;
     }
+
+    var sel = _self.selection;
 
     bufferContext.clearRect(0, 0, image.width, image.height);
-    _self.selbuffer.clearRect(0, 0, image.width, image.height);
+    sel.context.clearRect(0, 0, image.width, image.height);
 
-    if (!_self.cleared) {
-      layerContext.clearRect(_self.sx0, _self.sy0, _self.sw1, _self.sh1);
+    if (!sel.layerCleared) {
+      layerContext.clearRect(sel.x, sel.y, sel.width, sel.height);
       historyAdd();
     }
 
-    _tool_cleared = false;
-    _self.selbuffer._imgd = false;
-    _self.step = 0;
-    _self.canvasStyle.cursor = '';
+    sel.layerCleared = false;
+    _self.state = _self.STATE_NONE;
+    bufferStyle.cursor = '';
 
     app.btn_cut(-1);
     app.btn_copy(-1);
@@ -2021,8 +2279,12 @@ PaintTools.select = function (app) {
     return true;
   };
 
-  this.sel_copy = function (ev) {
-    if (_self.step != 2) {
+  /**
+   * Copy the selected pixels. The associated ImageData is stored in 
+   * <var>app.clipboard</var.
+   */
+  this.selectionCopy = function () {
+    if (_self.state != _self.STATE_SELECTED) {
       return false;
     }
 
@@ -2031,24 +2293,40 @@ PaintTools.select = function (app) {
       return false;
     }
 
-    if (!_self.cleared) {
-      app.clipboard = layerContext.getImageData(_self.sx0, _self.sy0, _self.sw1, _self.sh1);
+    var sel = _self.selection;
+
+    if (!sel.layerCleared) {
+      var w    = sel.width,
+          h    = sel.height,
+          sumX = sel.width  + sel.x;
+          sumY = sel.height + sel.y;
+
+      if (sumX > image.width) {
+        w = image.width - sel.x;
+      }
+      if (sumY > image.height) {
+        h = image.height - sel.y;
+      }
+
+      app.clipboard = layerContext.getImageData(sel.x, sel.y, w, h);
+
       return app.btn_paste(1);
     }
 
-    var sb = _self.selbuffer;
-
-    if (sb._imgd) {
-      app.clipboard = sb._imgd;
-    } else {
-      app.clipboard = sb.getImageData(0, 0, sb._sw, sb._sh);
-    }
+    app.clipboard = sel.context.getImageData(0, 0, sel.widthOriginal, 
+        sel.heightOriginal);
 
     return app.btn_paste(1);
   };
 
-  this.sel_paste = function (ev) {
-    if (_self.step != 0 && _self.step != 2) {
+  /**
+   * Paste an image from the "clipboard". The <var>app.clipboard</var object 
+   * must be an ImageData. This method will generate a new selection which will 
+   * hold the image pasted.
+   */
+  this.selectionPaste = function () {
+    if (_self.state != _self.STATE_NONE &&
+        _self.state != _self.STATE_SELECTED) {
       return false;
     }
 
@@ -2057,109 +2335,140 @@ PaintTools.select = function (app) {
       return false;
     }
 
-    // The default position for the pasted image is the top left corner of the visible area, taking into consideration the zoom level.
-    var sb = _self.selbuffer,
-        x = Math.round(elems.container.scrollLeft / image.zoom),
-        y = Math.round(elems.container.scrollTop  / image.zoom),
-        w = app.clipboard.width,
-        h = app.clipboard.height;
+    // The default position for the pasted image is the top left corner of the 
+    // visible area, taking into consideration the zoom level.
+    var x   = Math.round(elems.container.scrollLeft / image.zoom),
+        y   = Math.round(elems.container.scrollTop  / image.zoom),
+        w   = app.clipboard.width,
+        h   = app.clipboard.height,
+        sel = _self.selection;
 
-    x += _self.lineWidth;
-    y += _self.lineWidth;
+    x += sel.lineWidth;
+    y += sel.lineWidth;
 
-    if (_self.step == 2) {
+    if (_self.state == _self.STATE_SELECTED) {
       bufferContext.clearRect(0, 0, image.width, image.height);
-      _self.canvasStyle.cursor = '';
-      sb._imgd = false;
+      bufferStyle.cursor = '';
     }
 
-    // The following code block sucks:
-    // you can't use negative values, nor do you have a good globalCompositeOperation
-    sb.putImageData(app.clipboard, 0, 0);
-    if (_self.transparency) {
-      bufferContext.putImageData(app.clipboard, x, y);
-    } else {
+    if (!sel.transparent) {
       bufferContext.fillRect(x, y, w, h);
-      bufferContext.drawImage(sb.canvas, x, y);
-      sb._imgd = bufferContext.getImageData(x, y, w, h);
-
-      sb.putImageData(sb._imgd, 0, 0);
-      sb._imgd = app.clipboard;
     }
 
-    sb._sw = _self.sw1 = w;
-    sb._sh = _self.sh1 = h;
-    _self.sw2 = w + _self.lineWidth2;
-    _self.sh2 = h + _self.lineWidth2;
-    _self.sx0 = x;
-    _self.sy0 = y;
-    _self.sx0b = x - _self.lineWidth;
-    _self.sy0b = y - _self.lineWidth;
-    _self.sx1 = w + x;
-    _self.sy1 = h + y;
-    _self.sx1b = _self.sx1 + _self.lineWidth;
-    _self.sy1b = _self.sy1 + _self.lineWidth;
-    _self.transform = inputs.selTransform.checked = true;
-    _self.cleared = true;
-    _self.step = 2;
+    bufferContext.putImageData(app.clipboard, x, y);
+
+    bufferContext.strokeRect(x - sel.lineWidth / 2, y - sel.lineWidth / 2,
+        w + sel.lineWidth, h + sel.lineWidth);
+
+    sel.context.clearRect(0, 0, image.width, image.height);
+    sel.context.putImageData(app.clipboard, 0, 0);
+
+    sel.widthOriginal  = sel.width = w;
+    sel.heightOriginal = sel.height = h;
+    sel.x = x;
+    sel.y = y;
+    sel.transform = inputs.selTransform.checked = true;
+    sel.layerCleared = true;
+    _self.state = _self.STATE_SELECTED;
 
     app.btn_cut(1);
     app.btn_copy(1);
     statusShow('selectAvailable');
 
-    bufferContext.strokeRect(_self.sx0b + _self.lineWidth2, _self.sy0b + _self.lineWidth2, _self.sw2, _self.sh2);
-
-    _self.update_mpos(ev);
-
     return true;
   };
 
-  // Return: quickly enable/disable the transformation mode.
-  // Delete: delete the selected pixels.
-  // Escape: drop selection.
-  // Alt-Backspace: fill the selection with a flat color (fillStyle). This only works when transformation mode is disabled.
+  /**
+   * The <code>keydown</code> event handler. This method implements support for 
+   * the following keys:
+   *
+   * <ul>
+   *   <li><kbd>Control X</kbd> - Cut the selected pixels.
+   *
+   *   <li><kbd>Control C</kbd> - Copy the selected pixels to the PaintWeb 
+   *   application clipboard. The ImageData is stored in 
+   *   <var>app.clipboard</var>.
+   *
+   *   <li><kbd>Enter</kbd> - Toggle the transformation mode. When 
+   *   transformation mode is enabled, any selection changes also affects the 
+   *   selected pixels.
+   *
+   *   <li><kbd>Delete</kbd> - Delete the selected pixels.
+   *
+   *   <li><kbd>Escape</kbd> - Drop the selection / deselect.
+   *
+   *   <li><kbd>Alt Backspace</kbd> - Fill the selection with the current 
+   *   <var>fillStyle</var>. This is only allowed when transformation mode is 
+   *   disabled.
+   * </ul>
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.keydown = function (ev) {
-    // Toggle transformation mode
-    if (ev.kid_ == 'Enter') {
-      _self.transform = !inputs.selTransform.checked;
-      inputs.selTransform.checked = _self.transform;
+    var sel = _self.selection;
 
-    } else if ((ev.kid_ == 'Delete' || ev.kid_ == 'Escape') && _self.step == 2) {
-      // Delete the selected pixels and/or drop the selection (when the selection is available).
+    switch (ev.kid_) {
+      case 'Control X':
+        return _self.selectionCut();
 
-      // Delete the pixels from the image if they are not deleted already.
-      if (!_self.cleared && ev.kid_ == 'Delete') {
-        layerContext.clearRect(_self.sx0, _self.sy0, _self.sw1, _self.sh1);
+      case 'Control C':
+        return _self.selectionCopy();
+
+      case 'Enter':
+        // Toggle the transformation mode.
+        sel.transform = inputs.selTransform.checked = !sel.transform;
+        break;
+
+      case 'Delete':
+        // Delete the pixels from the image if they are not deleted already.
+        if (sel.layerCleared || _self.state != _self.STATE_SELECTED) {
+          return false;
+        }
+
+        layerContext.clearRect(sel.x, sel.y, sel.width, sel.height);
         historyAdd();
-      }
+        console.log('Delete');
 
-      _self.step = 0;
-      _self.cleared = false;
-      _self.canvasStyle.cursor = '';
-      _self.selbuffer._imgd = false;
+      case 'Escape':
+        // Drop the selection.
+        if (_self.state != _self.STATE_SELECTED) {
+          return false;
+        }
 
-      bufferContext.clearRect(0, 0, image.width, image.height);
-      app.btn_cut(-1);
-      app.btn_copy(-1);
-      statusShow('selectActive');
+        sel.layerCleared = false;
+        sel.context.clearRect(0, 0, image.width, image.height);
 
-    } else if (ev.kid_ == 'Alt Backspace' && !_self.transform) {
-      // Fill the selection with a flat color (fillStyle).
+        bufferContext.clearRect(0, 0, image.width, image.height);
+        bufferStyle.cursor = '';
 
-      layerContext.fillStyle = bufferContext.fillStyle;
-      layerContext.fillRect(_self.sx0, _self.sy0, _self.sw1, _self.sh1);
-      historyAdd();
+        app.btn_cut(-1);
+        app.btn_copy(-1);
+        statusShow('selectActive');
+        _self.state = _self.STATE_NONE;
 
-    } else {
-      return false;
+        break;
+
+      case 'Alt Backspace':
+        // Fill the selection with fillStyle.
+        if (sel.transform) {
+          return false;
+        }
+
+        layerContext.fillStyle = bufferContext.fillStyle;
+        layerContext.fillRect(sel.x, sel.y, sel.width, sel.height);
+        historyAdd();
+
+        break;
+
+      default:
+        return false;
     }
 
     return true;
   };
 
-  this.update_lineWidth();
-
-  return true;
+  // TODO: check this...
+  return init();
 };
 
 /**

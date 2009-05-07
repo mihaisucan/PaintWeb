@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-04-30 21:17:00 +0300 $
+  // $Date: 2009-05-07 18:38:33 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -45,7 +45,7 @@
     "rectMousedown": "Hold the Shift key down to draw a square.",
     "selectActive": "Click and drag to draw a selection.",
     "selectDraw": "Hold the Shift key down to draw a square selection.",
-    "selectAvailable": "Drag or resize the selection.",
+    "selectAvailable": "Drag or resize the selection. Hold the Control key down to toggle the transformation mode.",
     "selectDrag": "Hold the Shift key down for vertical/horizontal snapping.",
     "selectResize": "Hold the Shift key down to preserve the aspect ratio.",
     "textActive": "Pick where you want to place the text. Make sure you adjust the properties as desired."

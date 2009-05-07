@@ -1,11 +1,56 @@
+2009-05-07:
+===========
+
+- Made changes to the selection tool. Hopefully, now the code is much easier to 
+follow.
+- Added support for holding the Control key down while performing a selection 
+operation (drag/resize). This allows the user to toggle the selection 
+transformation mode easier and quicker. Thanks to Martin Langhoff for the 
+suggestion.
+
+2009-05-04:
+===========
+
+- Most functionality is working again. Notable exceptions: color editor, mouse 
+keys, shadows and color picker.
+- Continued work on the drawing tools code and the main code.
+- As stated, keyboard shortcuts work much better from a technical perspective 
+(no noticeable changes, for now). Only the MouseKeys extension benefits from the 
+important improvements.
+
+2009-04-29:
+===========
+
+- Towards GSOC 2009: started complete code reorganization. PaintWeb does not 
+run, for the moment.
+- Adding jsdoc comments, moving code out of the main index.js and renaming 
+objects, methods, properties and variables for naming consistency.
+- Moved the drawing tools into tools.js.
+- Moved language strings into lang/en.js.
+- Added lib.js which provides some often-needed functions and methods. Among 
+these is the important DOM keyboard events compatibility layer for most major 
+browsers.
+- Moved the color editor out from the main code. It will be an extension.
+- Added the MouseKeys extension, which should almost work. This extension allows 
+users to draw using the keyboard, instead of the mouse.
+- Keyboard shortcuts support should improve quite a lot once PaintWeb works 
+again, due to the use of the new lib.dom.KeyboardEventListener class (see lib.js).
+- and more ...
+
+2009-04-23:
+===========
+
+- PaintWeb will be integrated into Moodle (see Moodle.org) as part of the Google 
+Summer of Code 2009 program.
+
 2008-11-06:
 ===========
 
-- Paint.Web is now an open-source project. I picked the GPLv3 license.
+- PaintWeb is now an open-source project. I picked the GPLv3 license.
 - The project is now hosted at Google Code:
   http://code.google.com/p/paintweb
-- Updated www.robodesign.ro to include Paint.Web.
-- Packaged Paint.Web version 0.5 alpha, build 20081106.
+- Updated www.robodesign.ro to include PaintWeb.
+- Packaged PaintWeb version 0.5 alpha, build 20081106.
 
 
 2008-10-24:
@@ -40,7 +85,8 @@
 
 - Some code reorganization:
   - moved some code from init() into a new init_properties() method.
-  - also all color-related code has been rewritten/moved into the _me.coloreditor object which has its own initialization routine.
+  - also all color-related code has been rewritten/moved into the 
+  _me.coloreditor object which has its own initialization routine.
 
 
 2008-09-21:
@@ -137,7 +183,6 @@ ev_keypress:
 - incomplete feature-set
 - no GUI
 
-
--- 
+--
 vim:set spell spl=en fenc=utf-8 ff=unix: 
 

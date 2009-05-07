@@ -1,15 +1,17 @@
 $Author: Mihai Şucan $
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-05-04 16:20:27 +0300 $
+$Date: 2009-05-07 18:27:29 +0300 $
 
 
-TODO 2009-05-04:
+TODO 2009-05-07:
 
 (PaintWeb will be integrated into Moodle and TinyMCE, which means I have started 
  working an important part of the TODO below: code reorganization.)
 
 - Complete code reorganization.
-- Make PaintWeb work again. It's currently borked due to code reorganization.
+- Implement the ColorEditor extension.
+- Make the MouseKeys extension work (with minor improvements).
+- Make shadows work again.
 - Test performance on the XO.
 - Application packaging. Currently, all the code is split across multiple files.  
 For performance reasons, it's best to package all code in a single minified 
@@ -42,8 +44,6 @@ That should be all for now. Huh, lots of work to do.
 
 Volunteers are needed! Please contact me if you want to help. Thank you! ;)
 
-
-
--- 
+--
 vim:set spell spl=en fenc=utf-8 ff=unix: 
 

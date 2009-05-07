@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-04 13:38:16 +0300 $
+ * $Date: 2009-05-07 18:24:22 +0300 $
  */
 
 /**
@@ -26,8 +26,7 @@
  */
 
 
-// TODO: lots of reorg remains to be done, including adding proper jsdoc 
-// comments.
+// TODO: add more jsdoc comments and move the GUI code out.
 
 /**
  * Holds all language strings used within PaintWeb.
@@ -60,7 +59,7 @@ function PaintWeb (win_, doc_) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090504;
+  this.build = 20090507;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -229,7 +228,6 @@ function PaintWeb (win_, doc_) {
    * differences in the DOM keyboard events.
    */
   var kbListener_ = null;
-  var xhr_ = null;
 
   function $ (id) {
     var elem = _self.doc.getElementById(id);
@@ -2013,7 +2011,7 @@ function PaintWeb (win_, doc_) {
       return false;
     }
 
-    return _self.tool.sel_cut(ev);
+    return _self.tool.selectionCut(ev);
   };
 
   this.btn_copy = function (ev) {
@@ -2032,7 +2030,7 @@ function PaintWeb (win_, doc_) {
       return false;
     }
 
-    return _self.tool.sel_copy(ev);
+    return _self.tool.selectionCopy(ev);
   };
 
   this.btn_paste = function (ev) {
@@ -2054,7 +2052,7 @@ function PaintWeb (win_, doc_) {
     if (!_self.toolActivate('select', ev)) {
       return false;
     } else {
-      return _self.tool.sel_paste(ev);
+      return _self.tool.selectionPaste(ev);
     }
   };
 
