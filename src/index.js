@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-07 23:50:07 +0300 $
+ * $Date: 2009-05-08 15:26:30 +0300 $
  */
 
 /**
@@ -59,7 +59,7 @@ function PaintWeb (win_, doc_) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090507;
+  this.build = 20090508;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -537,6 +537,11 @@ function PaintWeb (win_, doc_) {
       return false;
     }
 
+    // Load the extensions.
+    if (!this.initExtensions()) {
+      return false;
+    }
+
     // The keyboard shortcuts.
     if (!this.init_keys()) {
       return false;
@@ -574,6 +579,26 @@ function PaintWeb (win_, doc_) {
 
     for (; i < n; i++) {
       id = this.config.tools[i];
+      this.scriptInsert(base + id + '.js');
+    }
+
+    return true;
+  };
+
+  /**
+   * Load all the extensions. Note that the loading is done asynchronously.
+   *
+   * @private
+   * @returns {Boolean} True if the extensions started loading, or false if not.
+   */
+  this.initExtensions = function () {
+    var i    = 0,
+        n    = this.config.extensions.length,
+        base = this.config.extensionsFolder + '/',
+        id   = '';
+
+    for (; i < n; i++) {
+      id = this.config.extensions[i];
       this.scriptInsert(base + id + '.js');
     }
 
@@ -1095,6 +1120,10 @@ function PaintWeb (win_, doc_) {
    * no event handler was executed, false is returned.
    */
   this.ev_canvas = function (ev) {
+    if (!_self.tool) {
+      return false;
+    }
+
     /*
      * If the mouse is down already, skip the event.
      * This is needed to allow the user to go out of the drawing canvas, release 
@@ -1194,7 +1223,7 @@ function PaintWeb (win_, doc_) {
    *
    * @param {Event} ev The DOM Event object.
    *
-   * @see PainterConfig.keys The keyboard shortcuts configuration.
+   * @see PaintWeb.config.keys The keyboard shortcuts configuration.
    * @see lib.dom.KeyboardEventListener The class dealing with the cross-browser 
    * differences in the DOM keyboard events.
    */
@@ -2348,6 +2377,7 @@ function PaintWeb (win_, doc_) {
       return false;
     }
 
+    func.prototype._id = id;
     this.extensions[id] = new func(_self);
 
     return this.extensions[id] ? true : false;

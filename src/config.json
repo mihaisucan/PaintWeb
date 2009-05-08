@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-05-07 22:55:21 +0300 $
+  // $Date: 2009-05-08 14:44:01 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -25,16 +25,6 @@
    * @default "imageBuffer"
    */
   "bufferCanvasID": "imageBuffer",
-
-  /**
-   * The default tool ID.
-   *
-   * @type String
-   * @default "line"
-   * @see this.tools The array holding the list of drawing tools you want 
-   * loaded.
-   */
-  "toolDefault": "line",
 
   /**
    * Shape drawing "type": filled, only stroke, or both. Possible values: 
@@ -89,16 +79,32 @@
   /**
    * Tools folder.
    * @type String
-   * @default 'tools'
+   * @default "tools"
    */
   "toolsFolder": "tools",
+
+  /**
+   * The default tool ID.
+   *
+   * @type String
+   * @default "line"
+   * @see this.tools The array holding the list of drawing tools you want 
+   * loaded.
+   */
+  "toolDefault": "line",
 
   /**
    * Holds the list of extensions you want to load.
    * @type Array
    */
-  // TODO: Make this work
-  "extensions": [],
+  "extensions": ["mousekeys"],
+
+  /**
+   * Extensions folder.
+   * @type String
+   * @default "extensions"
+   */
+  "extensionsFolder": "extensions",
 
   /**
    * @namespace Holds the MouseKeys extension options.
@@ -121,12 +127,13 @@
      */
     // We make sure the number keys on the NumPad also work when the Shift key 
     // is down.
-    "keys": {
+    "actions": {
       "ButtonToggle": [0, "Shift Insert"],
       "SouthWest":    [1, "Shift End"],
       "South":        [2, "Shift Down"],
       "SouthEast":    [3, "Shift PageDown"],
       "West":         [4, "Shift Left"],
+      "ButtonClick":  [5, "Shift Clear"],
       "East":         [6, "Shift Right"],
       "NorthWest":    [7, "Shift Home"],
       "North":        [8, "Shift Up"],

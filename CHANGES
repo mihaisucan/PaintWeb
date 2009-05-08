@@ -1,3 +1,14 @@
+2009-05-08:
+===========
+
+- The MouseKeys extension is now working.
+- The extension now fires the 'click' event as well, and it allows a second way 
+of handling mouse button events. Instead of button toggling with a key press.  
+Now one can simulate holding down the mouse button by holding down a key. See 
+action 'ButtonClick'.
+- The MouseKeys virtual pointer now provides a visual indicator if the mouse 
+button is down or not.
+
 2009-05-07:
 ===========
 

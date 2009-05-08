@@ -1,1033 +1,1059 @@
 /*
- * vim:set ts=4 sw=4 sts=4 sta noet fenc=utf-8 ff=unix:
+ * Copyright (C) 2008, 2009 Mihai Şucan
  *
- * © 2008 ROBO Design
- * http://www.robodesign.ro
+ * This file is part of PaintWeb.
  *
- * $Date: 2009-04-29 13:21:42 +0300 $
+ * PaintWeb is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * PaintWeb is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * $URL: http://code.google.com/p/paintweb $
+ * $Date: 2009-05-08 15:04:08 +0300 $
  */
 
 body {
-	background: #fff;
-	color: #000;
-	font: 12px sans-serif;
+  background: #fff;
+  color: #000;
+  font: 12px sans-serif;
 }
 
 label
 {
-	font-weight: bold;
-	cursor: pointer;
+  font-weight: bold;
+  cursor: pointer;
 }
 
 .clearfix:after, #props3 > div:after {
-	content: ".";
-	display: block;
-	visibility: hidden;
-	height: 0;
-	clear: both;
+  content: ".";
+  display: block;
+  visibility: hidden;
+  height: 0;
+  clear: both;
 }
 
 /* Tool bar */
 
 #toolbar {
-	position: absolute;
-	top: 5px;
-	left: 5px;
-	background: url("images/toolbar.png") no-repeat;
-	width: 76px;
-	height: 408px;
-	z-index: 1000;
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  background: url("images/toolbar.png") no-repeat;
+  width: 76px;
+  height: 408px;
+  z-index: 1000;
 }
 
 #toolbar h1, #main h1, #help h1, #properties h1, #coloreditor h1 {
-	color: #000;
-	margin: 5px 0 0 0;
-	padding: 0;
-	font-size: 1.1em;
-	text-align: center;
-	text-shadow: 0 0 5px #999;
-	cursor: move;
+  color: #000;
+  margin: 5px 0 0 0;
+  padding: 0;
+  font-size: 1.1em;
+  text-align: center;
+  text-shadow: 0 0 5px #999;
+  cursor: move;
 }
 
 #main h1, #help h1, #properties h1 {
-	position: absolute;
-	top: 0;
-	width: 100%;
-	margin-top: 1px;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  margin-top: 1px;
 }
 
 #main h1 {
-	margin-top: 6px;
+  margin-top: 6px;
 }
 
 #coloreditor h1 {
-	padding-left: 34px;
-	margin: 2px 0 0;
-	color: #fff;
-	text-shadow: 0 0 5px #000;
+  padding-left: 34px;
+  margin: 2px 0 0;
+  color: #fff;
+  text-shadow: 0 0 5px #000;
 }
 
 
 /* The two color options in the tool bar */
 
 #toolbar > .separator {
-	clear: both;
-	height: 10px;
-	background: url("images/separator.png") center center no-repeat;
-	padding: 4px 0;
-	text-indent: -100px;
-	overflow: hidden;
+  clear: both;
+  height: 10px;
+  background: url("images/separator.png") center center no-repeat;
+  padding: 4px 0;
+  text-indent: -100px;
+  overflow: hidden;
 }
 
 #colors-fill-stroke {
-	position: relative;
-	background: url("images/toolbar-colors.png") 1px 0 no-repeat;
-	height: 58px;
-	color: #fff;
-	font-size: 0.9em;
-	text-shadow: 0 0 3px #000;
+  position: relative;
+  background: url("images/toolbar-colors.png") 1px 0 no-repeat;
+  height: 58px;
+  color: #fff;
+  font-size: 0.9em;
+  text-shadow: 0 0 3px #000;
 }
 
 #colors-fill-stroke p {
-	padding: 0;
-	margin: 0;
+  padding: 0;
+  margin: 0;
 }
 
 #colors-fill-stroke span {
-	position: absolute;
-	display: block;
-	cursor: pointer;
+  position: absolute;
+  display: block;
+  cursor: pointer;
 }
 
 #toolbar .colorpreview {
-	width: 21px;
-	height: 21px;
-	border: 1px solid #fff;
+  width: 21px;
+  height: 21px;
+  border: 1px solid #fff;
 }
 
 #opt-strokeStyle {
-	top: 46px;
-	right: 21px;
+  top: 46px;
+  right: 21px;
 }
 
 #in-strokeStyle {
-	top: 23px;
-	left: 32px;
+  top: 23px;
+  left: 32px;
 }
 
 #opt-fillStyle {
-	left: 20px;
+  left: 20px;
 }
 
 #in-fillStyle {
-	top: 12px;
-	left: 21px;
+  top: 12px;
+  left: 21px;
 }
 
 /* The Close button, used by the Help dialog and the color editor */
 
 .btn_close {
-	position: absolute;
-	top: 2px;
-	right: 17px;
-	background: url("images/buttons/close.png") no-repeat;
-	padding: 15px 0 0 0;
-	margin: 0;
-	height: 0;
-	width: 16px;
-	overflow: hidden;
-	cursor: pointer;
+  position: absolute;
+  top: 2px;
+  right: 17px;
+  background: url("images/buttons/close.png") no-repeat;
+  padding: 15px 0 0 0;
+  margin: 0;
+  height: 0;
+  width: 16px;
+  overflow: hidden;
+  cursor: pointer;
 }
 
 .btn_close:hover, .btn_close:focus {
-	background-position: 0 -15px;
+  background-position: 0 -15px;
 }
 
 /* The color editor */
 
 #coloreditor {
-	visibility: hidden;
-	background: url("images/color-editor-bgr.png") no-repeat;
-	width: 548px;
-	height: 223px;
-	position: absolute;
-	top: 200px;
-	left: 200px;
-	z-index: 10000;
-	font-size: 0.9em;
+  visibility: hidden;
+  background: url("images/color-editor-bgr.png") no-repeat;
+  width: 548px;
+  height: 223px;
+  position: absolute;
+  top: 200px;
+  left: 200px;
+  z-index: 10000;
+  font-size: 0.9em;
 }
 
 #coloreditor-inputs {
-	position: absolute;
-	left: 220px;
-	bottom: 26px;
-	width: 310px;
-	margin: 0;
-	padding-bottom: 5px;
-	background: url("images/color-editor-input-tabs.png");
-	border: 1px solid #000;
+  position: absolute;
+  left: 220px;
+  bottom: 26px;
+  width: 310px;
+  margin: 0;
+  padding-bottom: 5px;
+  background: url("images/color-editor-input-tabs.png");
+  border: 1px solid #000;
 }
 
 #coloreditor-inputs ol {
-	list-style: none;
-	padding: 0;
-	margin: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .ce-inputs label {
-	display: block;
-	text-shadow: 1px 1px 3px #fff, -1px -1px 3px #fff;
+  display: block;
+  text-shadow: 1px 1px 3px #fff, -1px -1px 3px #fff;
 }
 
 .ce-inputs li {
-	background: url("images/color-editor-field.png");
-	width: 10em;
-	margin: 4px 0;
-	padding: 3px 25px;
+  background: url("images/color-editor-field.png");
+  width: 10em;
+  margin: 4px 0;
+  padding: 3px 25px;
 }
 
 .ce-inputs input:not([type=radio]) {
-	position: absolute;
-	left: 11em;
-	width: 4em;
-	margin-top: -3px;
-	height: 15px;
-	background: #fff url("images/field-bgr.png") no-repeat;
-	text-align: right;
+  position: absolute;
+  left: 11em;
+  width: 4em;
+  margin-top: -3px;
+  height: 15px;
+  background: #fff url("images/field-bgr.png") no-repeat;
+  text-align: right;
 }
 
 .ce-inputs input[type=radio] {
-	position: absolute;
-	margin-top: 0;
-	left: 0;
+  position: absolute;
+  margin-top: 0;
+  left: 0;
 }
 
 #coloreditor-hexalpha {
-	background: url("images/label-bgr.png");
-	position: absolute;
-	top: 0;
-	right: 0;
-	padding: 0 5px !important;
-	color: #fff;
-	border: 1px solid #000;
-	border-width: 0 0 1px 1px;
+  background: url("images/label-bgr.png");
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0 5px !important;
+  color: #fff;
+  border: 1px solid #000;
+  border-width: 0 0 1px 1px;
 }
 
 #coloreditor-hexalpha li {
-	margin: 3px 0;
-	text-shadow: 1px 1px 3px #000, -1px -1px 3px #000;
+  margin: 3px 0;
+  text-shadow: 1px 1px 3px #000, -1px -1px 3px #000;
 }
 
 #coloreditor-hexalpha input {
-	display: block;
-	width: 5em;
-	height: 15px;
-	background: #fff url("images/field-bgr.png") no-repeat;
+  display: block;
+  width: 5em;
+  height: 15px;
+  background: #fff url("images/field-bgr.png") no-repeat;
 }
 
 #in-cpalette {
-	width: 96%;
-	margin-bottom: 3px;
+  width: 96%;
+  margin-bottom: 3px;
 }
 
 #out-cpalette {
-	list-style: none; 
-	margin: 0;
-	padding: 0;
-	width: 96%;
-	height: 137px;
-	overflow: auto;
+  list-style: none; 
+  margin: 0;
+  padding: 0;
+  width: 96%;
+  height: 137px;
+  overflow: auto;
 }
 
 #coloreditor-cpalettes.double #out-cpalette {
-	width: 100%;
-	height: 314px;
+  width: 100%;
+  height: 314px;
 }
 
 #coloreditor-cpalettes.double #in-cpalette {
-	width: 100%;
+  width: 100%;
 }
 
 #out-cpalette li {
-	float: left;
-	width: 11px;
-	height: 11px;
-	border: 1px solid #000;
-	border-width: 1px 1px 0 0;
-	cursor: pointer;
+  float: left;
+  width: 11px;
+  height: 11px;
+  border: 1px solid #000;
+  border-width: 1px 1px 0 0;
+  cursor: pointer;
 }
 
 #coloreditor-canvas, #coloreditor-controls {
-	position: absolute;
-	top: 2px;
-	left: 2px;
+  position: absolute;
+  top: 2px;
+  left: 2px;
 }
 
 #coloreditor-cmixer, #coloreditor-cpalettes {
-	background: url("images/color-editor-canvas-bgr.png") no-repeat;
-	position: absolute;
-	top: 22px;
-	left: 10px;
-	padding: 5px 0 1px 5px;
+  background: url("images/color-editor-canvas-bgr.png") no-repeat;
+  position: absolute;
+  top: 22px;
+  left: 10px;
+  padding: 5px 0 1px 5px;
 }
 
 #coloreditor-cpalettes {
-	width: 200px;
-	height: 170px;
-	padding: 5px 0 1px 4px;
+  width: 200px;
+  height: 170px;
+  padding: 5px 0 1px 4px;
 }
 
 #coloreditor-cmixer.double, #coloreditor-cpalettes.double {
-	background: #000;
-	padding: 10px;
-	border: 5px solid #ccc;
-	z-index: 91871;
+  background: #000;
+  padding: 10px;
+  border: 5px solid #ccc;
+  z-index: 91871;
 }
 
 #coloreditor-cmixer.double #coloreditor-canvas, #coloreditor-cmixer.double #coloreditor-controls {
-	top: 10px;
-	left: 10px;
+  top: 10px;
+  left: 10px;
 }
 
 #coloreditor-cpalettes.double li {
-	width: 14px;
-	height: 14px;
+  width: 14px;
+  height: 14px;
 }
 
 #coloreditor-chart_pos {
-	position: absolute;
-	width: 3px;
-	height: 3px;
-	background: #000;
-	border: 1px solid #fff;
-	margin: -3px 0 0 -3px;
-	opacity: 0.5;
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: #000;
+  border: 1px solid #fff;
+  margin: -3px 0 0 -3px;
+  opacity: 0.5;
 }
 
 #coloreditor-slider_pos {
-	position: absolute;
-	height: 3px;
-	background: #000;
-	border: 1px solid #fff;
-	margin: -2px 0 0 -1px;
-	opacity: 0.5;
+  position: absolute;
+  height: 3px;
+  background: #000;
+  border: 1px solid #fff;
+  margin: -2px 0 0 -1px;
+  opacity: 0.5;
 }
 
 #coloreditor > .coloreditor-tabs {
-	left: 10px;
-	bottom: 12px;
+  left: 10px;
+  bottom: 12px;
 }
 
 #coloreditor-inputs > .coloreditor-tabs {
-	width: 100%;
-	left: 0;
-	bottom: -16px;
+  width: 100%;
+  left: 0;
+  bottom: -16px;
 }
 
 .coloreditor-tabs {
-	position: absolute;
-	list-style: none;
-	margin: 0;
-	padding: 0;
+  position: absolute;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .coloreditor-tabs li {
-	display: inline-block;
-	height: 16px;
-	line-height: 16px;
-	background: url("images/color-editor-tab-repeat.png") repeat-x;
-	cursor: pointer;
+  display: inline-block;
+  height: 16px;
+  line-height: 16px;
+  background: url("images/color-editor-tab-repeat.png") repeat-x;
+  cursor: pointer;
 }
 
 .coloreditor-tabs li:before {
-	content: " ";
-	font-size: 1px;
-	background: url("images/color-editor-tab.png") no-repeat;
-	display: inline-block;
-	width: 12px;
-	height: 16px;
-	vertical-align: bottom;
+  content: " ";
+  font-size: 1px;
+  background: url("images/color-editor-tab.png") no-repeat;
+  display: inline-block;
+  width: 12px;
+  height: 16px;
+  vertical-align: bottom;
 }
 
 .coloreditor-tabs li:after {
-	content: " ";
-	font-size: 1px;
-	background: url("images/color-editor-tab.png") top right no-repeat;
-	display: inline-block;
-	width: 12px;
-	height: 16px;
-	vertical-align: bottom;
+  content: " ";
+  font-size: 1px;
+  background: url("images/color-editor-tab.png") top right no-repeat;
+  display: inline-block;
+  width: 12px;
+  height: 16px;
+  vertical-align: bottom;
 }
 
 .coloreditor-tabs li:hover, .coloreditor-tabs li:focus {
-	background-position: 0 -19px;
+  background-position: 0 -19px;
 }
 
 .coloreditor-tabs li:hover:before, .coloreditor-tabs li:focus:before {
-	background-position: 0 -19px;
+  background-position: 0 -19px;
 }
 
 .coloreditor-tabs li:hover:after, .coloreditor-tabs li:focus:after {
-	background-position: right -19px;
+  background-position: right -19px;
 }
 
 .coloreditor-tabs .active {
-	background-position: 0 -38px;
-	color: #ddd;
+  background-position: 0 -38px;
+  color: #ddd;
 }
 
 .coloreditor-tabs .active:before {
-	background-position: 0 -38px;
+  background-position: 0 -38px;
 }
 
 .coloreditor-tabs .active:after {
-	background-position: right -38px;
+  background-position: right -38px;
 }
 
 .coloreditor-tabs .active:hover {
-	background-position: 0 -57px;
+  background-position: 0 -57px;
 }
 
 .coloreditor-tabs .active:hover:before, .coloreditor-tabs .active:focus:before {
-	background-position: 0 -57px;
+  background-position: 0 -57px;
 }
 
 .coloreditor-tabs .active:hover:after, .coloreditor-tabs .active:focus:before {
-	background-position: right -57px;
+  background-position: right -57px;
 }
 
 #coloreditor-preview {
-	background: url("images/color-editor-preview.png") no-repeat;
-	position: absolute;
-	top: 22px;
-	left: 217px;
-	width: 74px;
-	height: 53px;
-	margin: 0;
-	padding: 0;
-	list-style: none;
+  background: url("images/color-editor-preview.png") no-repeat;
+  position: absolute;
+  top: 22px;
+  left: 217px;
+  width: 74px;
+  height: 53px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 #coloreditor-activec {
-	position: absolute;
-	top: 2px;
-	left: 5px;
-	width: 32px;
-	height: 32px;
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 32px;
+  height: 32px;
 }
 
 #coloreditor-oldc {
-	position: absolute;
-	top: 2px;
-	right: 4px;
-	width: 32px;
-	height: 32px;
-	text-align: right;
-	cursor: pointer;
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  width: 32px;
+  height: 32px;
+  text-align: right;
+  cursor: pointer;
 }
 
 #coloreditor-preview span {
-	position: absolute;
-	left: 2px;
-	bottom: -1.4em;
-	font-size: 0.9em;
-	width: 28px;
-	text-shadow: 1px 1px 3px #fff, -1px -1px 3px #fff;
+  position: absolute;
+  left: 2px;
+  bottom: -1.4em;
+  font-size: 0.9em;
+  width: 28px;
+  text-shadow: 1px 1px 3px #fff, -1px -1px 3px #fff;
 }
 
 #coloreditor-actions {
-	position: absolute;
-	top: 22px;
-	right: 15px;
-	margin: 0;
-	padding: 0;
-	list-style: none;
+  position: absolute;
+  top: 22px;
+  right: 15px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 #coloreditor-actions li {
-	background: url("images/color-editor-button.png") repeat-x;
-	width: 74px;
-	height: 20px;
-	line-height: 20px;
-	vertical-align: middle;
-	text-align: center;
-	text-shadow: 1px 1px 3px #fff, -1px -1px 3px #fff;
-	cursor: pointer;
+  background: url("images/color-editor-button.png") repeat-x;
+  width: 74px;
+  height: 20px;
+  line-height: 20px;
+  vertical-align: middle;
+  text-align: center;
+  text-shadow: 1px 1px 3px #fff, -1px -1px 3px #fff;
+  cursor: pointer;
 }
 
 #coloreditor-actions li:hover, #coloreditor-actions li:focus {
-	background-position: left -20px;
+  background-position: left -20px;
 }
 
 /* Tool bar buttons */
 
 #tools {
-	margin: 0;
-	padding: 0;
+  margin: 0;
+  padding: 0;
 }
 
 #tools li {
-	float: left;
-	background-repeat: no-repeat;
-	padding-top: 29px;
-	margin: 6px 0 0 5px;
-	width: 29px;
-	height: 0;
-	overflow: hidden;
-	cursor: pointer;
+  float: left;
+  background-repeat: no-repeat;
+  padding-top: 29px;
+  margin: 6px 0 0 5px;
+  width: 29px;
+  height: 0;
+  overflow: hidden;
+  cursor: pointer;
 }
 
 #tools li.disabled {
-	cursor: default;
+  cursor: default;
 }
 
 #tools .separator {
-	clear: both;
-	padding-top: 0;
-	margin-left: 0;
-	width: 100%;
-	height: 10px;
-	background: url("images/separator.png") no-repeat;
-	background-position: center center !important;
-	cursor: default;
+  clear: both;
+  padding-top: 0;
+  margin-left: 0;
+  width: 100%;
+  height: 10px;
+  background: url("images/separator.png") no-repeat;
+  background-position: center center !important;
+  cursor: default;
 }
 
 #tools li:hover, #tools li:focus {
-	background-position: 0 -29px;
+  background-position: 0 -29px;
 }
 
 #tools li.active {
-	background-position: 0 -58px;
+  background-position: 0 -58px;
 }
 
 #tools li.disabled {
-	background-position: 0 -87px;
+  background-position: 0 -87px;
 }
 
 /* The tool bar buttons */
 
 #btn-undo {
-	background-image: url("images/buttons/undo.png");
+  background-image: url("images/buttons/undo.png");
 }
 
 #btn-redo {
-	background-image: url("images/buttons/redo.png");
+  background-image: url("images/buttons/redo.png");
 }
 
 #btn-clear {
-	background-image: url("images/buttons/new-image.png");
+  background-image: url("images/buttons/new-image.png");
 }
 
 #btn-save {
-	background-image: url("images/buttons/save.png");
+  background-image: url("images/buttons/save.png");
 }
 
 #tool-select {
-	background-image: url("images/buttons/selection.png");
+  background-image: url("images/buttons/selection.png");
 }
 
 #tool-drag {
-	background-image: url("images/buttons/drag.png");
+  background-image: url("images/buttons/drag.png");
 }
 
 #tool-rect {
-	background-image: url("images/buttons/rect.png");
+  background-image: url("images/buttons/rect.png");
 }
 
 #tool-ellipse {
-	background-image: url("images/buttons/ellipse.png");
+  background-image: url("images/buttons/ellipse.png");
 }
 
 #tool-poly {
-	background-image: url("images/buttons/polygon.png");
+  background-image: url("images/buttons/polygon.png");
 }
 
 #tool-line {
-	background-image: url("images/buttons/line.png");
+  background-image: url("images/buttons/line.png");
 }
 
 #tool-text {
-	background-image: url("images/buttons/text.png");
+  background-image: url("images/buttons/text.png");
 }
 
 #tool-curve {
-	background-image: url("images/buttons/curve.png");
+  background-image: url("images/buttons/curve.png");
 }
 
 #tool-insertimg {
-	background-image: url("images/buttons/insert-image.png");
+  background-image: url("images/buttons/insert-image.png");
 }
 
 #tool-pencil {
-	background-image: url("images/buttons/pencil.png");
+  background-image: url("images/buttons/pencil.png");
 }
 
 #tool-cpicker {
-	background-image: url("images/buttons/color-picker.png");
+  background-image: url("images/buttons/color-picker.png");
 }
 
 #tool-eraser {
-	background-image: url("images/buttons/eraser.png");
+  background-image: url("images/buttons/eraser.png");
 }
 
 
 /* The main window: the image container */
 
 #main {
-	position: absolute;
-	top: 5px;
-	left: 90px;
-	z-index: 1010;
+  position: absolute;
+  top: 5px;
+  left: 90px;
+  z-index: 1010;
 }
 
 #main-top {
-	background: url("images/canvas-top-middle.png") repeat-x;
-	height: 78px;
-	margin: 0 98px 0 99px;
+  background: url("images/canvas-top-middle.png") repeat-x;
+  height: 78px;
+  margin: 0 98px 0 99px;
 }
 
 #main-tleft {
-	background: url("images/canvas-top-left.png") no-repeat;
-	width: 99px;
-	height: 78px;
-	position: absolute;
-	top: 0;
-	left: 0;
+  background: url("images/canvas-top-left.png") no-repeat;
+  width: 99px;
+  height: 78px;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 #main-tright {
-	background: url("images/canvas-top-right.png") no-repeat;
-	width: 102px;
-	height: 78px;
-	position: absolute;
-	top: 0;
-	right: -4px;
+  background: url("images/canvas-top-right.png") no-repeat;
+  width: 102px;
+  height: 78px;
+  position: absolute;
+  top: 0;
+  right: -4px;
 }
 
 #main-bottom {
-	background: url("images/canvas-bottom-middle.png") repeat-x;
-	height: 39px;
-	margin: 0 102px 0 110px;
+  background: url("images/canvas-bottom-middle.png") repeat-x;
+  height: 39px;
+  margin: 0 102px 0 110px;
 }
 
 #main-bleft {
-	background: url("images/canvas-bottom-left.png") no-repeat;
-	width: 110px;
-	height: 39px;
-	position: absolute;
-	bottom: 0;
-	left: 0;
+  background: url("images/canvas-bottom-left.png") no-repeat;
+  width: 110px;
+  height: 39px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
 }
 
 #main-bright {
-	background: url("images/canvas-bottom-right.png") no-repeat;
-	width: 106px;
-	height: 39px;
-	position: absolute;
-	bottom: 0;
-	right: -4px;
+  background: url("images/canvas-bottom-right.png") no-repeat;
+  width: 106px;
+  height: 39px;
+  position: absolute;
+  bottom: 0;
+  right: -4px;
 }
 
 #toolbar-main {
-	display: inline;
-	margin: 0;
-	padding: 0;
-	list-style: none;
+  display: inline;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 #toolbar-main li {
-	position: absolute;
-	top: 35px;
-	margin: 0;
-	padding: 0;
-	background-repeat: no-repeat;
-	width: 36px;
-	height: 0;
-	padding-top: 36px;
-	overflow: hidden;
-	cursor: pointer;
+  position: absolute;
+  top: 35px;
+  margin: 0;
+  padding: 0;
+  background-repeat: no-repeat;
+  width: 36px;
+  height: 0;
+  padding-top: 36px;
+  overflow: hidden;
+  cursor: pointer;
 }
 
 #toolbar-main li:hover, #toolbar-main li:focus {
-	background-position: 0 -36px;
+  background-position: 0 -36px;
 }
 
 #toolbar-main li.active {
-	background-position: 0 -72px;
+  background-position: 0 -72px;
 }
 
 #toolbar-main li.disabled {
-	cursor: default;
-	background-position: 0 -108px;
+  cursor: default;
+  background-position: 0 -108px;
 }
 
 #btn-cut {
-	background-image: url("images/buttons/cut.png");
-	left: 15px;
+  background-image: url("images/buttons/cut.png");
+  left: 15px;
 }
 
 #btn-copy {
-	background-image: url("images/buttons/copy.png");
-	left: 56px;
+  background-image: url("images/buttons/copy.png");
+  left: 56px;
 }
 
 #btn-paste {
-	background-image: url("images/buttons/paste.png");
-	left: 97px;
+  background-image: url("images/buttons/paste.png");
+  left: 97px;
 }
 
 #btn-help {
-	background-image: url("images/buttons/help.png");
-	right: 15px;
+  background-image: url("images/buttons/help.png");
+  right: 15px;
 }
 
 #status {
-	position: absolute;
-	z-index: 1001;
-	left: 10px;
-	margin: 7px 105px 0 0;
-	padding: 0;
-	color: #fff;
-	line-height: 0.9em;
-	font-size: 0.9em;
+  position: absolute;
+  z-index: 1001;
+  left: 10px;
+  margin: 7px 105px 0 0;
+  padding: 0;
+  color: #fff;
+  line-height: 0.9em;
+  font-size: 0.9em;
 }
 
 #opt-zoom {
-	position: absolute;
-	bottom: 7px;
-	right: 10px;
-	background: url("images/zoom.png") top left no-repeat;
-	height: 27px;
-	padding: 0 0 0 35px;
-	margin: 0;
+  position: absolute;
+  bottom: 7px;
+  right: 10px;
+  background: url("images/zoom.png") top left no-repeat;
+  height: 27px;
+  padding: 0 0 0 35px;
+  margin: 0;
 }
 
 #opt-zoom label {
-	display: none;
+  display: none;
 }
 
 #in-zoom {
-	width: 4em;
-	border: 1px solid #000;
-	padding: 2px;
-	margin-top: 2px;
+  width: 4em;
+  border: 1px solid #000;
+  padding: 2px;
+  margin-top: 2px;
 }
 
 #container {
-	background: #fff;
-	border: 1px solid #000;
-	position: relative;
-	width: 400px;
-	height: 300px;
-	overflow: auto;
+  background: #fff;
+  border: 1px solid #000;
+  position: relative;
+  width: 400px;
+  height: 300px;
+  overflow: auto;
 }
 
 #imageLayer, #imageBuffer {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	cursor: crosshair;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
 }
 
 #selBuffer {
-	display: none;
+  display: none;
+}
+
+#mousekeysPointer {
+  position: absolute;
+  width: 4px;
+  height: 4px; 
+  background: #000;
+  border: 1px solid #fff;
+}
+
+#mousekeysPointer.mouseDown {
+  background: #0ff;
+  border: 1px solid #000;
 }
 
 /* If we use display:none Opera will not properly determine the image width/height. */
 #insertimg {
-	position: absolute;
-	visibility: hidden;
+  position: absolute;
+  visibility: hidden;
 }
 
 #resizer {
-	position: absolute;
-	right: 1px;
-	bottom: 1px;
-	width: 15px;
-	height: 15px;
-	cursor: se-resize;
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: 15px;
+  height: 15px;
+  cursor: se-resize;
 }
 
 
 /* The Properties and Help boxes */
 
 #properties {
-	position: absolute;
-	top: 5px;
-	left: 510px;
-	color: #fff;
-	width: 340px;
-	z-index: 1020;
+  position: absolute;
+  top: 5px;
+  left: 510px;
+  color: #fff;
+  width: 340px;
+  z-index: 1020;
 }
 
 #help {
-	visibility: hidden;
-	position: absolute;
-	color: #fff;
-	width: 490px;
-	top: 100px;
-	left: 100px;
-	z-index: 1030;
+  visibility: hidden;
+  position: absolute;
+  color: #fff;
+  width: 490px;
+  top: 100px;
+  left: 100px;
+  z-index: 1030;
 }
 
 #help a, #properties a {
-	color: #fff;
+  color: #fff;
 }
 
 #help-top, #prop-top {
-	background: url("images/box-top-middle.png") repeat-x;
-	height: 45px;
-	margin: 0 32px 0 29px;
+  background: url("images/box-top-middle.png") repeat-x;
+  height: 45px;
+  margin: 0 32px 0 29px;
 }
 
 #help-tleft, #prop-tleft {
-	background: url("images/box-top-left.png") no-repeat;
-	width: 29px;
-	height: 46px;
-	position: absolute;
-	top: 0;
-	left: 0;
+  background: url("images/box-top-left.png") no-repeat;
+  width: 29px;
+  height: 46px;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 #help-tright, #prop-tright {
-	background: url("images/box-top-right.png") no-repeat;
-	width: 32px;
-	height: 46px;
-	position: absolute;
-	top: 0;
-	right: 0;
+  background: url("images/box-top-right.png") no-repeat;
+  width: 32px;
+  height: 46px;
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
 #help-bottom, #prop-bottom {
-	background: url("images/box-bottom-middle.png") repeat-x;
-	height: 33px;
-	margin: 0 32px 0 29px;
+  background: url("images/box-bottom-middle.png") repeat-x;
+  height: 33px;
+  margin: 0 32px 0 29px;
 }
 
 #help-bleft, #prop-bleft {
-	background: url("images/box-bottom-left.png") no-repeat;
-	width: 29px;
-	height: 40px;
-	position: absolute;
-	bottom: 0;
-	left: 0;
+  background: url("images/box-bottom-left.png") no-repeat;
+  width: 29px;
+  height: 40px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
 }
 
 #help-bright, #prop-bright {
-	background: url("images/box-bottom-right.png") no-repeat;
-	width: 32px;
-	height: 41px;
-	position: absolute;
-	bottom: 0;
-	right: 0;
+  background: url("images/box-bottom-right.png") no-repeat;
+  width: 32px;
+  height: 41px;
+  position: absolute;
+  bottom: 0;
+  right: 0;
 }
 
 #help1, #props1 {
-	background: url("images/box-left-middle.png") repeat-y;
+  background: url("images/box-left-middle.png") repeat-y;
 }
 
 #help2, #props2 {
-	background: url("images/box-right-middle.png") top right repeat-y;
+  background: url("images/box-right-middle.png") top right repeat-y;
 }
 
 #help3, #props3 {
-	background: #6f6f6f;
-	margin: 0 20px;
-	padding-bottom: 10px;
+  background: #6f6f6f;
+  margin: 0 20px;
+  padding-bottom: 10px;
 }
 
 #help3 {
-	padding-top: 1px;
+  padding-top: 1px;
 }
 
 #props3 > div > p, #props3 > div > div {
-	clear: both;
-	margin: 0;
-	padding: 0;
+  clear: both;
+  margin: 0;
+  padding: 0;
 }
 
 #help h2, #properties h2 {
-	clear: both;
-	margin: 0 0 10px 0;
-	padding: 0;
-	border-bottom: 1px solid #fff;
-	font-size: 1.2em;
-	text-shadow: 0 0 5px #999;
-	cursor: pointer;
+  clear: both;
+  margin: 0 0 10px 0;
+  padding: 0;
+  border-bottom: 1px solid #fff;
+  font-size: 1.2em;
+  text-shadow: 0 0 5px #999;
+  cursor: pointer;
 }
 
 #help h2:before {
-	content: "../ ";
-	color: #bbb;
-	text-shadow: 0 0 5px #fff;
+  content: "../ ";
+  color: #bbb;
+  text-shadow: 0 0 5px #fff;
 }
 
 #props3 > div {
-	clear: both;
-	margin-top: 10px;
+  clear: both;
+  margin-top: 10px;
 }
 
 #props3 > div:first-child {
-	margin-top: 0;
+  margin-top: 0;
 }
 
 #help3 > *:last-child {
-	margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 #props3 > div.minimized {
-	height: 2em;
-	overflow: hidden;
+  height: 2em;
+  overflow: hidden;
 }
 
 #properties h2:before {
-	content: "[-] ";
-	color: #bbb;
-	text-shadow: 0 0 5px #fff;
-	font-family: monospace;
+  content: "[-] ";
+  color: #bbb;
+  text-shadow: 0 0 5px #fff;
+  font-family: monospace;
 }
 
 #props3 > div.minimized h2:before {
-	content: "[+] ";
+  content: "[+] ";
 }
 
 .inputText label, .inputIcon p, .inputInline, .inputColor {
-	display: block;
-	background: url("images/label-bgr.png");
-	border: 1px solid #9C9B9A;
-	position: relative;
-	left: -19px;
-	width: 14em;
-	margin: 2px 0 0 0 !important;
-	padding: 2px 0 !important;
-	text-indent: 19px;
-	font-weight: bold;
+  display: block;
+  background: url("images/label-bgr.png");
+  border: 1px solid #9C9B9A;
+  position: relative;
+  left: -19px;
+  width: 14em;
+  margin: 2px 0 0 0 !important;
+  padding: 2px 0 !important;
+  text-indent: 19px;
+  font-weight: bold;
 }
 
 .inputInline {
-	width: 25em;
+  width: 25em;
 }
 
 .inputColor span {
-	display: block;
-	width: 4.2em;
-	height: 18px;
-	cursor: pointer;
+  display: block;
+  width: 4.2em;
+  height: 18px;
+  cursor: pointer;
 }
 
 .inputColor > span {
-	background: url("images/checker.png");
-	position: absolute;
-	top: 0;
-	right: -4.2em;
-	margin-right: -7px;
-	border: 1px solid #9C9B9A;
+  background: url("images/checker.png");
+  position: absolute;
+  top: 0;
+  right: -4.2em;
+  margin-right: -7px;
+  border: 1px solid #9C9B9A;
 }
 
 .inputText input {
-	background: #fff url("images/field-bgr.png") no-repeat;
-	border: 1px solid #000;
-	position: absolute;
-	left: 103%;
-	width: 3em;
-	padding: 2px 6px;
+  background: #fff url("images/field-bgr.png") no-repeat;
+  border: 1px solid #000;
+  position: absolute;
+  left: 103%;
+  width: 3em;
+  padding: 2px 6px;
 }
 
 .inputText select {
-	position: absolute;
-	left: 103%;
+  position: absolute;
+  left: 103%;
 }
 
 .inputIcon div {
-	float: left;
-	width: 31px;
-	padding-top: 31px;
-	height: 0;
-	overflow: hidden;
-	margin-left: 3px;
-	background-repeat: no-repeat;
-	cursor: pointer;
+  float: left;
+  width: 31px;
+  padding-top: 31px;
+  height: 0;
+  overflow: hidden;
+  margin-left: 3px;
+  background-repeat: no-repeat;
+  cursor: pointer;
 }
 
 #in-textAlign {
-	display: inline;
-	float: none;
+  display: inline;
+  float: none;
 }
 
 #in-textAlign p {
-	display: none;
+  display: none;
 }
 
 #in-textString {
-	position: static;
-	width: 20em;
+  position: static;
+  width: 20em;
 }
 
 #properties .disabled {
-	color: #ccc;
+  color: #ccc;
 }
 
 .inputIcon div:hover, .inputIcon div:focus {
-	background-position: 0 -31px;
+  background-position: 0 -31px;
 }
 
 .inputIcon div.active {
-	background-position: 0 -62px;
+  background-position: 0 -62px;
 }
 
 /* Icons used within Properties */
 
 #shapeType-fill {
-	background-image: url("images/buttons/shape-fill.png");
+  background-image: url("images/buttons/shape-fill.png");
 }
 
 #shapeType-stroke {
-	background-image: url("images/buttons/shape-stroke.png");
+  background-image: url("images/buttons/shape-stroke.png");
 }
 
 #shapeType-both {
-	background-image: url("images/buttons/shape-both.png");
+  background-image: url("images/buttons/shape-both.png");
 }
 
 #lineCap-round {
-	background-image: url("images/buttons/line-cap-round.png");
+  background-image: url("images/buttons/line-cap-round.png");
 }
 
 #lineCap-square {
-	background-image: url("images/buttons/line-cap-square.png");
+  background-image: url("images/buttons/line-cap-square.png");
 }
 
 #lineJoin-miter {
-	background-image: url("images/buttons/line-join-miter.png");
+  background-image: url("images/buttons/line-join-miter.png");
 }
 
 #lineJoin-round {
-	background-image: url("images/buttons/line-join-round.png");
+  background-image: url("images/buttons/line-join-round.png");
 }
 
 #lineJoin-bevel {
-	background-image: url("images/buttons/line-join-bevel.png");
+  background-image: url("images/buttons/line-join-bevel.png");
 }
 
 #in-textBold {
-	background-image: url("images/buttons/text-bold.png");
+  background-image: url("images/buttons/text-bold.png");
 }
 
 #in-textItalic {
-	background-image: url("images/buttons/text-italic.png");
+  background-image: url("images/buttons/text-italic.png");
 }
 
 #textAlign-left {
-	background-image: url("images/buttons/text-left.png");
+  background-image: url("images/buttons/text-left.png");
 }
 
 #textAlign-center {
-	background-image: url("images/buttons/text-center.png");
+  background-image: url("images/buttons/text-center.png");
 }
 
 #textAlign-right {
-	background-image: url("images/buttons/text-right.png");
+  background-image: url("images/buttons/text-right.png");
 }
 

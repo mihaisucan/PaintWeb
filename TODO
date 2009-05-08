@@ -1,16 +1,15 @@
 $Author: Mihai Şucan $
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-05-07 18:27:29 +0300 $
+$Date: 2009-05-08 15:10:40 +0300 $
 
 
-TODO 2009-05-07:
+TODO 2009-05-08:
 
 (PaintWeb will be integrated into Moodle and TinyMCE, which means I have started 
  working an important part of the TODO below: code reorganization.)
 
-- Complete code reorganization.
+- Complete code reorganization: GUI separation.
 - Implement the ColorEditor extension.
-- Make the MouseKeys extension work (with minor improvements).
 - Make shadows work again.
 - Test performance on the XO.
 - Application packaging. Currently, all the code is split across multiple files.  
