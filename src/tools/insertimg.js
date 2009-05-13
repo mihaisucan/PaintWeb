@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-07 22:25:50 +0300 $
+ * $Date: 2009-05-13 23:13:12 +0300 $
  */
 
 /**
@@ -37,6 +37,9 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
       container    = app.elems.container,
       context      = app.buffer.context,
       layerUpdate  = app.layerUpdate,
+      MathAbs      = Math.abs,
+      MathMin      = Math.min,
+      MathRound    = Math.round,
       mouse        = app.mouse,
       statusShow   = app.statusShow,
       toolActivate = app.toolActivate;
@@ -124,18 +127,16 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
    * The <code>load</code> event handler for the image element. This method 
    * makes sure the image dimensions are synchronized with the zoom level, and 
    * draws the image on the canvas.
-   *
-   * @param {Event} ev The DOM Event object.
    */
-  function ev_imageLoaded (ev) {
+  function ev_imageLoaded () {
     // Did the image already load?
     if (imageLoaded) {
-      return true;
+      return;
     }
 
     // The default position for the inserted image is the top left corner of the visible area, taking into consideration the zoom level.
-    var x = Math.round(container.scrollLeft / canvasImage.zoom),
-        y = Math.round(container.scrollTop  / canvasImage.zoom);
+    var x = MathRound(container.scrollLeft / canvasImage.zoom),
+        y = MathRound(container.scrollTop  / canvasImage.zoom);
 
     context.clearRect(0, 0, canvasImage.width, canvasImage.height);
 
@@ -146,8 +147,6 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
     } catch (err) {
       alert(lang.errorInsertimg);
     }
-
-    return true;
   };
 
   /**
@@ -164,17 +163,15 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
    * The <code>mousedown</code> event handler. This method stores the current 
    * mouse location and the image aspect ratio for later reuse by the 
    * <code>mousemove</code> event handler.
-   *
-   * @param {Event} ev The DOM Event object.
    */
-  this.mousedown = function (ev) {
+  this.mousedown = function () {
     if (!imageLoaded) {
       alert(lang.errorInsertimgNotLoaded);
       return false;
     }
 
-    x0 = ev.x_;
-    y0 = ev.y_;
+    x0 = mouse.x;
+    y0 = mouse.y;
 
     // The image aspect ratio - used by the mousemove method when the user holds 
     // the Shift key down.
@@ -205,24 +202,24 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
     // If the user is holding down the mouse button, then allow him/her to 
     // resize the image.
     if (mouse.buttonDown) {
-      var w = Math.abs(ev.x_ - x0),
-          h = Math.abs(ev.y_ - y0),
-          x = Math.min(ev.x_,  x0),
-          y = Math.min(ev.y_,  y0);
+      var w = MathAbs(mouse.x - x0),
+          h = MathAbs(mouse.y - y0),
+          x = MathMin(mouse.x,  x0),
+          y = MathMin(mouse.y,  y0);
 
       // If the Shift key is down, constrain the image to have the same aspect 
       // ratio as the original image element.
       if (ev.shiftKey) {
         if (w > h) {
-          if (y == ev.y_) {
+          if (y == mouse.y) {
             y -= w-h;
           }
-          h = Math.round(w/imageRatio);
+          h = MathRound(w/imageRatio);
         } else {
-          if (x == ev.x_) {
+          if (x == mouse.x) {
             x -= h-w;
           }
-          w = Math.round(h*imageRatio);
+          w = MathRound(h*imageRatio);
         }
       }
 
@@ -230,7 +227,7 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
     } else {
       // If the mouse button is not down, simply allow the user to pick where 
       // he/she wants to insert the image element.
-      context.drawImage(imageElement, ev.x_, ev.y_);
+      context.drawImage(imageElement, mouse.x, mouse.y);
     }
   };
 

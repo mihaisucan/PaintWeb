@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-09 19:28:09 +0300 $
+ * $Date: 2009-05-13 23:06:56 +0300 $
  */
 
 /**
@@ -31,10 +31,36 @@
  * @param {PaintWeb} app Reference to the main paint application object.
  */
 PaintWebInstance.toolAdd('pencil', function (app) {
-  var _self       = this,
-      context     = app.buffer.context,
-      layerUpdate = app.layerUpdate,
-      mouse       = app.mouse;
+  var _self         = this,
+      context       = app.buffer.context,
+      layerUpdate   = app.layerUpdate,
+      mouse         = app.mouse,
+      setInterval   = window.setInterval,
+      clearInterval = window.clearInterval;
+
+  /**
+   * The delay used between each drawing call.
+   *
+   * @type Number
+   * @default 100
+   */
+  this.delay = 100;
+
+  /**
+   * The interval ID used for running the pencil drawing operation every few 
+   * milliseconds.
+   * @private
+   */
+  var timer = null;
+
+  /**
+   * Holds the points needed to be drawn. Each point is added by the 
+   * <code>mousemove</code> event handler.
+   *
+   * @private
+   * @type Array
+   */
+  var points = [];
 
   /**
    * Holds the last point on the <var>x</var> axis of the image, for the current 
@@ -56,53 +82,64 @@ PaintWebInstance.toolAdd('pencil', function (app) {
 
   /**
    * Initialize the drawing operation.
-   *
-   * @param {Event} ev The DOM Event object.
    */
-  this.mousedown = function (ev) {
-    x0 = ev.x_;
-    y0 = ev.y_;
+  this.mousedown = function () {
+    x0 = mouse.x;
+    y0 = mouse.y;
+
+    points = [];
+    timer = setInterval(draw, _self.delay);
 
     return true;
   };
 
   /**
-   * Perform the drawing operation, while the user moves the mouse.
-   *
-   * @param {Event} ev The DOM Event object.
+   * Save the mouse coordinates in the array.
    */
-  this.mousemove = function (ev) {
-    if (!mouse.buttonDown) {
-      return false;
+  this.mousemove = function () {
+    if (mouse.buttonDown) {
+      points.push(mouse.x, mouse.y);
     }
-
-    context.beginPath();
-    context.moveTo(x0, y0);
-    context.lineTo(ev.x_, ev.y_);
-    context.stroke();
-    context.closePath();
-
-    x0 = ev.x_;
-    y0 = ev.y_;
-
-    return true;
   };
 
   /**
    * End the drawing operation, once the user releases the mouse button.
-   *
-   * @param {Event} ev The DOM Event object.
    */
-  this.mouseup = function (ev) {
-    if (ev.x_ == x0 && ev.y_ == y0) {
-      ev.x_++;
-      ev.y_++;
-      _self.mousemove(ev);
+  this.mouseup = function () {
+    if (mouse.x == x0 && mouse.y == y0) {
+      points.push(x0+1, y0+1);
     }
 
+    clearInterval(timer);
+    draw();
     layerUpdate();
 
     return true;
+  };
+
+  /**
+   * Draw the points in the stack. This function is called every few 
+   * milliseconds.
+   */
+  function draw () {
+    var i = 0, n = points.length;
+    if (!n) {
+      return;
+    }
+
+    context.beginPath();
+    context.moveTo(x0, y0);
+
+    while (i < n) {
+      x0 = points[i++];
+      y0 = points[i++];
+      context.lineTo(x0, y0);
+    }
+
+    context.stroke();
+    context.closePath();
+
+    points = [];
   };
 
   // TODO: check this...

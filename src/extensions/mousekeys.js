@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-08 15:20:51 +0300 $
+ * $Date: 2009-05-13 20:46:53 +0300 $
  */
 
 /**
@@ -36,7 +36,9 @@ PaintWebInstance.extensionAdd('mousekeys', function (app) {
       canvas    = app.buffer.canvas,
       config    = app.config,
       container = app.elems.container,
-      mouse     = app.mouse;
+      MathCeil  = Math.ceil,
+      mouse     = app.mouse,
+      tool      = null;
 
   /**
    * Holds the current mouse movement speed in pixels.
@@ -107,49 +109,12 @@ PaintWebInstance.extensionAdd('mousekeys', function (app) {
    * @param {Event} ev The DOM Event object.
    */
   function pointerMousemove (ev) {
-    if (typeof ev.x_ == 'undefined' || !ev.kobj_ || !ev.kobj_.extension || 
+    if (!('kobj_' in ev) || !('extension' in ev.kobj_) ||
         ev.kobj_.extension != _self._id) {
       if (pointer.style.display == 'block') {
         pointer.style.display = 'none';
       }
-      return;
     }
-
-    pointer.style.top  = ev.y_ + 'px';
-    pointer.style.left = ev.x_ + 'px';
-  };
-
-  /**
-   * Dispatch a synthetic event to the buffer canvas element.
-   *
-   * @private
-   * @param {String} type The mouse event type to dispatch.
-   * @param {Event} ev The original DOM Event object.
-   */
-  function dispatch (type, ev) {
-    var ev_new = document.createEvent('MouseEvents');
-
-    ev_new.initMouseEvent(type,
-        ev.bubbles,  ev.cancelable,
-        ev.view,     0,
-        0,           0,
-        0,           0,
-        ev.ctrlKey,  ev.altKey,
-        ev.shiftKey, ev.metaKey,
-        0,           ev.relatedTarget);
-
-    // Make sure the new coordinates are passed to the event handlers.
-    ev_new.x_ = mouse.x;
-    ev_new.y_ = mouse.y;
-
-    // Make sure the event handlers can check this is a synthetic event.
-    // This is needed by the pointerMousemove() function.
-    ev_new.keyCode_  = ev.keyCode_;
-    ev_new.key_      = ev.key_;
-    ev_new.kid_      = ev.kid_;
-    ev_new.kobj_     = ev.kobj_;
-
-    canvas.dispatchEvent(ev_new);
   };
 
   /**
@@ -195,26 +160,46 @@ PaintWebInstance.extensionAdd('mousekeys', function (app) {
       pointer.style.display = 'block';
       pointer.style.top  = mouse.y + 'px';
       pointer.style.left = mouse.x + 'px';
-      pointer.className = mouse.buttonDown ? 'mouseDown' : '';
     }
+
+    tool = app.tool;
 
     switch (ev.kobj_.action) {
       case 'ButtonToggle':
-      case 'ButtonClick':
         if (mouse.buttonDown) {
-          dispatch('mouseup',   ev);
-          dispatch('click',     ev);
-        } else {
-          dispatch('mousedown', ev);
-        }
+          mouse.buttonDown = false;
+          if ('mouseup' in tool) {
+            tool.mouseup(ev);
+          }
+          if ('click' in tool) {
+            tool.click(ev);
+          }
 
-        pointer.className = mouse.buttonDown ? 'mouseDown' : '';
+        } else {
+          mouse.buttonDown = true;
+
+          if ('mousedown' in tool) {
+            tool.mousedown(ev);
+          }
+        }
+        break;
+
+      case 'ButtonClick':
+        if (!mouse.buttonDown) {
+          mouse.buttonDown = true;
+
+          if ('mousedown' in tool) {
+            tool.mousedown(ev);
+          }
+        }
 
         break;
 
       default:
         return false;
     }
+
+    pointer.className = mouse.buttonDown ? 'mouseDown' : '';
 
     return true;
   };
@@ -242,10 +227,6 @@ PaintWebInstance.extensionAdd('mousekeys', function (app) {
    * object.
    */
   this.keypress = function (ev) {
-    if (!ev || !ev.kobj_ || !ev.kobj_.action) {
-      return false;
-    }
-
     if (ev.shiftKey) {
       speed += speed * accel * 3;
     } else {
@@ -254,59 +235,59 @@ PaintWebInstance.extensionAdd('mousekeys', function (app) {
 
     var w = canvas.width,
         h = canvas.height,
-        x = mouse.x,
-        y = mouse.y,
-        step = Math.ceil(speed);
+        step = MathCeil(speed);
 
     switch (ev.kobj_.action) {
       case 'SouthWest':
-        x -= step;
-        y += step;
+        mouse.x -= step;
+        mouse.y += step;
         break;
       case 'South':
-        y += step;
+        mouse.y += step;
         break;
       case 'SouthEast':
-        x += step;
-        y += step;
+        mouse.x += step;
+        mouse.y += step;
         break;
       case 'West':
-        x -= step;
+        mouse.x -= step;
         break;
       case 'East':
-        x += step;
+        mouse.x += step;
         break;
       case 'NorthWest':
-        x -= step;
-        y -= step;
+        mouse.x -= step;
+        mouse.y -= step;
         break;
       case 'North':
-        y -= step;
+        mouse.y -= step;
         break;
       case 'NorthEast':
-        x += step;
-        y -= step;
+        mouse.x += step;
+        mouse.y -= step;
         break;
       default:
         return false;
     }
 
-    if (x < 0) {
-      x = 0;
-    } else if (x > w) {
-      x = w;
+    if (mouse.x < 0) {
+      mouse.x = 0;
+    } else if (mouse.x > w) {
+      mouse.x = w;
     }
 
-    if (y < 0) {
-      y = 0;
-    } else if (y > h) {
-      y = h;
+    if (mouse.y < 0) {
+      mouse.y = 0;
+    } else if (mouse.y > h) {
+      mouse.y = h;
     }
 
-    mouse.x = x;
-    mouse.y = y;
+    pointer.style.top  = mouse.y + 'px';
+    pointer.style.left = mouse.x + 'px';
 
-    dispatch('mousemove', ev);
+    if ('mousemove' in tool) {
+      tool.mousemove(ev);
+    }
 
     return true;
   };
@@ -337,8 +318,15 @@ PaintWebInstance.extensionAdd('mousekeys', function (app) {
    */
   this.keyup = function (ev) {
     if (ev.kobj_.action == 'ButtonClick' && mouse.buttonDown) {
-      dispatch('mouseup',   ev);
-      dispatch('click',     ev);
+      mouse.buttonDown = false;
+
+      if ('mouseup' in tool) {
+        tool.mouseup(ev);
+      }
+      if ('click' in tool) {
+        tool.click(ev);
+      }
+
       pointer.className = '';
       return true;
     }

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-07 22:25:59 +0300 $
+ * $Date: 2009-05-13 23:08:46 +0300 $
  */
 
 /**
@@ -31,12 +31,38 @@
  * @param {PaintWeb} app Reference to the main paint application object.
  */
 PaintWebInstance.toolAdd('eraser', function (app) {
-  var _self        = this,
-      context      = app.buffer.context,
-      layerContext = app.layer.context,
-      layerUpdate  = app.layerUpdate,
-      mouse        = app.mouse,
-      image        = app.image;
+  var _self         = this,
+      context       = app.buffer.context,
+      layerContext  = app.layer.context,
+      layerUpdate   = app.layerUpdate,
+      mouse         = app.mouse,
+      image         = app.image,
+      setInterval   = window.setInterval,
+      clearInterval = window.clearInterval;
+
+  /**
+   * The delay used between each drawing call.
+   *
+   * @type Number
+   * @default 100
+   */
+  this.delay = 100;
+
+  /**
+   * The interval ID used for running the pencil drawing operation every few 
+   * milliseconds.
+   * @private
+   */
+  var timer = null;
+
+  /**
+   * Holds the points needed to be drawn. Each point is added by the 
+   * <code>mousemove</code> event handler.
+   *
+   * @private
+   * @type Array
+   */
+  var points = [];
 
   /**
    * Holds the starting point on the <var>x</var> axis of the image, for the 
@@ -93,10 +119,8 @@ PaintWebInstance.toolAdd('eraser', function (app) {
 
   /**
    * Initialize the drawing operation.
-   *
-   * @param {Event} ev The DOM Event object.
    */
-  this.mousedown = function (ev) {
+  this.mousedown = function () {
     // The mousedown event remembers the current strokeStyle and sets a white 
     // colored stroke (same as the background), such that the user gets live 
     // feedback of what he/she erases.
@@ -105,51 +129,42 @@ PaintWebInstance.toolAdd('eraser', function (app) {
     // FIXME: ...
     context.strokeStyle = 'rgb(255,255,255)';
 
-    x0 = ev.x_;
-    y0 = ev.y_;
+    x0 = mouse.x;
+    y0 = mouse.y;
 
-    context.beginPath();
-    context.moveTo(ev.x_, ev.y_);
+    points = [];
+    timer = setInterval(draw, _self.delay);
 
     return true;
   };
 
   /**
-   * Perform the drawing operation, while the user moves the mouse.
-   *
-   * @param {Event} ev The DOM Event object.
+   * Save the mouse coordinates in the array.
    */
-  this.mousemove = function (ev) {
-    if (!mouse.buttonDown) {
-      return false;
+  this.mousemove = function () {
+    if (mouse.buttonDown) {
+      points.push(mouse.x, mouse.y);
     }
-
-    context.clearRect(0, 0, image.width, image.height);
-    context.lineTo(ev.x_, ev.y_);
-    context.stroke();
-
-    return true;
   };
 
   /**
    * End the drawing operation, once the user releases the mouse button.
-   *
-   * @param {Event} ev The DOM Event object.
    */
-  this.mouseup = function (ev) {
+  this.mouseup = function () {
     // The mouseup event handler changes the globalCompositeOperation to 
     // destination-out such that the white pencil path drawn by the user cuts 
     // out/clears the destination image
 
-    if (ev.x_ == x0 && ev.y_ == y0) {
-      context.lineTo(ev.x_, ev.y_ + 1);
-      context.stroke();
+    if (mouse.x == x0 && mouse.y == y0) {
+      points.push(x0+1, y0+1);
     }
+
+    clearInterval(timer);
+    draw();
 
     var op = layerContext.globalCompositeOperation;
     layerContext.globalCompositeOperation = 'destination-out';
 
-    context.closePath();
     layerUpdate();
 
     layerContext.globalCompositeOperation = op;
@@ -157,6 +172,31 @@ PaintWebInstance.toolAdd('eraser', function (app) {
     context.strokeStyle = _self.strokeStyle;
 
     return true;
+  };
+
+  /**
+   * Draw the points in the stack. This function is called every few 
+   * milliseconds.
+   */
+  function draw () {
+    var i = 0, n = points.length;
+    if (!n) {
+      return;
+    }
+
+    context.beginPath();
+    context.moveTo(x0, y0);
+
+    while (i < n) {
+      x0 = points[i++];
+      y0 = points[i++];
+      context.lineTo(x0, y0);
+    }
+
+    context.stroke();
+    context.closePath();
+
+    points = [];
   };
 
   // TODO: check this...

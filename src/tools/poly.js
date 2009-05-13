@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-07 22:26:30 +0300 $
+ * $Date: 2009-05-13 23:19:34 +0300 $
  */
 
 /**
@@ -38,6 +38,7 @@ PaintWebInstance.toolAdd('poly', function (app) {
       context     = app.buffer.context,
       image       = app.image,
       layerUpdate = app.layerUpdate,
+      MathAbs     = Math.abs,
       mouse       = app.mouse,
       snapXY      = app.toolSnapXY,
       statusShow  = app.statusShow;
@@ -71,13 +72,13 @@ PaintWebInstance.toolAdd('poly', function (app) {
   this.click = function (ev) {
     if (_self.started) {
       if (ev.shiftKey) {
-        snapXY(ev, _self.x1, _self.y1);
+        snapXY(_self.x1, _self.y1);
       }
 
-      var diffx1 = Math.abs(ev.x_ - _self.x0),
-          diffy1 = Math.abs(ev.y_ - _self.y0),
-          diffx2 = Math.abs(ev.x_ - _self.x1),
-          diffy2 = Math.abs(ev.y_ - _self.y1);
+      var diffx1 = MathAbs(mouse.x - _self.x0),
+          diffy1 = MathAbs(mouse.y - _self.y0),
+          diffx2 = MathAbs(mouse.x - _self.x1),
+          diffy2 = MathAbs(mouse.y - _self.y1);
 
       // End the polygon if the new point is close enough to the first/last point.
       if ((diffx1 < 5 && diffy1 < 5) || (diffx2 < 5 && diffy2 < 5)) {
@@ -96,20 +97,20 @@ PaintWebInstance.toolAdd('poly', function (app) {
     }
 
     // Remember the last pointer position.
-    _self.x1 = ev.x_;
-    _self.y1 = ev.y_;
+    _self.x1 = mouse.x;
+    _self.y1 = mouse.y;
 
     if (!_self.started) {
       _self.started = true;
 
       // Remember the first pointer position.
-      _self.x0 = ev.x_;
-      _self.y0 = ev.y_;
+      _self.x0 = mouse.x;
+      _self.y0 = mouse.y;
 
       statusShow('polyMousedown');
     }
 
-    _self.points.push([ev.x_, ev.y_]);
+    _self.points.push([mouse.x, mouse.y]);
 
     // Users need to know how to end drawing the polygon.
     if (_self.points.length > 3) {
@@ -136,15 +137,15 @@ PaintWebInstance.toolAdd('poly', function (app) {
       return false;
     }
 
-    // Store the last ev.x_ and ev.y_, for later use.
+    // Store the last mouse.x and mouse.y, for later use.
     if (ev) {
-      _self.ex = ev.x_;
-      _self.ey = ev.y_;
+      _self.ex = mouse.x;
+      _self.ey = mouse.y;
     }
 
     // Snapping on the X/Y axis for the current point (if available).
     if (ev && ev.shiftKey) {
-      snapXY(ev, _self.x1, _self.y1);
+      snapXY(_self.x1, _self.y1);
     }
 
     context.clearRect(0, 0, image.width, image.height);
@@ -159,7 +160,7 @@ PaintWebInstance.toolAdd('poly', function (app) {
 
     // If there's a current event, then draw the temporary point as well.
     if (ev) {
-      context.lineTo(ev.x_, ev.y_);
+      context.lineTo(mouse.x, mouse.y);
     }
 
     if (config.shapeType != 'stroke') {

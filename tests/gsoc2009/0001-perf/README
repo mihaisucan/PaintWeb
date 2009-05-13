@@ -1,5 +1,5 @@
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-05-13 15:03:18 +0300 $
+$Date: 2009-05-13 19:17:43 +0300 $
 
 Minimal tests for the purpose of optimizing drawing on the OLPC XO.
 
@@ -34,7 +34,7 @@ Tests
 =====
 
 
-test1
+test1:
 -----
 
 The starting code. This is what we have and we want to optimize. It's a drawing 
@@ -304,7 +304,7 @@ Based on this test alone I can say the XO default browser needs heavy JS engine
 performance improvements. The test execution ownTime shows how slow the test 
 script ran.
 
-test2
+test2:
 -----
 
 Instead of having a single looong path, the new drawing tool simply starts and 
@@ -801,4 +801,35 @@ only into the tool code. The ev_canvas function is now simpler.
 Performance-wise the drawing feels the same on Athlon and on the XO.
 
 The test runs about 0.3 seconds slower on the XO, both in Opera and Firefox.
+
+Conclusions
+===========
+
+It looks like I managed to make the synthetic test run much faster. If I make 
+the test runner directly call the event handlers, it will run even faster 
+- looks like synthetic DOM event dispatching is quite slow. This is not 
+evidenced by the tests above, because they all use synthetic DOM events.
+
+Additionally, it looks like we have a problem with Browser.xo. It's always very 
+slow to draw using the touchpad. In Opera test10 and test11 works fine, it's 
+usable, but not in Browser.xo.
+
+TODO: nail down the performance issue on the XO.
+
+
+Other tests
+===========
+
+test2:
+  Athlon:
+    Firefox 3.0 is about 3 seconds slower than Firefox 3.5.
+    Opera 9.64 is about 0.5 seconds slower than Opera 10.
+
+test11:
+  Athlon:
+    Firefox 3.0 is only about 0.4 seconds slower than Firefox 3.5.
+    Opera 9.64 is about 0.5 seconds slower than Opera 10.
+
+Mozilla Fennec 1.0 beta 1 is unusable, besides being slow. Any attempt to draw 
+causes their GUI to be dragged around. Basically, you cannot draw anywhere. Yay!
 

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-09 20:31:47 +0300 $
+ * $Date: 2009-05-13 20:53:40 +0300 $
  */
 
 /**
@@ -250,6 +250,10 @@ function PaintWeb (win_, doc_) {
    */
   var kbListener_ = null;
 
+  // Avoid global scope lookup.
+  var MathRound = Math.round,
+      MathAbs   = Math.abs;
+
   function $ (id) {
     var elem = _self.doc.getElementById(id);
     if (!elem) {
@@ -449,7 +453,7 @@ function PaintWeb (win_, doc_) {
      * the active tool (e.g. tool.mousemove).
      */
     var i, n, events = ['click', 'mousedown', 'mouseup', 'mousemove', 
-        'mouseover', 'mouseout', 'contextmenu'];
+        'contextmenu'];
 
     for (i = 0, n = events.length; i < n; i++) {
       bufferCanvas.addEventListener(events[i], this.ev_canvas, false);
@@ -1108,89 +1112,78 @@ function PaintWeb (win_, doc_) {
    * <code>mousedown</code> event the <code><var>tool</var>.mousedown()</code> 
    * method is invoked.
    *
-   * <p>The mouse coordinates are added to the <var>ev</var> DOM Event object: 
-   * <var>ev.x_</var> and <var>ev.y_</var>. These properties take into account 
-   * the current zoom level and the image scroll.
+   * <p>The mouse coordinates are stored in the {@link PaintWeb.mouse} object.  
+   * These properties take into account the current zoom level and the image 
+   * scroll.
    *
    * @private
    *
    * @param {Event} ev The DOM Event object.
    *
-   * @returns The result returned by the event handler of the current tool. If 
-   * no event handler was executed, false is returned.
+   * @returns {Boolean} True if the tool event handler executed, or false 
+   * otherwise.
    */
   this.ev_canvas = function (ev) {
     if (!_self.tool) {
       return false;
     }
 
-    /*
-     * If the mouse is down already, skip the event.
-     * This is needed to allow the user to go out of the drawing canvas, release 
-     * the mouse button, then come back and click to end the drawing operation.
-     * Additionally, this is needed to allow extensions like MouseKeys to 
-     * perform their actions during a drawing operation, even when a real mouse 
-     * is used. For example, allow the user to start drawing with the keyboard 
-     * (press 0) then use the real mouse to move and click to end the drawing 
-     * operation.
-     */
-    if (_self.mouse.buttonDown && ev.type == 'mousedown') {
-      return false;
+    switch (ev.type) {
+      case 'mousedown':
+        /*
+         * If the mouse is down already, skip the event.
+         * This is needed to allow the user to go out of the drawing canvas, 
+         * release the mouse button, then come back and click to end the drawing 
+         * operation.
+         * Additionally, this is needed to allow extensions like MouseKeys to 
+         * perform their actions during a drawing operation, even when a real 
+         * mouse is used. For example, allow the user to start drawing with the 
+         * keyboard (press 0) then use the real mouse to move and click to end 
+         * the drawing operation.
+         */
+        if (_self.mouse.buttonDown) {
+          return false;
+        }
+        _self.mouse.buttonDown = true;
+        break;
+
+      case 'mouseup':
+        // Skip the event if the mouse button was not down.
+        if (!_self.mouse.buttonDown) {
+          return false;
+        }
+        _self.mouse.buttonDown = false;
     }
 
     /*
      * Update the event, to include the mouse position, relative to the canvas 
-     * element, but don't overwrite any existing x_ / y_ property, since these 
-     * properties might be added by other functions.
+     * element.
      */
-    if (typeof ev.x_ == 'undefined') {
-      if (typeof ev.layerX != 'undefined') {
-        ev.x_ = ev.layerX;
-        ev.y_ = ev.layerY;
-      } else if (typeof ev.offsetX != 'undefined') {
-        ev.x_ = ev.offsetX;
-        ev.y_ = ev.offsetY;
+    if ('layerX' in ev) {
+      if (_self.image.zoom == 1) {
+        _self.mouse.x = ev.layerX;
+        _self.mouse.y = ev.layerY;
+      } else {
+        _self.mouse.x = MathRound(ev.layerX / _self.image.zoom);
+        _self.mouse.y = MathRound(ev.layerY / _self.image.zoom);
       }
-
-      // Take into account the current zoom level.
-      if (_self.image.zoom != 1 && (ev.x_ || ev.y_)) {
-        ev.x_ = Math.round(ev.x_ / _self.image.zoom);
-        ev.y_ = Math.round(ev.y_ / _self.image.zoom);
+    } else if ('offsetX' in ev) {
+      if (_self.image.zoom == 1) {
+        _self.mouse.x = ev.offsetX;
+        _self.mouse.y = ev.offsetY;
+      } else {
+        _self.mouse.x = MathRound(ev.offsetX / _self.image.zoom);
+        _self.mouse.y = MathRound(ev.offsetY / _self.image.zoom);
       }
-
-      // Update the current mouse position only for mouse events.
-      // Other events do not provide accurate mouse coordinates.
-      switch (ev.type) {
-        case 'mousedown':
-        case 'mousemove':
-        case 'mouseup':
-          _self.mouse.x = ev.x_;
-          _self.mouse.y = ev.y_;
-      }
-    }
-
-    if (ev.type == 'mousedown') {
-      _self.mouse.buttonDown = true;
     }
 
     // The event handler of the current tool.
-    var result = false,
-        event_action = _self.tool[ev.type];
-
-    if (typeof event_action == 'function') {
-      result = event_action(ev);
-    }
-
-    if (ev.type == 'mouseup') {
-      _self.mouse.buttonDown = false;
-    }
-
-    // Do not call preventDefault() when the result is false.
-    if (result && ev.preventDefault) {
+    if (ev.type in _self.tool && _self.tool[ev.type](ev)) {
       ev.preventDefault();
+      return true;
+    } else {
+      return false;
     }
-
-    return result;
   };
 
   /**
@@ -1251,21 +1244,14 @@ function PaintWeb (win_, doc_) {
     }
     ev.kid_ += ev.key_;
 
-    /*
-     * Send the event to the canvas, and eventually to the keydown event handler 
-     * of the currently active tool (if any).
-     * The effect of calling ev_canvas() is that the event object *might* have 
-     * the x_ and y_ coordinate properties added. Additionally, if ev_canvas() 
-     * returns some result, we can use it to cancel any global keyboard 
-     * shortcut.
-     */
-    var canvas_result = _self.ev_canvas(ev);
-    if (canvas_result) {
+    // Send the keyboard event to the event handler of the active tool. If it 
+    // returns true, we consider it recognized the keyboard shortcut.
+    if (_self.tool && ev.type in _self.tool && _self.tool[ev.type](ev)) {
       return true;
     }
 
     // If there's no event handler within the active tool, or if the event 
-    // handler does otherwise return false, then continue with the global 
+    // handler does otherwise return false, then we continue with the global 
     // keyboard shortcuts.
 
     var gkey = _self.config.keys[ev.kid_];
@@ -1276,29 +1262,32 @@ function PaintWeb (win_, doc_) {
     ev.kobj_ = gkey;
 
     // Check if the keyboard shortcut has some extension associated.
-    var ext    = gkey.extension ? _self.extensions[gkey.extension] : false,
+    var ext    = 'extension' in gkey ? _self.extensions[gkey.extension] : false,
         ext_fn = false;
 
     // Check if the keyboard shortcut points to a specific method from the 
     // extension object, otherwise use the current event type as the method 
     // name.
     if (ext) {
-      ext_fn = gkey.method ? ext[gkey.method] : ext[ev.type];
-    }
-    
-    // Execute the associated extension method.
-    if (typeof ext_fn == 'function') {
-      ext_fn(ev);
+      ext_fn = 'method' in gkey ? ext[gkey.method] : ext[ev.type];
+
+      // Execute the associated extension method.
+      if (ext_fn) {
+        ext_fn(ev);
+      }
     }
 
-    // Activate the tool associated with the current keyboard shortcut.
-    // Do this only once, for the keydown event.
-    if (ev.type == 'keydown' && gkey.tool) {
-      _self.toolActivate(gkey.tool);
-    }
+    switch (ev.type) {
+      case 'keydown':
+        // Activate the tool associated with the current keyboard shortcut.
+        // Do this only once, for the keydown event.
+        if ('tool' in gkey) {
+          _self.toolActivate(gkey.tool);
+        }
+        break;
 
-    if (ev.type == 'keypress' && ev.preventDefault) {
-      ev.preventDefault();
+      case 'keypress':
+        ev.preventDefault();
     }
 
     // TODO: check if return is needed.
@@ -2280,14 +2269,14 @@ function PaintWeb (win_, doc_) {
     return true;
   };
 
-  this.toolSnapXY = function (ev, x, y) {
-    var diffx = Math.abs(ev.x_ - x),
-        diffy = Math.abs(ev.y_ - y);
+  this.toolSnapXY = function (x, y) {
+    var diffx = MathAbs(_self.mouse.x - x),
+        diffy = MathAbs(_self.mouse.y - y);
 
     if (diffx > diffy) {
-      ev.y_ = y;
+      _self.mouse.y = y;
     } else {
-      ev.x_ = x;
+      _self.mouse.x = x;
     }
   };
 

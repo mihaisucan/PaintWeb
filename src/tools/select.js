@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-07 22:25:35 +0300 $
+ * $Date: 2009-05-13 23:25:56 +0300 $
  */
 
 /**
@@ -42,6 +42,9 @@ PaintWebInstance.toolAdd('select', function (app) {
       inputs        = app.inputs,
       layerCanvas   = app.layer.canvas,
       layerContext  = app.layer.context,
+      MathAbs       = Math.abs,
+      MathMin       = Math.min,
+      MathRound     = Math.round,
       mouse         = app.mouse,
       snapXY        = app.toolSnapXY,
       statusShow    = app.statusShow;
@@ -383,8 +386,8 @@ PaintWebInstance.toolAdd('select', function (app) {
     }
 
     // Update the current mouse position, this is used as the start position for most of the operations.
-    x0 = ev.x_;
-    y0 = ev.y_;
+    x0 = mouse.x;
+    y0 = mouse.y;
 
     lineWidthUpdate();
 
@@ -500,7 +503,7 @@ PaintWebInstance.toolAdd('select', function (app) {
   this.mouseup = function (ev) {
     // Allow click+mousemove+click, not only mousedown+move+up
     if (_self.state != _self.STATE_PENDING &&
-        ev.x_ == x0 && ev.y_ == y0) {
+        mouse.x == x0 && mouse.y == y0) {
       return true;
     }
 
@@ -573,20 +576,20 @@ PaintWebInstance.toolAdd('select', function (app) {
    * selection information: x, y, width and height.
    */
   function selectionDraw (ev) {
-    var x = Math.min(ev.x_,  x0),
-        y = Math.min(ev.y_,  y0),
-        w = Math.abs(ev.x_ - x0),
-        h = Math.abs(ev.y_ - y0);
+    var x = MathMin(mouse.x,  x0),
+        y = MathMin(mouse.y,  y0),
+        w = MathAbs(mouse.x - x0),
+        h = MathAbs(mouse.y - y0);
 
     // Constrain the shape to a square.
     if (ev.shiftKey) {
       if (w > h) {
-        if (y == ev.y_) {
+        if (y == mouse.y) {
           y -= w-h;
         }
         h = w;
       } else {
-        if (x == ev.x_) {
+        if (x == mouse.x) {
           x -= h-w;
         }
         w = h;
@@ -618,13 +621,13 @@ PaintWebInstance.toolAdd('select', function (app) {
   function selectionDrag (ev) {
     // Snapping on the X/Y axis
     if (ev.shiftKey) {
-      snapXY(ev, x0, y0);
+      snapXY(x0, y0);
     }
 
     var sel = _self.selection;
 
-    var x = sel.x + ev.x_ - x0,
-        y = sel.y + ev.y_ - y0;
+    var x = sel.x + mouse.x - x0,
+        y = sel.y + mouse.y - y0;
 
     bufferContext.clearRect(0, 0, image.width, image.height);
 
@@ -660,8 +663,8 @@ PaintWebInstance.toolAdd('select', function (app) {
   function selectionResize (ev) {
     var sel = _self.selection;
 
-    var diffx = ev.x_ - x0,
-        diffy = ev.y_ - y0,
+    var diffx = mouse.x - x0,
+        diffy = mouse.y - y0,
         x     = sel.x,
         y     = sel.y,
         w     = sel.width,
@@ -718,10 +721,10 @@ PaintWebInstance.toolAdd('select', function (app) {
       switch (mouseResize.charAt(0)) {
         case 'n':
         case 's':
-          w2 = Math.round(h*p);
+          w2 = MathRound(h*p);
           break;
         default:
-          h2 = Math.round(w/p);
+          h2 = MathRound(w/p);
       }
 
       switch (mouseResize) {
@@ -786,29 +789,29 @@ PaintWebInstance.toolAdd('select', function (app) {
     mouseArea = 'out';
 
     // Inside the rectangle
-    if (ev.x_ <     x1 && ev.y_ <     y1 &&
-        ev.x_ > sel.x  && ev.y_ > sel.y) {
+    if (mouse.x <     x1 && mouse.y <     y1 &&
+        mouse.x > sel.x  && mouse.y > sel.y) {
       cursor = 'move';
       mouseArea = 'in';
 
     } else {
       // On one of the borders (north/south)
-      if (ev.x_ >= x0_out && ev.x_ <= x1_out &&
-          ev.y_ >= y0_out && ev.y_ <= sel.y) {
+      if (mouse.x >= x0_out && mouse.x <= x1_out &&
+          mouse.y >= y0_out && mouse.y <= sel.y) {
         cursor = 'n';
 
-      } else if (ev.x_ >= x0_out && ev.x_ <= x1_out &&
-                 ev.y_ >= y1     && ev.y_ <= y1_out) {
+      } else if (mouse.x >= x0_out && mouse.x <= x1_out &&
+                 mouse.y >= y1     && mouse.y <= y1_out) {
         cursor = 's';
       }
 
       // West/east
-      if (ev.y_ >= y0_out && ev.y_ <= y1_out &&
-          ev.x_ >= x0_out && ev.x_ <= sel.x) {
+      if (mouse.y >= y0_out && mouse.y <= y1_out &&
+          mouse.x >= x0_out && mouse.x <= sel.x) {
         cursor += 'w';
 
-      } else if (ev.y_ >= y0_out && ev.y_ <= y1_out &&
-                 ev.x_ >= x1     && ev.x_ <= x1_out) {
+      } else if (mouse.y >= y0_out && mouse.y <= y1_out &&
+                 mouse.x >= x1     && mouse.x <= x1_out) {
         cursor += 'e';
       }
 
@@ -1062,8 +1065,8 @@ PaintWebInstance.toolAdd('select', function (app) {
 
     // The default position for the pasted image is the top left corner of the 
     // visible area, taking into consideration the zoom level.
-    var x   = Math.round(elems.container.scrollLeft / image.zoom),
-        y   = Math.round(elems.container.scrollTop  / image.zoom),
+    var x   = MathRound(elems.container.scrollLeft / image.zoom),
+        y   = MathRound(elems.container.scrollTop  / image.zoom),
         w   = app.clipboard.width,
         h   = app.clipboard.height,
         sel = _self.selection;

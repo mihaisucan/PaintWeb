@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-07 22:25:07 +0300 $
+ * $Date: 2009-05-13 21:03:35 +0300 $
  */
 
 /**
@@ -36,6 +36,7 @@ PaintWebInstance.toolAdd('drag', function (app) {
       canvasStyle  = app.buffer.canvas.style,
       container    = app.elems.container,
       image        = app.image,
+      MathRound    = Math.round,
       mouse        = app.mouse,
       toolActivate = app.toolActivate;
 
@@ -69,12 +70,10 @@ PaintWebInstance.toolAdd('drag', function (app) {
 
   /**
    * Initialize the canvas drag.
-   *
-   * @param {Event} ev The DOM Event object.
    */
-  this.mousedown = function (ev) {
-    x0 = Math.round(ev.x_ * image.zoom);
-    y0 = Math.round(ev.y_ * image.zoom);
+  this.mousedown = function () {
+    x0 = MathRound(mouse.x * image.zoom);
+    y0 = MathRound(mouse.y * image.zoom);
   };
 
   /**
@@ -82,16 +81,14 @@ PaintWebInstance.toolAdd('drag', function (app) {
    *
    * <p>Press <kbd>Escape</kbd> to stop dragging and to get back to the previous 
    * tool.
-   *
-   * @param {Event} ev The DOM Event object.
    */
-  this.mousemove = function (ev) {
+  this.mousemove = function () {
     if (!mouse.buttonDown) {
       return false;
     }
 
-    var dx = Math.round(ev.x_ * image.zoom) - x0,
-        dy = Math.round(ev.y_ * image.zoom) - y0;
+    var dx = MathRound(mouse.x * image.zoom) - x0,
+        dy = MathRound(mouse.y * image.zoom) - y0;
 
     container.scrollTop  -= dy;
     container.scrollLeft -= dx;

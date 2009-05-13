@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-07 22:26:54 +0300 $
+ * $Date: 2009-05-13 23:14:38 +0300 $
  */
 
 /**
@@ -59,12 +59,10 @@ PaintWebInstance.toolAdd('line', function (app) {
   /**
    * Initialize the drawing operation, by storing the location of the pointer, 
    * the start position.
-   *
-   * @param {Event} ev The DOM Event object.
    */
-  this.mousedown = function (ev) {
-    x0 = ev.x_;
-    y0 = ev.y_;
+  this.mousedown = function () {
+    x0 = mouse.x;
+    y0 = mouse.y;
 
     statusShow('lineMousedown');
 
@@ -89,12 +87,12 @@ PaintWebInstance.toolAdd('line', function (app) {
 
     // Snapping on the X/Y axis.
     if (ev.shiftKey) {
-      snapXY(ev, x0, y0);
+      snapXY(x0, y0);
     }
 
     context.beginPath();
     context.moveTo(x0, y0);
-    context.lineTo(ev.x_, ev.y_);
+    context.lineTo(mouse.x, mouse.y);
     context.stroke();
     context.closePath();
 
@@ -103,16 +101,10 @@ PaintWebInstance.toolAdd('line', function (app) {
 
   /**
    * End the drawing operation, once the user releases the mouse button.
-   *
-   * @param {Event} ev The DOM Event object.
    */
-  this.mouseup = function (ev) {
-    if (!mouse.buttonDown) {
-      return false;
-    }
-
+  this.mouseup = function () {
     // FIXME: Allow users to click then drag, not only mousedown+drag+mouseup.
-    /*if (ev.x_ == x0 && ev.y_ == y0) {
+    /*if (mouse.x == x0 && mouse.y == y0) {
       return true;
     }*/
 

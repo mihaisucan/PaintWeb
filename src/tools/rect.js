@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-07 22:26:41 +0300 $
+ * $Date: 2009-05-13 23:16:37 +0300 $
  */
 
 /**
@@ -35,6 +35,8 @@ PaintWebInstance.toolAdd('rect', function (app) {
       context     = app.buffer.context,
       image       = app.image,
       layerUpdate = app.layerUpdate,
+      MathAbs     = Math.abs,
+      MathMin     = Math.min,
       mouse       = app.mouse,
       statusShow  = app.statusShow;
 
@@ -59,12 +61,10 @@ PaintWebInstance.toolAdd('rect', function (app) {
   /**
    * Initialize the drawing operation, by storing the location of the pointer, 
    * the start position.
-   *
-   * @param {Event} ev The DOM Event object.
    */
-  this.mousedown = function (ev) {
-    x0 = ev.x_;
-    y0 = ev.y_;
+  this.mousedown = function () {
+    x0 = mouse.x;
+    y0 = mouse.y;
 
     statusShow('rectMousedown');
 
@@ -86,10 +86,10 @@ PaintWebInstance.toolAdd('rect', function (app) {
 
     context.clearRect(0, 0, image.width, image.height);
 
-    var x = Math.min(ev.x_,  x0),
-        y = Math.min(ev.y_,  y0),
-        w = Math.abs(ev.x_ - x0),
-        h = Math.abs(ev.y_ - y0);
+    var x = MathMin(mouse.x,  x0),
+        y = MathMin(mouse.y,  y0),
+        w = MathAbs(mouse.x - x0),
+        h = MathAbs(mouse.y - y0);
 
     if (!w || !h) {
       return false;
@@ -98,12 +98,12 @@ PaintWebInstance.toolAdd('rect', function (app) {
     // Constrain the shape to a square
     if (ev.shiftKey) {
       if (w > h) {
-        if (y == ev.y_) {
+        if (y == mouse.y) {
           y -= w-h;
         }
         h = w;
       } else {
-        if (x == ev.x_) {
+        if (x == mouse.x) {
           x -= h-w;
         }
         w = h;
@@ -123,16 +123,10 @@ PaintWebInstance.toolAdd('rect', function (app) {
 
   /**
    * End the drawing operation, once the user releases the mouse button.
-   *
-   * @param {Event} ev The DOM Event object.
    */
-  this.mouseup = function (ev) {
-    if (!mouse.buttonDown) {
-      return false;
-    }
-
+  this.mouseup = function () {
     // FIXME: Allow click+mousemove, not only mousedown+move+up
-    /*if (ev.x_ == x0 && ev.y_ == y0) {
+    /*if (mouse.x == x0 && mouse.y == y0) {
       return true;
     }*/
 

@@ -2,7 +2,9 @@
 ===========
 
 - Performance testing on the OLPC XO-1 laptop. Check tests/gsoc2009/0001-perf.
-- Improved the performance of the pencil drawing tool.
+- Improved the performance of the pencil and of the eraser drawing tools.
+- Improved performance of ev_keyboard and ev_canvas.
+- Improved performance of the MouseKeys extension.
 
 2009-05-08:
 ===========

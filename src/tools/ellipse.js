@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-07 22:26:07 +0300 $
+ * $Date: 2009-05-13 21:06:23 +0300 $
  */
 
 /**
@@ -34,6 +34,8 @@ PaintWebInstance.toolAdd('ellipse', function (app) {
   var _self       = this,
       config      = app.config,
       context     = app.buffer.context,
+      MathMin     = Math.min,
+      MathMax     = Math.max,
       mouse       = app.mouse,
       image       = app.image,
       layerUpdate = app.layerUpdate,
@@ -63,13 +65,11 @@ PaintWebInstance.toolAdd('ellipse', function (app) {
   /**
    * Initialize the drawing operation, by storing the location of the pointer, 
    * the start position.
-   *
-   * @param {Event} ev The DOM Event object.
    */
-  this.mousedown = function (ev) {
+  this.mousedown = function () {
     // The mouse start position
-    x0 = ev.x_;
-    y0 = ev.y_;
+    x0 = mouse.x;
+    y0 = mouse.y;
 
     statusShow('ellipseMousedown');
 
@@ -91,10 +91,10 @@ PaintWebInstance.toolAdd('ellipse', function (app) {
 
     context.clearRect(0, 0, image.width, image.height);
 
-    var rectx0 = Math.min(ev.x_, x0),
-        rectx1 = Math.max(ev.x_, x0),
-        recty0 = Math.min(ev.y_, y0),
-        recty1 = Math.max(ev.y_, y0);
+    var rectx0 = MathMin(mouse.x, x0),
+        rectx1 = MathMax(mouse.x, x0),
+        recty0 = MathMin(mouse.y, y0),
+        recty1 = MathMax(mouse.y, y0);
 
     /*
       ABCD - rectangle
@@ -112,14 +112,14 @@ PaintWebInstance.toolAdd('ellipse', function (app) {
     if (ev.shiftKey) {
       if (w > h) {
         recty1 = recty0+w;
-        if (recty0 == ev.y_) {
+        if (recty0 == mouse.y) {
           recty0 -= w-h;
           recty1 -= w-h;
         }
         h = w;
       } else {
         rectx1 = rectx0+h;
-        if (rectx0 == ev.x_) {
+        if (rectx0 == mouse.x) {
           rectx0 -= h-w;
           rectx1 -= h-w;
         }
@@ -165,16 +165,10 @@ PaintWebInstance.toolAdd('ellipse', function (app) {
 
   /**
    * End the drawing operation, once the user releases the mouse button.
-   *
-   * @param {Event} ev The DOM Event object.
    */
-  this.mouseup = function (ev) {
-    if (!mouse.buttonDown) {
-      return false;
-    }
-
+  this.mouseup = function () {
     // FIXME: Allow click+mousemove, not only mousedown+move+up
-    /*if (ev.x_ == x0 && ev.y_ == y0) {
+    /*if (mouse.x == x0 && mouse.y == y0) {
       return true;
     }*/
 

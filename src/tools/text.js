@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-07 22:23:50 +0300 $
+ * $Date: 2009-05-13 23:23:31 +0300 $
  */
 
 /**
@@ -68,22 +68,6 @@ PaintWebInstance.toolAdd('text', function (app) {
   elems.textOptions.className = '';
 
   /**
-   * The event handler for the text field and the other text options.
-   *
-   * @param {Event} ev The DOM Event object.
-   */
-  this.textUpdate = function (ev) {
-    if (!ev) {
-      ev = {};
-    }
-
-    ev.x_ = mouse.x;
-    ev.y_ = mouse.y;
-
-    _self.mousemove(ev);
-  };
-
-  /**
    * Setup the <code>textUpdate()</code> event handler for several inputs. This 
    * allows the text rendering to be updated automatically when some value 
    * changes.
@@ -115,25 +99,22 @@ PaintWebInstance.toolAdd('text', function (app) {
     }
   };
 
-  setup('add');
-
   /**
    * The <code>mousemove</code> event handler. This method tracks the mouse 
    * location and updates the text accordingly.
-   *
-   * @param {Event} ev The DOM Event object.
    */
-  this.mousemove = function (ev) {
+  this.mousemove = function () {
     context.clearRect(0, 0, image.width, image.height);
 
     if (config.shapeType != 'stroke') {
-      context.fillText(inputs.textString.value, ev.x_, ev.y_);
+      context.fillText(inputs.textString.value, mouse.x, mouse.y);
     }
 
     if (config.shapeType != 'fill') {
-      context.strokeText(inputs.textString.value, ev.x_, ev.y_);
+      context.strokeText(inputs.textString.value, mouse.x, mouse.y);
     }
   };
+  this.textUpdate = this.mousemove;
 
   /**
    * The <code>click</code> event handler. This method completes the drawing 
@@ -143,7 +124,7 @@ PaintWebInstance.toolAdd('text', function (app) {
    * @param {Event} ev The DOM Event object.
    */
   this.click = function (ev) {
-    _self.mousemove(ev);
+    _self.mousemove();
 
     layerUpdate();
 
@@ -196,6 +177,8 @@ PaintWebInstance.toolAdd('text', function (app) {
 
     return true;
   };
+
+  setup('add');
 
   // TODO: check this..
   return true;

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-07 22:26:26 +0300 $
+ * $Date: 2009-05-13 20:51:25 +0300 $
  */
 
 /**
@@ -75,10 +75,6 @@ PaintWebInstance.toolAdd('curve', function (app) {
    * @param {Event} ev The DOM Event object.
    */
   this.mouseup = function (ev) {
-    if (!mouse.buttonDown) {
-      return false;
-    }
-
     if (_self.points.length == 0) {
       statusShow('curveSnapping');
     }
@@ -86,7 +82,7 @@ PaintWebInstance.toolAdd('curve', function (app) {
     if (_self.points.length == 1) {
       // Snapping on the X/Y axis for the current point.
       if (ev.shiftKey) {
-        snapXY(ev, _self.points[0][0], _self.points[0][1]);
+        snapXY(_self.points[0][0], _self.points[0][1]);
       }
 
       statusShow('curveActive');
@@ -94,7 +90,7 @@ PaintWebInstance.toolAdd('curve', function (app) {
 
     // We need 4 points to draw the Bézier curve: start, end, and two control points.
     if (_self.points.length < 4) {
-      _self.points.push([ev.x_, ev.y_]);
+      _self.points.push([mouse.x, mouse.y]);
 
       if (!_self.draw()) {
         return false;
@@ -140,14 +136,14 @@ PaintWebInstance.toolAdd('curve', function (app) {
     if (n == 2) {
       // Snapping on the X/Y axis for the current point (if available).
       if (ev && ev.shiftKey) {
-        snapXY(ev, p[0][0], p[0][1]);
+        snapXY(p[0][0], p[0][1]);
       }
 
       context.beginPath();
       context.moveTo(p[0][0], p[0][1]+2);
       i = p[1];
       if (!i) {
-        i = [ev.x_, ev.y_];
+        i = [mouse.x, mouse.y];
       }
       context.lineTo(i[0], i[1]+2);
       context.lineWidth = 1;
@@ -165,7 +161,7 @@ PaintWebInstance.toolAdd('curve', function (app) {
       for (i = 0; i < n; i++) {
         y = p[i];
         if (!y) {
-          y = [ev.x_, ev.y_];
+          y = [mouse.x, mouse.y];
         }
 
         context.fillRect(y[0], y[1], 4, 4);
@@ -183,7 +179,7 @@ PaintWebInstance.toolAdd('curve', function (app) {
     if (!p4) {
       // If the fourth point is not available, then use the current event or the third point.
       if (ev) {
-        p4 = [ev.x_, ev.y_];
+        p4 = [mouse.x, mouse.y];
       } else {
         p4 = p[2];
       }
@@ -191,7 +187,7 @@ PaintWebInstance.toolAdd('curve', function (app) {
 
     var p3 = p[2];
     if (!p3) {
-      p3 = [ev.x_, ev.y_];
+      p3 = [mouse.x, mouse.y];
     }
 
     context.beginPath();
