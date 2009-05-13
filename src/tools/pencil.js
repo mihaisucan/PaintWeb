@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-07 22:27:02 +0300 $
+ * $Date: 2009-05-09 19:28:09 +0300 $
  */
 
 /**
@@ -31,14 +31,14 @@
  * @param {PaintWeb} app Reference to the main paint application object.
  */
 PaintWebInstance.toolAdd('pencil', function (app) {
-  var context     = app.buffer.context,
+  var _self       = this,
+      context     = app.buffer.context,
       layerUpdate = app.layerUpdate,
-      mouse       = app.mouse,
-      image       = app.image;
+      mouse       = app.mouse;
 
   /**
-   * Holds the starting point on the <var>x</var> axis of the image, for the 
-   * current drawing operation.
+   * Holds the last point on the <var>x</var> axis of the image, for the current 
+   * drawing operation.
    *
    * @private
    * @type Number
@@ -46,21 +46,13 @@ PaintWebInstance.toolAdd('pencil', function (app) {
   var x0 = 0;
 
   /**
-   * Holds the starting point on the <var>y</var> axis of the image, for the 
-   * current drawing operation.
+   * Holds the last point on the <var>y</var> axis of the image, for the current 
+   * drawing operation.
    *
    * @private
    * @type Number
    */
   var y0 = 0;
-
-  this.deactivate = function () {
-    if (mouse.buttonDown) {
-      context.closePath();
-    }
-
-    return true;
-  };
 
   /**
    * Initialize the drawing operation.
@@ -70,9 +62,6 @@ PaintWebInstance.toolAdd('pencil', function (app) {
   this.mousedown = function (ev) {
     x0 = ev.x_;
     y0 = ev.y_;
-
-    context.beginPath();
-    context.moveTo(ev.x_, ev.y_);
 
     return true;
   };
@@ -87,9 +76,14 @@ PaintWebInstance.toolAdd('pencil', function (app) {
       return false;
     }
 
-    context.clearRect(0, 0, image.width, image.height);
+    context.beginPath();
+    context.moveTo(x0, y0);
     context.lineTo(ev.x_, ev.y_);
     context.stroke();
+    context.closePath();
+
+    x0 = ev.x_;
+    y0 = ev.y_;
 
     return true;
   };
@@ -101,11 +95,11 @@ PaintWebInstance.toolAdd('pencil', function (app) {
    */
   this.mouseup = function (ev) {
     if (ev.x_ == x0 && ev.y_ == y0) {
-      context.lineTo(ev.x_, ev.y_ + 1);
-      context.stroke();
+      ev.x_++;
+      ev.y_++;
+      _self.mousemove(ev);
     }
 
-    context.closePath();
     layerUpdate();
 
     return true;

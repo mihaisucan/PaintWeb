@@ -1,3 +1,9 @@
+2009-05-13:
+===========
+
+- Performance testing on the OLPC XO-1 laptop. Check tests/gsoc2009/0001-perf.
+- Improved the performance of the pencil drawing tool.
+
 2009-05-08:
 ===========
 

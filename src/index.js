@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-08 15:26:30 +0300 $
+ * $Date: 2009-05-09 20:31:47 +0300 $
  */
 
 /**
@@ -155,7 +155,7 @@ function PaintWeb (win_, doc_) {
   this.doc = doc_ || document;
 
   /**
-   * The document element we will be working with.
+   * The window object we will be working with.
    *
    * @private
    * @type Window

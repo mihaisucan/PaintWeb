@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-08 15:04:08 +0300 $
+ * $Date: 2009-05-08 15:36:10 +0300 $
  */
 
 body {
@@ -1056,4 +1056,6 @@ label
 #textAlign-right {
   background-image: url("images/buttons/text-right.png");
 }
+
+/* vim:set fo=wan1croql tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix: */
 

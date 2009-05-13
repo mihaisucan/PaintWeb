@@ -1,0 +1,804 @@
+$URL: http://code.google.com/p/paintweb $
+$Date: 2009-05-13 15:03:18 +0300 $
+
+Minimal tests for the purpose of optimizing drawing on the OLPC XO.
+
+Profiling is done by a minimal library I wrote.
+
+Performance testing is done by a minimal test suite, found in common.js.  The 
+tester simply dispatches synthetic mousedown, mousemove and mouseup events to 
+the canvas element. By default, about 10000 such events are dispatched for good 
+measure.
+
+Test machines:
+
+- AMD Athlon XP 1800+, 1.53 Ghz, 1 GB RAM, Nvidia Geforce 6600GS with 128 MB 
+memory. The operating system is Ubuntu 9.04 with all the latest updates, fairly 
+clean set of repos, nothing messy.
+
+- OLPC XO-1, some AMD 400Mhz CPU, 256 MB memory. Check the online specs for 
+further details. The operating system is the latest stable release build 767 
+version 8.2.0.
+
+Test browsers:
+
+- Firefox 3.5 nightly (20090511), with Firebug 1.4 (latest alpha).
+- Opera 10 alpha build 4340 (latest weekly builds).
+- Midori 0.6.4 (latest PPA build). Uses the Webkit engine, the same as Safari 
+4 and Google Chrome 2.
+- Konqueror 4.2.2 (default from KUbuntu repos). This uses its own render engine, 
+  KHTML.
+
+
+Tests
+=====
+
+
+test1
+-----
+
+The starting code. This is what we have and we want to optimize. It's a drawing 
+pencil.
+
+Tool.mousedown starts drawing a stroked path which is extended with each mouse 
+move (see tool.mousemove). In mouseup we close the path.
+
+Firefox profiling results:
+  Entire test:
+    runTime:
+      Athlon: 94345 ms
+      XO: 45492 ms
+    ownTime:
+      Athlon: 3184 ms
+      XO: 12560 ms
+
+  ev_canvas:
+    Avg ownTime / call:
+      Athlon: 0.0520 ms
+      XO: 0.3077 ms
+    Avg runTime / call:
+      Athlon: 8.9319 ms
+      XO: 3.0024 ms
+    Calls: 10168
+    runTime:
+      Athlon: 90820 ms
+      XO: 30529 ms
+    ownTime:
+      Athlon: 529 ms
+      XO: 3129 ms
+
+  pencil.mousedown:
+    Avg runTime / call:
+      Athlon: 0.0714 ms
+      XO: 0.1428 ms
+    Calls: 84
+    Max runTime / call: 1 ms
+    runTime:
+      Athlon: 2 ms
+      XO: 12 ms
+
+  pencil.mousemove:
+    Avg runTime / call:
+      Athlon: 8.9079 ms
+      XO: 2.4460 ms
+    Calls: 10084
+    Max runTime / call:
+      Athlon: 271 ms
+      XO: 51 ms
+    Min runTime / call: 0 ms
+    runTime:
+      Athlon: 89828 ms
+      XO: 24666 ms
+
+  pencil.mouseup:
+    Avg ownTime / call:
+      Athlon: 0.0476 ms
+      XO: 0.1547 ms
+    Avg runTime / call:
+      Athlon: 17.8452 ms
+      XO: 4.0833 ms
+    Calls: 84
+    Max ownTime / call: 1 ms
+    Max runTime / call:
+      Athlon: 57 ms
+      XO: 17 ms
+    Min ownTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime:
+      Athlon: 1499 ms
+      XO: 343 ms
+    ownTime:
+      Athlon: 4 ms
+      XO: 13 ms
+
+Opera profiling results:
+
+  Entire test:
+    runTime:
+      Athlon: 32095 ms
+      XO: 62472 ms
+    ownTime:
+      Athlon: 2843 ms
+      XO: 5903 ms
+
+  ev_canvas:
+    Avg ownTime / call:
+      Athlon: 0.0309 ms
+      XO: 0.1303 ms
+    Avg runTime / call:
+      Athlon: 2.8584 ms
+      XO: 5.4676 ms
+    Calls: 10168
+    Max ownTime / call:
+      Athlon: 15 ms
+      XO: 2 ms
+    Max runTime / call:
+      Athlon: 32 ms
+      XO: 119 ms
+    Min ownTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime:
+      Athlon: 29065 ms
+      XO: 55595 ms
+    ownTime:
+      Athlon: 315 ms
+      XO: 1325 ms
+
+  pencil.mousedown:
+    Avg runTime / call:
+      Athlon: 0.0238 ms
+      XO: 0.0714 ms
+    Calls: 84
+    Max runTime / call: 1 ms
+    Min runTime / call: 0 ms
+    runTime:
+      Athlon: 2 ms
+      XO: 6 ms
+
+  pencil.mousemove:
+    Avg runTime / call:
+      Athlon: 2.8155 ms
+      XO: 5.2739 ms
+    Calls: 10084
+    Max runTime / call:
+      Athlon: 32 ms
+      XO: 119 ms
+    Min runTime / call: 0 ms
+    runTime:
+      Athlon: 28392 ms
+      XO: 53183 ms
+
+  pencil.mouseup:
+    Avg ownTime / call:
+      Athlon: 0.0476 ms
+      XO: 0.1071 ms
+    Avg runTime / call:
+      Athlon: 2.9523 ms
+      XO: 6.2619 ms
+    Calls: 84
+    Max ownTime / call: 1 ms
+    Max runTime / call:
+      Athlon: 4 ms
+      XO: 8 ms
+    Min ownTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime:
+      Athlon: 248 ms
+      XO: 526 ms
+    ownTime:
+      Athlon: 4 ms
+      XO: 9 ms
+
+Midori (Webkit) profiling results (only on Athlon):
+
+  Entire test:
+    runTime: 24943 ms
+    ownTime: 1432 ms
+
+  ev_canvas:
+    Avg ownTime / call: 0.0258 ms
+    Avg runTime / call: 2.3001 ms
+    Calls: 10168
+    Max ownTime / call: 3 ms
+    Max runTime / call: 39 ms
+    Min ownTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime: 23388 ms
+    ownTime: 263 ms
+
+  pencil.mousedown:
+    Avg runTime / call: 0.0119 ms
+    Calls: 84
+    Max runTime / call: 1 ms
+    Min runTime / call: 0 ms
+    runTime: 1 ms
+
+  pencil.mousemove:
+    Avg runTime / call: 2.2581 ms
+    Calls: 10084
+    Max runTime / call: 39 ms
+    Min runTime / call: 0 ms
+    runTime: 22771 ms
+
+  pencil.mouseup:
+    Avg ownTime / call: 0.0238 ms
+    Avg runTime / call: 2.9285 ms
+    Calls: 84
+    Max ownTime / call: 1 ms
+    Max runTime / call: 5 ms
+    Min ownTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime: 246 ms
+    ownTime: 2 ms
+
+Konqueror profiling results:
+
+  Entire test:
+    runTime: 15482 ms
+    ownTime: 3016 ms
+
+  ev_canvas:
+    Avg ownTime / call: 0.0986 ms
+    Avg runTime / call: 1.1396 ms
+    Calls: 10168
+    Max ownTime / call: 16 ms
+    Max runTime / call: 38 ms
+    Min ownTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime: 11588 ms
+    ownTime: 1003 ms
+
+  pencil.mousedown:
+    Avg runTime / call: 0.0714 ms
+    Calls: 84
+    Max runTime / call: 1 ms
+    Min runTime / call: 0 ms
+    runTime: 6 ms
+
+  pencil.mousemove:
+    Avg runTime / call: 0.9577 ms
+    Calls: 10084
+    Max runTime / call: 37 ms
+    Min runTime / call: 0 ms
+    runTime: 9658 ms
+
+  pencil.mouseup:
+    Avg ownTime / call: 0.1309 ms
+    Avg runTime / call: 1.9642 ms
+    Calls: 84
+    Max ownTime / call: 1 ms
+    Max runTime / call: 3 ms
+    Min ownTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime: 165 ms
+    ownTime: 11 ms
+
+So, the rundown is:
+
+  - Firefox took 94 seconds on Athlon, 45 seconds on the XO. Drawing is much 
+  faster than JS.
+  - Opera took 32 seconds on Athlon, 62 seconds on the XO. Drawing is not as 
+  optimized as in Firefox on the XO. However, on the desktop, Opera is faster in 
+  rendering and JS code execution.
+  - Webkit took 24 seconds on Athlon. Faster JS code execution and faster 
+  rendering than both Opera and Firefox.
+  - Konqueror took only 15 seconds on Athlon. Yay for KDE devs! Drawing was much 
+  faster than JS code execution, actually.
+
+Gecko and Webkit optimize canvas rendering, by not rendering anything too much 
+when the path becomes too long. In Gecko this looks like a freeze which gets 
+longer and longer, eh.
+
+Midori is just a "cutting-edge" way for myself to keep up with Webkit on Linux.  
+I don't think it's worth testing on the XO, unless you guys have plans to switch 
+to Webkit - which is, btw, much faster than Gecko.
+
+As you can see, Gecko is the slowest of all, on Athlon. Konqueror, surprisingly, 
+   is the fastest.
+
+I was very amazed to see the XO outperforming Athlon when it comes to actual 
+drawing. The browser activity seems quite heavily optimized for rendering, since 
+it outperforms even Opera on Athlon. Albeit, Konqueror is the king. ;)
+
+Based on this test alone I can say the XO default browser needs heavy JS engine 
+performance improvements. The test execution ownTime shows how slow the test 
+script ran.
+
+test2
+-----
+
+Instead of having a single looong path, the new drawing tool simply starts and 
+ends a path in each mouse move events. This achieves a nice result: all browsers 
+render the path with the same speed, constantly.
+
+Gecko no longer freezes in this test case. It runs smooth constantly. This 
+change improved the drawing performance quite much. The same goes for Webkit.
+
+On the XO, the pencil drawing use is smoother and usable now in Opera. Note this 
+is debugging code. In Firefox, the drawing operation doesn't slow down to 
+a halt, it's constantly at an okish speed, but still quite slower than Opera.
+
+Firefox profiling results:
+
+  Entire test:
+    runTime:
+      Athlon: 4940 ms
+      XO: 21761 ms
+    ownTime:
+      Athlon: 2616 ms
+      XO: 8709 ms
+
+  ev_canvas:
+    Avg ownTime / call:
+      Athlon: 0.0489 ms
+      XO: 0.2237 ms
+    Avg runTime / call:
+      Athlon: 0.1973 ms
+      XO: 1.0843 ms
+    Calls: 10168
+    Max ownTime / call:
+      Athlon: 14 ms
+      XO: 2 ms
+    Max runTime / call:
+      Athlon: 15 ms
+      XO: 24 ms
+    Min ownTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime:
+      Athlon: 2007 ms
+      XO: 11026 ms
+    ownTime:
+      Athlon: 498 ms
+      XO: 2275 ms
+
+  pencil.mousedown:
+    Avg runTime / call:
+      Athlon: 0 ms
+      XO: 0.0952 ms
+    Calls: 84
+    Max runTime / call:
+      Athlon: 0 ms
+      XO: 1 ms
+    Min runTime / call: 0 ms
+    runTime:
+      Athlon: 0 ms
+      XO: 8 ms
+
+  pencil.mousemove:
+    Avg runTime / call:
+      Athlon: 0.1137 ms
+      XO: 0.6660 ms
+    Calls: 10084
+    Max runTime / call:
+      Athlon: 11 ms
+      XO: 24 ms
+    Min runTime / call: 0 ms
+    runTime:
+      Athlon: 1147 ms
+      XO: 6716 ms
+
+  pencil.mouseup:
+    Avg ownTime / call:
+      Athlon: 0.0357 ms
+      XO: 0.1190 ms
+    Avg runTime / call:
+      Athlon: 0.25 ms
+      XO: 2.3928 ms
+    Calls: 84
+    Max ownTime / call: 1 ms
+    Max runTime / call:
+      Athlon: 2 ms
+      XO: 15 ms
+    Min ownTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime:
+      Athlon: 21 ms
+      XO: 201 ms
+    ownTime:
+      Athlon: 3 ms
+      XO: 10 ms
+
+Opera profiling results:
+
+  Entire test:
+    runTime:
+      Athlon: 1936 ms
+      XO: 10289 ms
+    ownTime:
+      Athlon: 1082 ms
+      XO: 5087 ms
+
+  ev_canvas:
+    Avg ownTime / call:
+      Athlon: 0.0213 ms
+      XO: 0.1328 ms
+    Avg runTime / call:
+      Athlon: 0.0689 ms
+      XO: 0.417 ms
+    Calls: 10168
+    Max ownTime / call: 1 ms
+    Max runTime / call: 3 ms
+    Min ownTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime:
+      Athlon: 701 ms
+      XO: 4241 ms
+    ownTime:
+      Athlon: 217 ms
+      XO: 1351 ms
+
+  pencil.mousedown:
+    Avg runTime / call:
+      Athlon: 0 ms
+      XO: 0.0238 ms
+    Calls: 84
+    Max runTime / call:
+      Athlon: 0 ms
+      XO: 1 ms
+    Min runTime / call: 0 ms
+    runTime:
+      Athlon: 0 ms
+      XO: 2 ms
+
+  pencil.mousemove:
+    Avg runTime / call:
+      Athlon: 0.0315 ms
+      XO: 0.1849 ms
+    Calls: 10084
+    Max runTime / call: 3 ms
+    Min runTime / call: 0 ms
+    runTime:
+      Athlon: 318 ms
+      XO: 1865 ms
+
+  pencil.mouseup:
+    Avg ownTime / call:
+      Athlon: 0.0357 ms
+      XO: 0.1428 ms
+    Avg runTime / call:
+      Athlon: 0.1666 ms
+      XO: 0.8333 ms
+    Calls: 84
+    Max ownTime / call: 1 ms
+    Max runTime / call: 1 ms
+    Min ownTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime:
+      Athlon: 14 ms
+      XO: 70 ms
+    ownTime:
+      Athlon: 3 ms
+      XO: 12 ms
+
+Midori (Webkit) profiling results on Athlon:
+
+  Entire test:
+    runTime: 850 ms
+    ownTime: 283 ms
+
+  ev_canvas:
+    Avg ownTime / call: 0.0095 ms
+    Avg runTime / call: 0.0494 ms
+    Calls: 10168
+    Max ownTime / call: 5 ms
+    Max runTime / call: 5 ms
+    Min ownTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime: 503 ms
+    ownTime: 97 ms
+
+  pencil.mousedown:
+    Avg runTime / call: 0 ms
+    Calls: 84
+    Max runTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime: 0 ms
+
+  pencil.mousemove:
+    Avg runTime / call: 0.0296 ms
+    Calls: 10084
+    Max runTime / call: 3 ms
+    Min runTime / call: 0 ms
+    runTime: 299 ms
+
+  pencil.mouseup:
+    Avg ownTime / call: 0.0119 ms
+    Avg runTime / call: 0.2380 ms
+    Calls: 84
+    Max ownTime / call: 1 ms
+    Max runTime / call: 1 ms
+    Min ownTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime: 20 ms
+    ownTime: 1 ms
+
+Konqueror profiling results on Athlon:
+
+  Entire test:
+    runTime: 7763 ms
+    ownTime: 3032 ms
+
+  ev_canvas:
+    Avg ownTime / call: 0.1119 ms
+    Avg runTime / call: 0.3784 ms
+    Calls: 10168
+    Max ownTime / call: 37 ms
+    Max runTime / call: 38 ms
+    Min ownTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime: 3848 ms
+    ownTime: 1138 ms
+
+  pencil.mousedown:
+    Avg runTime / call: 0.0238 ms
+    Calls: 84
+    Max runTime / call: 1 ms
+    Min runTime / call: 0 ms
+    runTime: 2 ms
+
+  pencil.mousemove:
+    Avg runTime / call: 0.1762 ms
+    Calls: 10084
+    Max runTime / call: 27 ms
+    Min runTime / call: 0 ms
+    runTime: 1777 ms
+
+  pencil.mouseup:
+    Avg ownTime / call: 0.1309 ms
+    Avg runTime / call: 1.0357 ms
+    Calls: 84
+    Max ownTime / call: 2 ms
+    Max runTime / call: 3 ms
+    Min ownTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime: 87 ms
+    ownTime: 11 ms
+
+So, the rundown is:
+  - Firefox took 4.9 seconds on Athlon, and 21 seconds on the XO. Again, JS is 
+  slow on the XO.
+  - Opera took 1.9 seconds on Athlon, and 10 seconds on the XO. Looks like now 
+  Opera is faster on the XO as well, compared to Firefox.
+  - Webkit took merely 0.8 seconds on Athlon.
+  - Konqueror took 7.7 seconds.
+
+test3:
+-----
+
+In this test we merge ev_canvas into tool.mousedown/mousemove/mouseup.
+
+Note: this is not an option we can use in PaintWeb. Just perf testing. ;)
+
+Firefox profiling results:
+
+  Entire test:
+    runTime:
+      Athlon: 3589 ms (1.5 seconds faster)
+      XO: 18013 ms (3 seconds faster)
+    ownTime:
+      Athlon: 2287 ms (0.4 seconds faster)
+      XO: 8837 ms (0.1 seconds faster)
+
+Opera profiling results:
+
+  Entire test:
+    runTime:
+      Athlon: 1533 ms (0.3 seconds faster)
+      XO: 7944 ms (2.1 seconds faster)
+    ownTime:
+      Athlon: 1027 ms (the same)
+      XO: 5097 ms (the same)
+
+Midori (Webkit) profiling results on Athlon:
+
+  Entire test:
+    runTime: 662 ms (0.2 seconds faster)
+    ownTime: 260 ms (the same)
+
+Konqueror profiling results on Athlon:
+
+  Entire test:
+    runTime: 5191 ms (2.6 seconds faster)
+    ownTime: 2566 ms (0.5 seconds faster)
+
+Once again, Webkit is the fastest.
+
+The performance wins are not important. I get such variances when running the 
+test multiple times. Additionally, these improvements are far from important 
+when simply drawing with the mouse (here we do 100000 calls).
+
+
+test4:
+-----
+
+The same as test3, but with no layerX/offsetX checks, just the raw code. You 
+cannot use the mouse to draw - you can only run the test.
+
+No actual performance enhancement noticed.
+
+
+test5:
+-----
+
+The same as test3, but with no profiling code for each drawing function. The 
+only profiling done is for the actual test run.
+
+This test runs, naturally, faster than test3.
+
+Firefox profiling results:
+
+  Entire test took:
+    Athlon: 2243 ms (1.3 seconds faster)
+    XO: 13421 ms (5 seconds faster)
+
+Opera profiling results:
+
+  Entire test:
+    Athlon: 1002 ms (0.5 seconds faster)
+    XO: 5494 ms (2.4 seconds faster)
+
+Midori (Webkit) took only 0.4 seconds on Athlon, about 0.2 seconds faster.
+
+Konqueror took 2514 ms on Athlon, about 2.6 seconds faster.
+
+So, the profiler slows things. Doh.
+
+test6:
+-----
+
+I took test2 and changed ev_canvas() to be that of PaintWeb, with all the 
+additional checks it does.
+
+Firefox profiling results:
+
+  Entire test:
+    runTime:
+      Athlon: 4653 ms (about the same)
+      XO: 23208 ms (2 seconds slower)
+    ownTime:
+      Athlon: 2354 ms (about the same)
+      XO: 9166 ms (0.4 seconds slower)
+
+  ev_canvas:
+    Avg ownTime / call:
+      Athlon: 0.0572 ms (0.01 ms slower)
+      XO: 0.3760 ms (0.1 ms slower)
+    Avg runTime / call:
+      Athlon: 0.1913 ms (the same)
+      XO: 1.2074 ms (0.2 ms slower)
+    Calls: 10168
+    Max ownTime / call:
+      Athlon: 8 ms
+      XO: 12 ms
+    Max runTime / call:
+      Athlon: 12 ms
+      XO: 25 ms
+    Min ownTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime:
+      Athlon: 1946 ms (the same)
+      XO: 12277 ms (one second slower)
+    ownTime:
+      Athlon: 582 ms
+      XO: 3824 ms (1.6 seconds slower)
+
+Opera profiling results:
+
+  Entire test:
+    runTime:
+      Athlon: 1972 ms (the same)
+      XO: 10929 ms (0.7 seconds slower)
+    ownTime:
+      Athlon: 1059 ms (the same)
+      XO: 6110 ms (1.1 seconds slower)
+
+  ev_canvas:
+    Avg ownTime / call:
+      Athlon: 0.0271 ms (the same)
+      XO: 0.1436 ms (0.001 ms slower)
+    Avg runTime / call:
+      Athlon: 0.0741 ms (0.01 slower)
+      XO: 0.3647 ms (0.1 ms faster)
+    Calls: 10168
+    Max ownTime / call:
+      Athlon: 1 ms
+      XO: 2 ms
+    Max runTime / call:
+      Athlon: 14 ms
+      XO: 2 ms
+    Min ownTime / call: 0 ms
+    Min runTime / call: 0 ms
+    runTime:
+      Athlon: 754 ms (50 ms slower)
+      XO: 3709 ms (0.5 seconds faster)
+    ownTime:
+      Athlon: 276 ms
+      XO: 1461 ms (0.1 seconds slower)
+
+Konqueror and Midori (Webkit) do not show any important profiling differences 
+either.
+
+As one can see, the difference is minor, irrelevant. One sees such differences 
+when running the same test multiple times.
+
+test7:
+-----
+
+It's the same as test6, with an updated ev_canvas. The changes I made try to 
+optimize the operations being performed.
+
+No performance impact.
+
+
+test8:
+-----
+
+Same as test7, but with no profiling code inside the drawing functions.
+
+Firefox profiling results:
+  Test run time:
+    Athlon: 2416 ms (2.5 seconds faster)
+    XO: 15320 ms (8 seconds faster)
+
+Opera profiling results:
+  Test run time:
+    Athlon: 1081 ms (0.9 seconds faster)
+    XO: 5915 ms (5 seconds faster)
+
+Midori (Webkit) ran the test in 0.5 seconds on Athlon (0.3 seconds faster).
+Konqueror ran the test in 2.8 seconds on Athlon (5 seconds faster). This shows 
+JS execution is kinda slow in Konqueror.
+
+test9:
+-----
+Same as test8, but with no ev_canvas. I inlined ev_canvas into the tool event 
+handlers, with minimal operations being performed.
+
+Firefox profiling results:
+  Test run time:
+    Athlon: 2329 ms (the same)
+    XO: 13149 ms (2 seconds faster)
+
+Opera profiling results:
+  Test run time:
+    Athlon: 1032 ms (the same)
+    XO: 5692 ms (0.3 seconds faster)
+
+Midori (Webkit) ran the test in 441 ms on Athlon (about 100 ms faster).
+Konqueror ran the test in 2579 ms on Athlon (about 300 ms faster).
+
+test10:
+------
+
+Took test8 and changes ev_canvas and the tool.mousemove functions so they allow 
+stacking of the mouse movement coordinates. Now the lines are no longer drawn as 
+the mouse moves. They are drawn at a given interval (100 ms).
+
+This has a nice performance impact. In Opera on the XO drawing became even 
+smoother.
+
+Even the synthetic test (which draws 10000 points) runs faster.
+
+Firefox profiling results:
+  Test run time:
+    Athlon: 1836 ms (0.5 seconds faster)
+    XO: 9337 ms (4 seconds faster)
+
+Opera profiling results:
+  Test run time:
+    Athlon: 953 ms (0.1 seconds faster)
+    XO: 5195 ms (0.5 seconds faster)
+
+Problem is, on Firefox on the XO I get no improvement in the smoothness of 
+drawing. Might be related to how the browser handles the events.
+
+test11:
+------
+
+The same as test10, but from the implementation POV, I moved all the handling 
+only into the tool code. The ev_canvas function is now simpler.
+
+Performance-wise the drawing feels the same on Athlon and on the XO.
+
+The test runs about 0.3 seconds slower on the XO, both in Opera and Firefox.
+
