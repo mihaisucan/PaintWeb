@@ -1,5 +1,5 @@
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-05-13 19:17:43 +0300 $
+$Date: 2009-05-14 13:08:20 +0300 $
 
 Minimal tests for the purpose of optimizing drawing on the OLPC XO.
 
@@ -798,7 +798,7 @@ test11:
 The same as test10, but from the implementation POV, I moved all the handling 
 only into the tool code. The ev_canvas function is now simpler.
 
-Performance-wise the drawing feels the same on Athlon and on the XO.
+Performance-wise the drawing feels the same in test10, on both test machines.
 
 The test runs about 0.3 seconds slower on the XO, both in Opera and Firefox.
 
@@ -806,15 +806,28 @@ Conclusions
 ===========
 
 It looks like I managed to make the synthetic test run much faster. If I make 
-the test runner directly call the event handlers, it will run even faster 
+the test runner directly call the event handlers, it runs even faster 
 - looks like synthetic DOM event dispatching is quite slow. This is not 
 evidenced by the tests above, because they all use synthetic DOM events.
 
-Additionally, it looks like we have a problem with Browser.xo. It's always very 
-slow to draw using the touchpad. In Opera test10 and test11 works fine, it's 
-usable, but not in Browser.xo.
+Additionally, it looks like we have a problem with Browse.xo. It's always very 
+slow to draw using the touchpad. In Opera test10 and test11 work fine, they are 
+usable, but not in Browse.xo.
 
-TODO: nail down the performance issue on the XO.
+After further testing, I determined the performance issue affecting Browse.xo: 
+it's the layout.css.dpi configuration value. The browser is set to render pages 
+at 134 DPI, to make all fonts and images bigger. However this has a huge 
+performance impact on all rendering of images - bilinear image resampling is 
+used.
+
+We need to avoid such resizing of the canvas element, or Browse.xo must somehow 
+become faster when scaling images.
+
+If layout.css.dpi is set to 96, drawing with the touchpad is live/real-time on 
+the XO. It's even faster than Opera 10! Lovely. ;)
+
+All of my testing in Opera 10 was done with zoom 100%. Obviously, if I change 
+the zoom level, drawing becomes slower.
 
 
 Other tests
@@ -833,3 +846,6 @@ test11:
 Mozilla Fennec 1.0 beta 1 is unusable, besides being slow. Any attempt to draw 
 causes their GUI to be dragged around. Basically, you cannot draw anywhere. Yay!
 
+
+--
+vim:set spell spl=en fo=tcroqwanl1 tw=80 fenc=utf-8 ff=unix:
