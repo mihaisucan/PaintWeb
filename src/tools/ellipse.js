@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-13 21:06:23 +0300 $
+ * $Date: 2009-05-17 19:29:15 +0300 $
  */
 
 /**
@@ -31,16 +31,46 @@
  * @param {PaintWeb} app Reference to the main paint application object.
  */
 PaintWebInstance.toolAdd('ellipse', function (app) {
-  var _self       = this,
-      config      = app.config,
-      context     = app.buffer.context,
-      MathMin     = Math.min,
-      MathMax     = Math.max,
-      mouse       = app.mouse,
-      image       = app.image,
-      layerUpdate = app.layerUpdate,
-      snapXY      = app.toolSnapXY,
-      statusShow  = app.statusShow;
+  var _self         = this,
+      MathMax       = Math.max,
+      MathMin       = Math.min,
+      clearInterval = window.clearInterval,
+      config        = app.config,
+      context       = app.buffer.context,
+      image         = app.image,
+      layerUpdate   = app.layerUpdate,
+      mouse         = app.mouse,
+      setInterval   = window.setInterval,
+      snapXY        = app.toolSnapXY,
+      statusShow    = app.statusShow;
+
+  /**
+   * The interval ID used for running the pencil drawing operation every few 
+   * milliseconds.
+   *
+   * @private
+   * @see PaintWeb.config.toolDrawDelay
+   */
+  var timer = null;
+
+  /**
+   * Tells if the <kbd>Shift</kbd> key is down or not. This is used by the 
+   * drawing function.
+   *
+   * @private
+   * @type Boolean
+   * @default false
+   */
+  var shiftKey = false;
+
+  /**
+   * Tells if the drawing canvas needs to be updated or not.
+   *
+   * @private
+   * @type Boolean
+   * @default false
+   */
+  var needsRedraw = false;
 
   var K = 4*((Math.SQRT2-1)/3);
 
@@ -63,13 +93,34 @@ PaintWebInstance.toolAdd('ellipse', function (app) {
   var y0 = 0;
 
   /**
-   * Initialize the drawing operation, by storing the location of the pointer, 
-   * the start position.
+   * Tool deactivation event handler.
    */
-  this.mousedown = function () {
+  this.deactivate = function () {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+      needsRedraw = false;
+      context.clearRect(0, 0, image.width, image.height);
+    }
+
+    return true;
+  };
+
+  /**
+   * Initialize the drawing operation.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
+  this.mousedown = function (ev) {
     // The mouse start position
     x0 = mouse.x;
     y0 = mouse.y;
+
+    if (!timer) {
+      timer = setInterval(_self.draw, config.toolDrawDelay);
+    }
+    shiftKey = ev.shiftKey;
+    needsRedraw = false;
 
     statusShow('ellipseMousedown');
 
@@ -77,17 +128,29 @@ PaintWebInstance.toolAdd('ellipse', function (app) {
   };
 
   /**
-   * Perform the drawing operation, while the user moves the mouse.
-   *
-   * <p>Hold down the <kbd>Shift</kbd> key to draw a circle.
-   * <p>Press <kbd>Escape</kbd> to cancel the drawing operation.
+   * Store the <kbd>Shift</kbd> key state which is used by the drawing function.
    *
    * @param {Event} ev The DOM Event object.
    */
   this.mousemove = function (ev) {
-    if (!mouse.buttonDown) {
-      return false;
+    shiftKey = ev.shiftKey;
+    needsRedraw = true;
+  };
+
+  /**
+   * Perform the drawing operation. This function is called every few 
+   * milliseconds.
+   *
+   * <p>Hold down the <kbd>Shift</kbd> key to draw a circle.
+   * <p>Press <kbd>Escape</kbd> to cancel the drawing operation.
+   *
+   * @see PaintWeb.config.toolDrawDelay
+   */
+  this.draw = function () {
+    if (!needsRedraw) {
+      return;
     }
+    needsRedraw = false;
 
     context.clearRect(0, 0, image.width, image.height);
 
@@ -105,11 +168,11 @@ PaintWebInstance.toolAdd('ellipse', function (app) {
         h = recty1-recty0;
 
     if (!w || !h) {
-      return false;
+      return;
     }
 
     // Constrain the ellipse to be a circle
-    if (ev.shiftKey) {
+    if (shiftKey) {
       if (w > h) {
         recty1 = recty0+w;
         if (recty0 == mouse.y) {
@@ -159,22 +222,27 @@ PaintWebInstance.toolAdd('ellipse', function (app) {
     }
 
     context.closePath();
-
-    return true;
   };
 
   /**
    * End the drawing operation, once the user releases the mouse button.
    */
   this.mouseup = function () {
-    // FIXME: Allow click+mousemove, not only mousedown+move+up
-    /*if (mouse.x == x0 && mouse.y == y0) {
+    // Allow click+mousemove, not only mousedown+move+up
+    if (mouse.x == x0 && mouse.y == y0) {
       return true;
-    }*/
+    }
 
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+
+    _self.draw();
+    layerUpdate();
     statusShow('ellipseActive');
 
-    return layerUpdate();
+    return true;
   };
 
   /**
@@ -190,15 +258,19 @@ PaintWebInstance.toolAdd('ellipse', function (app) {
       return false;
     }
 
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+
     context.clearRect(0, 0, image.width, image.height);
+    mouse.buttonDown = false;
+    needsRedraw = false;
 
     statusShow('ellipseActive');
 
     return true;
   };
-
-  // TODO: check this...
-  return true;
 });
 
 

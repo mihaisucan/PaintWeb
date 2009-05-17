@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-13 23:25:56 +0300 $
+ * $Date: 2009-05-16 21:24:22 +0300 $
  */
 
 /**
@@ -40,6 +40,7 @@ PaintWebInstance.toolAdd('select', function (app) {
       historyAdd    = app.historyAdd,
       image         = app.image,
       inputs        = app.inputs,
+      lang          = app.lang,
       layerCanvas   = app.layer.canvas,
       layerContext  = app.layer.context,
       MathAbs       = Math.abs,

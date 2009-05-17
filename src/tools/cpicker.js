@@ -17,13 +17,15 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-07 22:25:28 +0300 $
+ * $Date: 2009-05-16 21:13:24 +0300 $
  */
 
 /**
  * @author <a lang="ro" href="http://www.robodesign.ro/mihai">Mihai Şucan</a>
  * @fileOverview Holds the color picker implementation.
  */
+
+// FIXME: waiting for the Color Editor extension and for the new GUI.
 
 /**
  * @class The color picker tool.
@@ -35,6 +37,7 @@ PaintWebInstance.toolAdd('cpicker', function (app) {
       context      = app.buffer.context,
       mouse        = app.mouse,
       image        = app.image,
+      lang         = app.lang,
       layerUpdate  = app.layerUpdate,
       statusShow   = app.statusShow,
       toolActivate = app.toolActivate;

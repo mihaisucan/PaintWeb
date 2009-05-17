@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-13 20:51:25 +0300 $
+ * $Date: 2009-05-16 21:19:31 +0300 $
  */
 
 /**
@@ -46,7 +46,7 @@ PaintWebInstance.toolAdd('curve', function (app) {
    * @private
    * @type Array
    */
-  _self.points = [];
+  this.points = [];
 
   /**
    * The tool deactivation method, used for clearing the buffer.
@@ -114,8 +114,8 @@ PaintWebInstance.toolAdd('curve', function (app) {
    *
    * @returns {Boolean} True if the curve has been drawn, or false if not.
    */
-  _self.draw = function (ev) {
-    var y, i, p     = _self.points;
+  this.draw = function (ev) {
+    var y, i, p     = this.points;
     var n           = p.length,
         lineWidth   = context.lineWidth,
         strokeStyle = context.strokeStyle,

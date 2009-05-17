@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-13 20:46:53 +0300 $
+ * $Date: 2009-05-16 21:28:36 +0300 $
  */
 
 /**
@@ -98,7 +98,7 @@ PaintWebInstance.extensionAdd('mousekeys', function (app) {
       }
     };
 
-    lib.extend(config.keys, result);
+    pwlib.extend(config.keys, result);
   };
 
   /**

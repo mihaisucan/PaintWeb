@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-13 23:23:31 +0300 $
+ * $Date: 2009-05-16 21:24:54 +0300 $
  */
 
 /**
@@ -46,7 +46,7 @@ PaintWebInstance.toolAdd('text', function (app) {
       toolActivate = app.toolActivate;
 
   if (!context.fillText || !context.strokeText) {
-    alert(lang.errorTextUnsupported);
+    alert(app.lang.errorTextUnsupported);
     this._cancel = true;
     return false;
   }

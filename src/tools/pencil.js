@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-13 23:06:56 +0300 $
+ * $Date: 2009-05-17 20:18:24 +0300 $
  */
 
 /**
@@ -32,24 +32,19 @@
  */
 PaintWebInstance.toolAdd('pencil', function (app) {
   var _self         = this,
+      clearInterval = window.clearInterval,
       context       = app.buffer.context,
+      image         = app.image,
       layerUpdate   = app.layerUpdate,
       mouse         = app.mouse,
-      setInterval   = window.setInterval,
-      clearInterval = window.clearInterval;
-
-  /**
-   * The delay used between each drawing call.
-   *
-   * @type Number
-   * @default 100
-   */
-  this.delay = 100;
+      setInterval   = window.setInterval;
 
   /**
    * The interval ID used for running the pencil drawing operation every few 
    * milliseconds.
+   *
    * @private
+   * @see PaintWeb.config.toolDrawDelay
    */
   var timer = null;
 
@@ -81,6 +76,20 @@ PaintWebInstance.toolAdd('pencil', function (app) {
   var y0 = 0;
 
   /**
+   * Tool deactivation event handler.
+   */
+  this.deactivate = function () {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+      points = [];
+      context.clearRect(0, 0, image.width, image.height);
+    }
+
+    return true;
+  };
+
+  /**
    * Initialize the drawing operation.
    */
   this.mousedown = function () {
@@ -88,7 +97,9 @@ PaintWebInstance.toolAdd('pencil', function (app) {
     y0 = mouse.y;
 
     points = [];
-    timer = setInterval(draw, _self.delay);
+    if (!timer) {
+      timer = setInterval(_self.draw, app.config.toolDrawDelay);
+    }
 
     return true;
   };
@@ -103,25 +114,12 @@ PaintWebInstance.toolAdd('pencil', function (app) {
   };
 
   /**
-   * End the drawing operation, once the user releases the mouse button.
-   */
-  this.mouseup = function () {
-    if (mouse.x == x0 && mouse.y == y0) {
-      points.push(x0+1, y0+1);
-    }
-
-    clearInterval(timer);
-    draw();
-    layerUpdate();
-
-    return true;
-  };
-
-  /**
    * Draw the points in the stack. This function is called every few 
    * milliseconds.
+   *
+   * @see PaintWeb.config.toolDrawDelay
    */
-  function draw () {
+  this.draw = function () {
     var i = 0, n = points.length;
     if (!n) {
       return;
@@ -142,8 +140,49 @@ PaintWebInstance.toolAdd('pencil', function (app) {
     points = [];
   };
 
-  // TODO: check this...
-  return true;
+  /**
+   * End the drawing operation, once the user releases the mouse button.
+   */
+  this.mouseup = function () {
+    if (mouse.x == x0 && mouse.y == y0) {
+      points.push(x0+1, y0+1);
+    }
+
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+
+    _self.draw();
+    layerUpdate();
+
+    return true;
+  };
+
+  /**
+   * Allows the user to press <kbd>Escape</kbd> to cancel the drawing operation.
+   *
+   * @param {Event} ev The DOM Event object.
+   *
+   * @returns {Boolean} True if the drawing operation was cancelled, or false if 
+   * not.
+   */
+  this.keydown = function (ev) {
+    if (!mouse.buttonDown || ev.kid_ != 'Escape') {
+      return false;
+    }
+
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+
+    context.clearRect(0, 0, image.width, image.height);
+    mouse.buttonDown = false;
+    points = [];
+
+    return true;
+  };
 });
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:

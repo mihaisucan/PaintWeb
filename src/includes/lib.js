@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-05-09 22:05:08 +0300 $
+ * $Date: 2009-05-16 19:22:24 +0300 $
  */
 
 /**
@@ -15,7 +15,7 @@
  * @namespace Holds methods and properties necessary throughout the entire 
  * application.
  */
-var lib = {};
+var pwlib = {};
 
 /**
  * This function extends objects.
@@ -24,17 +24,17 @@ var lib = {};
  * <code>var <var>obj1</var> = {a: 'a1', b: 'b1', d: 'd1'},
  *     <var>obj2</var> = {a: 'a2', b: 'b2', c: 'c2'};
  * 
- * lib.extend(<var>obj1</var>, <var>obj2</var>);</code>
+ * pwlib.extend(<var>obj1</var>, <var>obj2</var>);</code>
  * 
  * // Now <var>obj1.c == 'c2'</var>, while <var>obj1.a</var>, <var>obj1.b</var>
  * // and <var>obj1.d</var> remain the same.
  *
- * // If <code>lib.extend(true, <var>obj1</var>, <var>obj2</var>)</code> is
+ * // If <code>pwlib.extend(true, <var>obj1</var>, <var>obj2</var>)</code> is
  * // called, then <var>obj1.a</var>, <var>obj1.b</var>, <var>obj1.c</var>
  * // become all the same as in <var>obj2</var>.
  *
  * @example
- * <code>var <var>obj1</var> = {a: 'a1', b: 'b1', extend: lib.extend};
+ * <code>var <var>obj1</var> = {a: 'a1', b: 'b1', extend: pwlib.extend};
  * <var>obj1</var>.extend({c: 'c1', d: 'd1'});</code>
  *
  * // In this case the destination object which is to be extend is
@@ -54,7 +54,7 @@ var lib = {};
  * @param {Object} source The third argument must provide list of methods and 
  * properties which will be added to the destination object.
  */
-lib.extend = function () {
+pwlib.extend = function () {
   var i = 0,
       len = arguments.length,
       name, src, sval, dval;
@@ -99,7 +99,7 @@ lib.extend = function () {
  * lang.table_cells = "The table %name% has %n% cells.";
  *
  * // later ...
- * console.log(lib.lang('table_cells', {'name' : 'tbl1', 'n' : 11}));
+ * console.log(pwlib.lang('table_cells', {'name' : 'tbl1', 'n' : 11}));
  * // The output is 'The table tbl1 has 11 cells.'
  *
  * @param {String} id Language string ID. It must be available in the global 
@@ -110,7 +110,7 @@ lib.extend = function () {
  * @returns {String} The language string, updated with the variables you 
  * provided.
  */
-lib.lang = function (id, vars) {
+pwlib.lang = function (id, vars) {
   var msg, re, i;
 
   if (!id || !window.lang || !(msg = lang[id])) {
@@ -135,7 +135,7 @@ lib.lang = function (id, vars) {
  * @param {String} str The JSON string to parse.
  * @returns The JavaScript object that was parsed.
  */
-lib.jsonParse = function (str) {
+pwlib.jsonParse = function (str) {
   str = str.replace(/\s*\/\*(\s|.)+?\*\//g, '').
             replace(/^\s*\/\/.*$/gm,        '');
 
@@ -157,7 +157,7 @@ lib.jsonParse = function (str) {
  *
  * @returns {XMLHttpRequest} The XMLHttpRequest object created by this method.
  */
-lib.xhrLoad = function (url, handler, method, send) {
+pwlib.xhrLoad = function (url, handler, method, send) {
   if (!method) {
     method = 'GET';
   }
@@ -173,7 +173,7 @@ lib.xhrLoad = function (url, handler, method, send) {
 /**
  * @namespace Holds browser information.
  */
-lib.browser = {};
+pwlib.browser = {};
 
 (function () {
 var ua = '';
@@ -185,7 +185,7 @@ if (window.navigator && window.navigator.userAgent) {
 /**
  * @type Boolean
  */
-lib.browser.opera = window.opera ? true : /\bopera\b/.test(ua);
+pwlib.browser.opera = window.opera ? true : /\bopera\b/.test(ua);
 
 /**
  * Webkit is the render engine used primarily by Safari. It's also used by 
@@ -193,7 +193,7 @@ lib.browser.opera = window.opera ? true : /\bopera\b/.test(ua);
  *
  * @type Boolean
  */
-lib.browser.webkit = /\b(applewebkit|webkit)\b/.test(ua);
+pwlib.browser.webkit = /\b(applewebkit|webkit)\b/.test(ua);
 
 /**
  * Firefox uses the Gecko render engine.
@@ -202,7 +202,7 @@ lib.browser.webkit = /\b(applewebkit|webkit)\b/.test(ua);
  */
 // In some variations of the User Agent strings provided by Opera, Firefox is 
 // mentioned.
-lib.browser.firefox = /\bfirefox\b/.test(ua) && !lib.browser.opera;
+pwlib.browser.firefox = /\bfirefox\b/.test(ua) && !pwlib.browser.opera;
 
 /**
  * Gecko is the render engine used by Firefox and related products.
@@ -211,8 +211,8 @@ lib.browser.firefox = /\bfirefox\b/.test(ua) && !lib.browser.opera;
  */
 // Typically, the user agent string of WebKit also mentions Gecko. Additionally, 
 // Opera mentions Gecko for tricking some sites.
-lib.browser.gecko = /\bgecko\b/.test(ua) && !lib.browser.opera &&
-                      !lib.browser.webkit;
+pwlib.browser.gecko = /\bgecko\b/.test(ua) && !pwlib.browser.opera &&
+                      !pwlib.browser.webkit;
 
 /**
  * Microsoft Internet Explorer. The future of computing.
@@ -220,7 +220,7 @@ lib.browser.gecko = /\bgecko\b/.test(ua) && !lib.browser.opera &&
  * @type Boolean
  */
 // Again, Opera allows users to easily fake the UA.
-lib.browser.msie = /\bmsie\b/.test(ua) && !lib.browser.opera;
+pwlib.browser.msie = /\bmsie\b/.test(ua) && !pwlib.browser.opera;
 
 /**
  * Presto is the render engine used by Opera.
@@ -228,7 +228,7 @@ lib.browser.msie = /\bmsie\b/.test(ua) && !lib.browser.opera;
  * @type Boolean
  */
 // Older versions of Opera did not mention Presto in the UA string.
-lib.browser.presto = /\bpresto\b/.test(ua) || lib.browser.opera;
+pwlib.browser.presto = /\bpresto\b/.test(ua) || pwlib.browser.opera;
 
 
 /**
@@ -236,7 +236,7 @@ lib.browser.presto = /\bpresto\b/.test(ua) || lib.browser.opera;
  *
  * @type String
  */
-lib.browser.os = (ua.match(/\b(windows|linux)\b/) || [])[1];
+pwlib.browser.os = (ua.match(/\b(windows|linux)\b/) || [])[1];
 
 delete ua;
 })();
@@ -245,7 +245,7 @@ delete ua;
 /**
  * @namespace Holds methods and properties necessary for DOM manipulation.
  */
-lib.dom = {};
+pwlib.dom = {};
 
 /**
  * @namespace Holds the list of virtual key identifiers and a few characters, 
@@ -253,7 +253,7 @@ lib.dom = {};
  *
  * @private
  */
-lib.dom.keyNames = {
+pwlib.dom.keyNames = {
   Help:          6,
   Backspace:     8,
   Tab:           9,
@@ -314,7 +314,7 @@ lib.dom.keyNames = {
  *
  * @private
  */
-lib.dom.keyCodes = {
+pwlib.dom.keyCodes = {
   /*
    * For almost each key code, these comments give the key name, the 
    * keyIdentifier from the DOM 3 Events spec and the Unicode character 
@@ -721,8 +721,8 @@ lib.dom.keyCodes = {
   //376: 'NumLock'            // Ÿ, Opera, Windows XP in VirtualBox
 };
 
-if (lib.browser.gecko) {
-  lib.dom.keyCodes[3] = 'Cancel'; // DOM_VK_CANCEL
+if (pwlib.browser.gecko) {
+  pwlib.dom.keyCodes[3] = 'Cancel'; // DOM_VK_CANCEL
 }
 
 /**
@@ -730,11 +730,11 @@ if (lib.browser.gecko) {
  *
  * @private
  */
-lib.dom.keyCodes_fixes = {
-  42:   lib.dom.keyNames['*'],          // char * to key *
-  47:   lib.dom.keyNames['/'],          // char / to key /
-  59:   lib.dom.keyNames[';'],          // char ; to key ;
-  61:   lib.dom.keyNames['='],          // char = to key =
+pwlib.dom.keyCodes_fixes = {
+  42:   pwlib.dom.keyNames['*'],        // char * to key *
+  47:   pwlib.dom.keyNames['/'],        // char / to key /
+  59:   pwlib.dom.keyNames[';'],        // char ; to key ;
+  61:   pwlib.dom.keyNames['='],        // char = to key =
   96:   48,                             // NumPad_0 to char 0
   97:   49,                             // NumPad_1 to char 1
   98:   50,                             // NumPad_2 to char 2
@@ -747,9 +747,9 @@ lib.dom.keyCodes_fixes = {
   105:  57,                             // NumPad_9 to char 9
   //106:  56,                           // NumPad_Multiply to char 8
   //107:  187,                          // NumPad_Plus to key =
-  109:  lib.dom.keyNames['-'],          // NumPad_Minus to key -
-  110:  lib.dom.keyNames['.'],          // NumPad_Period to key .
-  111:  lib.dom.keyNames['/']           // NumPad_Division to key /
+  109:  pwlib.dom.keyNames['-'],        // NumPad_Minus to key -
+  110:  pwlib.dom.keyNames['.'],        // NumPad_Period to key .
+  111:  pwlib.dom.keyNames['/']         // NumPad_Division to key /
 };
 
 /**
@@ -758,31 +758,31 @@ lib.dom.keyCodes_fixes = {
  *
  * @private
  */
-lib.dom.keyCodes_Safari2 = {
-  63232: lib.dom.keyNames.Up,               // 38
-  63233: lib.dom.keyNames.Down,             // 40
-  63234: lib.dom.keyNames.Left,             // 37
-  63235: lib.dom.keyNames.Right,            // 39
-  63236: lib.dom.keyNames.F1,               // 112
-  63237: lib.dom.keyNames.F2,               // 113
-  63238: lib.dom.keyNames.F3,               // 114
-  63239: lib.dom.keyNames.F4,               // 115
-  63240: lib.dom.keyNames.F5,               // 116
-  63241: lib.dom.keyNames.F6,               // 117
-  63242: lib.dom.keyNames.F7,               // 118
-  63243: lib.dom.keyNames.F8,               // 119
-  63244: lib.dom.keyNames.F9,               // 120
-  63245: lib.dom.keyNames.F10,              // 121
-  63246: lib.dom.keyNames.F11,              // 122
-  63247: lib.dom.keyNames.F12,              // 123
-  63248: lib.dom.keyNames.PrintScreen,      // 44
-  63272: lib.dom.keyNames['Delete'],        // 46
-  63273: lib.dom.keyNames.Home,             // 36
-  63275: lib.dom.keyNames.End,              // 35
-  63276: lib.dom.keyNames.PageUp,           // 33
-  63277: lib.dom.keyNames.PageDown,         // 34
-  63289: lib.dom.keyNames.NumLock,          // 144
-  63302: lib.dom.keyNames.Insert            // 45
+pwlib.dom.keyCodes_Safari2 = {
+  63232: pwlib.dom.keyNames.Up,               // 38
+  63233: pwlib.dom.keyNames.Down,             // 40
+  63234: pwlib.dom.keyNames.Left,             // 37
+  63235: pwlib.dom.keyNames.Right,            // 39
+  63236: pwlib.dom.keyNames.F1,               // 112
+  63237: pwlib.dom.keyNames.F2,               // 113
+  63238: pwlib.dom.keyNames.F3,               // 114
+  63239: pwlib.dom.keyNames.F4,               // 115
+  63240: pwlib.dom.keyNames.F5,               // 116
+  63241: pwlib.dom.keyNames.F6,               // 117
+  63242: pwlib.dom.keyNames.F7,               // 118
+  63243: pwlib.dom.keyNames.F8,               // 119
+  63244: pwlib.dom.keyNames.F9,               // 120
+  63245: pwlib.dom.keyNames.F10,              // 121
+  63246: pwlib.dom.keyNames.F11,              // 122
+  63247: pwlib.dom.keyNames.F12,              // 123
+  63248: pwlib.dom.keyNames.PrintScreen,      // 44
+  63272: pwlib.dom.keyNames['Delete'],        // 46
+  63273: pwlib.dom.keyNames.Home,             // 36
+  63275: pwlib.dom.keyNames.End,              // 35
+  63276: pwlib.dom.keyNames.PageUp,           // 33
+  63277: pwlib.dom.keyNames.PageDown,         // 34
+  63289: pwlib.dom.keyNames.NumLock,          // 144
+  63302: pwlib.dom.keyNames.Insert            // 45
 };
 
 
@@ -847,7 +847,7 @@ lib.dom.keyCodes_Safari2 = {
  *     ' repeat_ ' + <var>ev</var>.repeat_);
  * };
  *
- * var <var>kbListener</var> = new lib.dom.KeyboardEventListener(window,
+ * var <var>kbListener</var> = new pwlib.dom.KeyboardEventListener(window,
  *               {keydown: <var>klogger</var>,
  *                keypress: <var>klogger</var>,
  *                keyup: <var>klogger</var>});</code>
@@ -867,7 +867,7 @@ lib.dom.keyCodes_Safari2 = {
  * @throws {TypeError} If the <var>handlers_</var> object does not contain any 
  * event handler.
  */
-lib.dom.KeyboardEventListener = function (elem_, handlers_) {
+pwlib.dom.KeyboardEventListener = function (elem_, handlers_) {
   /*
     Technical details:
 
@@ -900,9 +900,9 @@ lib.dom.KeyboardEventListener = function (elem_, handlers_) {
     = '-'.
 
     Therefore, we need to map all the codes of several keys, like F1-F12, 
-    Escape, Enter, Tab, etc. This map is held by lib.dom.keyCodes. It associates, 
-    for example, code 112 to F1, or 13 to Enter. This map is used to detect 
-    virtual keys in all events.
+    Escape, Enter, Tab, etc. This map is held by pwlib.dom.keyCodes. It 
+    associates, for example, code 112 to F1, or 13 to Enter. This map is used to 
+    detect virtual keys in all events.
 
     (This is only the general story, details about browser-specific differences 
     follow below.)
@@ -912,7 +912,7 @@ lib.dom.KeyboardEventListener = function (elem_, handlers_) {
 
     In all browsers we consider all events having keyCode <= 32, as being events  
     generated by a virtual key (not a character). As such, the keyCode value is 
-    always searched in lib.dom.keyCodes.
+    always searched in pwlib.dom.keyCodes.
 
     As you might notice from the above description, in the keypress event we 
     cannot tell the difference from say F1 and p, because both give the code 
@@ -936,10 +936,10 @@ lib.dom.KeyboardEventListener = function (elem_, handlers_) {
     being Insert/Delete.
     
     The above brings us to one of the main visible difference, when comparing 
-    the lib.dom.KeyboardEventListener class and the simple 
-    lib.dom.KeyboardEvent.getKey() function. In getKey(), for the keypress event 
-    we cannot accurately determine the exact key, because it requires checking
-    the keyCode used for the keydown event. The KeyboardEventListener
+    the pwlib.dom.KeyboardEventListener class and the simple 
+    pwlib.dom.KeyboardEvent.getKey() function. In getKey(), for the keypress 
+    event we cannot accurately determine the exact key, because it requires
+    checking the keyCode used for the keydown event. The KeyboardEventListener
     class monitors all the keyboard events, ensuring a more accurate key 
     detection.
 
@@ -1234,7 +1234,7 @@ lib.dom.KeyboardEventListener = function (elem_, handlers_) {
 
       // FIXME: I could use createEvent() ... food for thought for later
       var ev_new = {};
-      lib.extend(ev_new, ev);
+      pwlib.extend(ev_new, ev);
       ev_new.type = type;
 
       // Make sure preventDefault() is not borked...
@@ -1388,7 +1388,7 @@ lib.dom.KeyboardEventListener = function (elem_, handlers_) {
    * a <code>keypress</code> event, or false if not.
    */
   function firesKeyPress (ev) {
-    if (!lib.browser.msie && !lib.browser.webkit) {
+    if (!pwlib.browser.msie && !pwlib.browser.webkit) {
       return true;
     }
 
@@ -1401,7 +1401,7 @@ lib.dom.KeyboardEventListener = function (elem_, handlers_) {
     }
 
     // Webkit doesn't fire keypress for Escape as well ...
-    if (lib.browser.webkit && key_ == 'Escape') {
+    if (pwlib.browser.webkit && key_ == 'Escape') {
       return false;
     }
 
@@ -1409,7 +1409,7 @@ lib.dom.KeyboardEventListener = function (elem_, handlers_) {
     // is off. Albeit, based on testing I am not completely sure if Shift needs 
     // to be down or not. Sometimes MSIE won't fire keypress even if I hold 
     // Shift down, and sometimes it does. Eh.
-    if (lib.browser.msie && !ev.shiftKey && (ev.ctrlKey || ev.altKey)) {
+    if (pwlib.browser.msie && !ev.shiftKey && (ev.ctrlKey || ev.altKey)) {
       return false;
     }
 
@@ -1442,22 +1442,22 @@ lib.dom.KeyboardEventListener = function (elem_, handlers_) {
       keyCode_ = ev.keyCode || ev.which;
 
       // Fix Webkit quirks
-      if (lib.browser.webkit) {
+      if (pwlib.browser.webkit) {
         // Old Webkit gives keyCode 25 when Shift+Tab is used.
         if (keyCode_ == 25 && this.shiftKey) {
-          keyCode_ = lib.dom.keyNames.Tab;
-        } else if (keyCode_ >= 63232 && keyCode_ in lib.dom.keyCodes_Safari2) {
+          keyCode_ = pwlib.dom.keyNames.Tab;
+        } else if (keyCode_ >= 63232 && keyCode_ in pwlib.dom.keyCodes_Safari2) {
           // Old Webkit gives wrong values for several keys.
-          keyCode_ = lib.dom.keyCodes_Safari2[keyCode_];
+          keyCode_ = pwlib.dom.keyCodes_Safari2[keyCode_];
         }
       }
 
       // Fix keyCode quirks in all browsers.
-      if (keyCode_ in lib.dom.keyCodes_fixes) {
-        keyCode_ = lib.dom.keyCodes_fixes[keyCode_];
+      if (keyCode_ in pwlib.dom.keyCodes_fixes) {
+        keyCode_ = pwlib.dom.keyCodes_fixes[keyCode_];
       }
 
-      key_ = lib.dom.keyCodes[keyCode_] || String.fromCharCode(keyCode_);
+      key_ = pwlib.dom.keyCodes[keyCode_] || String.fromCharCode(keyCode_);
 
       return;
     }
@@ -1488,18 +1488,18 @@ lib.dom.KeyboardEventListener = function (elem_, handlers_) {
       /*
        * Common keyIdentifiers like 'PageDown' are used as they are.
        * We determine the common keyCode used by Web browsers, from the 
-       * lib.dom.keyNames object.
+       * pwlib.dom.keyNames object.
        */
-      keyCode_ = lib.dom.keyNames[id] || null;
+      keyCode_ = pwlib.dom.keyNames[id] || null;
       key_ = id;
 
       return;
     }
 
     // Some keyIdentifiers like 'U+007F' (127: Delete) need to become key names.
-    if (keyCode in lib.dom.keyCodes && (keyCode <= 32 || keyCode == 127 || keyCode 
-          == 144)) {
-      key_ = lib.dom.keyCodes[keyCode];
+    if (keyCode in pwlib.dom.keyCodes && (keyCode <= 32 || keyCode == 127 || 
+          keyCode == 144)) {
+      key_ = pwlib.dom.keyCodes[keyCode];
     } else {
       if (!key) {
         key = String.fromCharCode(keyCode);
@@ -1514,8 +1514,8 @@ lib.dom.KeyboardEventListener = function (elem_, handlers_) {
 
     // Correct the keyCode, make sure it's a common keyCode, not the Unicode 
     // decimal representation of the character.
-    if (key_ == 'Delete' || key_.length == 1 && key_ in lib.dom.keyNames) {
-      keyCode = lib.dom.keyNames[key_];
+    if (key_ == 'Delete' || key_.length == 1 && key_ in pwlib.dom.keyNames) {
+      keyCode = pwlib.dom.keyNames[key_];
     }
 
     keyCode_ = keyCode;
@@ -1549,9 +1549,9 @@ lib.dom.KeyboardEventListener = function (elem_, handlers_) {
 
       // We accept some keyCodes.
       switch (keyCode) {
-        case lib.dom.keyNames.Tab:
-        case lib.dom.keyNames.Enter:
-        case lib.dom.keyNames.Space:
+        case pwlib.dom.keyNames.Tab:
+        case pwlib.dom.keyNames.Enter:
+        case pwlib.dom.keyNames.Space:
           force = true;
       }
 
@@ -1565,7 +1565,7 @@ lib.dom.KeyboardEventListener = function (elem_, handlers_) {
       // If the keypress event at hand is synthetically dispatched by keydown, 
       // then special treatment is needed. This happens only in Webkit and MSIE.
       if (ev.type_ == 'keydown') {
-        var key = lib.dom.keyCodes[keyCode];
+        var key = pwlib.dom.keyCodes[keyCode];
         // Check if the keyCode points to a single character.
         // If it does, use it.
         if (key && key.length == 1) {
@@ -1609,10 +1609,10 @@ lib.dom.KeyboardEventListener = function (elem_, handlers_) {
         charCode = parseInt(id.substr(2), 16);
       }
 
-      if (charCode == lib.dom.keyNames.Tab ||
-          charCode == lib.dom.keyNames.Enter ||
+      if (charCode == pwlib.dom.keyNames.Tab ||
+          charCode == pwlib.dom.keyNames.Enter ||
           charCode >= 32 && charCode != 127 &&
-          charCode != lib.dom.keyNames.NumLock) {
+          charCode != pwlib.dom.keyNames.NumLock) {
 
         charCode_ = charCode;
         char_ = c || String.fromCharCode(charCode);
@@ -1632,8 +1632,7 @@ lib.dom.KeyboardEventListener = function (elem_, handlers_) {
   this.attach();
 };
 
-// lib.dom.KeyboardEvent.getKey() is not included here. You can get it from the 
-// libmacrame project: http://code.google.com/p/libmacrame.
+// Check out the libmacrame project: http://code.google.com/p/libmacrame.
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
 

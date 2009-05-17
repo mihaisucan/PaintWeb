@@ -1,3 +1,14 @@
+2009-05-17:
+==========
+
+- More code organization work.
+- More performance work and bug fixes.
+- Performance improvements for the following drawing tools: rectangle, ellipse 
+and line.
+- Further adjustment to the pencil and eraser tools. For example, now you can 
+press Escape to cancel the drawing operation.
+- Added new option to config: toolDrawDelay.
+
 2009-05-13:
 ===========
 

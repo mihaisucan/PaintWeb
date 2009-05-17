@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-14 13:32:09 +0300 $
+ * $Date: 2009-05-17 20:33:10 +0300 $
  */
 
 /**
@@ -28,17 +28,9 @@
 
 // TODO: add more jsdoc comments and move the GUI code out.
 
-/**
- * Holds all language strings used within PaintWeb.
- */
-// Here we include a minimal set of strings, used in case the language file will 
-// not load.
-var lang = {
-  "errorElementNotFound": "Error: the following element was not found: %id%.",
-  "errorInitGetComputedStyle": "Error: window.getComputedStyle is not available.",
-  "errorInitXMLHttpRequest": "Error: window.XMLHttpRequest is not available.",
-  "errorInitJSON": "Error: window.JSON is not available."
-};
+// Ugly, but needed.
+document.write('<script type="text/javascript" ' +
+  'src="includes/lib.js"></script>');
 
 /**
  * The PaintWeb application object.
@@ -59,7 +51,7 @@ function PaintWeb (win_, doc_) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090514;
+  this.build = 20090517;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -67,6 +59,18 @@ function PaintWeb (win_, doc_) {
    */
   this.config = {
     configFile: 'config.json'
+  };
+
+  /**
+   * Holds all language strings used within PaintWeb.
+   */
+  // Here we include a minimal set of strings, used in case the language file will 
+  // not load.
+  this.lang = {
+    "errorElementNotFound": "Error: the following element was not found: %id%.",
+    "errorInitGetComputedStyle": "Error: window.getComputedStyle is not available.",
+    "errorInitXMLHttpRequest": "Error: window.XMLHttpRequest is not available.",
+    "errorInitJSON": "Error: window.JSON is not available."
   };
 
   /**
@@ -244,9 +248,9 @@ function PaintWeb (win_, doc_) {
    * Holds the keyboard event listener object.
    *
    * @private
-   * @type lib.dom.KeyboardEventListener
-   * @see lib.dom.KeyboardEventListener The class dealing with the cross-browser 
-   * differences in the DOM keyboard events.
+   * @type pwlib.dom.KeyboardEventListener
+   * @see pwlib.dom.KeyboardEventListener The class dealing with the 
+   * cross-browser differences in the DOM keyboard events.
    */
   var kbListener_ = null;
 
@@ -257,7 +261,7 @@ function PaintWeb (win_, doc_) {
   function $ (id) {
     var elem = _self.doc.getElementById(id);
     if (!elem) {
-      alert( lib.lang('errorElementNotFound', {'id' : id}) );
+      alert( pwlib.lang('errorElementNotFound', {'id' : id}) );
       return false;
     } else {
       return elem;
@@ -278,17 +282,17 @@ function PaintWeb (win_, doc_) {
   this.init = function () {
     // Basic functionality used within the Web application.
     if (!window.getComputedStyle) {
-      alert(lang.errorInitGetComputedStyle);
+      alert(_self.lang.errorInitGetComputedStyle);
       return false;
     }
 
     if (!window.XMLHttpRequest) {
-      alert(lang.errorInitXMLHttpRequest);
+      alert(_self.lang.errorInitXMLHttpRequest);
       return false;
     }
 
     if (!window.JSON) {
-      alert(lang.errorInitJSON);
+      alert(_self.lang.errorInitJSON);
       return false;
     }
 
@@ -308,7 +312,7 @@ function PaintWeb (win_, doc_) {
    * XMLHttpRequest object.
    */
   this.configLoad = function () {
-    lib.xhrLoad(this.config.configFile, this.configReady);
+    pwlib.xhrLoad(this.config.configFile, this.configReady);
   };
 
   /**
@@ -335,10 +339,10 @@ function PaintWeb (win_, doc_) {
       return;
     }
 
-    var config = lib.jsonParse(xhr.responseText);
+    var config = pwlib.jsonParse(xhr.responseText);
 
     // Overwrite any existing configuration.
-    lib.extend(true, _self.config, config);
+    pwlib.extend(true, _self.config, config);
 
     if (_self.initialized == PaintWeb.INIT_STARTED) {
       _self.langLoad();
@@ -354,7 +358,7 @@ function PaintWeb (win_, doc_) {
    * XMLHttpRequest object.
    */
   this.langLoad = function () {
-    lib.xhrLoad(this.config.langFile, this.langReady);
+    pwlib.xhrLoad(this.config.langFile, this.langReady);
   };
 
   /**
@@ -373,9 +377,9 @@ function PaintWeb (win_, doc_) {
       return;
     }
 
-    var lang_new = lib.jsonParse(xhr.responseText);
+    var lang_new = pwlib.jsonParse(xhr.responseText);
 
-    lib.extend(lang, lang_new);
+    pwlib.extend(_self.lang, lang_new);
 
     if (_self.initialized == PaintWeb.INIT_STARTED) {
       _self.initPostConfig();
@@ -404,7 +408,7 @@ function PaintWeb (win_, doc_) {
         throw 'err';
       }
     } catch (err) {
-      alert(lang.errorInitContext);
+      alert(this.lang.errorInitContext);
       return false;
     }
 
@@ -419,7 +423,7 @@ function PaintWeb (win_, doc_) {
     // Create the buffer canvas.
     var bufferCanvas = this.doc.createElement('canvas');
     if (!bufferCanvas) {
-      alert(lang.errorInitBufferCanvas);
+      alert(this.lang.errorInitBufferCanvas);
       return false;
     }
     this.buffer.canvas  = bufferCanvas;
@@ -621,8 +625,8 @@ function PaintWeb (win_, doc_) {
           return false;
         }
 
-        if (lang.status['hover' + elem.id]) {
-          lang.status['hover' + elem.id] += ' [ ' + i + ' ]';
+        if (this.lang.status['hover' + elem.id]) {
+          this.lang.status['hover' + elem.id] += ' [ ' + i + ' ]';
         }
 
         if (elem.title) {
@@ -651,7 +655,7 @@ function PaintWeb (win_, doc_) {
     // The global keyboard events handler implements everything needed for 
     // switching between tools and for accessing any other functionality of the 
     // Web application.
-    kbListener_ = new lib.dom.KeyboardEventListener(window,
+    kbListener_ = new pwlib.dom.KeyboardEventListener(window,
         {keydown:  this.ev_keyboard,
          keypress: this.ev_keyboard,
          keyup: this.ev_keyboard});
@@ -957,7 +961,7 @@ function PaintWeb (win_, doc_) {
       return false;
     }
 
-    if (lang.status['hover' + this.id]) {
+    if (_self.lang.status['hover' + this.id]) {
       _self.statusShow('hover' + this.id, ev);
     } else if (this.title) {
       _self.statusShow(this.title, ev);
@@ -994,8 +998,8 @@ function PaintWeb (win_, doc_) {
         elem._prevText = false;
       }
 
-      if (msg && lang.status[msg]) {
-        msg = lang.status[msg];
+      if (msg && _self.lang.status[msg]) {
+        msg = _self.lang.status[msg];
       }
     }
 
@@ -1050,7 +1054,7 @@ function PaintWeb (win_, doc_) {
 
     var tool_obj = new tool(_self, ev);
     if (!tool_obj) {
-      alert(lang.errorToolActivate);
+      alert(_self.lang.errorToolActivate);
       return false;
     }
 
@@ -1064,29 +1068,31 @@ function PaintWeb (win_, doc_) {
 
     // Deactivate the previously active tool
     if (_self.tool) {
-      if (_self.tool.deactivate) {
+      if ('deactivate' in _self.tool) {
         _self.tool.deactivate(ev);
       }
-      if (_self.tool._elem) {
+      if ('_elem' in _self.tool) {
         _self.tool._elem.className = '';
       }
     }
 
-    if (tool_obj._elem) {
+    _self.mouse.buttonDown = false;
+
+    if ('_elem' in tool_obj) {
       tool_obj._elem.className = 'active';
     }
 
     _self.tool = tool_obj;
 
     // Show the status message for the active tool.
-    if (lang.status[id + 'Active']) {
+    if ((id + 'Active') in _self.lang.status) {
       _self.statusShow(id + 'Active');
     } else {
       _self.statusShow('');
     }
 
     // Besides the "constructor", each tool can also have code which is run after the deactivation of the previous tool.
-    if (_self.tool.activate) {
+    if ('activate' in _self.tool) {
       _self.tool.activate(ev);
     }
 
@@ -1217,8 +1223,8 @@ function PaintWeb (win_, doc_) {
    * @param {Event} ev The DOM Event object.
    *
    * @see PaintWeb.config.keys The keyboard shortcuts configuration.
-   * @see lib.dom.KeyboardEventListener The class dealing with the cross-browser 
-   * differences in the DOM keyboard events.
+   * @see pwlib.dom.KeyboardEventListener The class dealing with the 
+   * cross-browser differences in the DOM keyboard events.
    */
   this.ev_keyboard = function (ev) {
     // Do not continue if the key was not recognized by the lib.
@@ -1772,7 +1778,7 @@ function PaintWeb (win_, doc_) {
       return _self.update_textProps(ev);
     }
 
-    var new_font = prompt(lang.promptTextFont);
+    var new_font = prompt(_self.lang.promptTextFont);
     if (!new_font) {
       this.selectedIndex = 0;
       this.value = this.options[0].value;
@@ -1992,7 +1998,7 @@ function PaintWeb (win_, doc_) {
     // When the Shift key is being held down, prompt the user to input the new 
     // image dimensions.
 
-    var res = prompt(lang.promptImageDimensions, image.width + 'x' 
+    var res = prompt(_self.lang.promptImageDimensions, image.width + 'x' 
         + image.height);
 
     if (!res) {
@@ -2448,10 +2454,16 @@ PaintWeb.INIT_ERROR = -1;
 window.PaintWebInstance = new PaintWeb();
 
 if (!window.JSON) {
-  PaintWebInstance.scriptInsert('json2.js');
+  // Ugly, but it forces the browser to load the JSON code first.
+  document.write('<script type="text/javascript" ' +
+    'src="includes/json2.js"></script>');
+
+  // This does not work in all browsers.
+  //PaintWebInstance.scriptInsert('json2.js');
 }
 
 window.addEventListener('load', PaintWebInstance.init, false);
+
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
 

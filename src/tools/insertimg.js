@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-13 23:13:12 +0300 $
+ * $Date: 2009-05-16 21:22:30 +0300 $
  */
 
 /**
@@ -36,6 +36,7 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
       canvasImage  = app.image,
       container    = app.elems.container,
       context      = app.buffer.context,
+      lang         = app.lang,
       layerUpdate  = app.layerUpdate,
       MathAbs      = Math.abs,
       MathMin      = Math.min,
@@ -99,7 +100,7 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
   }
 
   // Remember the URL.
-  lib.extend(true, this.constructor.prototype, {url: this.url});
+  pwlib.extend(true, this.constructor.prototype, {url: this.url});
 
   /**
    * Determine the host from the given HTTP address.
