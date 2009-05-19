@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-05-18 21:19:17 +0300 $
+ * $Date: 2009-05-19 20:36:04 +0300 $
  */
 
 function tool_pencil (app) {
@@ -98,21 +98,24 @@ var PaintWebInstance = new (function () {
 
     var dpiProvider = _self.doc.getElementById('dpiLocal');
     var width = parseInt(_self.win.getComputedStyle(dpiProvider, null).width);
+    var scale = 1;
+
     if (width && !isNaN(width)) {
       dpiLocal = width;
+      scale = Math.floor(dpiLocal / dpiOptimal);
+
     } else if (window.navigator.userAgent.indexOf('olpc') != -1) {
       dpiLocal = 134;
+      scale = dpiLocal / dpiOptimal;
     }
 
-    if (dpiLocal != dpiOptimal) {
-      image.zoom = dpiOptimal / dpiLocal;
+    if (dpiLocal != dpiOptimal && scale != 1) {
+      image.zoom = 1 / scale;
 
-      var scale = dpiLocal / dpiOptimal;
-      var sw = canvas.width / scale;
+      var sw = canvas.width  / scale;
           sh = canvas.height / scale;
 
       console.log(dpiLocal + ' / ' + dpiOptimal + ' = ' + scale + "\n" +
-          dpiOptimal + ' / ' + dpiLocal + ' = ' + image.zoom + "\n" +
           'w ' + canvas.width + ' h ' + canvas.height + ' sw ' + sw + ' sh ' + sh);
 
       canvas.style.width  = sw + 'px';
