@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-17 19:29:15 +0300 $
+ * $Date: 2009-05-20 14:05:41 +0300 $
  */
 
 /**
@@ -150,7 +150,6 @@ PaintWebInstance.toolAdd('ellipse', function (app) {
     if (!needsRedraw) {
       return;
     }
-    needsRedraw = false;
 
     context.clearRect(0, 0, image.width, image.height);
 
@@ -222,6 +221,8 @@ PaintWebInstance.toolAdd('ellipse', function (app) {
     }
 
     context.closePath();
+
+    needsRedraw = false;
   };
 
   /**

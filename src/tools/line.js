@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-17 19:27:44 +0300 $
+ * $Date: 2009-05-20 17:05:58 +0300 $
  */
 
 /**
@@ -147,7 +147,6 @@ PaintWebInstance.toolAdd('line', function (app) {
     if (!needsRedraw) {
       return;
     }
-    needsRedraw = false;
 
     context.clearRect(0, 0, image.width, image.height);
 
@@ -161,6 +160,8 @@ PaintWebInstance.toolAdd('line', function (app) {
     context.lineTo(mouse.x, mouse.y);
     context.stroke();
     context.closePath();
+
+    needsRedraw = false;
   };
 
   /**
