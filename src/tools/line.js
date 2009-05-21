@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-20 17:05:58 +0300 $
+ * $Date: 2009-05-20 19:53:44 +0300 $
  */
 
 /**
@@ -43,7 +43,7 @@ PaintWebInstance.toolAdd('line', function (app) {
       statusShow    = app.statusShow;
 
   /**
-   * The interval ID used for running the pencil drawing operation every few 
+   * The interval ID used for invoking the drawing operation every few 
    * milliseconds.
    *
    * @private
@@ -95,9 +95,13 @@ PaintWebInstance.toolAdd('line', function (app) {
     if (timer) {
       clearInterval(timer);
       timer = null;
-      needsRedraw = false;
+    }
+
+    if (mouse.buttonDown) {
       context.clearRect(0, 0, image.width, image.height);
     }
+
+    needsRedraw = false;
 
     return true;
   };

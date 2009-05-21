@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-05-07 18:38:33 +0300 $
+  // $Date: 2009-05-21 15:06:16 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -23,7 +23,9 @@
     "cpickerNormal": "Click to change the fill color, and Shift+Click to change the stroke color.",
     "cpickerFillStyle": "Click to pick the fill color.",
     "cpickerStrokeStyle": "Click to pick the stroke color.",
-    "curveActive": "Click four times to draw the curve: start, end and two control points.",
+    "curveActive": "Click to start drawing the curve. You need four points: start, end and two control points.",
+    "curveControlPoint1": "Click to draw the first control point.",
+    "curveControlPoint2": "Click to draw the second control point. This will also end the drawing operation.",
     "curveSnapping": "Hold the Shift key down for vertical/horizontal snapping.",
     "dragActive": "Click and drag the image to scroll.",
     "ellipseActive": "Click and drag to draw an ellipse.",

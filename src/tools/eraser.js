@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-17 20:23:21 +0300 $
+ * $Date: 2009-05-20 19:54:45 +0300 $
  */
 
 /**
@@ -82,9 +82,13 @@ PaintWebInstance.toolAdd('eraser', function (app) {
     if (timer) {
       clearInterval(timer);
       timer = null;
-      points = [];
+    }
+
+    if (mouse.buttonDown) {
       context.clearRect(0, 0, image.width, image.height);
     }
+
+    points = [];
 
     if (_self.strokeStyle) {
       context.strokeStyle = _self.strokeStyle;

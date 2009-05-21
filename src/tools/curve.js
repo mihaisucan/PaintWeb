@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-16 21:19:31 +0300 $
+ * $Date: 2009-05-21 15:55:52 +0300 $
  */
 
 /**
@@ -31,14 +31,16 @@
  * @param {PaintWeb} app Reference to the main paint application object.
  */
 PaintWebInstance.toolAdd('curve', function (app) {
-  var _self       = this,
-      config      = app.config,
-      context     = app.buffer.context,
-      image       = app.image,
-      layerUpdate = app.layerUpdate,
-      mouse       = app.mouse,
-      snapXY      = app.toolSnapXY,
-      statusShow  = app.statusShow;
+  var _self         = this,
+      clearInterval = window.clearInterval,
+      config        = app.config,
+      context       = app.buffer.context,
+      image         = app.image,
+      layerUpdate   = app.layerUpdate,
+      mouse         = app.mouse,
+      setInterval   = window.setInterval,
+      snapXY        = app.toolSnapXY,
+      statusShow    = app.statusShow;
 
   /**
    * Holds the points in the Bézier curve being drawn.
@@ -46,13 +48,51 @@ PaintWebInstance.toolAdd('curve', function (app) {
    * @private
    * @type Array
    */
-  this.points = [];
+  var points = [];
+
+  /**
+   * The interval ID used for invoking the drawing operation every few 
+   * milliseconds.
+   *
+   * @private
+   * @see PaintWeb.config.toolDrawDelay
+   */
+  var timer = null;
+
+  /**
+   * Tells if the <kbd>Shift</kbd> key is down or not. This is used by the 
+   * drawing function.
+   *
+   * @private
+   * @type Boolean
+   * @default false
+   */
+  var shiftKey = false;
+
+  /**
+   * Tells if the drawing canvas needs to be updated or not.
+   *
+   * @private
+   * @type Boolean
+   * @default false
+   */
+  var needsRedraw = false;
 
   /**
    * The tool deactivation method, used for clearing the buffer.
    */
   this.deactivate = function () {
-    context.clearRect(0, 0, image.width, image.height);
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+
+    if (points.length) {
+      context.clearRect(0, 0, image.width, image.height);
+    }
+
+    needsRedraw = false;
+    points = [];
 
     return true;
   };
@@ -63,9 +103,102 @@ PaintWebInstance.toolAdd('curve', function (app) {
    * @param {Event} ev The DOM Event object.
    */
   this.mousedown = function (ev) {
-    _self.mousemove = _self.draw;
+    if (points.length == 0) {
+      statusShow('curveSnapping');
+      points.push([mouse.x, mouse.y]);
+    }
 
-    return _self.draw(ev);
+    if (!timer) {
+      timer = setInterval(_self.draw, config.toolDrawDelay);
+    }
+
+    shiftKey = ev.shiftKey;
+    needsRedraw = false;
+
+    return true;
+  };
+
+  /**
+   * Store the <kbd>Shift</kbd> key state which is used by the drawing function.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
+  this.mousemove = function (ev) {
+    shiftKey = ev.shiftKey;
+    needsRedraw = true;
+  };
+
+  /**
+   * Draw the Bézier curve, using the available points.
+   *
+   * @see PaintWeb.config.toolDrawDelay
+   */
+  this.draw = function () {
+    if (!needsRedraw) {
+      return;
+    }
+
+    // Add the temporary point while the mouse button is down.
+    if (mouse.buttonDown) {
+      if (shiftKey && points.length == 1) {
+        snapXY(points[0][0], points[0][1]);
+      }
+      points.push([mouse.x, mouse.y]);
+    }
+
+    var n           = points.length,
+        p0          = points[0],
+        p1          = points[1],
+        p2          = points[2],
+        p3          = points[3] || points[2],
+        lineWidth   = context.lineWidth,
+        strokeStyle = context.strokeStyle,
+        fillStyle   = context.fillStyle;
+
+    if (mouse.buttonDown) {
+      points.pop();
+    }
+
+    context.clearRect(0, 0, image.width, image.height);
+
+    if (!n) {
+      return;
+    }
+
+    // Draw the main line
+    if (n == 2) {
+      context.beginPath();
+      context.moveTo(p0[0], p0[1]+2);
+      context.lineTo(p1[0], p1[1]+2);
+      context.lineWidth = 1;
+      context.strokeStyle = '#000000';
+      context.stroke();
+      context.closePath();
+
+      context.lineWidth = lineWidth;
+      context.strokeStyle = strokeStyle;
+
+      return;
+    }
+
+    context.beginPath();
+    context.moveTo(p0[0], p0[1]);
+    context.bezierCurveTo(
+      p2[0], p2[1],
+      p3[0], p3[1],
+      p1[0], p1[1]);
+
+    if (config.shapeType != 'stroke') {
+      context.fill();
+    }
+
+    if (config.shapeType != 'fill') {
+      context.stroke();
+    }
+
+    context.closePath();
+
+    needsRedraw = false;
   };
 
   /**
@@ -75,135 +208,33 @@ PaintWebInstance.toolAdd('curve', function (app) {
    * @param {Event} ev The DOM Event object.
    */
   this.mouseup = function (ev) {
-    if (_self.points.length == 0) {
-      statusShow('curveSnapping');
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
     }
 
-    if (_self.points.length == 1) {
-      // Snapping on the X/Y axis for the current point.
-      if (ev.shiftKey) {
-        snapXY(_self.points[0][0], _self.points[0][1]);
-      }
+    var n = points.length;
 
-      statusShow('curveActive');
+    if (n == 1 && ev.shiftKey) {
+      snapXY(points[0][0], points[0][1]);
     }
 
-    // We need 4 points to draw the Bézier curve: start, end, and two control points.
-    if (_self.points.length < 4) {
-      _self.points.push([mouse.x, mouse.y]);
-
-      if (!_self.draw()) {
-        return false;
-      }
-    }
-
-    if (_self.points.length == 4) {
-      _self.points = [];
-      delete _self.mousemove;
-
-      return layerUpdate();
-    }
-
-    return true;
-  };
-
-  /**
-   * Draw the Bézier curve, using the available points.
-   *
-   * @param {Event} ev The DOM Event object.
-   *
-   * @returns {Boolean} True if the curve has been drawn, or false if not.
-   */
-  this.draw = function (ev) {
-    var y, i, p     = this.points;
-    var n           = p.length,
-        lineWidth   = context.lineWidth,
-        strokeStyle = context.strokeStyle,
-        fillStyle   = context.fillStyle;
-
-    // If there's an event, we can use the new point for live feedback.
-    if (ev) {
-      n++;
-    }
-
-    if (!n) {
-      return false;
-    }
-
-    context.clearRect(0, 0, image.width, image.height);
-
-    // Draw the main line
-    if (n == 2) {
-      // Snapping on the X/Y axis for the current point (if available).
-      if (ev && ev.shiftKey) {
-        snapXY(p[0][0], p[0][1]);
-      }
-
-      context.beginPath();
-      context.moveTo(p[0][0], p[0][1]+2);
-      i = p[1];
-      if (!i) {
-        i = [mouse.x, mouse.y];
-      }
-      context.lineTo(i[0], i[1]+2);
-      context.lineWidth = 1;
-      context.strokeStyle = '#000000';
-      context.stroke();
-      context.closePath();
-
-      context.lineWidth = lineWidth;
-      context.strokeStyle = strokeStyle;
-    }
-
-    // Draw the points
-    if (n < 4 || (n == 4 && ev)) {
-      context.fillStyle = '#0000ff';
-      for (i = 0; i < n; i++) {
-        y = p[i];
-        if (!y) {
-          y = [mouse.x, mouse.y];
-        }
-
-        context.fillRect(y[0], y[1], 4, 4);
-      }
-      context.fillStyle = fillStyle;
-    }
-
-    // If we do not have at least 3 points we cannot draw any Bézier curve
+    // We need 4 points to draw the Bézier curve: start, end, and two control 
+    // points.
     if (n < 3) {
-      return true;
+      statusShow('curveControlPoint' + n);
+      points.push([mouse.x, mouse.y]);
     }
 
-    // The fourth point
-    var p4 = p[3];
-    if (!p4) {
-      // If the fourth point is not available, then use the current event or the third point.
-      if (ev) {
-        p4 = [mouse.x, mouse.y];
-      } else {
-        p4 = p[2];
-      }
-    }
+    // Make sure the canvas is up-to-date.
+    shiftKey = ev.shiftKey;
+    _self.draw();
 
-    var p3 = p[2];
-    if (!p3) {
-      p3 = [mouse.x, mouse.y];
+    if (n == 3) {
+      statusShow('curveActive');
+      points = [];
+      layerUpdate();
     }
-
-    context.beginPath();
-    context.moveTo(p[0][0], p[0][1]);
-    context.bezierCurveTo(p3[0], p3[1],
-      p4[0], p4[1],
-      p[1][0], p[1][1]);
-
-    if (config.shapeType != 'stroke') {
-      context.fill();
-    }
-    if (config.shapeType != 'fill') {
-      context.stroke();
-    }
-
-    context.closePath();
 
     return true;
   };
@@ -213,27 +244,31 @@ PaintWebInstance.toolAdd('curve', function (app) {
    * press the <kbd>Escape</kbd> key to cancel the current drawing operation.
    *
    * @param {Event} ev The DOM Event object.
+   *
    * @returns {Boolean} True if the keyboard shortcut was recognized, or false 
    * if not.
    */
   this.keydown = function (ev) {
-    if (ev.kid_ != 'Escape') {
+    if (!points.length || ev.kid_ != 'Escape') {
       return false;
     }
 
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+
     context.clearRect(0, 0, image.width, image.height);
-    _self.points = [];
-    delete _self.mousemove;
+
+    points = [];
+    needsRedraw = false;
+    mouse.buttonDown = false;
 
     statusShow('curveActive');
 
     return true;
   };
-
-  // TODO: check this...
-  return true;
 });
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
-
 
