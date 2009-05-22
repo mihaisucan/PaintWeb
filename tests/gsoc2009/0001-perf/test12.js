@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-05-19 22:56:31 +0300 $
+ * $Date: 2009-05-22 16:21:44 +0300 $
  */
 
 function tool_pencil (app) {
@@ -103,10 +103,20 @@ var PaintWebInstance = new (function () {
     if (width && !isNaN(width)) {
       dpiLocal = width;
       scale = Math.floor(dpiLocal / dpiOptimal);
+      console.log('dpiLocal ' + dpiLocal + ' scale ' + scale);
 
     } else if (window.navigator.userAgent.indexOf('olpc') != -1) {
+      // See:
+      // http://mxr.mozilla.org/mozilla-central/source/gfx/src/thebes/nsThebesDeviceContext.cpp#725
+      // dotsArePixels = false on the XO due to a hard-coded patch.
+      // Thanks go to roc from Mozilla!
       dpiLocal = 134;
-      scale = dpiLocal / dpiOptimal;
+      var appUnitsPerCSSPixel = 60;
+      var devPixelsPerCSSPixel = dpiLocal / 96;
+      var appUnitsPerDevPixel = appUnitsPerCSSPixel / devPixelsPerCSSPixel;
+      scale = appUnitsPerCSSPixel / Math.floor(appUnitsPerDevPixel);
+      console.log('scale ' + scale + ' devPixelsPerCSSPixel ' +
+          devPixelsPerCSSPixel + ' appUnitsPerDevPixel ' + appUnitsPerDevPixel);
     }
 
     if (dpiLocal != dpiOptimal && scale != 1) {
@@ -115,8 +125,8 @@ var PaintWebInstance = new (function () {
       var sw = canvas.width  / scale;
           sh = canvas.height / scale;
 
-      console.log(dpiLocal + ' / ' + dpiOptimal + ' = ' + scale + "\n" +
-          'w ' + canvas.width + ' h ' + canvas.height + ' sw ' + sw + ' sh ' + sh);
+      console.log('w ' + canvas.width + ' h ' + canvas.height + ' sw ' + sw 
+          + ' sh ' + sh);
 
       canvas.style.width  = sw + 'px';
       canvas.style.height = sh + 'px';

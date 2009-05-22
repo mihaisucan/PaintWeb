@@ -1,3 +1,16 @@
+2009-05-22:
+===========
+
+- Performance test12 is finally working very well in the default Gecko-based 
+browser on the XO. Yay!
+
+Thanks go to Robert O'Callahan (roc) from Mozilla for his valuable information 
+on how Gecko renders pages. Also, thanks to my mentor, Martin Langhoff, for 
+finding the Gecko patches applied on the XO.
+
+This work will be integrated into PaintWeb.
+
+
 2009-05-21:
 ===========
 
