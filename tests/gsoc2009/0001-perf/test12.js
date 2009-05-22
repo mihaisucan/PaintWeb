@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-05-22 19:29:28 +0300 $
+ * $Date: 2009-05-22 21:37:07 +0300 $
  */
 
 function tool_pencil (app) {
@@ -105,11 +105,11 @@ var PaintWebInstance = new (function () {
 
     if (window.opera) {
       scale = window.innerHeight / height;
-      scale = Math.round(scale * 100) / 100;
+      scale = Math.round(scale * 10) / 10;
       console.log('scale ' + scale + ' innerHeight ' + window.innerHeight +
           ' height ' + height);
 
-    } else if (width && !isNaN(width)) {
+    } else if (width && !isNaN(width) && width != dpiOptimal) {
       dpiLocal = width;
       scale = Math.floor(dpiLocal / dpiOptimal);
       console.log('dpiLocal ' + dpiLocal + ' scale ' + scale);
@@ -121,7 +121,7 @@ var PaintWebInstance = new (function () {
       // Thanks go to roc from Mozilla for his feedback on making this work.
       dpiLocal = 134;
       var appUnitsPerCSSPixel = 60;
-      var devPixelsPerCSSPixel = dpiLocal / 96;
+      var devPixelsPerCSSPixel = dpiLocal / dpiOptimal;
       var appUnitsPerDevPixel = appUnitsPerCSSPixel / devPixelsPerCSSPixel;
       scale = appUnitsPerCSSPixel / Math.floor(appUnitsPerDevPixel);
       console.log('dpiLocal ' + dpiLocl + ' scale ' + scale +

@@ -10,7 +10,9 @@ finding the Gecko patches applied on the XO.
 
 This work will be integrated into PaintWeb.
 
-- Added zoom level detection for Opera in performance test12.
+- Added zoom level detection for Opera in performance test12, which semi-works.  
+Detection of the zoom level is sufficiently accurate, yet, Opera doesn't always 
+cancel the scaling. For zoom 200% scaling is cancelled and performance is good.
 
 
 2009-05-21:
