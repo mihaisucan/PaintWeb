@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-05-22 16:21:44 +0300 $
+ * $Date: 2009-05-22 19:29:28 +0300 $
  */
 
 function tool_pencil (app) {
@@ -96,11 +96,20 @@ var PaintWebInstance = new (function () {
     _self.image.width = canvas.width;
     _self.image.height = canvas.height;
 
-    var dpiProvider = _self.doc.getElementById('dpiLocal');
-    var width = parseInt(_self.win.getComputedStyle(dpiProvider, null).width);
-    var scale = 1;
+    var resInfo = _self.doc.getElementById('resInfo');
+    var cs = _self.win.getComputedStyle(resInfo, null);
 
-    if (width && !isNaN(width)) {
+    var width  = parseInt(cs.width),
+        height = parseInt(cs.height),
+        scale = 1;
+
+    if (window.opera) {
+      scale = window.innerHeight / height;
+      scale = Math.round(scale * 100) / 100;
+      console.log('scale ' + scale + ' innerHeight ' + window.innerHeight +
+          ' height ' + height);
+
+    } else if (width && !isNaN(width)) {
       dpiLocal = width;
       scale = Math.floor(dpiLocal / dpiOptimal);
       console.log('dpiLocal ' + dpiLocal + ' scale ' + scale);
@@ -109,17 +118,18 @@ var PaintWebInstance = new (function () {
       // See:
       // http://mxr.mozilla.org/mozilla-central/source/gfx/src/thebes/nsThebesDeviceContext.cpp#725
       // dotsArePixels = false on the XO due to a hard-coded patch.
-      // Thanks go to roc from Mozilla!
+      // Thanks go to roc from Mozilla for his feedback on making this work.
       dpiLocal = 134;
       var appUnitsPerCSSPixel = 60;
       var devPixelsPerCSSPixel = dpiLocal / 96;
       var appUnitsPerDevPixel = appUnitsPerCSSPixel / devPixelsPerCSSPixel;
       scale = appUnitsPerCSSPixel / Math.floor(appUnitsPerDevPixel);
-      console.log('scale ' + scale + ' devPixelsPerCSSPixel ' +
-          devPixelsPerCSSPixel + ' appUnitsPerDevPixel ' + appUnitsPerDevPixel);
+      console.log('dpiLocal ' + dpiLocl + ' scale ' + scale +
+          ' devPixelsPerCSSPixel ' + devPixelsPerCSSPixel +
+          ' appUnitsPerDevPixel ' + appUnitsPerDevPixel);
     }
 
-    if (dpiLocal != dpiOptimal && scale != 1) {
+    if (scale != 1) {
       image.zoom = 1 / scale;
 
       var sw = canvas.width  / scale;

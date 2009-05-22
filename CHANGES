@@ -10,6 +10,8 @@ finding the Gecko patches applied on the XO.
 
 This work will be integrated into PaintWeb.
 
+- Added zoom level detection for Opera in performance test12.
+
 
 2009-05-21:
 ===========

@@ -5,19 +5,25 @@
     <title>Simple performance test 12</title>
     <style type="text/css"><!--
       @media screen and (resolution: 96dpi) {
-        #dpiLocal { width: 96px }
+        #resInfo { width: 96px }
       }
       @media screen and (resolution: 134dpi) {
-        #dpiLocal { width: 134px }
+        #resInfo { width: 134px }
       }
       @media screen and (resolution: 200dpi) {
-        #dpiLocal { width: 200px }
+        #resInfo { width: 200px }
       }
       @media screen and (resolution: 300dpi) {
-        #dpiLocal { width: 300px }
+        #resInfo { width: 300px }
       }
-      #dpiLocal {
-        display: none;
+      #resInfo {
+        display: block;
+        height: 100%;
+        left: -3000px;
+        position: fixed;
+        top: 0;
+        visibility: hidden;
+        z-index:-32;
       }
       #container { position: relative; }
       #imageView { border: 1px solid #000; }
@@ -37,7 +43,7 @@
           href="http://www.konqueror.org">Konqueror</a>.</p>
         </canvas>
       </div>
-      <div id="dpiLocal"></div>
+      <div id="resInfo"></div>
 
     <script type="text/javascript" src="common.js"></script>
     <script type="text/javascript" src="test12.js"></script>
