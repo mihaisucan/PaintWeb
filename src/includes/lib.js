@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-05-16 19:22:24 +0300 $
+ * $Date: 2009-05-23 16:09:20 +0300 $
  */
 
 /**
@@ -237,6 +237,14 @@ pwlib.browser.presto = /\bpresto\b/.test(ua) || pwlib.browser.opera;
  * @type String
  */
 pwlib.browser.os = (ua.match(/\b(windows|linux)\b/) || [])[1];
+
+/**
+ * Tells if the browser is running on an OLPC XO. Typically, only the default 
+ * Gecko-based browser includes the OLPC XO tokens in the user agent string.
+ *
+ * @type Boolean
+ */
+pwlib.browser.olpcxo = ua.match(/\bolpc\b/) && ua.match(/\bxo\b/);
 
 delete ua;
 })();

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-20 17:18:15 +0300 $
+ * $Date: 2009-05-23 20:48:07 +0300 $
  */
 
 /**
@@ -51,7 +51,7 @@ function PaintWeb (win_, doc_) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090520;
+  this.build = 20090523;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -188,12 +188,65 @@ function PaintWeb (win_, doc_) {
     height: 0,
 
     /**
-     * Image zoom level.
+     * Image zoom level. This property holds the current image zoom level used 
+     * by the user for viewing the image.
      *
      * @type Number
      * @default 1
      */
-    zoom: 1
+    zoom: 1,
+
+    /**
+     * Image scaling. The canvas elements are scaled from CSS using this value 
+     * as the scaling factor. This value is dependant on the browser rendering 
+     * resolution and on the user-defined image zoom level.
+     *
+     * @type Number
+     * @default 1
+     */
+    canvasScale: 1
+  };
+
+  /**
+   * Resolution information.
+   *
+   * @type Object
+   */
+  this.resolution = {
+    /**
+     * Optimal DPI for the canvas elements.
+     *
+     * @private
+     * @type Number
+     * @default 96
+     */
+    dpiOptimal: 96,
+
+    /**
+     * The current DPI used by the browser for rendering the entire page.
+     *
+     * @type Number
+     * @default 96
+     */
+    dpiLocal: 96,
+
+    /**
+     * The current zoom level used by the browser for rendering the entire page.
+     *
+     * @type Number
+     * @default 1
+     */
+    browserZoom: 1,
+
+    /**
+     * The scaling factor used by the browser for rendering the entire page. For 
+     * example, on Gecko using DPI 200 the scale factor is 2.
+     *
+     * @private
+     * @type Number
+     * @default 1
+     */
+    scale: 1
   };
 
   /**
@@ -213,6 +266,7 @@ function PaintWeb (win_, doc_) {
     /**
      * The ImageDatas for each history state.
      *
+     * @private
      * @type Array
      */
     states: []
@@ -255,8 +309,11 @@ function PaintWeb (win_, doc_) {
   var kbListener_ = null;
 
   // Avoid global scope lookup.
-  var MathRound = Math.round,
-      MathAbs   = Math.abs;
+  var MathAbs   = Math.abs,
+      MathFloor = Math.floor,
+      MathMax   = Math.max,
+      MathMin   = Math.min,
+      MathRound = Math.round;
 
   function $ (id) {
     var elem = _self.doc.getElementById(id);
@@ -446,6 +503,14 @@ function PaintWeb (win_, doc_) {
       = this.image.height + 'px';
 
     this.buffer.context = bufferCanvas.getContext('2d');
+
+    this.elems.resInfo = $('resInfo');
+    if (!this.elems.resInfo) {
+      return false;
+    }
+
+    this.updateCanvasScaling();
+    this.win.addEventListener('resize', this.updateCanvasScaling, false);
 
     // The initial blank state of the image
     this.historyAdd();
@@ -815,6 +880,76 @@ function PaintWeb (win_, doc_) {
     return true;
   };
 
+  /**
+   * Update the canvas scaling. This method determines the DPI and/or zoom level 
+   * used by the browser to render the application. Based on these values, the 
+   * canvas elements are scaled down to cancel any upscaling performed by the 
+   * browser.
+   */
+  this.updateCanvasScaling = function () {
+    var cs             = _self.win.getComputedStyle(_self.elems.resInfo, null),
+        res            = _self.resolution,
+        image          = _self.image;
+        bufferStyle    = _self.buffer.canvas.style,
+        layerStyle     = _self.layer.canvas.style,
+        containerStyle = _self.elems.container.style,
+        scaleNew       = 1;
+
+    var width  = parseInt(cs.width),
+        height = parseInt(cs.height);
+
+    if (pwlib.browser.opera) {
+      // Opera zoom level detection.
+      // The scaling factor is sufficiently accurate for zoom levels between 
+      // 100% and 200% (in steps of 10%).
+
+      scaleNew = _self.win.innerHeight / height;
+      scaleNew = MathRound(scaleNew * 10) / 10;
+
+    } else if (width && !isNaN(width) && width != res.dpiOptimal) {
+      // Page DPI detection. This only works in Gecko 1.9.1.
+
+      res.dpiLocal = width;
+
+      // The scaling factor is the same as in Gecko.
+      scaleNew = MathFloor(res.dpiLocal / res.dpiOptimal);
+
+    } else if (pwlib.browser.olpcxo) {
+      // Support for the default Gecko included on the OLPC XO-1 system.
+      //
+      // See:
+      // http://mxr.mozilla.org/mozilla-central/source/gfx/src/thebes/nsThebesDeviceContext.cpp#725
+      // dotsArePixels = false on the XO due to a hard-coded patch.
+      // Thanks go to roc from Mozilla for his feedback on making this work.
+
+      res.dpiLocal = 134;
+      var appUnitsPerCSSPixel = 60;
+      var devPixelsPerCSSPixel = res.dpiLocal / res.dpiOptimal;
+      var appUnitsPerDevPixel = appUnitsPerCSSPixel / devPixelsPerCSSPixel;
+
+      scaleNew = appUnitsPerCSSPixel / MathFloor(appUnitsPerDevPixel);
+    }
+
+    if (scaleNew == res.scale) {
+      return;
+    }
+
+    res.scale = scaleNew;
+
+    var styleWidth  = image.width  / res.scale * image.zoom,
+        styleHeight = image.height / res.scale * image.zoom;
+
+    image.canvasScale = styleWidth / image.width;
+
+    bufferStyle.width  = layerStyle.width  = styleWidth  + 'px';
+    bufferStyle.height = layerStyle.height = styleHeight + 'px';
+
+    if (image.zoom <= 1) {
+      containerStyle.width  = styleWidth  + 'px';
+      containerStyle.height = styleHeight + 'px';
+    }
+  };
+
   // Initialize and handle the dragging of the GUI boxes.
   // TODO: GUI stuff
   this.boxes = {
@@ -1166,20 +1301,20 @@ function PaintWeb (win_, doc_) {
      * element.
      */
     if ('layerX' in ev) {
-      if (_self.image.zoom == 1) {
+      if (_self.image.canvasScale == 1) {
         _self.mouse.x = ev.layerX;
         _self.mouse.y = ev.layerY;
       } else {
-        _self.mouse.x = MathRound(ev.layerX / _self.image.zoom);
-        _self.mouse.y = MathRound(ev.layerY / _self.image.zoom);
+        _self.mouse.x = MathRound(ev.layerX / _self.image.canvasScale);
+        _self.mouse.y = MathRound(ev.layerY / _self.image.canvasScale);
       }
     } else if ('offsetX' in ev) {
-      if (_self.image.zoom == 1) {
+      if (_self.image.canvasScale == 1) {
         _self.mouse.x = ev.offsetX;
         _self.mouse.y = ev.offsetY;
       } else {
-        _self.mouse.x = MathRound(ev.offsetX / _self.image.zoom);
-        _self.mouse.y = MathRound(ev.offsetY / _self.image.zoom);
+        _self.mouse.x = MathRound(ev.offsetX / _self.image.canvasScale);
+        _self.mouse.y = MathRound(ev.offsetY / _self.image.canvasScale);
       }
     }
 
@@ -1476,26 +1611,30 @@ function PaintWeb (win_, doc_) {
     }
 
     var input = _self.inputs.zoom,
-        w = (image.width  * level) + 'px',
-        h = (image.height * level) + 'px',
+        w = image.width  / _self.resolution.scale * level,
+        h = image.height / _self.resolution.scale * level,
         bufferStyle = _self.buffer.canvas.style,
         layerStyle = _self.layer.canvas.style,
         containerStyle = _self.elems.container.style;
 
+    image.canvasScale = w / image.width;
+
     if (input.value != level*100) {
-      input.value = Math.round(level*100);
+      input.value = MathRound(level*100);
     }
 
-    bufferStyle.width  = layerStyle.width  = w;
-    bufferStyle.height = layerStyle.height = h;
+    bufferStyle.width  = layerStyle.width  = w + 'px';
+    bufferStyle.height = layerStyle.height = h + 'px';
 
     // The container should only be smaller than the image dimensions
-    if (level < 1) {
-      containerStyle.width  = w;
-      containerStyle.height = h;
-    } else if (image.zoom < 1) {
-      containerStyle.width  = image.width  + 'px';
-      containerStyle.height = image.height + 'px';
+    if (level <= 1) {
+      console.log('cucu1');
+      containerStyle.width  = w + 'px';
+      containerStyle.height = h + 'px';
+    } else {
+      console.log('cucu2');
+      containerStyle.width  = image.width  / _self.resolution.scale + 'px';
+      containerStyle.height = image.height / _self.resolution.scale + 'px';
     }
 
     image.zoom = level;
@@ -1579,8 +1718,8 @@ function PaintWeb (win_, doc_) {
       var dx = ev.clientX - r.mx,
           dy = ev.clientY - r.my;
 
-      var w = Math.round((r.w + dx) / _self.image.zoom),
-          h = Math.round((r.h + dy) / _self.image.zoom);
+      var w = MathRound((r.w + dx) / _self.image.canvasScale),
+          h = MathRound((r.h + dy) / _self.image.canvasScale);
 
       _self.resizeCanvas(w, h, true);
 
@@ -1624,8 +1763,8 @@ function PaintWeb (win_, doc_) {
       return false;
     }
 
-    var w2 = Math.round(w * _self.image.zoom),
-        h2 = Math.round(h * _self.image.zoom);
+    var w2 = w * _self.image.canvasScale,
+        h2 = h * _self.image.canvasScale;
 
     if (_self.image.zoom <= 1) {
       _self.elems.container.style.width  = w2 + 'px';
@@ -1641,8 +1780,8 @@ function PaintWeb (win_, doc_) {
 
     // The canvas state gets reset once the dimensions change.
     var state = _self.state_save(_self.layer.context),
-        dw    = Math.min(_self.image.width,  w),
-        dh    = Math.min(_self.image.height, h);
+        dw    = MathMin(_self.image.width,  w),
+        dh    = MathMin(_self.image.height, h);
 
     // The image is cleared once the dimensions change. We need to restore the image.
     // This does not work in Opera 9.2 and older, nor in Safari. This works in new WebKit builds.

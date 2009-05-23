@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-16 21:28:36 +0300 $
+ * $Date: 2009-05-23 20:16:01 +0300 $
  */
 
 /**
@@ -33,10 +33,11 @@
  */
 PaintWebInstance.extensionAdd('mousekeys', function (app) {
   var _self     = this,
+      MathCeil  = Math.ceil,
       canvas    = app.buffer.canvas,
       config    = app.config,
       container = app.elems.container,
-      MathCeil  = Math.ceil,
+      image     = app.image,
       mouse     = app.mouse,
       tool      = null;
 
@@ -158,8 +159,9 @@ PaintWebInstance.extensionAdd('mousekeys', function (app) {
 
     if (pointer.style.display == 'none') {
       pointer.style.display = 'block';
-      pointer.style.top  = mouse.y + 'px';
-      pointer.style.left = mouse.x + 'px';
+      pointer.style.top  = (mouse.y * image.canvasScale) + 'px';
+      pointer.style.left = (mouse.x * image.canvasScale) + 'px';
+      pointer.className = mouse.buttonDown ? 'mouseDown' : '';
     }
 
     tool = app.tool;
@@ -233,9 +235,7 @@ PaintWebInstance.extensionAdd('mousekeys', function (app) {
       speed += speed * accel;
     }
 
-    var w = canvas.width,
-        h = canvas.height,
-        step = MathCeil(speed);
+    var step = MathCeil(speed);
 
     switch (ev.kobj_.action) {
       case 'SouthWest':
@@ -272,18 +272,18 @@ PaintWebInstance.extensionAdd('mousekeys', function (app) {
 
     if (mouse.x < 0) {
       mouse.x = 0;
-    } else if (mouse.x > w) {
-      mouse.x = w;
+    } else if (mouse.x > image.width) {
+      mouse.x = image.width;
     }
 
     if (mouse.y < 0) {
       mouse.y = 0;
-    } else if (mouse.y > h) {
-      mouse.y = h;
+    } else if (mouse.y > image.height) {
+      mouse.y = image.height;
     }
 
-    pointer.style.top  = mouse.y + 'px';
-    pointer.style.left = mouse.x + 'px';
+    pointer.style.top  = (mouse.y * image.canvasScale) + 'px';
+    pointer.style.left = (mouse.x * image.canvasScale) + 'px';
 
     if ('mousemove' in tool) {
       tool.mousemove(ev);

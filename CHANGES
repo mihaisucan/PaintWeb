@@ -1,3 +1,14 @@
+2009-05-23:
+===========
+
+- Fixed performance test12. Huh. Working again.
+- Included all the work from test12 into PaintWeb. Now the application works 
+much better on the XO, by default. Yay! ;)
+- Made sure that any DPI changes, or zoom level changes in Opera, are detected 
+automatically while PaintWeb runs.
+- Made the MouseKeys extension aware of the current image zoom and the canvas 
+scaling going on.
+
 2009-05-22:
 ===========
 
