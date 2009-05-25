@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-20 19:53:44 +0300 $
+ * $Date: 2009-05-25 18:08:21 +0300 $
  */
 
 /**
@@ -170,10 +170,13 @@ PaintWebInstance.toolAdd('line', function (app) {
 
   /**
    * End the drawing operation, once the user releases the mouse button.
+   *
+   * @param {Event} ev The DOM Event object.
    */
-  this.mouseup = function () {
+  this.mouseup = function (ev) {
     // Allow users to click then drag, not only mousedown+drag+mouseup.
     if (mouse.x == x0 && mouse.y == y0) {
+      mouse.buttonDown = true;
       return true;
     }
 
@@ -182,6 +185,7 @@ PaintWebInstance.toolAdd('line', function (app) {
       timer = null;
     }
 
+    shiftKey = ev.shiftKey;
     _self.draw();
     statusShow('lineActive');
     layerUpdate();

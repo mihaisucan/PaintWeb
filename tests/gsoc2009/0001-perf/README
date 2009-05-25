@@ -1,5 +1,5 @@
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-05-14 13:08:20 +0300 $
+$Date: 2009-05-25 15:07:15 +0300 $
 
 Minimal tests for the purpose of optimizing drawing on the OLPC XO.
 
@@ -802,6 +802,35 @@ Performance-wise the drawing feels the same in test10, on both test machines.
 
 The test runs about 0.3 seconds slower on the XO, both in Opera and Firefox.
 
+test12:
+------
+
+The Gecko-based browser on the XO renders pages on 134 DPI, instead of the 
+default 96 DPI. This means that all elements in the page are scaled up using 
+a bilinear filter. This is what makes painting on the canvas feel very sluggish.
+
+Test12 is the same as test11, but with additional code in the initialization 
+function. This code down-scales the canvas element such that Gecko cancels the 
+scaling.
+
+In Gecko 1.9.1 the DPI can be detected using CSS 3 Media Queries.
+In Gecko 1.9.0 the DPI cannot be detected. For the XO I am required to do 
+user-agent sniffing. I set the default 134 DPI.
+
+Additionally, normal Gecko builds only scale pages using integer factors - like 
+1, 2, 3. However, Gecko on the XO is patched to scale pages using a non-integer 
+factor. Yay! :)
+
+Opera has no support for rendering pages using some DPI value other than 96. It 
+only implements zoom, thus Opera's zoom level is detected and cancelled. The 
+cancellation of the zoom level semi-works. Opera doesn't support CSS floating 
+point pixel values - only integers.
+
+Zoom in Gecko is harder to determine, so the script does not try it.
+
+This work has been integrated into PaintWeb.
+
+
 Conclusions
 ===========
 
@@ -821,7 +850,7 @@ performance impact on all rendering of images - bilinear image resampling is
 used.
 
 We need to avoid such resizing of the canvas element, or Browse.xo must somehow 
-become faster when scaling images.
+become faster when scaling images. Test12 avoids the canvas element scaling.
 
 If layout.css.dpi is set to 96, drawing with the touchpad is live/real-time on 
 the XO. It's even faster than Opera 10! Lovely. ;)

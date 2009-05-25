@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-16 21:24:54 +0300 $
+ * $Date: 2009-05-25 18:31:57 +0300 $
  */
 
 /**
@@ -45,12 +45,6 @@ PaintWebInstance.toolAdd('text', function (app) {
       statusShow   = app.statusShow,
       toolActivate = app.toolActivate;
 
-  if (!context.fillText || !context.strokeText) {
-    alert(app.lang.errorTextUnsupported);
-    this._cancel = true;
-    return false;
-  }
-
   /**
    * Holds the previous tool ID.
    *
@@ -59,19 +53,36 @@ PaintWebInstance.toolAdd('text', function (app) {
    */
   var prevTool = app.tool._id;
 
-  // Reset mouse coordinates in the center of the image, for the purpose of 
-  // placing the text there.
-  mouse.x = Math.round(image.width / 2);
-  mouse.y = Math.round(image.height / 2);
+  /**
+   * Tool preactivation code. This method is invoked when the user attempts to 
+   * activate the text tool.
+   *
+   * @returns {Boolean} True if the tool can be activated successfully, or false 
+   * if not.
+   */
+  this.preActivate = function () {
+    if (!context.fillText || !context.strokeText) {
+      alert(app.lang.errorTextUnsupported);
+      return false;
+    }
 
-  // Show the text options.
-  elems.textOptions.className = '';
+    // Reset mouse coordinates in the center of the image, for the purpose of 
+    // placing the text there.
+    mouse.x = Math.round(image.width / 2);
+    mouse.y = Math.round(image.height / 2);
+
+    // Show the text options.
+    elems.textOptions.className = '';
+
+    return true;
+  };
 
   /**
    * Setup the <code>textUpdate()</code> event handler for several inputs. This 
    * allows the text rendering to be updated automatically when some value 
    * changes.
    *
+   * @private
    * @param {String} act The action to perform: 'add' or 'remove' the event 
    * listeners.
    */
@@ -139,10 +150,11 @@ PaintWebInstance.toolAdd('text', function (app) {
 
   /**
    * The tool activation code. This runs after the text tool is constructed, and 
-   * after the previous tool has been destructed. This method simply references 
-   * the <code>textUpdate()</code> method.
+   * after the previous tool has been deactivated.
    */
-  this.activate = this.textUpdate;
+  this.activate = function () {
+    setup('add');
+  };
 
   /**
    * The tool deactivation simply consists of removing the event listeners added 
@@ -177,11 +189,6 @@ PaintWebInstance.toolAdd('text', function (app) {
 
     return true;
   };
-
-  setup('add');
-
-  // TODO: check this..
-  return true;
 });
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:

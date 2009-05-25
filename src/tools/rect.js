@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-20 19:52:37 +0300 $
+ * $Date: 2009-05-25 18:07:48 +0300 $
  */
 
 /**
@@ -159,6 +159,7 @@ PaintWebInstance.toolAdd('rect', function (app) {
         h = MathAbs(mouse.y - y0);
 
     if (!w || !h) {
+      needsRedraw = false;
       return;
     }
 
@@ -190,10 +191,13 @@ PaintWebInstance.toolAdd('rect', function (app) {
 
   /**
    * End the drawing operation, once the user releases the mouse button.
+   *
+   * @param {Event} ev The DOM Event object.
    */
-  this.mouseup = function () {
+  this.mouseup = function (ev) {
     // Allow click+mousemove, not only mousedown+move+up
     if (mouse.x == x0 && mouse.y == y0) {
+      mouse.buttonDown = true;
       return true;
     }
 
@@ -202,6 +206,7 @@ PaintWebInstance.toolAdd('rect', function (app) {
       timer = null;
     }
 
+    shiftKey = ev.shiftKey;
     _self.draw();
     layerUpdate();
     statusShow('rectActive');

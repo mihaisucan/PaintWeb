@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-05-23 20:43:34 +0300 $
+ * $Date: 2009-05-25 21:48:09 +0300 $
  */
 
 function tool_pencil (app) {
@@ -111,8 +111,8 @@ var PaintWebInstance = new (function () {
       scale = _self.win.innerHeight / height;
       scale = MathRound(scale * 10) / 10;
 
-      console.log('scale ' + scale + ' innerHeight ' + _self.win.innerHeight +
-          ' height ' + height);
+      /*console.log('scale ' + scale + ' innerHeight ' + _self.win.innerHeight +
+          ' height ' + height);*/
 
     } else if (width && !isNaN(width) && width != dpiOptimal) {
       // Page DPI detection. This only works in Gecko 1.9.1.
@@ -121,7 +121,7 @@ var PaintWebInstance = new (function () {
 
       // The scaling factor is the same as in Gecko.
       scale = Math.floor(dpiLocal / dpiOptimal);
-      console.log('dpiLocal ' + dpiLocal + ' scale ' + scale);
+      //console.log('dpiLocal ' + dpiLocal + ' scale ' + scale);
 
     } else if (_self.win.navigator.userAgent.indexOf('olpc') != -1) {
       // Support for the default Gecko included on the OLPC XO-1 system.
@@ -137,19 +137,19 @@ var PaintWebInstance = new (function () {
 
       scale = appUnitsPerCSSPixel / Math.floor(appUnitsPerDevPixel);
 
-      console.log('dpiLocal ' + dpiLocal + ' scale ' + scale +
+      /*console.log('dpiLocal ' + dpiLocal + ' scale ' + scale +
           ' devPixelsPerCSSPixel ' + devPixelsPerCSSPixel +
-          ' appUnitsPerDevPixel ' + appUnitsPerDevPixel);
+          ' appUnitsPerDevPixel ' + appUnitsPerDevPixel);*/
     }
 
     if (scale != 1) {
       image.zoom = 1 / scale;
 
-      var sw = canvas.width  / scale;
+      var sw = canvas.width  / scale,
           sh = canvas.height / scale;
 
-      console.log('w ' + canvas.width + ' h ' + canvas.height + ' sw ' + sw +
-          ' sh ' + sh);
+      /*console.log('w ' + canvas.width + ' h ' + canvas.height + ' sw ' + sw +
+          ' sh ' + sh);*/
 
       canvas.style.width  = sw + 'px';
       canvas.style.height = sh + 'px';

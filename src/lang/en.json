@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-05-21 15:06:16 +0300 $
+  // $Date: 2009-05-25 17:29:44 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -41,6 +41,7 @@
     "lineMousedown": "Hold the Shift key down for vertical/horizontal snapping.",
     "pencilActive": "Click and drag to draw.",
     "polyActive": "Click anywhere to start drawing a polygon.",
+    "polyAddPoint": "Click to add another point to the polygon.",
     "polyMousedown": "Hold the Shift key down for vertical/horizontal snapping.",
     "polyEnd": "To end drawing the polygon simply click in the same place as the last point.",
     "rectActive": "Click and drag to draw a rectangle.", 

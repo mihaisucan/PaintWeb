@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-23 20:48:07 +0300 $
+ * $Date: 2009-05-25 18:26:38 +0300 $
  */
 
 /**
@@ -51,7 +51,7 @@ function PaintWeb (win_, doc_) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090523;
+  this.build = 20090525;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -1189,14 +1189,25 @@ function PaintWeb (win_, doc_) {
 
     var tool_obj = new tool(_self, ev);
     if (!tool_obj) {
-      alert(_self.lang.errorToolActivate);
       return false;
     }
 
-    // The activation of the tool has been cancelled. This can happen via user 
-    // intervention or due to technical aspects, for example the tool 
-    // "constructor" determines some APIs are not available.
-    if (tool_obj._cancel) {
+    /*
+     * Each tool can implement its own mouse and keyboard events handler.
+     * Additionally, tool objects can implement handlers for the deactivation 
+     * and activation events.
+     * Given tool1 is active and tool2 is going to be activated, then the 
+     * following event handlers will be called:
+     *
+     * tool2.preActivate
+     * tool1.deactivate
+     * tool2.activate
+     *
+     * In the 'preActivate' event handler you can cancel the tool activation by 
+     * returning a value which evaluates to false.
+     */
+
+    if ('preActivate' in tool_obj && !tool_obj.preActivate(ev)) {
       tool_obj = null;
       return false;
     }

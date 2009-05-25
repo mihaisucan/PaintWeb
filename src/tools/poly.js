@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-13 23:19:34 +0300 $
+ * $Date: 2009-05-25 17:54:46 +0300 $
  */
 
 /**
@@ -33,15 +33,17 @@
 // TODO: Merge behaviour with line tool, and improve usability (mousedown and
 // mouseup feedback).
 PaintWebInstance.toolAdd('poly', function (app) {
-  var _self       = this,
-      config      = app.config,
-      context     = app.buffer.context,
-      image       = app.image,
-      layerUpdate = app.layerUpdate,
-      MathAbs     = Math.abs,
-      mouse       = app.mouse,
-      snapXY      = app.toolSnapXY,
-      statusShow  = app.statusShow;
+  var _self         = this,
+      MathAbs       = Math.abs,
+      clearInterval = window.clearInterval,
+      config        = app.config,
+      context       = app.buffer.context,
+      image         = app.image,
+      layerUpdate   = app.layerUpdate,
+      mouse         = app.mouse,
+      setInterval   = window.setInterval,
+      snapXY        = app.toolSnapXY,
+      statusShow    = app.statusShow;
 
   /**
    * Holds the points in the polygon being drawn.
@@ -49,117 +51,120 @@ PaintWebInstance.toolAdd('poly', function (app) {
    * @private
    * @type Array
    */
-  this.points = [];
+  var points = [];
 
   /**
-   * Tells if the drawing operation has been started or not.
+   * The interval ID used for invoking the drawing operation every few 
+   * milliseconds.
+   *
+   * @private
+   * @see PaintWeb.config.toolDrawDelay
+   */
+  var timer = null;
+
+  /**
+   * Tells if the <kbd>Shift</kbd> key is down or not. This is used by the 
+   * drawing function.
    *
    * @private
    * @type Boolean
+   * @default false
    */
-  this.started = false;
+  var shiftKey = false;
 
   /**
-   * The <code>click</code> event handler.
+   * Tells if the drawing canvas needs to be updated or not.
    *
-   * <p>This method adds the points in the polygon shape. If the mouse 
-   * coordinates are close to the first/last point, then the drawing operation 
-   * is ended.
-   *
-   * @param {Event} ev The DOM Event object.
-   * @returns {Boolean} True if the event handler executed, or false if not.
+   * @private
+   * @type Boolean
+   * @default false
    */
-  this.click = function (ev) {
-    if (_self.started) {
-      if (ev.shiftKey) {
-        snapXY(_self.x1, _self.y1);
-      }
+  var needsRedraw = false;
 
-      var diffx1 = MathAbs(mouse.x - _self.x0),
-          diffy1 = MathAbs(mouse.y - _self.y0),
-          diffx2 = MathAbs(mouse.x - _self.x1),
-          diffy2 = MathAbs(mouse.y - _self.y1);
-
-      // End the polygon if the new point is close enough to the first/last point.
-      if ((diffx1 < 5 && diffy1 < 5) || (diffx2 < 5 && diffy2 < 5)) {
-        // Add the start point to complete the polygon shape.
-        _self.points.push([_self.x0, _self.y0]);
-
-        _self.mousemove();
-        _self.points = [];
-        _self.started = false;
-
-        statusShow('polyActive');
-        layerUpdate();
-
-        return true;
-      }
+  /**
+   * The tool deactivation method, used for clearing the buffer.
+   */
+  this.deactivate = function () {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
     }
 
-    // Remember the last pointer position.
-    _self.x1 = mouse.x;
-    _self.y1 = mouse.y;
-
-    if (!_self.started) {
-      _self.started = true;
-
-      // Remember the first pointer position.
-      _self.x0 = mouse.x;
-      _self.y0 = mouse.y;
-
-      statusShow('polyMousedown');
+    if (points.length) {
+      context.clearRect(0, 0, image.width, image.height);
     }
 
-    _self.points.push([mouse.x, mouse.y]);
-
-    // Users need to know how to end drawing the polygon.
-    if (_self.points.length > 3) {
-      statusShow('polyEnd');
-    }
-
-    _self.mousemove();
+    needsRedraw = false;
+    points = [];
 
     return true;
   };
 
   /**
-   * The <code>mousemove</code> event handler. This method performs the actual 
-   * polygon drawing operation.
+   * The <code>mousedown</code> event handler.
    *
    * @param {Event} ev The DOM Event object.
-   * @returns {Boolean} True if the polygon was drawn, false if not.
+   * @returns {Boolean} True if the event handler executed, or false if not.
    */
-  this.mousemove = function (ev) {
-    var p, i, n   = _self.points.length,
-        fillStyle = context.fillStyle;
-
-    if (!_self.started || !n || (n == 1 && !ev)) {
-      return false;
+  this.mousedown = function (ev) {
+    if (points.length == 0) {
+      points.push([mouse.x, mouse.y]);
     }
 
-    // Store the last mouse.x and mouse.y, for later use.
-    if (ev) {
-      _self.ex = mouse.x;
-      _self.ey = mouse.y;
+    if (!timer) {
+      timer = setInterval(_self.draw, config.toolDrawDelay);
+    }
+
+    shiftKey = ev.shiftKey;
+    needsRedraw = false;
+
+    statusShow('polyMousedown');
+
+    return true;
+  };
+
+  /**
+   * Store the <kbd>Shift</kbd> key state which is used by the drawing function.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
+  this.mousemove = function (ev) {
+    shiftKey = ev.shiftKey;
+    needsRedraw = true;
+  };
+
+  /**
+   * Draw the polygon.
+   *
+   * @see PaintWeb.config.toolDrawDelay
+   */
+  this.draw = function (ev) {
+    if (!needsRedraw) {
+      return;
+    }
+
+    var n = points.length;
+
+    if (!n || (n == 1 && !mouse.buttonDown)) {
+      needsRedraw = false;
+      return;
     }
 
     // Snapping on the X/Y axis for the current point (if available).
-    if (ev && ev.shiftKey) {
-      snapXY(_self.x1, _self.y1);
+    if (mouse.buttonDown && shiftKey) {
+      snapXY(points[n-1][0], points[n-1][1]);
     }
 
     context.clearRect(0, 0, image.width, image.height);
     context.beginPath();
-    context.moveTo(_self.points[0][0], _self.points[0][1]);
+    context.moveTo(points[0][0], points[0][1]);
 
     // Draw the path of the polygon
-    for (i = 0; i < n; i++) {
-      p = _self.points[i];
-      context.lineTo(p[0], p[1]);
+    for (var i = 0; i < n; i++) {
+      context.lineTo(points[i][0], points[i][1]);
     }
 
-    // If there's a current event, then draw the temporary point as well.
-    if (ev) {
+    if (mouse.buttonDown) {
       context.lineTo(mouse.x, mouse.y);
     }
 
@@ -167,34 +172,72 @@ PaintWebInstance.toolAdd('poly', function (app) {
       context.fill();
     }
 
+    // In the case where we only have a straight line, draw a stroke even if no 
+    // stroke should be drawn, such that the user has better visual feedback.
     if (config.shapeType != 'fill' || n == 1) {
-      // In the case where we only have a straight line, draw a stroke even if no stroke should be drawn, such that the user has better visual feedback.
-
-      if (n == 1 && ev && config.shapeType == 'fill') {
-        var strokeStyle = context.strokeStyle,
-            lineWidth   = context.lineWidth;
-
-        context.strokeStyle = context.fillStyle;
-        context.lineWidth   = 1;
-        context.stroke();
-        context.strokeStyle = strokeStyle;
-        context.lineWidth   = lineWidth;
-      } else {
-        context.stroke();
-      }
+      context.stroke();
     }
 
     context.closePath();
 
-    // Draw blue squares for each point to provide live feedback for the user. The squares will not show when the final drawing is complete.
-    if (ev) {
-      context.fillStyle = '#0000ff';
-      for (i = 0; i < n; i++) {
-        p = _self.points[i];
-        context.fillRect(p[0], p[1], 4, 4);
-      }
-      context.fillStyle = fillStyle;
+    needsRedraw = false;
+  };
+
+  /**
+   * The <code>mouseup</code> event handler.
+   *
+   * @param {Event} ev The DOM Event object.
+   * @returns {Boolean} True if the event handler executed, or false if not.
+   */
+  this.mouseup = function (ev) {
+    var n = points.length;
+
+    // Allow click+mousemove+click, not only mousedown+mousemove+mouseup.
+    // Do this only for the first point in the polygon.
+    if (n == 1 && mouse.x == points[n-1][0] && mouse.y == points[n-1][1]) {
+      mouse.buttonDown = true;
+      return true;
     }
+
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+
+    shiftKey = ev.shiftKey;
+    needsRedraw = true;
+
+    if (ev.shiftKey) {
+      snapXY(points[n-1][0], points[n-1][1]);
+    }
+
+    var diffx1 = MathAbs(mouse.x - points[0][0]),
+        diffy1 = MathAbs(mouse.y - points[0][1]),
+        diffx2 = MathAbs(mouse.x - points[n-1][0]),
+        diffy2 = MathAbs(mouse.y - points[n-1][1]);
+
+    // End the polygon if the new point is close enough to the first/last point.
+    if ((diffx1 < 5 && diffy1 < 5) || (diffx2 < 5 && diffy2 < 5)) {
+      // Add the start point to complete the polygon shape.
+      points.push(points[0]);
+
+      _self.draw();
+      points = [];
+
+      statusShow('polyActive');
+      layerUpdate();
+
+      return true;
+    }
+
+    if (n > 3) {
+      statusShow('polyEnd');
+    } else {
+      statusShow('polyAddPoint');
+    }
+
+    points.push([mouse.x, mouse.y]);
+    _self.draw();
 
     return true;
   };
@@ -206,38 +249,42 @@ PaintWebInstance.toolAdd('poly', function (app) {
    * end the drawing operation.
    *
    * @param {Event} ev The DOM Event object.
+   *
    * @returns {Boolean} True if the keyboard shortcut was recognized, or false 
    * if not.
    */
   this.keydown = function (ev) {
-    if (!_self.started || (ev.kid_ != 'Escape' && ev.kid_ != 'Enter')) {
+    var n = points.length;
+    if (!n || (ev.kid_ != 'Escape' && ev.kid_ != 'Enter')) {
       return false;
     }
 
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+    mouse.buttonDown = false;
+
     if (ev.kid_ == 'Escape') {
       context.clearRect(0, 0, image.width, image.height);
+      needsRedraw = false;
 
     } else if (ev.kid_ == 'Enter') {
-      // Add the point of the last mousemove event, and the start point, to complete the polygon.
-      _self.points.push([_self.ex, _self.ey]);
-      _self.points.push([_self.x0, _self.y0]);
-      _self.mousemove();
-
+      // Add the point of the last mousemove event, and the start point, to 
+      // complete the polygon.
+      points.push([mouse.x, mouse.y]);
+      points.push(points[0]);
+      needsRedraw = true;
+      _self.draw();
       layerUpdate();
     }
 
-    _self.points = [];
-    _self.started = false;
-
+    points = [];
     statusShow('polyActive');
 
     return true;
   };
-
-  // TODO: check this ...
-  return true;
 });
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
-
 

@@ -1,3 +1,14 @@
+2009-05-25:
+===========
+
+- Performance and usability work for the polygon tool.
+- Bug fixes for curve, rectangle, line and ellipse tools.
+- A small change to the way tools can cancel the activation.
+- Updated the text tool to use the new activation cancellation. More work on the 
+text tool will come.
+- Updated the tests/gsoc2009/0001-perf/README file and a small fix for perf 
+test12.
+
 2009-05-23:
 ===========
 

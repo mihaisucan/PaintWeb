@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-21 15:55:52 +0300 $
+ * $Date: 2009-05-25 18:15:04 +0300 $
  */
 
 /**
@@ -138,16 +138,18 @@ PaintWebInstance.toolAdd('curve', function (app) {
       return;
     }
 
+    var n = points.length;
+
     // Add the temporary point while the mouse button is down.
     if (mouse.buttonDown) {
-      if (shiftKey && points.length == 1) {
+      if (shiftKey && n == 1) {
         snapXY(points[0][0], points[0][1]);
       }
       points.push([mouse.x, mouse.y]);
+      n++;
     }
 
-    var n           = points.length,
-        p0          = points[0],
+    var p0          = points[0],
         p1          = points[1],
         p2          = points[2],
         p3          = points[3] || points[2],
@@ -162,6 +164,7 @@ PaintWebInstance.toolAdd('curve', function (app) {
     context.clearRect(0, 0, image.width, image.height);
 
     if (!n) {
+      needsRedraw = false;
       return;
     }
 
@@ -178,8 +181,11 @@ PaintWebInstance.toolAdd('curve', function (app) {
       context.lineWidth = lineWidth;
       context.strokeStyle = strokeStyle;
 
+      needsRedraw = false;
       return;
     }
+
+    // Draw the Bézier curve
 
     context.beginPath();
     context.moveTo(p0[0], p0[1]);
@@ -208,12 +214,19 @@ PaintWebInstance.toolAdd('curve', function (app) {
    * @param {Event} ev The DOM Event object.
    */
   this.mouseup = function (ev) {
+    var n = points.length;
+
+    // Allow click+mousemove+click, not only mousedown+mousemove+mouseup.
+    // Do this only for the start point.
+    if (n == 1 && mouse.x == points[0][0] && mouse.y == points[0][1]) {
+      mouse.buttonDown = true;
+      return true;
+    }
+
     if (timer) {
       clearInterval(timer);
       timer = null;
     }
-
-    var n = points.length;
 
     if (n == 1 && ev.shiftKey) {
       snapXY(points[0][0], points[0][1]);
@@ -221,19 +234,22 @@ PaintWebInstance.toolAdd('curve', function (app) {
 
     // We need 4 points to draw the Bézier curve: start, end, and two control 
     // points.
-    if (n < 3) {
-      statusShow('curveControlPoint' + n);
+    if (n < 4) {
       points.push([mouse.x, mouse.y]);
+      needsRedraw = true;
+      n++;
     }
 
     // Make sure the canvas is up-to-date.
     shiftKey = ev.shiftKey;
     _self.draw();
 
-    if (n == 3) {
+    if (n == 2 || n == 3) {
+      statusShow('curveControlPoint' + (n-1));
+    } else if (n == 4) {
       statusShow('curveActive');
-      points = [];
       layerUpdate();
+      points = [];
     }
 
     return true;
