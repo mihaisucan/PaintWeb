@@ -1,3 +1,14 @@
+2009-05-26:
+===========
+
+- Performance work and bug fixing for the selection tool.
+- Performance work and bug fixing for the "Insert image" tool.
+- Performance work for the text tool.
+- Minor bug fix in the MouseKeys extension. Found a rare case where 'mousemove' 
+in tool throws (see line 288).
+
+... ready to start work on the new GUI.
+
 2009-05-25:
 ===========
 

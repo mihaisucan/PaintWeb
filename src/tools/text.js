@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-25 18:31:57 +0300 $
+ * $Date: 2009-05-26 13:35:51 +0300 $
  */
 
 /**
@@ -33,17 +33,28 @@
  * @param {PaintWeb} app Reference to the main paint application object.
  */
 PaintWebInstance.toolAdd('text', function (app) {
-  var _self        = this,
-      config       = app.config,
-      container    = app.elems.container,
-      context      = app.buffer.context,
-      elems        = app.elems,
-      image        = app.image,
-      inputs       = app.inputs,
-      layerUpdate  = app.layerUpdate,
-      mouse        = app.mouse,
-      statusShow   = app.statusShow,
-      toolActivate = app.toolActivate;
+  var _self         = this,
+      clearInterval = window.clearInterval,
+      config        = app.config,
+      container     = app.elems.container,
+      context       = app.buffer.context,
+      elems         = app.elems,
+      image         = app.image,
+      inputs        = app.inputs,
+      layerUpdate   = app.layerUpdate,
+      mouse         = app.mouse,
+      setInterval   = window.setInterval,
+      statusShow    = app.statusShow,
+      toolActivate  = app.toolActivate;
+
+  /**
+   * The interval ID used for invoking the drawing operation every few 
+   * milliseconds.
+   *
+   * @private
+   * @see PaintWeb.config.toolDrawDelay
+   */
+  var timer = null;
 
   /**
    * Holds the previous tool ID.
@@ -51,7 +62,16 @@ PaintWebInstance.toolAdd('text', function (app) {
    * @private
    * @type String
    */
-  var prevTool = app.tool._id;
+  var prevTool = app.tool ? app.tool._id : null;
+
+  /**
+   * Tells if the drawing canvas needs to be updated or not.
+   *
+   * @private
+   * @type Boolean
+   * @default false
+   */
+  var needsRedraw = false;
 
   /**
    * Tool preactivation code. This method is invoked when the user attempts to 
@@ -64,23 +84,58 @@ PaintWebInstance.toolAdd('text', function (app) {
     if (!context.fillText || !context.strokeText) {
       alert(app.lang.errorTextUnsupported);
       return false;
+    } else {
+      return true;
     }
+  };
 
+  /**
+   * The tool activation code. This runs after the text tool is constructed, and 
+   * after the previous tool has been deactivated.
+   */
+  this.activate = function () {
     // Reset mouse coordinates in the center of the image, for the purpose of 
     // placing the text there.
-    mouse.x = Math.round(image.width / 2);
+    mouse.x = Math.round(image.width  / 2);
     mouse.y = Math.round(image.height / 2);
 
     // Show the text options.
     elems.textOptions.className = '';
 
+    setup('add');
+
+    if (!timer) {
+      timer = setInterval(_self.draw, config.toolDrawDelay);
+    }
+    needsRedraw = true;
+
     return true;
   };
 
   /**
-   * Setup the <code>textUpdate()</code> event handler for several inputs. This 
-   * allows the text rendering to be updated automatically when some value 
-   * changes.
+   * The tool deactivation simply consists of removing the event listeners added 
+   * when the tool was constructed, and clearing the buffer canvas.
+   */
+  this.deactivate = function () {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+    needsRedraw = false;
+
+    setup('remove');
+
+    context.clearRect(0, 0, image.width, image.height);
+
+    // Minimize the text options.
+    elems.textOptions.className = 'minimized';
+
+    return true;
+  };
+
+  /**
+   * Setup the <code>draw()</code> event handler for several inputs. This allows 
+   * the text rendering to be updated automatically when some value changes.
    *
    * @private
    * @param {String} act The action to perform: 'add' or 'remove' the event 
@@ -103,18 +158,32 @@ PaintWebInstance.toolAdd('text', function (app) {
       }
 
       if (act == 'add') {
-        i.addEventListener(ev,    _self.textUpdate, false);
+        i.addEventListener(ev,    _self.draw, false);
       } else {
-        i.removeEventListener(ev, _self.textUpdate, false);
+        i.removeEventListener(ev, _self.draw, false);
       }
     }
   };
 
   /**
-   * The <code>mousemove</code> event handler. This method tracks the mouse 
-   * location and updates the text accordingly.
+   * The <code>mousemove</code> event handler.
    */
   this.mousemove = function () {
+    needsRedraw = true;
+  };
+
+  /**
+   * Perform the drawing operation.
+   *
+   * @param {Boolean} [force] Force redrawing.
+   *
+   * @see PaintWeb.config.toolDrawDelay
+   */
+  this.draw = function (force) {
+    if (!needsRedraw && !force) {
+      return;
+    }
+
     context.clearRect(0, 0, image.width, image.height);
 
     if (config.shapeType != 'stroke') {
@@ -124,8 +193,9 @@ PaintWebInstance.toolAdd('text', function (app) {
     if (config.shapeType != 'fill') {
       context.strokeText(inputs.textString.value, mouse.x, mouse.y);
     }
+
+    needsRedraw = false;
   };
-  this.textUpdate = this.mousemove;
 
   /**
    * The <code>click</code> event handler. This method completes the drawing 
@@ -135,8 +205,12 @@ PaintWebInstance.toolAdd('text', function (app) {
    * @param {Event} ev The DOM Event object.
    */
   this.click = function (ev) {
-    _self.mousemove();
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
 
+    _self.draw();
     layerUpdate();
 
     if (prevTool) {
@@ -146,29 +220,6 @@ PaintWebInstance.toolAdd('text', function (app) {
     if (ev.stopPropagation) {
       ev.stopPropagation();
     }
-  };
-
-  /**
-   * The tool activation code. This runs after the text tool is constructed, and 
-   * after the previous tool has been deactivated.
-   */
-  this.activate = function () {
-    setup('add');
-  };
-
-  /**
-   * The tool deactivation simply consists of removing the event listeners added 
-   * when the tool was constructed, and clearing the buffer canvas.
-   */
-  this.deactivate = function () {
-    setup('remove');
-
-    context.clearRect(0, 0, image.width, image.height);
-
-    // Minimize the text options.
-    elems.textOptions.className = 'minimized';
-
-    return true;
   };
 
   /**
@@ -192,5 +243,4 @@ PaintWebInstance.toolAdd('text', function (app) {
 });
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
-
 

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-16 21:24:22 +0300 $
+ * $Date: 2009-05-26 15:52:53 +0300 $
  */
 
 /**
@@ -35,6 +35,7 @@ PaintWebInstance.toolAdd('select', function (app) {
       bufferCanvas  = app.buffer.canvas,
       bufferContext = app.buffer.context,
       bufferStyle   = app.buffer.canvas.style,
+      clearInterval = window.clearInterval,
       config        = app.config,
       elems         = app.elems,
       historyAdd    = app.historyAdd,
@@ -47,8 +48,37 @@ PaintWebInstance.toolAdd('select', function (app) {
       MathMin       = Math.min,
       MathRound     = Math.round,
       mouse         = app.mouse,
+      setInterval   = window.setInterval,
       snapXY        = app.toolSnapXY,
       statusShow    = app.statusShow;
+
+  /**
+   * The interval ID used for invoking the drawing operation every few 
+   * milliseconds.
+   *
+   * @private
+   * @see PaintWeb.config.toolDrawDelay
+   */
+  var timer = null;
+
+  /**
+   * Tells if the <kbd>Shift</kbd> key is down or not. This is used by the 
+   * drawing function.
+   *
+   * @private
+   * @type Boolean
+   * @default false
+   */
+  var shiftKey = false;
+
+  /**
+   * Tells if the drawing canvas needs to be updated or not.
+   *
+   * @private
+   * @type Boolean
+   * @default false
+   */
+  var needsRedraw = false;
 
   /**
    * The selection has been dropped, and the mouse button is down. The user has 
@@ -267,14 +297,45 @@ PaintWebInstance.toolAdd('select', function (app) {
    */
   var shadowActive = false;
 
+
   /**
-   * Tool initialization logic. This method is run automatically when the tool 
-   * object is instanced/constructed.
+   * The tool preactivation code. This function prepares the selection canvas 
+   * element.
    *
-   * @private
+   * @returns {Boolean} True if the activation did not fail, or false otherwise.  
+   * If false is returned, the selection tool cannot be activated.
    */
-  function init () {
+  this.preActivate = function () {
     var sel = _self.selection;
+
+    // The selection image buffer.
+    sel.canvas = app.doc.createElement('canvas');
+    if (!sel.canvas) {
+      alert(lang.errorToolActivate);
+      return false;
+    }
+
+    sel.canvas.id     = 'selBuffer';
+    sel.canvas.width  = image.width;
+    sel.canvas.height = image.height;
+
+    sel.context = sel.canvas.getContext('2d');
+    if (!sel.context) {
+      alert(lang.errorToolActivate);
+      return false;
+    }
+
+    return true;
+  };
+
+  /**
+   * The tool activation code. This is run after the tool construction and after 
+   * the previous tool is deactivated.
+   */
+  this.activate = function () {
+    var sel = _self.selection;
+
+    elems.container.appendChild(sel.canvas);
 
     // Show the selection options.
     elems.selectionOptions.className = '';
@@ -299,44 +360,19 @@ PaintWebInstance.toolAdd('select', function (app) {
           + strokeStyle._value.g + ',' + strokeStyle._value.b + ')';
     }
 
-    // The selection image buffer.
-    sel.canvas = app.doc.createElement('canvas');
-    if (!sel.canvas) {
-      alert(lang.errorToolActivate);
-      _self._cancel = true;
-      return false;
-    }
-
-    sel.canvas.id     = 'selBuffer';
-    sel.canvas.width  = image.width;
-    sel.canvas.height = image.height;
-
-    elems.container.appendChild(sel.canvas);
-
-    sel.context = sel.canvas.getContext('2d');
-    if (!sel.context) {
-      alert(lang.errorToolActivate);
-      _self._cancel = true;
-      return false;
-    }
-
     inputs.selTransparent.addEventListener('change', transparencyChange, false);
 
     lineWidthUpdate();
 
-    return true;
-  };
-
-  /**
-   * The tool activation code. This is run after the tool construction and after 
-   * the previous tool object is destructed.
-   */
-  this.activate = function () {
     // Disable the bufferCanvas shadow.
     if (inputs.shadowActive) {
       shadowActive = inputs.shadowActive.checked;
       app.shadowDisable();
       inputs.shadowActive.disabled = true;
+    }
+
+    if (!timer) {
+      timer = setInterval(timerFn, config.toolDrawDelay);
     }
 
     return true;
@@ -346,6 +382,11 @@ PaintWebInstance.toolAdd('select', function (app) {
    * The tool deactivation code.
    */
   this.deactivate = function () {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+
     selectionBufferMerge();
 
     var sel = _self.selection;
@@ -390,6 +431,8 @@ PaintWebInstance.toolAdd('select', function (app) {
     x0 = mouse.x;
     y0 = mouse.y;
 
+    shiftKey = ev.shiftKey;
+
     lineWidthUpdate();
 
     // No selection is available, then start drawing a selection.
@@ -401,7 +444,7 @@ PaintWebInstance.toolAdd('select', function (app) {
     }
 
     // STATE_SELECTED: selection available.
-    mouseAreaUpdate(ev);
+    mouseAreaUpdate();
 
     var sel = _self.selection;
 
@@ -463,15 +506,29 @@ PaintWebInstance.toolAdd('select', function (app) {
   };
 
   /**
-   * The <code>mousemove</code> event handler. When the mouse button is down, 
-   * this method performs the dragging/resizing operation. When the mouse button 
-   * is not down, this method simply tracks the mouse location for the purpose 
-   * of determining the area being pointed at: the selection, the borders, or if 
-   * the mouse is outside the selection.
+   * The <code>mousemove</code> event handler.
    *
    * @param {Event} ev The DOM Event object.
    */
   this.mousemove = function (ev) {
+    shiftKey = ev.shiftKey;
+    needsRedraw = true;
+  };
+
+  /**
+   * The timer function. When the mouse button is down, this method performs the 
+   * dragging/resizing operation. When the mouse button is not down, this method 
+   * simply tracks the mouse location for the purpose of determining the area 
+   * being pointed at: the selection, the borders, or if the mouse is outside 
+   * the selection.
+   *
+   * @private
+   */
+  function timerFn () {
+    if (!needsRedraw) {
+      return;
+    }
+
     switch (_self.state) {
       case _self.STATE_PENDING:
         // selection dropped, switch to draw selection
@@ -479,20 +536,22 @@ PaintWebInstance.toolAdd('select', function (app) {
         statusShow('selectDraw');
 
       case _self.STATE_DRAWING:
-        return selectionDraw(ev);
+        selectionDraw();
+        break;
 
       case _self.STATE_SELECTED:
-        return mouseAreaUpdate(ev);
+        mouseAreaUpdate();
+        break;
 
       case _self.STATE_DRAGGING:
-        return selectionDrag(ev);
+        selectionDrag();
+        break;
 
       case _self.STATE_RESIZING:
-        return selectionResize(ev);
-
-      default: // unknown state
-        return false;
+        selectionResize();
     }
+
+    needsRedraw = false;
   };
 
   /**
@@ -508,6 +567,9 @@ PaintWebInstance.toolAdd('select', function (app) {
       return true;
     }
 
+    shiftKey = ev.shiftKey;
+    needsRedraw = false;
+
     var result = null,
         sel = _self.selection;
 
@@ -519,7 +581,7 @@ PaintWebInstance.toolAdd('select', function (app) {
         return true;
 
       case _self.STATE_DRAWING:
-        result = selectionDraw(ev);
+        result = selectionDraw();
         if (result) {
           result[0] += sel.lineWidth / 2;
           result[1] += sel.lineWidth / 2;
@@ -530,11 +592,11 @@ PaintWebInstance.toolAdd('select', function (app) {
         break;
 
       case _self.STATE_DRAGGING:
-        result = selectionDrag(ev);
+        result = selectionDrag();
         break;
 
       case _self.STATE_RESIZING:
-        result = selectionResize(ev);
+        result = selectionResize();
         break;
 
       default:
@@ -570,20 +632,18 @@ PaintWebInstance.toolAdd('select', function (app) {
    *
    * @private
    *
-   * @param {Event} ev The DOM Event object.
-   *
    * @returns {false|Array} False is returned if the selection is too small, 
    * otherwise an array of four elements is returned. The array holds the 
    * selection information: x, y, width and height.
    */
-  function selectionDraw (ev) {
+  function selectionDraw () {
     var x = MathMin(mouse.x,  x0),
         y = MathMin(mouse.y,  y0),
         w = MathAbs(mouse.x - x0),
         h = MathAbs(mouse.y - y0);
 
     // Constrain the shape to a square.
-    if (ev.shiftKey) {
+    if (shiftKey) {
       if (w > h) {
         if (y == mouse.y) {
           y -= w-h;
@@ -613,15 +673,13 @@ PaintWebInstance.toolAdd('select', function (app) {
    *
    * @private
    *
-   * @param {Event} ev The DOM Event object.
-   *
    * @returns {false|Array} False is returned if the selection is too small, 
    * otherwise an array of two elements is returned. The array holds the 
    * selection coordinates, x and y.
    */
-  function selectionDrag (ev) {
+  function selectionDrag () {
     // Snapping on the X/Y axis
-    if (ev.shiftKey) {
+    if (shiftKey) {
       snapXY(x0, y0);
     }
 
@@ -655,13 +713,11 @@ PaintWebInstance.toolAdd('select', function (app) {
    *
    * @private
    *
-   * @param {Event} ev The DOM Event object.
-   *
    * @returns {false|Array} False is returned if the selection is too small, 
    * otherwise an array of four elements is returned. The array holds the 
    * selection information: x, y, width and height.
    */
-  function selectionResize (ev) {
+  function selectionResize () {
     var sel = _self.selection;
 
     var diffx = mouse.x - x0,
@@ -715,7 +771,7 @@ PaintWebInstance.toolAdd('select', function (app) {
     }
 
     // Constrain the rectangle to have the same aspect ratio as the initial rectangle.
-    if (ev.shiftKey) {
+    if (shiftKey) {
       var p = sel.width / sel.height,
           w2 = w, h2 = h;
 
@@ -771,11 +827,9 @@ PaintWebInstance.toolAdd('select', function (app) {
   /**
    * Determine the are where the mouse is located: if it is inside or outside of 
    * the selection rectangle, or on the selection border.
-   *
    * @private
-   * @param {Event} ev The DOM Event object.
    */
-  function mouseAreaUpdate (ev) {
+  function mouseAreaUpdate () {
     var cursor = '',
         sel    = _self.selection;
 
@@ -1066,8 +1120,8 @@ PaintWebInstance.toolAdd('select', function (app) {
 
     // The default position for the pasted image is the top left corner of the 
     // visible area, taking into consideration the zoom level.
-    var x   = MathRound(elems.container.scrollLeft / image.zoom),
-        y   = MathRound(elems.container.scrollTop  / image.zoom),
+    var x   = MathRound(elems.container.scrollLeft / image.canvasScale),
+        y   = MathRound(elems.container.scrollTop  / image.canvasScale),
         w   = app.clipboard.width,
         h   = app.clipboard.height,
         sel = _self.selection;
@@ -1195,9 +1249,6 @@ PaintWebInstance.toolAdd('select', function (app) {
 
     return true;
   };
-
-  // TODO: check this...
-  return init();
 });
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:

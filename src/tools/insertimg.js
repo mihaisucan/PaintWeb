@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-16 21:22:30 +0300 $
+ * $Date: 2009-05-26 14:58:58 +0300 $
  */
 
 /**
@@ -32,18 +32,21 @@
  */
 // TODO: allow inserting images from a different host, using server-side magic.
 PaintWebInstance.toolAdd('insertimg', function (app) {
-  var _self        = this,
-      canvasImage  = app.image,
-      container    = app.elems.container,
-      context      = app.buffer.context,
-      lang         = app.lang,
-      layerUpdate  = app.layerUpdate,
-      MathAbs      = Math.abs,
-      MathMin      = Math.min,
-      MathRound    = Math.round,
-      mouse        = app.mouse,
-      statusShow   = app.statusShow,
-      toolActivate = app.toolActivate;
+  var _self         = this,
+      MathAbs       = Math.abs,
+      MathMin       = Math.min,
+      MathRound     = Math.round,
+      canvasImage   = app.image,
+      clearInterval = window.clearInterval,
+      config        = app.config,
+      container     = app.elems.container,
+      context       = app.buffer.context,
+      lang          = app.lang,
+      layerUpdate   = app.layerUpdate,
+      mouse         = app.mouse,
+      setInterval   = window.setInterval,
+      statusShow    = app.statusShow,
+      toolActivate  = app.toolActivate;
 
   /**
    * Holds the previous tool ID.
@@ -51,7 +54,35 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
    * @private
    * @type String
    */
-  var prevTool = app.tool._id;
+  var prevTool = app.tool ? app.tool._id : null;
+
+  /**
+   * The interval ID used for invoking the drawing operation every few 
+   * milliseconds.
+   *
+   * @private
+   * @see PaintWeb.config.toolDrawDelay
+   */
+  var timer = null;
+
+  /**
+   * Tells if the <kbd>Shift</kbd> key is down or not. This is used by the 
+   * drawing function.
+   *
+   * @private
+   * @type Boolean
+   * @default false
+   */
+  var shiftKey = false;
+
+  /**
+   * Tells if the drawing canvas needs to be updated or not.
+   *
+   * @private
+   * @type Boolean
+   * @default false
+   */
+  var needsRedraw = false;
 
   /**
    * Holds the starting point on the <var>x</var> axis of the image, for the 
@@ -88,46 +119,91 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
   var imageRatio = 1;
 
   /**
+   * Holds the DOM image element.
+   *
+   * @private
+   * @type Element
+   */
+  var imageElement = null;
+
+  /**
    * Holds the image address.
    * @type String
    */
-  this.url = prompt(lang.promptInsertimg, this.url || 'http://');
-
-  if (!this.url || this.url.toLowerCase() == 'http://' ||
-      this.url.substr(0, 7).toLowerCase() != 'http://') {
-    this._cancel = true;
-    return false;
+  if (!this.url) {
+    this.url = 'http://';
   }
-
-  // Remember the URL.
-  pwlib.extend(true, this.constructor.prototype, {url: this.url});
 
   /**
-   * Determine the host from the given HTTP address.
+   * The tool preactivation code. This function asks the user to provide an URL 
+   * to the image which is desired to be inserted into the canvas.
    *
-   * @param {String} url The HTTP address.
-   * @returns {String} The host name.
+   * @returns {Boolean} True if the URL provided is correct. False is returned 
+   * if the URL is not provided or if it's incorrect. When false is returned the 
+   * tool activation is cancelled.
    */
-  function getHost (url) {
-    url = url.substr(7);
-    var pos = url.indexOf('/');
-    if (pos > -1) {
-      url = url.substr(0, pos);
+  this.preActivate = function () {
+    _self.url = prompt(lang.promptInsertimg, _self.url);
+
+    if (!_self.url || _self.url.toLowerCase() == 'http://' ||
+        _self.url.substr(0, 7).toLowerCase() != 'http://') {
+      return false;
     }
 
-    return url;
+    // Remember the URL.
+    pwlib.extend(true, _self.constructor.prototype, {url: _self.url});
+
+    var host = _self.url.substr(7);
+    var pos = host.indexOf('/');
+    if (pos > -1) {
+      host = host.substr(0, pos);
+    }
+
+    if (host != app.win.location.host) {
+      alert(lang.errorInsertimgHost);
+      return false;
+    }
+
+    return true;
   };
 
-  if (getHost(this.url) != app.win.location.host) {
-    alert(lang.errorInsertimgHost);
-    this._cancel = true;
-    return false;
-  }
+  /**
+   * The tool activation event handler. This function is called once the 
+   * previous tool has been deactivated.
+   */
+  this.activate = function () {
+    imageElement = new Image();
+    imageElement.addEventListener('load', ev_imageLoaded, false);
+    imageElement.src = _self.url;
+
+    return true;
+  };
+
+  /**
+   * The tool deactivation event handler.
+   */
+  this.deactivate = function () {
+    if (imageElement) {
+      imageElement = null;
+    }
+
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+    needsRedraw = false;
+
+    context.clearRect(0, 0, canvasImage.width, canvasImage.height);
+
+    return true;
+  };
 
   /**
    * The <code>load</code> event handler for the image element. This method 
    * makes sure the image dimensions are synchronized with the zoom level, and 
    * draws the image on the canvas.
+   *
+   * @private
    */
   function ev_imageLoaded () {
     // Did the image already load?
@@ -136,36 +212,36 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
     }
 
     // The default position for the inserted image is the top left corner of the visible area, taking into consideration the zoom level.
-    var x = MathRound(container.scrollLeft / canvasImage.zoom),
-        y = MathRound(container.scrollTop  / canvasImage.zoom);
+    var x = MathRound(container.scrollLeft / canvasImage.canvasScale),
+        y = MathRound(container.scrollTop  / canvasImage.canvasScale);
 
     context.clearRect(0, 0, canvasImage.width, canvasImage.height);
 
     try {
       context.drawImage(imageElement, x, y);
-      imageLoaded = true;
-      statusShow('insertimgLoaded');
     } catch (err) {
       alert(lang.errorInsertimg);
+      return;
     }
-  };
 
-  /**
-   * Holds the DOM image element.
-   *
-   * @private
-   * @type Element
-   */
-  var imageElement = new Image();
-  imageElement.addEventListener('load', ev_imageLoaded, false);
-  imageElement.src = this.url;
+    imageLoaded = true;
+    needsRedraw = false;
+
+    if (!timer) {
+      timer = setInterval(_self.draw, config.toolDrawDelay);
+    }
+
+    statusShow('insertimgLoaded');
+  };
 
   /**
    * The <code>mousedown</code> event handler. This method stores the current 
    * mouse location and the image aspect ratio for later reuse by the 
-   * <code>mousemove</code> event handler.
+   * <code>draw()</code> method.
+   *
+   * @param {Event} ev The DOM Event object.
    */
-  this.mousedown = function () {
+  this.mousedown = function (ev) {
     if (!imageLoaded) {
       alert(lang.errorInsertimgNotLoaded);
       return false;
@@ -174,9 +250,10 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
     x0 = mouse.x;
     y0 = mouse.y;
 
-    // The image aspect ratio - used by the mousemove method when the user holds 
+    // The image aspect ratio - used by the draw() method when the user holds 
     // the Shift key down.
     imageRatio = imageElement.width / imageElement.height;
+    shiftKey = ev.shiftKey;
 
     statusShow('insertimgResize');
 
@@ -186,16 +263,26 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
   };
 
   /**
-   * The <code>mousemove</code> event handler. When the mouse button is not 
-   * down, the user is allowed to pick where he/she wants to insert the image 
-   * element, inside the canvas. Once the <code>mousedown</code> event is fired, 
-   * this method allows the user to resize the image inside the canvas.
+   * The <code>mousemove</code> event handler.
    *
    * @param {Event} ev The DOM Event object.
    */
   this.mousemove = function (ev) {
-    if (!imageLoaded) {
-      return false;
+    shiftKey = ev.shiftKey;
+    needsRedraw = true;
+  };
+
+  /**
+   * Perform the drawing operation. When the mouse button is not down, the user 
+   * is allowed to pick where he/she wants to insert the image element, inside 
+   * the canvas. Once the <code>mousedown</code> event is fired, this method 
+   * allows the user to resize the image inside the canvas.
+   *
+   * @see PaintWeb.config.toolDrawDelay
+   */
+  this.draw = function () {
+    if (!imageLoaded || !needsRedraw) {
+      return;
     }
 
     context.clearRect(0, 0, canvasImage.width, canvasImage.height);
@@ -208,9 +295,14 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
           x = MathMin(mouse.x,  x0),
           y = MathMin(mouse.y,  y0);
 
+      if (!w || !h) {
+        needsRedraw = false;
+        return;
+      }
+
       // If the Shift key is down, constrain the image to have the same aspect 
       // ratio as the original image element.
-      if (ev.shiftKey) {
+      if (shiftKey) {
         if (w > h) {
           if (y == mouse.y) {
             y -= w-h;
@@ -230,6 +322,8 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
       // he/she wants to insert the image element.
       context.drawImage(imageElement, mouse.x, mouse.y);
     }
+
+    needsRedraw = false;
   };
 
   /**
@@ -244,6 +338,11 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
       return false;
     }
 
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+
     layerUpdate();
 
     if (prevTool) {
@@ -253,20 +352,6 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
     if (ev.stopPropagation) {
       ev.stopPropagation();
     }
-  };
-
-  /**
-   * The tool deactivation event handler.
-   */
-  this.deactivate = function () {
-    if (imageElement) {
-      imageElement = null;
-      delete imageElement;
-    }
-
-    context.clearRect(0, 0, canvasImage.width, canvasImage.height);
-
-    return true;
   };
 
   /**
@@ -282,17 +367,17 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
       return false;
     }
 
-    mouse.buttonDown = false;
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
 
+    mouse.buttonDown = false;
     toolActivate(prevTool, ev);
 
     return true;
   };
-
-  // TODO: check this ...
-  return true;
 });
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
-
 

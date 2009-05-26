@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-23 20:16:01 +0300 $
+ * $Date: 2009-05-26 14:56:48 +0300 $
  */
 
 /**
@@ -39,7 +39,7 @@ PaintWebInstance.extensionAdd('mousekeys', function (app) {
       container = app.elems.container,
       image     = app.image,
       mouse     = app.mouse,
-      tool      = null;
+      tool      = app.tool || {};
 
   /**
    * Holds the current mouse movement speed in pixels.
@@ -164,7 +164,7 @@ PaintWebInstance.extensionAdd('mousekeys', function (app) {
       pointer.className = mouse.buttonDown ? 'mouseDown' : '';
     }
 
-    tool = app.tool;
+    tool = app.tool || {};
 
     switch (ev.kobj_.action) {
       case 'ButtonToggle':

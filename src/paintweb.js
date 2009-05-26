@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-25 18:26:38 +0300 $
+ * $Date: 2009-05-26 15:58:02 +0300 $
  */
 
 /**
@@ -51,7 +51,7 @@ function PaintWeb (win_, doc_) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090525;
+  this.build = 20090526;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -1896,8 +1896,8 @@ function PaintWeb (win_, doc_) {
 
     this.className = 'active';
 
-    if (_self.tool && _self.tool._id == 'text' && _self.tool.textUpdate) {
-      _self.tool.textUpdate();
+    if (_self.tool && _self.tool._id == 'text' && 'draw' in _self.tool) {
+      _self.tool.draw(ev);
     }
 
     return true;
@@ -1994,8 +1994,8 @@ function PaintWeb (win_, doc_) {
 
     _self.layer.context.font = _self.buffer.context.font = prop;
 
-    if (_self.tool && _self.tool._id == 'text' && _self.tool.textUpdate) {
-      _self.tool.textUpdate();
+    if (_self.tool && _self.tool._id == 'text' && 'draw' in _self.tool) {
+      _self.tool.draw(ev);
     }
 
     return true;
