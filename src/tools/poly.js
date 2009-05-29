@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-25 17:54:46 +0300 $
+ * $Date: 2009-05-29 15:43:59 +0300 $
  */
 
 /**
@@ -30,16 +30,14 @@
  *
  * @param {PaintWeb} app Reference to the main paint application object.
  */
-// TODO: Merge behaviour with line tool, and improve usability (mousedown and
-// mouseup feedback).
-PaintWebInstance.toolAdd('poly', function (app) {
+pwlib.tools.poly = function (app) {
   var _self         = this,
-      MathAbs       = Math.abs,
       clearInterval = window.clearInterval,
       config        = app.config,
       context       = app.buffer.context,
       image         = app.image,
       layerUpdate   = app.layerUpdate,
+      MathAbs       = Math.abs,
       mouse         = app.mouse,
       setInterval   = window.setInterval,
       snapXY        = app.toolSnapXY,
@@ -284,7 +282,7 @@ PaintWebInstance.toolAdd('poly', function (app) {
 
     return true;
   };
-});
+};
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
 

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-16 21:13:24 +0300 $
+ * $Date: 2009-05-29 15:42:15 +0300 $
  */
 
 /**
@@ -27,12 +27,13 @@
 
 // FIXME: waiting for the Color Editor extension and for the new GUI.
 
+
 /**
  * @class The color picker tool.
  *
  * @param {PaintWeb} app Reference to the main paint application object.
  */
-PaintWebInstance.toolAdd('cpicker', function (app) {
+pwlib.tools.cpicker = function (app) {
   var _self        = this,
       context      = app.buffer.context,
       mouse        = app.mouse,
@@ -196,8 +197,7 @@ PaintWebInstance.toolAdd('cpicker', function (app) {
 
   // TODO: check this...
   return true;
-});
+};
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
-
 

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-13 21:03:35 +0300 $
+ * $Date: 2009-05-29 15:42:52 +0300 $
  */
 
 /**
@@ -31,7 +31,7 @@
  *
  * @param {PaintWeb} app Reference to the main paint application object.
  */
-PaintWebInstance.toolAdd('drag', function (app) {
+pwlib.tools.drag = function (app) {
   var _self        = this,
       canvasStyle  = app.buffer.canvas.style,
       container    = app.elems.container,
@@ -116,8 +116,7 @@ PaintWebInstance.toolAdd('drag', function (app) {
   };
 
   return true;
-});
+};
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
-
 

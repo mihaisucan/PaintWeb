@@ -1,3 +1,13 @@
+2009-05-29:
+===========
+
+- Started splitting the GUI out from the main code.
+- Lots of work on the initialization code.
+- New API for "application events", like "init", "toolActivate" and more will 
+come.
+
+Currently the build is broken, it won't start. Stay tuned!
+
 2009-05-26:
 ===========
 

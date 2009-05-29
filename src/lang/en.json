@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-05-25 17:29:44 +0300 $
+  // $Date: 2009-05-27 20:28:02 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -8,6 +8,7 @@
   "errorInitXMLHttpRequest": "Error: window.XMLHttpRequest is not available.",
   "errorInitJSON": "Error: window.JSON is not available.",
   "errorToolActivate": "Error: the tool you want could not be properly activated!",
+  "errorInitGUI": "Error: the interface failed to initialize!",
   "errorCpickerUnsupported": "Error: your browser does not support get/putImageData! The color picker tool cannot be used.",
   "errorClipboardUnsupported": "Error: your browser does not support get/putImageData! Clipboard operations like cut/copy/paste cannot be used.",
   "errorTextUnsupported": "Error: your browser does not implement the Canvas Text API! The text tool cannot be used.",

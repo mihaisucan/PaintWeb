@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-25 18:07:48 +0300 $
+ * $Date: 2009-05-29 15:44:09 +0300 $
  */
 
 /**
@@ -30,15 +30,15 @@
  *
  * @param {PaintWeb} app Reference to the main paint application object.
  */
-PaintWebInstance.toolAdd('rect', function (app) {
+pwlib.tools.rect = function (app) {
   var _self         = this,
-      MathAbs       = Math.abs,
-      MathMin       = Math.min,
       clearInterval = window.clearInterval,
       config        = app.config,
       context       = app.buffer.context,
       image         = app.image,
       layerUpdate   = app.layerUpdate,
+      MathAbs       = Math.abs,
+      MathMin       = Math.min,
       mouse         = app.mouse,
       setInterval   = window.setInterval,
       statusShow    = app.statusShow;
@@ -240,7 +240,7 @@ PaintWebInstance.toolAdd('rect', function (app) {
 
     return true;
   };
-});
+};
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
 

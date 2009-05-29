@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-26 14:58:58 +0300 $
+ * $Date: 2009-05-29 15:43:25 +0300 $
  */
 
 /**
@@ -25,17 +25,15 @@
  * @fileOverview Holds the "Insert image" tool implementation.
  */
 
+// TODO: allow inserting images from a different host, using server-side magic.
+
 /**
  * @class The "Insert image" tool.
  *
  * @param {PaintWeb} app Reference to the main paint application object.
  */
-// TODO: allow inserting images from a different host, using server-side magic.
-PaintWebInstance.toolAdd('insertimg', function (app) {
+pwlib.tools.insertimg = function (app) {
   var _self         = this,
-      MathAbs       = Math.abs,
-      MathMin       = Math.min,
-      MathRound     = Math.round,
       canvasImage   = app.image,
       clearInterval = window.clearInterval,
       config        = app.config,
@@ -43,6 +41,9 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
       context       = app.buffer.context,
       lang          = app.lang,
       layerUpdate   = app.layerUpdate,
+      MathAbs       = Math.abs,
+      MathMin       = Math.min,
+      MathRound     = Math.round,
       mouse         = app.mouse,
       setInterval   = window.setInterval,
       statusShow    = app.statusShow,
@@ -377,7 +378,7 @@ PaintWebInstance.toolAdd('insertimg', function (app) {
 
     return true;
   };
-});
+};
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
 

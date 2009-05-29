@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-05-15 23:10:28 +0300 $
+  // $Date: 2009-05-28 19:36:24 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -9,6 +9,46 @@
    * @default "lang/en.json"
    */
   "langFile": "lang/en.json",
+
+  /**
+   * The graphical user interface you want to use.
+   *
+   * @type String
+   * @default "default"
+   */
+  "gui": "default",
+
+  /**
+   * The folder contains all the interfaces.
+   *
+   * @type String
+   * @default "interfaces"
+   */
+  "interfacesFolder": "interfaces",
+
+  /**
+   * The interface markup file.
+   *
+   * @type String
+   * @default "layout.html"
+   */
+  "guiMarkup": "layout.html",
+
+  /**
+   * The interface style file.
+   *
+   * @type String
+   * @default "style.css"
+   */
+  "guiStyle": "style.css",
+
+  /**
+   * The interface script file.
+   *
+   * @type String
+   * @default script.js
+   */
+  "guiScript": "script.js",
 
   /**
    * The Canvas element ID used in the markup document for the image layer.

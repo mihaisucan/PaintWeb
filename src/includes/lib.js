@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-05-23 16:09:20 +0300 $
+ * $Date: 2009-05-27 20:12:25 +0300 $
  */
 
 /**
@@ -16,6 +16,43 @@
  * application.
  */
 var pwlib = {};
+
+/**
+ * @namespace Holds the implementation of each drawing tool.
+ *
+ * @type Object
+ *
+ * @see PaintWeb#toolRegister Register a new drawing tool into a PaintWeb 
+ * instance.
+ * @see PaintWeb#toolActivate Activate a drawing tool in a PaintWeb instance.
+ * @see PaintWeb#toolUnregister Unregister a drawing tool from a PaintWeb 
+ * instance.
+ *
+ * @see PaintWeb.config.toolDefault The default tool being activated when 
+ * a PaintWeb instance is initialized.
+ * @see PaintWeb.config.tools Holds the list of tools to be loaded automatically 
+ * when a PaintWeb instance is initialized.
+ */
+pwlib.tools = {};
+
+/**
+ * @namespace Holds all the PaintWeb extensions.
+ *
+ * @type Object
+ * @see PaintWeb#extensionRegister Register a new extension into a PaintWeb 
+ * instance.
+ * @see PaintWeb#extensionUnregister Unregister an extension from a PaintWeb 
+ * instance.
+ * @see PaintWeb.config.extensions Holds the list of extensions to be loaded 
+ * automatically when a PaintWeb instance is initialized.
+ */
+pwlib.extensions = {};
+
+/**
+ * @namespace Holds all the PaintWeb GUIs.
+ * @type Object
+ */
+pwlib.gui = {};
 
 /**
  * This function extends objects.
@@ -59,7 +96,7 @@ pwlib.extend = function () {
       len = arguments.length,
       name, src, sval, dval;
 
-  if (typeof arguments[0] == 'boolean') {
+  if (typeof arguments[0] === 'boolean') {
     force = arguments[0];
     dest  = arguments[1];
     src   = arguments[2];
@@ -69,19 +106,19 @@ pwlib.extend = function () {
     src   = arguments[1];
   }
 
-  if (typeof src == 'undefined') {
+  if (typeof src === 'undefined') {
     src = dest;
     dest = this;
   }
 
-  if (typeof dest == 'undefined') {
+  if (typeof dest === 'undefined') {
     return;
   }
 
   for (name in src) {
     sval = src[name];
     dval = dest[name];
-    if (force || typeof dval == 'undefined') {
+    if (force || typeof dval === 'undefined') {
       dest[name] = sval;
     }
   }
@@ -1173,13 +1210,13 @@ pwlib.dom.KeyboardEventListener = function (elem_, handlers_) {
         'handler.');
   }
 
-  if (handlers_.keydown && typeof handlers_.keydown != 'function') {
+  if (handlers_.keydown && typeof handlers_.keydown !== 'function') {
     throw new TypeError('The keydown event handler is not a function!');
   }
-  if (handlers_.keypress && typeof handlers_.keypress != 'function') {
+  if (handlers_.keypress && typeof handlers_.keypress !== 'function') {
     throw new TypeError('The keypress event handler is not a function!');
   }
-  if (handlers_.keyup && typeof handlers_.keyup != 'function') {
+  if (handlers_.keyup && typeof handlers_.keyup !== 'function') {
     throw new TypeError('The keyup event handler is not a function!');
   }
 
@@ -1234,7 +1271,7 @@ pwlib.dom.KeyboardEventListener = function (elem_, handlers_) {
 
     var handler = handlers_[type];
 
-    if (type == ev.type) {
+    if (type === ev.type) {
       handler.call(elem_, ev);
 
     } else {
@@ -1273,7 +1310,7 @@ pwlib.dom.KeyboardEventListener = function (elem_, handlers_) {
 
     ev.keyCode_ = keyCode_;
     ev.key_ = key_;
-    ev.repeat_ = key_ && prevKey == key_ ? true : false;
+    ev.repeat_ = key_ && prevKey === key_ ? true : false;
 
     repeat_ = ev.repeat_;
 
@@ -1403,13 +1440,13 @@ pwlib.dom.KeyboardEventListener = function (elem_, handlers_) {
     // Check if the key is a character key, or not.
     // If it's not a character, then keypress will not fire.
     // Known exceptions: keypress fires for Space, Enter and Escape in MSIE.
-    if (key_ && key_ != 'Space' && key_ != 'Enter' && key_ != 'Escape' && 
-        key_.length != 1) {
+    if (key_ && key_ !== 'Space' && key_ !== 'Enter' && key_ !== 'Escape' && 
+        key_.length !== 1) {
       return false;
     }
 
     // Webkit doesn't fire keypress for Escape as well ...
-    if (pwlib.browser.webkit && key_ == 'Escape') {
+    if (pwlib.browser.webkit && key_ === 'Escape') {
       return false;
     }
 
@@ -1437,8 +1474,8 @@ pwlib.dom.KeyboardEventListener = function (elem_, handlers_) {
      * If the event has no keyCode/which/keyIdentifier values, then simply do 
      * not overwrite any existing keyCode_/key_.
      */
-    if (ev.type == 'keyup' && !ev.keyCode && !ev.which && (!ev.keyIdentifier || 
-          ev.keyIdentifier == 'Unidentified' || ev.keyIdentifier == 'U+0000')) {
+    if (ev.type === 'keyup' && !ev.keyCode && !ev.which && (!ev.keyIdentifier || 
+          ev.keyIdentifier === 'Unidentified' || ev.keyIdentifier === 'U+0000')) {
       return;
     }
 
@@ -1478,15 +1515,15 @@ pwlib.dom.KeyboardEventListener = function (elem_, handlers_) {
         keyCode = null,
         id = ev.keyIdentifier;
 
-    if (!id || id == 'Unidentified' || id == 'U+0000') {
+    if (!id || id === 'Unidentified' || id === 'U+0000') {
       return;
     }
 
-    if (id.substr(0, 2) == 'U+') {
+    if (id.substr(0, 2) === 'U+') {
       // Webkit gives character codes using the 'U+XXXX' notation, as per spec.
       keyCode = parseInt(id.substr(2), 16);
 
-    } else if (id.length == 1) {
+    } else if (id.length === 1) {
       // Konqueror 4 implements keyIdentifier, and they provide the Unicode 
       // character directly, instead of using the 'U+XXXX' notation.
       keyCode = id.charCodeAt(0);
@@ -1515,14 +1552,14 @@ pwlib.dom.KeyboardEventListener = function (elem_, handlers_) {
 
       // Konqueror gives lower-case chars
       key_ = key.toUpperCase();
-      if (key != key_) {
+      if (key !== key_) {
         keyCode = key_.charCodeAt(0);
       }
     }
 
     // Correct the keyCode, make sure it's a common keyCode, not the Unicode 
     // decimal representation of the character.
-    if (key_ == 'Delete' || key_.length == 1 && key_ in pwlib.dom.keyNames) {
+    if (key_ === 'Delete' || key_.length === 1 && key_ in pwlib.dom.keyNames) {
       keyCode = pwlib.dom.keyNames[key_];
     }
 
@@ -1566,17 +1603,17 @@ pwlib.dom.KeyboardEventListener = function (elem_, handlers_) {
       // Do not consider the keyCode a character code, if during the keydown 
       // event it was determined the key does not generate a character, unless 
       // it's Tab, Enter or Space.
-      if (!force && key_ && key_.length != 1) {
+      if (!force && key_ && key_.length !== 1) {
         return;
       }
 
       // If the keypress event at hand is synthetically dispatched by keydown, 
       // then special treatment is needed. This happens only in Webkit and MSIE.
-      if (ev.type_ == 'keydown') {
+      if (ev.type_ === 'keydown') {
         var key = pwlib.dom.keyCodes[keyCode];
         // Check if the keyCode points to a single character.
         // If it does, use it.
-        if (key && key.length == 1) {
+        if (key && key.length === 1) {
           charCode_ = key.charCodeAt(0); // keyCodes != charCodes
           char_ = key;
         }
@@ -1604,11 +1641,11 @@ pwlib.dom.KeyboardEventListener = function (elem_, handlers_) {
         charCode = null,
         id = ev.keyIdentifier;
 
-    if (id && id != 'Unidentified' && id != 'U+0000' &&
-        (id.substr(0, 2) == 'U+' || id.length == 1)) {
+    if (id && id !== 'Unidentified' && id !== 'U+0000' &&
+        (id.substr(0, 2) === 'U+' || id.length === 1)) {
 
       // Characters in Konqueror...
-      if (id.length == 1) {
+      if (id.length === 1) {
         charCode = id.charCodeAt(0);
         c = id;
 
@@ -1631,7 +1668,7 @@ pwlib.dom.KeyboardEventListener = function (elem_, handlers_) {
 
     // Try to use the key determined from the previous keydown event, if it 
     // holds a character.
-    if (key_ && key_.length == 1) {
+    if (key_ && key_.length === 1) {
       charCode_ = key_.charCodeAt(0);
       char_ = key_;
     }

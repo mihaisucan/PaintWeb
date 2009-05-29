@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-20 19:54:12 +0300 $
+ * $Date: 2009-05-29 15:43:46 +0300 $
  */
 
 /**
@@ -30,7 +30,7 @@
  *
  * @param {PaintWeb} app Reference to the main paint application object.
  */
-PaintWebInstance.toolAdd('pencil', function (app) {
+pwlib.tools.pencil = function (app) {
   var _self         = this,
       clearInterval = window.clearInterval,
       context       = app.buffer.context,
@@ -187,7 +187,7 @@ PaintWebInstance.toolAdd('pencil', function (app) {
 
     return true;
   };
-});
+};
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
 

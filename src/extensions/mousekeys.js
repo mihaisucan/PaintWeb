@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-26 14:56:48 +0300 $
+ * $Date: 2009-05-29 15:50:29 +0300 $
  */
 
 /**
@@ -31,7 +31,7 @@
  *
  * @param {PaintWeb} app Reference to the main paint application object.
  */
-PaintWebInstance.extensionAdd('mousekeys', function (app) {
+pwlib.extensions.mousekeys = function (app) {
   var _self     = this,
       MathCeil  = Math.ceil,
       canvas    = app.buffer.canvas,
@@ -69,12 +69,14 @@ PaintWebInstance.extensionAdd('mousekeys', function (app) {
   var pointer = null;
 
   /**
-   * Initialize the extension. This function adds the pointer DOM element and 
-   * sets up the keyboard shortcuts.
+   * The <code>extensionRegister</code> event handler. This initializes the 
+   * extension by adding the pointer DOM element and by setting up the keyboard 
+   * shortcuts.
    *
-   * @private
+   * @returns {Boolean} True if the extension initialized successfully, or false 
+   * if not.
    */
-  function init () {
+  this.extensionRegister = function () {
     accel = config.mousekeys.accel;
 
     pointer = document.createElement('div');
@@ -100,6 +102,25 @@ PaintWebInstance.extensionAdd('mousekeys', function (app) {
     };
 
     pwlib.extend(config.keys, result);
+
+    return true;
+  };
+
+  /**
+   * The <code>extensionUnregister</code> event handler. This will remove the 
+   * pointer DOM element and the canvas event listener.
+   */
+  this.extensionUnregister = function () {
+    container.removeChild(pointer);
+    canvas.removeEventListener('mousemove', pointerMousemove, false);
+
+    var key, kobj;
+    for (key in config.keys) {
+      kobj = config.keys[key];
+      if (kobj.extension == _self._id) {
+        delete config.keys[key];
+      }
+    }
   };
 
   /**
@@ -333,26 +354,7 @@ PaintWebInstance.extensionAdd('mousekeys', function (app) {
 
     return false;
   };
-
-  /**
-   * Handles action removal. This will remove the pointer DOM element and the 
-   * canvas event listener.
-   */
-  this.extensionRemove = function () {
-    container.removeChild(pointer);
-    canvas.removeEventListener('mousemove', pointerMousemove, false);
-
-    var key, kobj;
-    for (key in config.keys) {
-      kobj = config.keys[key];
-      if (kobj.extension == _self._id) {
-        delete config.keys[key];
-      }
-    }
-  };
-
-  init();
-});
+};
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
 
