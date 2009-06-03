@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-29 15:43:36 +0300 $
+ * $Date: 2009-06-03 18:30:05 +0300 $
  */
 
 /**
@@ -40,7 +40,7 @@ pwlib.tools.line = function (app) {
       mouse         = app.mouse,
       setInterval   = window.setInterval,
       snapXY        = app.toolSnapXY,
-      statusShow    = app.statusShow;
+      statusShow    = app.gui.statusShow;
 
   /**
    * The interval ID used for invoking the drawing operation every few 

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-29 15:44:09 +0300 $
+ * $Date: 2009-06-03 18:30:40 +0300 $
  */
 
 /**
@@ -41,7 +41,7 @@ pwlib.tools.rect = function (app) {
       MathMin       = Math.min,
       mouse         = app.mouse,
       setInterval   = window.setInterval,
-      statusShow    = app.statusShow;
+      statusShow    = app.gui.statusShow;
 
   /**
    * The interval ID used for invoking the drawing operation every few 

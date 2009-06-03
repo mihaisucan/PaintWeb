@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-02 23:27:25 +0300 $
+  // $Date: 2009-06-03 18:35:00 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -114,7 +114,7 @@
    * Holds the list of drawing tools you want to load.
    * @type Array
    */
-  "tools": ["cpicker", "curve", "drag", "ellipse", "eraser", "insertimg", "line", "pencil", "poly", "rect", "select", "text"],
+  "tools": ["select", "drag", "rect", "ellipse", "poly", "line", "text", "curve", "insertimg", "pencil", "cpicker", "eraser"],
 
   /**
    * Tools folder.

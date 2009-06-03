@@ -3,8 +3,7 @@
 
 - Continued work on the new GUI code.
 - More work on the initialization code.
-- Initialization starts now and fails in the middle. You can see the GUI is 
-loading.
+- The application is now able to loads itself.
 
 2009-05-29:
 ===========

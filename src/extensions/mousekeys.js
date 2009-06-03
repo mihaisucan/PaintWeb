@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-29 15:50:29 +0300 $
+ * $Date: 2009-06-03 18:09:24 +0300 $
  */
 
 /**
@@ -33,11 +33,12 @@
  */
 pwlib.extensions.mousekeys = function (app) {
   var _self     = this,
-      MathCeil  = Math.ceil,
       canvas    = app.buffer.canvas,
       config    = app.config,
-      container = app.elems.container,
+      container = app.gui.elems.canvasContainer,
+      doc       = app.doc,
       image     = app.image,
+      MathCeil  = Math.ceil,
       mouse     = app.mouse,
       tool      = app.tool || {};
 
@@ -79,7 +80,7 @@ pwlib.extensions.mousekeys = function (app) {
   this.extensionRegister = function () {
     accel = config.mousekeys.accel;
 
-    pointer = document.createElement('div');
+    pointer = doc.createElement('div');
     if (!pointer) {
       _self._cancel = true;
       return false;

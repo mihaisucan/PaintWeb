@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-29 15:44:34 +0300 $
+ * $Date: 2009-06-03 18:31:01 +0300 $
  */
 
 /**
@@ -44,7 +44,7 @@ pwlib.tools.text = function (app) {
       layerUpdate   = app.layerUpdate,
       mouse         = app.mouse,
       setInterval   = window.setInterval,
-      statusShow    = app.statusShow,
+      statusShow    = app.gui.statusShow,
       toolActivate  = app.toolActivate;
 
   /**

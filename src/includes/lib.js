@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-06-03 14:55:11 +0300 $
+ * $Date: 2009-06-03 17:47:56 +0300 $
  */
 
 /**
@@ -436,15 +436,9 @@ pwlib.appEvents = function (target_) {
    * @see pwlib.appEvent the generic event object.
    */
   this.dispatch = function (ev) {
-    if (typeof type !== 'string') {
-      throw new TypeError('The first argument must be a string.');
-    }
-
     if (typeof ev !== 'object') {
       throw new TypeError('The second argument must be an object.');
-    }
-
-    if (typeof ev.type !== 'string') {
+    } else if (typeof ev.type !== 'string') {
       throw new TypeError('The second argument must be an application event ' +
         'object.');
     }
@@ -456,9 +450,9 @@ pwlib.appEvents = function (target_) {
 
     ev.target = target_;
 
-    var handler, handlers = events_[ev.type];
-    for (handler in handlers) {
-      handler.call(target_, ev);
+    var id, handlers = events_[ev.type];
+    for (id in handlers) {
+      handlers[id].call(target_, ev);
 
       if (ev.propagationStopped_) {
         break;

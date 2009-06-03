@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-29 15:43:25 +0300 $
+ * $Date: 2009-06-03 18:29:55 +0300 $
  */
 
 /**
@@ -46,7 +46,7 @@ pwlib.tools.insertimg = function (app) {
       MathRound     = Math.round,
       mouse         = app.mouse,
       setInterval   = window.setInterval,
-      statusShow    = app.statusShow,
+      statusShow    = app.gui.statusShow,
       toolActivate  = app.toolActivate;
 
   /**

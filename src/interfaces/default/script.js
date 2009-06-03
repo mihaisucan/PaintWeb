@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-03 17:16:07 +0300 $
+ * $Date: 2009-06-03 18:32:31 +0300 $
  */
 
 /**
@@ -170,11 +170,12 @@ pwlib.gui['default'] = function (app) {
         containerStyle  = canvasContainer.style;
 
     this.elems.canvasContainer = canvasContainer;
+    app.elems.container = canvasContainer;
     app.layer.canvas  = layerCanvas;
     app.buffer.canvas = bufferCanvas;
 
-    layerCanvas.className = classPrefix_ + 'layerCanvas';
-    layerCanvas.className = classPrefix_ + 'bufferCanvas';
+    layerCanvas.className  = classPrefix_ + 'layerCanvas';
+    bufferCanvas.className = classPrefix_ + 'bufferCanvas';
 
     canvasContainer.appendChild(layerCanvas);
     canvasContainer.appendChild(bufferCanvas);
@@ -527,7 +528,7 @@ pwlib.gui['default'] = function (app) {
    * not.
    */
   this.statusShow = function (id, temporary) {
-    var elem = this.elems.status;
+    var elem = _self.elems.status;
     if (id === -1 && elem._prevText === false) {
       return false;
     }
@@ -544,7 +545,7 @@ pwlib.gui['default'] = function (app) {
       elem.removeChild(elem.firstChild);
     }
 
-    _self.win.status = msg;
+    win.status = msg;
 
     if (msg) {
       elem.appendChild(doc.createTextNode(msg));
@@ -996,11 +997,15 @@ pwlib.gui['default'] = function (app) {
    * a drawing tool.
    */
   this.toolActivate = function (ev) {
-    var active = _self.tools[ev.id],
-        prev   = _self.tools[ev.prevId];
-
+    var active = _self.tools[ev.id];
     active.className += ' ' + classPrefix_ + 'toolActive';
-    prev.className = prev.className.replace(' ' + classPrefix_ + 'toolActive', '');
+
+    if (ev.prevId) {
+      var prev = _self.tools[ev.prevId];
+      prev.className = prev.className.
+        replace(' ' + classPrefix_ + 'toolActive', '');
+    }
+
     _self.statusShow(ev.id + 'Active');
   };
 
@@ -1016,24 +1021,24 @@ pwlib.gui['default'] = function (app) {
    * tools.
    */
   this.toolRegister = function (ev) {
-    if (ev.id in this.tools) {
+    if (ev.id in _self.tools) {
       return;
     }
 
     var elem = doc.createElement('li');
 
     elem.className = classPrefix_ + 'tool_' + ev.id;
-    elem.title = lang.tools[id];
-    elem._PaintWebTool = id;
+    elem.title = lang.tools[ev.id];
+    elem._PaintWebTool = ev.id;
 
-    elem.appendChild(doc.createTextNode(lang.tools[id]));
+    elem.appendChild(doc.createTextNode(lang.tools[ev.id]));
 
-    this.elems.tools.appendChild(elem);
-    this.tools[id] = elem;
+    _self.elems.tools.appendChild(elem);
+    _self.tools[ev.id] = elem;
 
-    elem.addEventListener('click',     this.toolClick,      false);
-    elem.addEventListener('mouseover', this.item_mouseover, false);
-    elem.addEventListener('mouseout',  this.item_mouseout,  false);
+    elem.addEventListener('click',     _self.toolClick,      false);
+    elem.addEventListener('mouseover', _self.item_mouseover, false);
+    elem.addEventListener('mouseout',  _self.item_mouseout,  false);
   };
 
   /**
@@ -1046,12 +1051,12 @@ pwlib.gui['default'] = function (app) {
    * tools.
    */
   this.toolUnregister = function (ev) {
-    if (!(ev.id in this.tools)) {
+    if (!(ev.id in _self.tools)) {
       return;
+    } else {
+      _self.elems.tools.removeChild(_self.tools[ev.id]);
+      delete _self.tools[id];
     }
-
-    this.elems.tools.removeChild(this.tools[ev.id]);
-    delete this.tools[id];
   };
 };
 

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-03 17:15:02 +0300 $
+ * $Date: 2009-06-03 18:33:47 +0300 $
  */
 
 /**
@@ -669,11 +669,6 @@ function PaintWeb (win_, doc_) {
    * @see pwlib.appEvent.initApp
    */
   this.initComplete = function () {
-    // Load the extensions.
-    if (!this.initExtensions()) {
-      return false;
-    }
-
     // The global keyboard events handler implements everything needed for 
     // switching between tools and for accessing any other functionality of the 
     // Web application.
@@ -698,17 +693,13 @@ function PaintWeb (win_, doc_) {
         base = cfg.baseFolder + cfg.toolsFolder + '/';
 
     temp_.toolsLoadQueue = n;
-    console.log('initTools n ' + temp_.toolsLoadQueue);
 
     for (var i = 0; i < n; i++) {
       id = cfg.tools[i];
-
-      console.log('initTools i ' + i + ' id ' + id);
-
       if (id in pwlib.tools) {
         this.toolLoaded();
       } else {
-        this.scriptLoad(base + id + 'js' , this.toolLoaded);
+        this.scriptLoad(base + id + '.js' , this.toolLoaded);
       }
     }
   };
@@ -718,11 +709,9 @@ function PaintWeb (win_, doc_) {
    * @private
    */
   this.toolLoaded = function () {
-    console.log('toolLoaded ' + temp_.toolsLoadQueue);
     temp_.toolsLoadQueue--;
 
     if (temp_.toolsLoadQueue === 0) {
-      console.log('toolLoaded yay');
       var tools = _self.config.tools,
           n = tools.length;
 
@@ -754,7 +743,7 @@ function PaintWeb (win_, doc_) {
       if (id in pwlib.extensions) {
         this.extensionLoaded();
       } else {
-        this.scriptInsert(base + id + '.js', this.extensionLoaded);
+        this.scriptLoad(base + id + '.js', this.extensionLoaded);
       }
     }
   };
@@ -1108,7 +1097,7 @@ function PaintWeb (win_, doc_) {
         h = image.height / _self.resolution.scale * level,
         bufferStyle = _self.buffer.canvas.style,
         layerStyle = _self.layer.canvas.style,
-        containerStyle = _self.elems.container.style;
+        containerStyle = _self.gui.elems.canvasContainer.style;
 
     image.canvasScale = w / image.width;
 
@@ -1121,11 +1110,9 @@ function PaintWeb (win_, doc_) {
 
     // The container should only be smaller than the image dimensions
     if (level <= 1) {
-      console.log('cucu1');
       containerStyle.width  = w + 'px';
       containerStyle.height = h + 'px';
     } else {
-      console.log('cucu2');
       containerStyle.width  = image.width  / _self.resolution.scale + 'px';
       containerStyle.height = image.height / _self.resolution.scale + 'px';
     }
@@ -1581,9 +1568,9 @@ function PaintWeb (win_, doc_) {
       this.tool.deactivate(ev);
     }
 
-    this.mouse.buttonDown = false;
-
     this.tool = tool_obj;
+
+    this.mouse.buttonDown = false;
 
     // Besides the "constructor", each tool can also have code which is run 
     // after the deactivation of the previous tool.

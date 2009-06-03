@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-29 15:42:15 +0300 $
+ * $Date: 2009-06-03 18:28:56 +0300 $
  */
 
 /**
@@ -40,7 +40,7 @@ pwlib.tools.cpicker = function (app) {
       image        = app.image,
       lang         = app.lang,
       layerUpdate  = app.layerUpdate,
-      statusShow   = app.statusShow,
+      statusShow   = app.gui.statusShow,
       toolActivate = app.toolActivate;
 
   // There are problems with Safari (tested 20080324 svn trunk, webkitgtk) and Opera Merlin (Opera versions older than 9.5).

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-02 12:57:56 +0300 $
+ * $Date: 2009-06-03 18:26:09 +0300 $
  */
 
 body {
@@ -534,7 +534,7 @@ label
   background-position: 0 -29px;
 }
 
-#tools li.active {
+#tools li.paintweb_toolActive {
   background-position: 0 -58px;
 }
 
@@ -544,67 +544,67 @@ label
 
 /* The tool bar buttons */
 
-#btn-undo {
+#btn_undo {
   background-image: url("images/buttons/undo.png");
 }
 
-#btn-redo {
+#btn_redo {
   background-image: url("images/buttons/redo.png");
 }
 
-#btn-clear {
+#btn_clear {
   background-image: url("images/buttons/new-image.png");
 }
 
-#btn-save {
+#btn_save {
   background-image: url("images/buttons/save.png");
 }
 
-#tool-select {
+.paintweb_tool_select {
   background-image: url("images/buttons/selection.png");
 }
 
-#tool-drag {
+.paintweb_tool_drag {
   background-image: url("images/buttons/drag.png");
 }
 
-#tool-rect {
+.paintweb_tool_rect {
   background-image: url("images/buttons/rect.png");
 }
 
-#tool-ellipse {
+.paintweb_tool_ellipse {
   background-image: url("images/buttons/ellipse.png");
 }
 
-#tool-poly {
+.paintweb_tool_poly {
   background-image: url("images/buttons/polygon.png");
 }
 
-#tool-line {
+.paintweb_tool_line {
   background-image: url("images/buttons/line.png");
 }
 
-#tool-text {
+.paintweb_tool_text {
   background-image: url("images/buttons/text.png");
 }
 
-#tool-curve {
+.paintweb_tool_curve {
   background-image: url("images/buttons/curve.png");
 }
 
-#tool-insertimg {
+.paintweb_tool_insertimg {
   background-image: url("images/buttons/insert-image.png");
 }
 
-#tool-pencil {
+.paintweb_tool_pencil {
   background-image: url("images/buttons/pencil.png");
 }
 
-#tool-cpicker {
+.paintweb_tool_cpicker {
   background-image: url("images/buttons/color-picker.png");
 }
 
-#tool-eraser {
+.paintweb_tool_eraser {
   background-image: url("images/buttons/eraser.png");
 }
 
@@ -690,7 +690,7 @@ label
   background-position: 0 -36px;
 }
 
-#toolbar-main li.active {
+#toolbar-main li.paintweb_toolActive {
   background-position: 0 -72px;
 }
 
@@ -699,22 +699,22 @@ label
   background-position: 0 -108px;
 }
 
-#btn-cut {
+#btn_cut {
   background-image: url("images/buttons/cut.png");
   left: 15px;
 }
 
-#btn-copy {
+#btn_copy {
   background-image: url("images/buttons/copy.png");
   left: 56px;
 }
 
-#btn-paste {
+#btn_paste {
   background-image: url("images/buttons/paste.png");
   left: 97px;
 }
 
-#btn-help {
+#btn_help {
   background-image: url("images/buttons/help.png");
   right: 15px;
 }

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-29 15:43:59 +0300 $
+ * $Date: 2009-06-03 18:30:27 +0300 $
  */
 
 /**
@@ -41,7 +41,7 @@ pwlib.tools.poly = function (app) {
       mouse         = app.mouse,
       setInterval   = window.setInterval,
       snapXY        = app.toolSnapXY,
-      statusShow    = app.statusShow;
+      statusShow    = app.gui.statusShow;
 
   /**
    * Holds the points in the polygon being drawn.
