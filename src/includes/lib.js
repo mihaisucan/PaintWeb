@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-05-27 20:12:25 +0300 $
+ * $Date: 2009-06-03 14:55:11 +0300 $
  */
 
 /**
@@ -125,7 +125,7 @@ pwlib.extend = function () {
 };
 
 /**
- * Retrieve a language string, customized with the provided variables.
+ * Retrieve a string formatted with the provided variables.
  *
  * <p>The language string must be available in the global <var>lang</var> 
  * object.
@@ -136,32 +136,24 @@ pwlib.extend = function () {
  * lang.table_cells = "The table %name% has %n% cells.";
  *
  * // later ...
- * console.log(pwlib.lang('table_cells', {'name' : 'tbl1', 'n' : 11}));
+ * console.log(pwlib.strf(lang.table_cells, {'name' : 'tbl1', 'n' : 11}));
  * // The output is 'The table tbl1 has 11 cells.'
  *
- * @param {String} id Language string ID. It must be available in the global 
- * <var>lang</var> object.
+ * @param {String} str The string you want to output.
  *
  * @param {Object} [vars] The variables you want to set in the language string.
  *
- * @returns {String} The language string, updated with the variables you 
- * provided.
+ * @returns {String} The string updated with the variables you provided.
  */
-pwlib.lang = function (id, vars) {
-  var msg, re, i;
-
-  if (!id || !window.lang || !(msg = lang[id])) {
-    return lang.internalError || 'Internal error';
-  } else if (!vars) {
-    return msg;
-  }
+pwlib.strf = function (str, vars) {
+  var re, i;
 
   for (i in vars) {
     re = new RegExp('%' + i + '%', 'g');
-    msg = msg.replace(re, vars[i]);
+    str = str.replace(re, vars[i]);
   }
 
-  return msg;
+  return str;
 };
 
 /**
@@ -206,6 +198,277 @@ pwlib.xhrLoad = function (url, handler, method, send) {
 
   return xhr;
 };
+
+/**
+ * @class Custom application event.
+ *
+ * @param {String} type Event type.
+ * @param {Boolean} [cancelable=false] Tells if the event can be cancelled or 
+ * not.
+ *
+ * @throws {TypeError} If the <var>type</var> parameter is not a string.
+ * @throws {TypeError} If the <var>cancelable</var> parameter is not a string.
+ *
+ * @see pwlib.appEvents for the application events interface which allows adding 
+ * and removing event listeners.
+ */
+pwlib.appEvent = function (type, cancelable) {
+  if (typeof type !== 'string') {
+    throw new TypeError('The first argument must be a string');
+  } else if (typeof cancelable === 'undefined') {
+    cancelable = false;
+  } else if (typeof cancelable !== 'boolean') {
+    throw new TypeError('The second argument must be a boolean');
+  }
+
+  this.cancelable = cancelable;
+  this.defaultPrevented = false;
+  this.type = type;
+
+  this.preventDefault = function () {
+    if (cancelable) {
+      this.defaultPrevented = true;
+    }
+  };
+
+  this.stopPropagation = function () {
+    this.propagationStopped_ = true;
+  };
+};
+
+/**
+ * @class Application initialization event. This event is not cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {Number} state The initialization state.
+ * @param {String} [errorMessage] The error message, if any.
+ *
+ * @throws {TypeError} If the <var>state</var> is not a number.
+ */
+pwlib.appEvent.initApp = function (state, errorMessage) {
+  if (typeof state !== 'number') {
+    throw new TypeError('The first argument must be a number.');
+  }
+
+  this.state = state;
+  this.errorMessage = errorMessage || null;
+
+  pwlib.appEvent.call(this, 'initApp');
+};
+
+/**
+ * @class Tool preactivation event. This event is cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {String} id The ID of the new tool being activated.
+ * @param {String|null} prevId The ID of the previous tool.
+ *
+ * @throws {TypeError} If the <var>id</var> is not a string.
+ * @throws {TypeError} If the <var>prevId</var> is not a string or null.
+ */
+pwlib.appEvent.toolPreactivate = function (id, prevId) {
+  if (typeof id !== 'string') {
+    throw new TypeError('The first argument must be a string.');
+  } else if (prevId !== null && typeof prevId !== 'string') {
+    throw new TypeError('The second argument must be a string or null.');
+  }
+
+  this.id = id;
+  this.prevId = prevId;
+
+  pwlib.appEvent.call(this, 'toolPreactivate', true);
+};
+
+/**
+ * @class Tool activation event. This event is not cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {String} id The ID of the new tool being activated.
+ * @param {String|null} prevId The ID of the previous tool.
+ *
+ * @throws {TypeError} If the <var>id</var> is not a string.
+ * @throws {TypeError} If the <var>prevId</var> is not a string or null.
+ */
+pwlib.appEvent.toolActivate = function (id, prevId) {
+  if (typeof id !== 'string') {
+    throw new TypeError('The first argument must be a string.');
+  } else if (prevId !== null && typeof prevId !== 'string') {
+    throw new TypeError('The second argument must be a string or null.');
+  }
+
+  this.id = id;
+  this.prevId = prevId;
+
+  pwlib.appEvent.call(this, 'toolActivate');
+};
+
+/**
+ * @class Tool registration event. This event is cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {String} id The ID of the tool being registered in an active PaintWeb 
+ * instance.
+ *
+ * @throws {TypeError} If the <var>id</var> is not a string.
+ */
+pwlib.appEvent.toolRegister = function (id) {
+  if (typeof id !== 'string') {
+    throw new TypeError('The first argument must be a string.');
+  }
+
+  this.id = id;
+
+  pwlib.appEvent.call(this, 'toolRegister', true);
+};
+
+/**
+ * @class Tool removal event. This event is cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {String} id The ID of the tool being unregistered in an active 
+ * PaintWeb instance.
+ *
+ * @throws {TypeError} If the <var>id</var> is not a string.
+ */
+pwlib.appEvent.toolUnregister = function (id) {
+  if (typeof id !== 'string') {
+    throw new TypeError('The first argument must be a string.');
+  }
+
+  this.id = id;
+
+  pwlib.appEvent.call(this, 'toolUnregister', true);
+};
+
+/**
+ * @class An interface for adding, removing and dispatching of custom 
+ * application events.
+ *
+ * @param {Object} target_ The target for all the events.
+ *
+ * @see pwlib.appEvent to create application event objects.
+ */
+pwlib.appEvents = function (target_) {
+  /**
+   * Holds the list of event types and event handlers.
+   *
+   * @private
+   * @type Object
+   */
+  var events_ = {};
+
+  var eventID_ = 1;
+
+  /**
+   * Add an event listener.
+   *
+   * @param {String} type The event you want to listen for.
+   * @param {Function} handler The event handler.
+   *
+   * @returns {Number} The event ID.
+   *
+   * @throws {TypeError} If the <var>type</var> argument is not a string.
+   * @throws {TypeError} If the <var>handler</var> argument is not a function.
+   *
+   * @see pwlib.appEvents#remove to remove events.
+   * @see pwlib.appEvents#dispatch to dispatch an event.
+   */
+  this.add = function (type, handler) {
+    if (typeof type !== 'string') {
+      throw new TypeError('The first argument must be a string.');
+    } else if (typeof handler !== 'function') {
+      throw new TypeError('The second argument must be a function.');
+    }
+
+    var id = eventID_++;
+
+    if (!(type in events_)) {
+      events_[type] = {};
+    }
+
+    events_[type][id] = handler;
+
+    return id;
+  };
+
+  /**
+   * Remove an event listener.
+   *
+   * @param {String} type The event type.
+   * @param {Number} id The event ID.
+   *
+   * @throws {TypeError} If the <var>type</var> argument is not a string.
+   *
+   * @see pwlib.appEvents#add to add events.
+   * @see pwlib.appEvents#dispatch to dispatch an event.
+   */
+  this.remove = function (type, id) {
+    if (typeof type !== 'string') {
+      throw new TypeError('The first argument must be a string.');
+    }
+
+    if (!(type in events_) || !(id in events_[type])) {
+      return;
+    }
+
+    delete events_[type][id];
+  };
+
+  /**
+   * Dispatch an event.
+   *
+   * @param {String} type The event type.
+   * @param {pwlib.appEvent} ev The event object.
+   *
+   * @returns {Boolean} True if the <code>event.preventDefault()</code> has been 
+   * invoked by one of the event handlers, or false if not.
+   *
+   * @throws {TypeError} If the <var>type</var> parameter is not a string.
+   * @throws {TypeError} If the <var>ev</var> parameter is not an object.
+   *
+   * @see pwlib.appEvents#add to add events.
+   * @see pwlib.appEvents#remove to remove events.
+   * @see pwlib.appEvent the generic event object.
+   */
+  this.dispatch = function (ev) {
+    if (typeof type !== 'string') {
+      throw new TypeError('The first argument must be a string.');
+    }
+
+    if (typeof ev !== 'object') {
+      throw new TypeError('The second argument must be an object.');
+    }
+
+    if (typeof ev.type !== 'string') {
+      throw new TypeError('The second argument must be an application event ' +
+        'object.');
+    }
+
+    // No event handlers.
+    if (!(ev.type in events_)) {
+      return false;
+    }
+
+    ev.target = target_;
+
+    var handler, handlers = events_[ev.type];
+    for (handler in handlers) {
+      handler.call(target_, ev);
+
+      if (ev.propagationStopped_) {
+        break;
+      }
+    }
+
+    return ev.defaultPrevented;
+  };
+};
+
 
 /**
  * @namespace Holds browser information.

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-29 15:41:56 +0300 $
+ * $Date: 2009-06-03 17:16:07 +0300 $
  */
 
 /**
@@ -25,20 +25,291 @@
  * @fileOverview The default PaintWeb interface code.
  */
 
+(function () {
+var pwlib = window.pwlib;
 
 /**
  * @class The default PaintWeb interface.
  *
  * @param {PaintWeb} app Reference to the main paint application object.
  */
-pwlib.gui.default = function (app) {
+pwlib.gui['default'] = function (app) {
+  var _self        = this,
+      classPrefix_ = 'paintweb_';
+      config       = app.config,
+      doc          = app.doc,
+      idPrefix_    = 'paintweb' + app.UID + '_',
+      lang         = app.lang,
+      pwlib        = window.pwlib,
+      win          = app.win,
 
-  this.init = function (markupDocument) {
+  idPrefix_ = '';
+
+  this.app = app;
+
+  /**
+   * Holds references to DOM elements.
+   * @type Object
+   */
+  this.elems = {};
+
+  /**
+   * Holds references to DOM input elements.
+   * @type Object
+   */
+  this.inputs = {};
+
+  /**
+   * Holds references to DOM elements associated to each tool registered in the 
+   * current PaintWeb application instance.
+   *
+   * @private
+   * @type Object
+   */
+  this.tools = {};
+
+  /**
+   * Holds references to the GUI floating panels.
+   * @private
+   */
+  this.panels = {zIndex: 0};
+
+  /**
+   * Holds an instance of the guiResizer object attached to the Canvas.
+   * @type guiResizer
+   */
+  this.canvasResizer = null;
+
+  function $ (id) {
+    var elem = doc.getElementById(idPrefix_ + id);
+    if (elem) {
+      return elem;
+    } else {
+      if (config.showErrors) {
+        alert( pwlib.strf(lang.errorElementNotFound, {'id' : id}) );
+      }
+
+      return false;
+    }
   };
 
-  // This function prepares all the inputs in the Properties box.
-  // TODO: fix all this... (will do it with the new GUI)
-  this.init_properties = function () {
+  /**
+   * Initialize the PaintWeb interface.
+   *
+   * @param {Document} markupDoc The interface markup loaded and parsed as DOM 
+   * Document object.
+   *
+   * @returns {Boolean} True if the initialization was successful, or false if 
+   * not.
+   */
+  this.init = function (markupDoc) {
+    this.initImportDoc(markupDoc);
+
+    // #resInfo is used for resolution information (DPI / zoom).
+    app.elems.resInfo = $('resInfo');
+
+    if (!this.initCanvas() ||
+        !this.initButtons() ||
+        !this.initProperties() ||
+        !this.initZoomInput() ||
+        !this.initKeyboardShortcuts()) {
+      return false;
+    }
+
+    // Setup the floating panels.
+    var panels = this.panels;
+
+    panels.toolbar     = new guiFloatingPanel(this, $('toolbar'));
+    panels.main        = new guiFloatingPanel(this, $('main'));
+    panels.properties  = new guiFloatingPanel(this, $('properties'));
+    panels.help        = new guiFloatingPanel(this, $('help'));
+    panels.help.hide();
+    panels.coloreditor = new guiFloatingPanel(this, $('coloreditor'));
+    panels.coloreditor.hide();
+
+    // Setup the Canvas resizer.
+
+    this.canvasResizer = new guiResizer(this, $('canvasResizer'), 
+        this.elems.canvasContainer);
+    this.canvasResizer.events.add('guiResizeStart', this.canvasResizeStart);
+    this.canvasResizer.events.add('guiResizeEnd',   this.canvasResizeEnd);
+
+    // Misc elements:
+    // #status for displaying various short informational messages.
+    // #tools holds the DOM element of each tool.
+
+    this.elems.status = $('status');
+    this.elems.status._prevText = false;
+
+    this.elems.tools  = $('tools');
+
+    // Update the version string in Help.
+    $('version').appendChild(doc.createTextNode(app));
+
+    // Add application-wide event listeners.
+    app.events.add('toolActivate',   this.toolActivate);
+    app.events.add('toolRegister',   this.toolRegister);
+    app.events.add('toolUnregister', this.toolUnregister);
+
+    return true;
+  };
+
+  /**
+   * Initialize the canvas elements.
+   *
+   * @private
+   * @returns {Boolean} True if the initialization was successful, or false if 
+   * not.
+   */
+  this.initCanvas = function () {
+    var canvasContainer = $('canvasContainer'),
+        layerCanvas     = doc.createElement('canvas'),
+        bufferCanvas    = doc.createElement('canvas'),
+        layerStyle      = layerCanvas.style,
+        bufferStyle     = bufferCanvas.style,
+        containerStyle  = canvasContainer.style;
+
+    this.elems.canvasContainer = canvasContainer;
+    app.layer.canvas  = layerCanvas;
+    app.buffer.canvas = bufferCanvas;
+
+    layerCanvas.className = classPrefix_ + 'layerCanvas';
+    layerCanvas.className = classPrefix_ + 'bufferCanvas';
+
+    canvasContainer.appendChild(layerCanvas);
+    canvasContainer.appendChild(bufferCanvas);
+
+    layerStyle.width = bufferStyle.width = containerStyle.width  
+      = layerCanvas.width  + 'px';
+
+    layerStyle.height = bufferStyle.height = containerStyle.height 
+      = layerCanvas.height + 'px';
+
+    return app.initCanvas();
+  };
+
+  /**
+   * Import the DOM nodes from the interface DOM document. All the nodes are 
+   * inserted into the {@link PaintWeb.config.guiPlaceholder} element.
+   *
+   * <p>Elements with IDs are added to <var>this.elems</var> object.
+   *
+   * @private
+   * @param {Document} srcDoc The source DOM document to import the nodes from.
+   */
+  this.initImportDoc = function (srcDoc) {
+    // I could use some XPath here, but for the sake of compatibility I don't.
+    var elem,
+        nodes = srcDoc.getElementsByTagName('*'),
+        n = nodes.length;
+
+    // Find all the element nodes which have IDs.
+    var type = Node.ELEMENT_NODE;
+    for (var i = 0; i < n; i++) {
+      elem = nodes[i];
+      if (elem.nodeType == type && elem.id) {
+        elem.id = idPrefix_ + elem.id;
+      }
+    }
+
+    var destElem = config.guiPlaceholder,
+        children = srcDoc.documentElement.childNodes;
+
+    n = children.length;
+
+    // Import all the nodes.
+    for (var i = 0; i < n; i++) {
+      elem = children[i];
+      destElem.appendChild(doc.importNode(elem, true));
+    }
+  };
+
+  /**
+   * Initialize the buttons in the GUI.
+   *
+   * @private
+   * @returns {Boolean} True if the initialization was successful, or false if 
+   * not.
+   */
+  this.initButtons = function () {
+    // Prepare the buttons
+    var id, elem, evfunc,
+        btn = {
+          'undo'  : false, // disabled
+          'redo'  : false,
+          'clear' : true,  // enabled
+          'save'  : true,
+          'cut'   : false,
+          'copy'  : false,
+          'paste' : false,
+          'help'  : true,
+          'help_close' : true
+        };
+
+    for (i in btn) {
+      id = 'btn_' + i;
+      if ( !(elem = $(id)) ) {
+        return false;
+      }
+
+      // Each button must have an event handler with the same name. E.g.  
+      // btn_undo
+      if ( !(evfunc = this[id]) ) {
+        continue;
+      }
+
+      if (!elem.title && elem.textContent) {
+        elem.title = elem.textContent;
+      }
+
+      elem.addEventListener('click',     evfunc,              false);
+      elem.addEventListener('mouseover', this.item_mouseover, false);
+      elem.addEventListener('mouseout',  this.item_mouseout,  false);
+
+      if (!btn[i]) {
+        elem.className = 'disabled';
+      }
+
+      this.elems[id] = elem;
+    }
+
+    return true;
+  };
+
+  /**
+   * Initialize the image zoom input.
+   *
+   * @private
+   * @returns {Boolean} True if the initialization was successful, or false if 
+   * not.
+   */
+  this.initZoomInput = function () {
+    var elem = $('in-zoom');
+    if (!elem) {
+      return false;
+    }
+
+    elem.value = 100;
+    elem._old_value = 100;
+    elem.addEventListener('keypress', this.ev_input_nr, false);
+    elem.addEventListener('change',   app.ev_change_zoom, false);
+
+    // Override the attributes, based on the settings.
+    elem.setAttribute('step', config.zoomStep * 100);
+    elem.setAttribute('max',  config.zoomMax  * 100);
+    elem.setAttribute('min',  config.zoomMin  * 100);
+
+    this.inputs.zoom = elem;
+
+    return true;
+  };
+
+  /**
+   * Initialize all the inputs in the Properties box.
+   * @private
+   */
+  // TODO: FIXME: this needs a better organization.
+  this.initProperties = function () {
     var i, elem,
 
       ev_simple_prop = function (ev) {
@@ -80,7 +351,7 @@ pwlib.gui.default = function (app) {
       // The first icon is also the default one for activation.
       icons[0].className = 'active';
       if (id != 'shapeType') {
-        this.buffer.context[id] = icons[0].id.replace(id + '-', '');
+        app.buffer.context[id] = icons[0].id.replace(id + '-', '');
       }
 
       for (y = 0; y < icons.length; y++) {
@@ -96,14 +367,14 @@ pwlib.gui.default = function (app) {
         'textString', 'shadowActive'];
     for (i = 0, n = inputs.length; i < n; i++) {
       id = inputs[i];
-      if ( !(_self.inputs[id] = $('in-' + id)) ) {
+      if ( !(this.inputs[id] = $('in-' + id)) ) {
         return false;
       }
     }
 
     // The selection transparency cannot be disabled if the browser does not 
     // implement put/getImageData.
-    if (!this.layer.context.getImageData || !this.layer.context.putImageData) {
+    if (!app.layer.context.getImageData || !app.layer.context.putImageData) {
       this.inputs.selTransparent.parentNode.className += ' disabled';
       this.inputs.selTransparent.disabled = true;
     }
@@ -111,16 +382,16 @@ pwlib.gui.default = function (app) {
     // The Shadow API is only supported by Firefox 3.1.
     // Opera reports all the shadow-related properties as available, even if it currently doesn't implement the Shadow API.
     elem = this.inputs.shadowActive;
-    if (!this.layer.context.shadowColor) {
+    if (!app.layer.context.shadowColor) {
       elem.parentNode.className += ' disabled';
       elem.disabled = true;
     }
-    elem.addEventListener('change', this.shadowToggle, false);
+    elem.addEventListener('change', app.shadowToggle, false);
     elem.checked = true;
-    this.shadowDisable();
+    app.shadowDisable();
 
     // The Text API is only supported by Firefox 3.1, and new WebKit builds.
-    if (this.layer.context.fillText && this.layer.context.strokeText) {
+    if (app.layer.context.fillText && app.layer.context.strokeText) {
       elem = this.inputs.textSize;
       elem._old_value = elem.value;
       elem.addEventListener('keypress', this.ev_input_nr,      false);
@@ -148,9 +419,9 @@ pwlib.gui.default = function (app) {
     var ttl, sections = {
       'lineOptions'      : true, // the condition to make the section available or not
       'selectionOptions' : true,
-      'textOptions'      : this.layer.context.fillText && 
-        this.layer.context.strokeText,
-      'shadowOptions'    : this.layer.context.shadowColor
+      'textOptions'      : app.layer.context.fillText && 
+        app.layer.context.strokeText,
+      'shadowOptions'    : app.layer.context.shadowColor
     };
 
     // Make each section from Properties minimizable.
@@ -188,216 +459,95 @@ pwlib.gui.default = function (app) {
     return true;
   };
 
-  // Initialize and handle the dragging of the GUI boxes.
-  // TODO: GUI stuff
-  this.boxes = {
-    'drag' : false,
-    'elem' : false,
-    'zIndex' : 0,
-    'zIndex_step' : 200,
+  /**
+   * Initialize the keyboard shortcuts. Basically, this updates various strings 
+   * to ensure the user interface is informational.
+   *
+   * @private
+   * @returns {Boolean} True if the initialization was successful, or false if 
+   * not.
+   */
+  this.initKeyboardShortcuts = function () {
+    var kid, kobj;
 
-    'init' : function () {
-      var b = _self.boxes, ttl, id, box, cs,
-        boxes = {
-          'toolbar'     : false, // auto-hide?
-          'main'        : false,
-          'properties'  : false,
-          'help'        :  true,
-          'coloreditor' :  true
-        };
+    for (kid in config.keys) {
+      kobj = config.keys[kid];
 
-      for (id in boxes) {
-        if ( !(box = $(id)) ) {
-          return false;
-        }
-
-        _self.elems[id] = box;
-
-        cs = _self.win.getComputedStyle(box, null);
-        if (!cs) {
-          continue;
-        }
-
-        // Set the position in the .style for quicker usage by the mousedown handler.
-        // If this is not done during initialization, it would need to be done in the mousedown handler.
-        box.style.top    = cs.top;
-        box.style.left   = cs.left;
-        box.style.zIndex = cs.zIndex;
-
-        if (cs.zIndex > b.zIndex) {
-          b.zIndex = parseInt(cs.zIndex);
-        }
-
-        // Auto-hide
-        if (boxes[id]) {
-          box.style.visibility = 'visible';
-          box.style.display    = 'none';
-        }
-
-        ttl = box.getElementsByTagName('h1')[0];
-        if (!ttl) {
-          continue;
-        }
-
-        ttl.addEventListener('mousedown', b.mousedown, false);
+      if (kobj.tool && kobj.tool in lang.tools) {
+        lang.tools[kobj.tool] += ' [ ' + kid + ' ]';
       }
-
-      return true;
-    },
-
-    'mousedown' : function (ev) {
-      var b = _self.boxes;
-      if (!b) {
-        return false;
-      }
-
-      if (b.drag) {
-        b.drag = false;
-      }
-
-      b.drag  = true;
-      b.mx    = ev.clientX;
-      b.my    = ev.clientY;
-      b.elem  = this.parentNode;
-      b.btop  = parseInt(b.elem.style.top);
-      b.bleft = parseInt(b.elem.style.left);
-
-      b.zIndex += b.zIndex_step;
-      b.elem.style.zIndex = b.zIndex;
-
-      _self.doc.addEventListener('mousemove', b.mousemove, false);
-      _self.doc.addEventListener('mouseup',   b.mouseup,   false);
-
-      if (ev.preventDefault) {
-        ev.preventDefault();
-      }
-
-      return true;
-    },
-
-    'mousemove' : function (ev) {
-      var b = _self.boxes;
-      if (!b || !b.drag || !b.elem) {
-        return false;
-      }
-
-      var x = b.bleft + ev.clientX - b.mx,
-          y = b.btop  + ev.clientY - b.my;
-
-      b.elem.style.top  = y + 'px';
-      b.elem.style.left = x + 'px';
-
-      if (ev.preventDefault) {
-        ev.preventDefault();
-      }
-    },
-
-    'mouseup' : function (ev) {
-      var b = _self.boxes;
-      if (!b) {
-        return false;
-      }
-
-      b.elem = b.drag = false;
-
-      _self.doc.removeEventListener('mousemove', b.mousemove, false);
-      _self.doc.removeEventListener('mouseup',   b.mouseup,   false);
-
-      if (ev.preventDefault) {
-        ev.preventDefault();
-      }
-
-      return true;
-    },
-
-    'bringOnTop' : function (box) {
-      var b = _self.boxes;
-      if (!b || !box) {
-        return false;
-      }
-
-      box = _self.elems[box];
-      if (!box) {
-        return false;
-      }
-
-      b.zIndex += b.zIndex_step;
-      box.style.zIndex = b.zIndex;
-
-      return true;
-    }
-  };
-
-  // This is the event handler which shows a temporary status message when hovering buttons/tools.
-  this.item_mouseover = function (ev) {
-    if (!this.id) {
-      return false;
-    }
-
-    if (_self.lang.status['hover' + this.id]) {
-      _self.statusShow('hover' + this.id, ev);
-    } else if (this.title) {
-      _self.statusShow(this.title, ev);
-    } else if (this.textContent) {
-      _self.statusShow(this.textContent, ev);
     }
 
     return true;
   };
 
-  // This simply goes back to the previous status message.
-  this.item_mouseout = function (ev) {
-    return _self.statusShow(-1, ev);
+  /**
+   * The <code>start</code> event handler for the Canvas resize operation.
+   * @private
+   */
+  this.canvasResizeStart = function () {
+    this.container.style.overflow = 'hidden';
+    _self.panels.main.bringOnTop();
   };
 
-  // This function changes the status message as needed. The optional event 
-  // object helps determine if the status message is temporary or not.
-  // The msg parameter can be an ID from _self.status_texts or directly the 
-  // message desired to show. msg can also be -1 when you want to get back to 
-  // the previous message.
-  // TODO: GUI stuff
-  this.statusShow = function (msg, ev) {
-    var elem = _self.elems.status;
-    if (!elem || (msg == -1 && elem._prevText === false)) {
+  /**
+   * The <code>end</code> event handler for the Canvas resize operation.
+   *
+   * @private
+   * @param {Object} ev The application event object.
+   */
+  this.canvasResizeEnd = function (ev) {
+    this.container.style.overflow = 'auto';
+    app.resizeCanvas(ev.width / app.image.canvasScale,
+        ev.height / app.image.canvasScale, true);
+  };
+
+  // This is the event handler which shows a temporary status message when hovering buttons/tools.
+  this.item_mouseover = function () {
+    if (this.title) {
+      _self.statusShow(this.title, true);
+    } else if (this.textContent) {
+      _self.statusShow(this.textContent, true);
+    }
+  };
+
+  // This simply goes back to the previous status message.
+  this.item_mouseout = function () {
+    _self.statusShow(-1);
+  };
+
+  /**
+   * Show a message in the status bar.
+   *
+   * @param {String|Number} id The message ID you want to display. The ID must 
+   * be available in the {@link PaintWeb.lang.status} object. If the value is -1 
+   * then the previous non-temporary message will be displayed.
+   *
+   * @param {Boolean} [temporary=false] Tells if the message is temporary or 
+   * not.
+   */
+  this.statusShow = function (id, temporary) {
+    var elem = this.elems.status;
+    if (id === -1 && elem._prevText === false) {
       return false;
     }
 
-    if (msg == -1) {
-      msg = elem._prevText;
-    } else {
-      if (ev && ev.type == 'mouseover') {
-        elem._prevText = elem.textContent;
-      } else {
-        elem._prevText = false;
-      }
-
-      if (msg && _self.lang.status[msg]) {
-        msg = _self.lang.status[msg];
-      }
+    if (id === -1) {
+      id = elem._prevText;
+    } else if (!temporary) {
+      elem._prevText = id;
     }
+
+    var msg = lang.status[id];
 
     if (elem.firstChild) {
       elem.removeChild(elem.firstChild);
     }
 
-    if (!msg) {
-      _self.win.status = '';
-      return true;
-    }
-
     _self.win.status = msg;
-    elem.appendChild(_self.doc.createTextNode(msg));
 
-    return true;
-  };
-
-  // This is called when any tool is clicked.
-  // TODO: move into GUI code
-  this.toolClick = function (ev) {
-    if (!this._tool) {
-      return false;
-    } else {
-      return _self.toolActivate(this._tool, ev);
+    if (msg) {
+      elem.appendChild(doc.createTextNode(msg));
     }
   };
 
@@ -508,109 +658,6 @@ pwlib.gui.default = function (app) {
 
     // The input value was updated by the user.
     return true; 
-  };
-
-  // This is the set of functions associated with the canvas resize handler.
-  // TODO: GUI stuff
-  this.resizer = {
-    'elem' : false,
-    'resizing' : false,
-
-    // The initial position of the mouse.
-    'mx' : 0,
-    'my' : 0,
-
-    // The container dimensions
-    'w' : 0,
-    'h' : 0,
-
-    'mousedown' : function (ev) {
-      var r = _self.resizer;
-      if (r.resizing || !r.elem) {
-        return false;
-      }
-
-      r.resizing = true;
-      r.mx = ev.clientX;
-      r.my = ev.clientY;
-      r.w = parseInt(_self.elems.container.style.width);
-      r.h = parseInt(_self.elems.container.style.height);
-
-      _self.doc.addEventListener('mousemove', r.mousemove, false);
-      _self.doc.addEventListener('mouseup',   r.mouseup,   false);
-
-      // We do not want scroll bars while resizing.
-      _self.elems.container.style.overflow = 'hidden';
-
-      // Make sure that the Main box is on top.
-      if (_self.boxes && _self.boxes.bringOnTop) {
-        _self.boxes.bringOnTop('main');
-      }
-
-      if (ev.preventDefault) {
-        ev.preventDefault();
-      }
-
-      if (ev.stopPropagation) {
-        ev.stopPropagation();
-      }
-
-      return true;
-    },
-
-    'mousemove' : function (ev) {
-      var r = _self.resizer;
-      if (!r.resizing) {
-        return false;
-      }
-
-      var dx = ev.clientX - r.mx,
-          dy = ev.clientY - r.my;
-
-      _self.elems.container.style.width  = (r.w + dx) + 'px';
-      _self.elems.container.style.height = (r.h + dy) + 'px';
-
-      if (ev.stopPropagation) {
-        ev.stopPropagation();
-      }
-
-      return true;
-    },
-
-    'mouseup' : function (ev) {
-      var r = _self.resizer;
-      if (!r.resizing) {
-        return false;
-      }
-
-      var dx = ev.clientX - r.mx,
-          dy = ev.clientY - r.my;
-
-      var w = MathRound((r.w + dx) / _self.image.canvasScale),
-          h = MathRound((r.h + dy) / _self.image.canvasScale);
-
-      _self.resizeCanvas(w, h, true);
-
-      return r.done(ev);
-    },
-
-    'done' : function (ev) {
-      var r = _self.resizer;
-      if (!r.resizing) {
-        return false;
-      }
-
-      r.resizing = false;
-      _self.doc.removeEventListener('mousemove', r.mousemove, false);
-      _self.doc.removeEventListener('mouseup',   r.mouseup,   false);
-      _self.elems.container.style.overflow = 'auto';
-
-      if (ev.stopPropagation) {
-        ev.stopPropagation();
-      }
-
-      return true;
-    }
   };
 
   // This is the event handler for most of the icon-based options. It used for 
@@ -923,70 +970,397 @@ pwlib.gui.default = function (app) {
   };
 
   /**
-   * Install a new drawing tool into PaintWeb.
+   * The <code>click</code> event handler for the tool DOM elements.
    *
-   * @param {String} id The ID of the new tool.
-   * @param {Function} func The constructor function of the new tool object.
-   * @param {Boolean} [overwrite=false] Tells to overwrite or not an existing 
-   * tool with the same ID.
+   * @private
    *
-   * @returns {Boolean} True if the tool was successfully added, or false if 
-   * not.
+   * @param {Event} ev The DOM Event object.
    *
-   * @see PaintWeb#toolRemove allows you to remove tools.
+   * @see PaintWeb#toolActivate to activate a drawing tool.
    */
-  this.toolAdd = function (id, tool, overwrite) {
-    if (typeof id != 'string' || typeof tool != 'function' || (this.tools[id] && 
-          !overwrite)) {
-      return false;
+  this.toolClick = function (ev) {
+    if (this._PaintWebTool) {
+      app.toolActivate(this._PaintWebTool, ev);
     }
-
-    tool.prototype._id = id;
-
-    // TODO: move this to GUI code.
-    var elem = this.doc.getElementById('tool-' + id);
-    if (elem) {
-      tool.prototype._elem = elem;
-
-      if (!elem.title && elem.textContent) {
-        elem.title = elem.textContent;
-      }
-
-      elem._tool = id;
-      elem.addEventListener('click',     this.toolClick,      false);
-      elem.addEventListener('mouseover', this.item_mouseover, false);
-      elem.addEventListener('mouseout',  this.item_mouseout,  false);
-    }
-
-    this.tools[id] = tool;
-
-    if (!this.tool && id == this.config.toolDefault) {
-      return this.toolActivate(id);
-    }
-
-    return true;
   };
 
   /**
-   * Remove a drawing tool from PaintWeb.
+   * The <code>toolActivate</code> application event handler. This method 
+   * provides visual feedback for the activation of a new drawing tool.
    *
-   * @param {String} id The ID of the tool you want to remove.
+   * @private
    *
-   * @returns {Boolean} True if the tool was removed, or false if it does not 
-   * exist or some error occurred.
+   * @param {Object} ev The application event object.
    *
-   * @see PaintWeb#toolAdd allows you to install new drawing tools.
+   * @see PaintWeb#toolActivate the method which allows you to activate 
+   * a drawing tool.
    */
-  this.toolRemove = function (id) {
-    if (!id || !_self.tools[id]) {
-      return false;
+  this.toolActivate = function (ev) {
+    var active = _self.tools[ev.id],
+        prev   = _self.tools[ev.prevId];
+
+    active.className += ' ' + classPrefix_ + 'toolActive';
+    prev.className = prev.className.replace(' ' + classPrefix_ + 'toolActive', '');
+    _self.statusShow(ev.id + 'Active');
+  };
+
+  /**
+   * The <code>toolRegister</code> application event handler. This method adds 
+   * the new tool into the GUI.
+   *
+   * @private
+   *
+   * @param {Object} ev The application event object.
+   *
+   * @see PaintWeb#toolRegister the method which allows you to register new 
+   * tools.
+   */
+  this.toolRegister = function (ev) {
+    if (ev.id in this.tools) {
+      return;
     }
 
-    delete _self.tools[id];
+    var elem = doc.createElement('li');
 
-    return true;
+    elem.className = classPrefix_ + 'tool_' + ev.id;
+    elem.title = lang.tools[id];
+    elem._PaintWebTool = id;
+
+    elem.appendChild(doc.createTextNode(lang.tools[id]));
+
+    this.elems.tools.appendChild(elem);
+    this.tools[id] = elem;
+
+    elem.addEventListener('click',     this.toolClick,      false);
+    elem.addEventListener('mouseover', this.item_mouseover, false);
+    elem.addEventListener('mouseout',  this.item_mouseout,  false);
+  };
+
+  /**
+   * The <code>toolRegister</code> application event handler. This method adds 
+   * the new tool into the GUI.
+   *
+   * @param {Object} ev The application event object.
+   *
+   * @see PaintWeb#toolRegister the method which allows you to register new 
+   * tools.
+   */
+  this.toolUnregister = function (ev) {
+    if (!(ev.id in this.tools)) {
+      return;
+    }
+
+    this.elems.tools.removeChild(this.tools[ev.id]);
+    delete this.tools[id];
   };
 };
+
+/**
+ * @class A floating panel GUI element.
+ *
+ * @param {pwlib.gui} gui Reference to the PaintWeb GUI object.
+ *
+ * @param {Element} elem Reference to the DOM element you want to transform into 
+ * a floating panel.
+ */
+function guiFloatingPanel (gui, elem) {
+  var _self       = this,
+      win         = gui.app.win,
+      doc         = gui.app.doc,
+      panels      = gui.panels,
+      zIndex_step = 200;
+
+  // These hold the mouse starting location during the drag operation.
+  var mx, my;
+
+  // These hold the panel starting location during the drag operation.
+  var ptop, pleft;
+
+  /**
+   * Tells if the floating panel is being dragged by the user.
+   * @type Boolean
+   */
+  this.dragging = false;
+
+  /**
+   * Reference to the panel element.
+   * @type Element
+   */
+  this.elem = elem;
+
+  /**
+   * Initialize the floating panel.
+   * @private
+   */
+  function init () {
+    var ttl, cs;
+
+    cs = win.getComputedStyle(elem, null);
+
+    // Set the position in the .style for quicker usage by the mousedown handler.
+    // If this is not done during initialization, it would need to be done in the mousedown handler.
+    elem.style.top    = cs.top;
+    elem.style.left   = cs.left;
+    elem.style.zIndex = cs.zIndex;
+
+    if (cs.zIndex > panels.zIndex) {
+      panels.zIndex = cs.zIndex;
+    }
+
+    ttl = elem.getElementsByTagName('h1')[0];
+    ttl.addEventListener('mousedown', ev_mousedown, false);
+  };
+
+  /**
+   * The <code>mousedown</code> event handler. This is invoked when you start 
+   * dragging the floating panel.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
+  function ev_mousedown (ev) {
+    _self.dragging = true;
+
+    mx = ev.clientX;
+    my = ev.clientY;
+    ptop  = parseInt(elem.style.top);
+    pleft = parseInt(elem.style.left);
+
+    _self.bringOnTop();
+
+    doc.addEventListener('mousemove', ev_mousemove, false);
+    doc.addEventListener('mouseup',   ev_mouseup,   false);
+
+    if (ev.preventDefault) {
+      ev.preventDefault();
+    }
+  };
+
+  /**
+   * The <code>mousemove</code> event handler. This performs the actual move of 
+   * the floating panel.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
+  function ev_mousemove (ev) {
+    elem.style.left = (pleft + ev.clientX - mx) + 'px';
+    elem.style.top  = (ptop  + ev.clientY - my) + 'px';
+  };
+
+  /**
+   * The <code>mouseup</code> event handler. This ends the panel drag operation.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
+  function ev_mouseup (ev) {
+    _self.dragging = false;
+
+    doc.removeEventListener('mousemove', ev_mousemove, false);
+    doc.removeEventListener('mouseup',   ev_mouseup,   false);
+  };
+
+  /**
+   * Bring the panel to the top. This method makes sure the current floating 
+   * panel is visible.
+   */
+  this.bringOnTop = function () {
+    panels.zIndex += zIndex_step;
+    elem.style.zIndex = panels.zIndex;
+  };
+
+  /**
+   * Hide the panel.
+   */
+  this.hide = function () {
+    elem.style.display = 'none';
+  };
+
+  /**
+   * Hide the panel.
+   */
+  this.show = function () {
+    elem.style.display = 'block';
+  };
+
+  init();
+};
+
+/**
+ * @class Resize handler.
+ *
+ * @param {pwlib.gui} gui Reference to the PaintWeb GUI object.
+ *
+ * @param {Element} resizeHandle Reference to the resize handle DOM element.  
+ * This is the element users will be able to drag to achieve the resize effect 
+ * on the <var>container</var> element.
+ *
+ * @param {Element} container Reference to the container DOM element. This is 
+ * the element users will be able to resize using the <var>resizeHandle</var> 
+ * element.
+ */
+function guiResizer (gui, resizeHandle, container) {
+  var _self          = this,
+      cStyle         = container.style,
+      doc            = gui.app.doc,
+      guiResizeEnd   = pwlib.appEvent.guiResizeEnd,
+      guiResizeStart = pwlib.appEvent.guiResizeStart;
+
+  /**
+   * Custom application events interface.
+   * @type pwlib.appEvents
+   */
+  this.events = null;
+
+  /**
+   * The resize handle DOM element.
+   * @type Element
+   */
+  this.resizeHandle = resizeHandle;
+
+  /**
+   * The container DOM element. This is the element that's resized by the user 
+   * when he/she drags the resize handle.
+   * @type Element
+   */
+  this.container = container;
+
+  /**
+   * Tells if the user resizing the container now.
+   * @type Boolean
+   */
+  this.resizing = false;
+
+  // The initial position of the mouse.
+  var mx = 0, my = 0;
+
+  // The initial container dimensions.
+  var cWidth = 0, cHeight = 0;
+
+  /**
+   * Initialize the resize functionality.
+   * @private
+   */
+  function init () {
+    _self.events = new pwlib.appEvents(_self);
+    resizeHandle.addEventListener('mousedown', ev_mousedown, false);
+  };
+
+  /**
+   * The <code>mousedown</code> event handler. This starts the resize operation.
+   *
+   * <p>This function dispatches the {@link pwlib.appEvent.guiResizeStart} 
+   * event.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
+  function ev_mousedown (ev) {
+    mx = ev.clientX;
+    my = ev.clientY;
+    cWidth  = parseInt(cStyle.width);
+    cHeight = parseInt(cStyle.height);
+
+    var cancel = _self.events.dispatch(new guiResizeStart(mx, my, cWidth, 
+          cHeight));
+
+    if (cancel) {
+      return;
+    }
+
+    _self.resizing = true;
+    doc.addEventListener('mousemove', ev_mousemove, false);
+    doc.addEventListener('mouseup',   ev_mouseup,   false);
+
+    if (ev.preventDefault) {
+      ev.preventDefault();
+    }
+
+    if (ev.stopPropagation) {
+      ev.stopPropagation();
+    }
+  };
+
+  /**
+   * The <code>mousemove</code> event handler. This performs the actual resizing 
+   * of the <var>container</var> element.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
+  function ev_mousemove (ev) {
+    cStyle.width  = (cWidth  + ev.clientX - mx) + 'px';
+    cStyle.height = (cHeight + ev.clientY - my) + 'px';
+  };
+
+  /**
+   * The <code>mouseup</code> event handler. This ends the resize operation.
+   *
+   * <p>This function dispatches the {@link pwlib.appEvent.guiResizeEnd} event.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
+  function ev_mouseup (ev) {
+    var w = cWidth  + ev.clientX - mx,
+        h = cHeight + ev.clientY - my,
+        cancel = _self.events.dispatch(new guiResizeEnd(mx, my, w, h));
+
+    cStyle.width  = w + 'px';
+    cStyle.height = h + 'px';
+
+    if (cancel) {
+      return;
+    }
+
+    _self.resizing = false;
+    doc.removeEventListener('mousemove', ev_mousemove, false);
+    doc.removeEventListener('mouseup',   ev_mouseup,   false);
+  };
+
+  init();
+};
+
+/**
+ * @class The GUI element resize start event. This event is cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {Number} x The mouse location on the x-axis.
+ * @param {Number} y The mouse location on the y-axis.
+ * @param {Number} width The element width.
+ * @param {Number} height The element height.
+ */
+pwlib.appEvent.guiResizeStart = function (x, y, width, height) {
+  this.x = x;
+  this.y = y;
+  this.width = width;
+  this.height = height;
+
+  pwlib.appEvent.call(this, 'guiResizeStart', true);
+};
+
+/**
+ * @class The GUI element resize end event. This event is cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {Number} x The mouse location on the x-axis.
+ * @param {Number} y The mouse location on the y-axis.
+ * @param {Number} width The element width.
+ * @param {Number} height The element height.
+ */
+pwlib.appEvent.guiResizeEnd = function (x, y, width, height) {
+  this.x = x;
+  this.y = y;
+  this.width = width;
+  this.height = height;
+
+  pwlib.appEvent.call(this, 'guiResizeEnd', true);
+};
+
+})();
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
 

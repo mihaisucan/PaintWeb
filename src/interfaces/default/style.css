@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-23 14:05:17 +0300 $
+ * $Date: 2009-06-02 12:57:56 +0300 $
  */
 
 body {
@@ -185,7 +185,6 @@ label
 /* The color editor */
 
 #coloreditor {
-  visibility: hidden;
   background: url("images/color-editor-bgr.png") no-repeat;
   width: 548px;
   height: 223px;
@@ -752,7 +751,7 @@ label
   margin-top: 2px;
 }
 
-#container {
+.paintweb_canvasContainer {
   background: #fff;
   border: 1px solid #000;
   position: relative;
@@ -761,7 +760,7 @@ label
   overflow: auto;
 }
 
-#imageLayer, #imageBuffer {
+.paintweb_layerCanvas, .paintweb_bufferCanvas {
   position: absolute;
   top: 0;
   left: 0;
@@ -793,7 +792,7 @@ label
   visibility: hidden;
 }
 
-#resizer {
+.paintweb_canvasResizer {
   position: absolute;
   right: 1px;
   bottom: 1px;
@@ -815,7 +814,6 @@ label
 }
 
 #help {
-  visibility: hidden;
   position: absolute;
   color: #fff;
   width: 490px;

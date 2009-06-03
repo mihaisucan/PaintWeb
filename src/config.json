@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-05-28 19:36:24 +0300 $
+  // $Date: 2009-06-02 23:27:25 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -27,12 +27,12 @@
   "interfacesFolder": "interfaces",
 
   /**
-   * The interface markup file.
+   * The interface markup file. The file must be an XHTML valid document.
    *
    * @type String
-   * @default "layout.html"
+   * @default "layout.xhtml"
    */
-  "guiMarkup": "layout.html",
+  "guiMarkup": "layout.xhtml",
 
   /**
    * The interface style file.

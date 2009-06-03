@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-29 17:02:11 +0300 $
+ * $Date: 2009-06-03 17:15:02 +0300 $
  */
 
 /**
@@ -26,7 +26,6 @@
  */
 
 (function () {
-
 /**
  * The PaintWeb application object.
  *
@@ -46,14 +45,14 @@ function PaintWeb (win_, doc_) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090529;
+  this.build = 20090603;
 
   /**
    * Holds all the PaintWeb configuration.
    * @type Object
    */
   this.config = {
-    baseFolder: '.',
+    baseFolder: '',
     configFile: 'config.json',
     showErrors: true
   };
@@ -67,7 +66,8 @@ function PaintWeb (win_, doc_) {
     "errorElementNotFound": "Error: the following element was not found: %id%.",
     "errorInitGetComputedStyle": "Error: window.getComputedStyle is not available.",
     "errorInitXMLHttpRequest": "Error: window.XMLHttpRequest is not available.",
-    "errorInitJSON": "Error: window.JSON is not available."
+    "errorInitJSON": "Error: window.JSON is not available.",
+    "errorInitCanvas": "Error: Your browser does not support Canvas."
   };
 
   /**
@@ -103,14 +103,6 @@ function PaintWeb (win_, doc_) {
    * @type Object
    */
   this.elems = {};
-
-  /**
-   * Holds references to DOM input elements.
-   *
-   * @private
-   * @type Object
-   */
-  this.inputs = {};
 
   /**
    * Holds the last recorded mouse coordinates and the button state (if it's 
@@ -285,12 +277,18 @@ function PaintWeb (win_, doc_) {
   this.initialized = PaintWeb.INIT_NOT_STARTED;
 
   /**
-   * Event handlers for specific actions within PaintWeb.
+   * Custom application events object.
    *
-   * @private
-   * @type Object
+   * @type pwlib.appEvents
    */
-  this.events = {};
+  this.events = null;
+
+  /**
+   * Unique ID for the current PaintWeb instance.
+   *
+   * @type Number
+   */
+  this.UID = 0;
 
   /**
    * Holds the keyboard event listener object.
@@ -302,98 +300,156 @@ function PaintWeb (win_, doc_) {
    */
   var kbListener_ = null;
 
+  /**
+   * Holds temporary state information during PaintWeb initialization.
+   *
+   * @private
+   * @type Object
+   */
+  var temp_ = {onInit: null, toolsLoadQueue: 0, extensionsLoadQueue: 0};
+
   // Avoid global scope lookup.
   var MathAbs   = Math.abs,
       MathFloor = Math.floor,
       MathMax   = Math.max,
       MathMin   = Math.min,
-      MathRound = Math.round;
+      MathRound = Math.round,
+      pwlib     = null,
+      appEvent  = null,
+      lang      = this.lang;
 
-  function $ (id) {
-    var elem = _self.doc.getElementById(id);
-    if (!elem) {
-      alert( pwlib.lang('errorElementNotFound', {'id' : id}) );
-      return false;
-    } else {
-      return elem;
-    }
-  }
+  /**
+   * PaintWeb pre-initialization code. This runs when the PaintWeb instance is 
+   * constructed.
+   * @private
+   */
+  function preInit() {
+    _self.UID = (new Date()).getMilliseconds() * MathRound(Math.random() * 100);
+
+    _self.elems.head = _self.doc.getElementsByTagName('head')[0] || 
+      _self.doc.body;
+  };
 
   /**
    * Initialize PaintWeb.
    *
    * <p>This method asynchronous, meaning that it will return much sooner before 
-   * the application initialization is completed. Please use the {@link 
-   * PaintWeb.initialized} state property to check if initialization is complete 
-   * or not.
+   * the application initialization is completed.
    *
-   * <p>This method dispatches the <code>init</code> event. The <var>state</var> 
-   * event property is set to {@link PaintWeb.INIT_STARTED}. You may cancel the 
-   * initialization by preventing the default action of the event.
+   * @param {Function} [handler] The <code>initApp</code> event handler. Your 
+   * event handler will be invoked automatically when PaintWeb completes 
+   * loading, or when an error occurs.
    *
    * @returns {Boolean} True if the initialization has been started 
    * successfully, or false if not.
    */
-  this.init = function () {
+  this.init = function (handler) {
+    if (this.initialized === PaintWeb.INIT_DONE) {
+      return true;
+    }
+
     this.initialized = PaintWeb.INIT_STARTED;
 
-    var cancel = this.eventDispatch('init', {state: this.initialized}, true);
-    if (cancel) {
-      this.initialized = PaintWeb.INIT_NOT_STARTED;
+    if (handler && typeof handler !== 'function') {
+      throw new TypeError("The first argument must be a function.");
+    }
+
+    temp_.onInit = handler;
+
+    // Check Canvas support.
+    if (!document.createElement('canvas').getContext) {
+      this.initError(lang.errorInitCanvas);
       return false;
-    }
-
-    // PaintWeb library
-    if (!window.pwlib) {
-      this.scriptInsert(this.config.baseFolder + '/includes/lib.js', true);
-    }
-
-    // JSON parser and serializer.
-    if (!window.JSON) {
-      this.scriptInsert(this.config.baseFolder + '/includes/json2.js', true);
     }
 
     // Basic functionality used within the Web application.
     if (!window.getComputedStyle) {
-      this.initError(this.lang.errorInitGetComputedStyle);
+      this.initError(lang.errorInitGetComputedStyle);
       return false;
     }
 
     if (!window.XMLHttpRequest) {
-      this.initError(this.lang.errorInitXMLHttpRequest);
+      this.initError(lang.errorInitXMLHttpRequest);
       return false;
     }
 
+    // JSON parser and serializer.
     if (!window.JSON) {
-      this.initError(this.lang.errorInitJSON);
-      return false;
+      this.scriptLoad(_self.config.baseFolder + 'includes/json2.js', 
+          this.jsonlibReady);
+    } else {
+      this.jsonlibReady();
     }
 
-    this.configLoad();
     return true;
+  };
+
+  /**
+   * The <code>load</code> event handler for the JSON library script.
+   * @private
+   */
+  this.jsonlibReady = function () {
+    if (window.pwlib) {
+      _self.pwlibReady();
+    } else {
+      _self.scriptLoad(_self.config.baseFolder + 'includes/lib.js', 
+          _self.pwlibReady);
+    }
+  };
+
+  /**
+   * The <code>load</code> event handler for the PaintWeb library script.
+   * @private
+   */
+  this.pwlibReady = function () {
+    pwlib = window.pwlib;
+    appEvent = pwlib.appEvent;
+
+    // Create the custom application events object.
+    _self.events = new pwlib.appEvents(_self);
+
+    // Add the init event handler.
+    if (typeof temp_.onInit === 'function') {
+      _self.events.add('initApp', temp_.onInit);
+      delete temp_.onInit;
+    }
+
+    _self.configLoad();
   };
 
   /**
    * Report an initialization error.
    *
-   * <p>This method dispatches the <code>initError</code> event. Event 
-   * properties:
-   *
-   * <ul>
-   *   <li><var>state</var> holds the {@link PaintWeb.initialized} state - that 
-   *   is {@link PaintWeb.INIT_ERROR}.
-   *   <li><var>message</var> holds the error message.
-   * </ul>
-   *
-   * <p>The <code>init</code> event is not cancelable in this case.
+   * <p>This method dispatches the {@link pwlib.appEvent.initApp} event.
    *
    * @private
+   *
    * @param {String} msg The error message.
+   *
+   * @see pwlib.appEvent.initApp
    */
   this.initError = function (msg) {
+    switch (this.initialized) {
+      case PaintWeb.INIT_ERROR:
+      case PaintWeb.INIT_DONE:
+      case PaintWeb.INIT_NOT_STARTED:
+        return;
+    }
+
     this.initialized = PaintWeb.INIT_ERROR;
 
-    this.eventDispatch('init', {state: this.initialized, message: msg});
+    var ev = null;
+
+    if (this.events && 'dispatch' in this.events && appEvent && 'initApp' in 
+        appEvent) {
+      ev = new appEvent.initApp(this.initialized, msg);
+      this.events.dispatch(ev);
+
+    } else if (typeof temp_.onInit === 'function') {
+      // fake an event dispatch.
+      ev = {type: 'initApp', state: this.initialized, errorMessage: msg};
+      temp_.onInit.call(this, ev);
+    }
 
     if (this.config.showErrors) {
       alert(msg);
@@ -411,7 +467,7 @@ function PaintWeb (win_, doc_) {
    * XMLHttpRequest object.
    */
   this.configLoad = function () {
-    pwlib.xhrLoad(this.config.baseFolder + '/' + this.config.configFile, 
+    pwlib.xhrLoad(this.config.baseFolder + this.config.configFile, 
         this.configReady);
   };
 
@@ -458,7 +514,7 @@ function PaintWeb (win_, doc_) {
    * XMLHttpRequest object.
    */
   this.langLoad = function () {
-    pwlib.xhrLoad(this.config.baseFolder + '/' + this.config.langFile, 
+    pwlib.xhrLoad(this.config.baseFolder + this.config.langFile, 
         this.langReady);
   };
 
@@ -491,31 +547,47 @@ function PaintWeb (win_, doc_) {
    *
    * @private
    *
-   * @see PaintWeb.config.guiMarkup The interface markup file.
    * @see PaintWeb.config.guiStyle The interface style file.
    * @see PaintWeb.config.guiScript The interface script file.
+   * @see pwlib.gui The namespace holding the interfaces.
+   */
+  this.guiLoad = function () {
+    var cfg    = this.config,
+        gui    = this.config.gui,
+        base   = cfg.baseFolder + cfg.interfacesFolder + '/' + gui + '/',
+        style  = base + cfg.guiStyle,
+        script = base + cfg.guiScript;
+
+    if (!(gui in pwlib.gui)) {
+      this.styleInsert(style);
+      this.scriptLoad(script, this.guiScriptReady);
+    } else {
+      this.guiScriptReady();
+    }
+  };
+
+  /**
+   * The <code>load</code> event handler for the PaintWeb GUI script. This 
+   * method creates an instance of the GUI object that just loaded and starts 
+   * loading the GUI markup.
+   *
+   * @private
+   *
+   * @see PaintWeb.config.guiScript The interface script file.
+   * @see PaintWeb.config.guiMarkup The interface markup file.
    * @see pwlib.gui The namespace holding the interfaces.
    * @see pwlib#xhrLoad The library function being used for creating the 
    * XMLHttpRequest object.
    */
-  this.guiLoad = function () {
-    var cfg = this.config,
-        gui = this.config.gui;
-    
-    var base = cfg.baseFolder + '/' + cfg.interfacesFolder + '/' + gui + '/';
-
-    var style  = base + cfg.guiStyle,
-        script = base + cfg.guiScript,
+  this.guiScriptReady = function () {
+    var cfg    = _self.config,
+        gui    = _self.config.gui,
+        base   = cfg.baseFolder + cfg.interfacesFolder + '/' + gui + '/',
         markup = base + cfg.guiMarkup;
 
-    if (!(gui in pwlib.gui)) {
-      this.styleInsert(style);
-      this.scriptInsert(script, true);
-    }
+    _self.gui = new pwlib.gui[gui](_self);
 
-    this.gui = new pwlib.gui[gui](this);
-
-    pwlib.xhrLoad(markup, this.guiReady);
+    pwlib.xhrLoad(markup, _self.guiMarkupReady);
   };
 
   /**
@@ -526,92 +598,43 @@ function PaintWeb (win_, doc_) {
    *
    * @param {XMLHttpRequest} xhr The XMLHttpRequest object being handled.
    *
-   * @see PaintWeb#guiLoad The method which issues the XMLHttpRequest request 
-   * for loading the interface markup file.
+   * @see PaintWeb#guiScriptReady The method which issues the XMLHttpRequest 
+   * request for loading the interface markup file.
    */
-  this.guiReady = function (xhr) {
+  this.guiMarkupReady = function (xhr) {
     if (!xhr || xhr.readyState !== 4 || xhr.status !== 200 || !xhr.responseXML) {
       return;
     }
 
     if (!_self.gui.init(xhr.responseXML)) {
-      _self.initError(_self.lang.errorInitGUI);
+      _self.initError(lang.errorInitGUI);
       return;
     }
 
-    _self.initPostConfig();
+    _self.initTools();
   };
 
   /**
-   * Initialization procedure which runs after the configuration, language and 
-   * GUI files have loaded.
-   *
-   * <p>This method dispatches the <code>init</code> event. The <var>state</var> 
-   * property holds the initialization state, which should be {@link 
-   * PaintWeb.INIT_DONE}, unless there were errors. This event is not 
-   * cancelable.
+   * Initialize the Canvas elements.
    *
    * @private
+   * @returns {Boolean} True if the initialization was successful, or false if 
+   * not.
    */
-  this.initPostConfig = function () {
-    var layerCanvas = $(this.config.layerCanvasID);
-    if (!layerCanvas) {
-      return false;
-    }
-    this.layer.canvas = layerCanvas;
+  this.initCanvas = function () {
+    var layerCanvas = this.layer.canvas,
+        bufferCanvas = this.buffer.canvas;
 
-    var layerContext = false;
-
-    // Prepare the canvas context.
-    try {
-      layerContext = layerCanvas.getContext('2d');
-      if (!layerContext) {
-        throw 'err';
-      }
-    } catch (err) {
-      alert(this.lang.errorInitContext);
+    this.layer.context = layerCanvas.getContext('2d');
+    if (!this.layer.context) {
+      this.initError(lang.errorInitContext);
       return false;
     }
 
-    this.layer.context   = layerContext;
-
-    this.image.width     = layerCanvas.width;
-    this.image.height    = layerCanvas.height;
-
-    var container = layerCanvas.parentNode;
-    this.elems.container = container;
-
-    // Create the buffer canvas.
-    var bufferCanvas = this.doc.createElement('canvas');
-    if (!bufferCanvas) {
-      alert(this.lang.errorInitBufferCanvas);
-      return false;
-    }
-    this.buffer.canvas  = bufferCanvas;
-
-    bufferCanvas.id     = this.config.bufferCanvasID;
-    bufferCanvas.width  = layerCanvas.width;
-    bufferCanvas.height = layerCanvas.height;
-
-    // Add the buffer canvas to the main document.
-    container.insertBefore(bufferCanvas, layerCanvas.nextSibling);
-
-    var layerStyle     = layerCanvas.style,
-        bufferStyle    = bufferCanvas.style,
-        containerStyle = container.style;
-
-    layerStyle.width = bufferStyle.width = containerStyle.width  
-      = this.image.width  + 'px';
-
-    layerStyle.height = bufferStyle.height = containerStyle.height 
-      = this.image.height + 'px';
+    this.image.width  = layerCanvas.width;
+    this.image.height = layerCanvas.height;
 
     this.buffer.context = bufferCanvas.getContext('2d');
-
-    this.elems.resInfo = $('resInfo');
-    if (!this.elems.resInfo) {
-      return false;
-    }
 
     this.updateCanvasScaling();
     this.win.addEventListener('resize', this.updateCanvasScaling, false);
@@ -625,213 +648,30 @@ function PaintWeb (win_, doc_) {
      * The event handler (ev_canvas) calls the event handlers associated with 
      * the active tool (e.g. tool.mousemove).
      */
-    var i, n, events = ['click', 'mousedown', 'mouseup', 'mousemove', 
-        'contextmenu'];
+    var events = ['click', 'mousedown', 'mouseup', 'mousemove', 'contextmenu'],
+        n = events.length;
 
-    for (i = 0, n = events.length; i < n; i++) {
+    for (var i = 0; i < n; i++) {
       bufferCanvas.addEventListener(events[i], this.ev_canvas, false);
     }
 
-    // FIXME: Initialize the color editor.
-    /*if (!_self.coloreditor.init()) {
-      return false;
-    }*/
+    return true;
+  };
 
-    // Prepare the buttons
-    var elem, evfunc,
-        btn = {
-          'undo'  : false, // disabled
-          'redo'  : false,
-          'clear' : true,  // enabled
-          'save'  : true,
-          'cut'   : false,
-          'copy'  : false,
-          'paste' : false,
-          'help'  : true,
-          'help_close' : true
-        };
-    for (i in btn) {
-      if ( !(elem = $('btn-' + i)) ) {
-        return false;
-      }
-
-      // Each button must have an event handler with the same name. E.g.  
-      // btn_undo
-      if ( !(evfunc = this['btn_' + i]) ) {
-        continue;
-      }
-
-      if (!elem.title && elem.textContent) {
-        elem.title = elem.textContent;
-      }
-
-      elem.addEventListener('click',     evfunc,             false);
-      elem.addEventListener('mouseover', this.item_mouseover, false);
-      elem.addEventListener('mouseout',  this.item_mouseout,  false);
-
-      if (!btn[i]) {
-        elem.className = 'disabled';
-      }
-
-      this.elems['btn_' + i] = elem;
-    }
-
-    // Initialize the properties box.
-    if (!this.init_properties()) {
-      return false;
-    }
-
-    // The resize handler.
-    if ( !(elem = $('resizer')) ) {
-      return false;
-    }
-    elem.addEventListener('mousedown', this.resizer.mousedown, false);
-    this.resizer.elem = elem;
-
-    // The zoom input.
-    if ( !(elem = $('in-zoom')) ) {
-      return false;
-    }
-
-    elem.addEventListener('keypress', this.ev_input_nr, false);
-    elem.addEventListener('change',   this.ev_change_zoom, false);
-    elem._old_value = elem.value;
-
-    // Override the attributes, based on the settings.
-    elem.setAttribute('step', this.config.zoomStep * 100);
-    elem.setAttribute('max',  this.config.zoomMax  * 100);
-    elem.setAttribute('min',  this.config.zoomMin  * 100);
-
-    this.inputs.zoom = elem;
-
-    // The status bar.
-    if ( !(this.elems.status = $('status')) ) {
-      return false;
-    }
-
-    // Load the drawing tools.
-    if (!this.initTools()) {
-      return false;
-    }
-
+  /**
+   * Initialization procedure which runs after the configuration, language and 
+   * GUI files have loaded.
+   *
+   * <p>This method dispatches the {@link pwlib.appEvent.initApp} event.
+   *
+   * @private
+   *
+   * @see pwlib.appEvent.initApp
+   */
+  this.initComplete = function () {
     // Load the extensions.
     if (!this.initExtensions()) {
       return false;
-    }
-
-    // The keyboard shortcuts.
-    if (!this.init_keys()) {
-      return false;
-    };
-
-    // Update the version string in Help.
-    elem = $('ver');
-    if (elem) {
-      elem.appendChild(this.doc.createTextNode(this.toString()));
-    }
-
-    // Initialize the boxes.
-    if (!this.boxes.init()) {
-      return false;
-    }
-
-    this.initialized = PaintWeb.INIT_DONE;
-
-    this.eventDispatch('init', {state: this.initialized});
-  };
-
-  /**
-   * Load all the configured drawing tools. Note that the loading is done 
-   * synchronously.
-   *
-   * @private
-   * @returns {Boolean} True if the drawing tools loaded successfully, or false 
-   * if not.
-   */
-  this.initTools = function () {
-    var n    = this.config.tools.length,
-        base = this.config.toolsFolder + '/',
-        id   = '';
-
-    for (var i = 0; i < n; i++) {
-      id = this.config.tools[i];
-
-      if (!(id in pwlib.tools)) {
-        this.scriptInsert(base + id + '.js', true);
-      }
-
-      if (!this.toolRegister(id)) {
-        return false;
-      }
-    }
-
-    return true;
-  };
-
-  /**
-   * Load all the extensions. Note that the loading is done synchronously.
-   *
-   * @private
-   * @returns {Boolean} True if the extensions loaded successfully, or false if 
-   * not.
-   */
-  this.initExtensions = function () {
-    var n    = this.config.extensions.length,
-        base = this.config.extensionsFolder + '/',
-        id   = '';
-
-    for (var i = 0; i < n; i++) {
-      id = this.config.extensions[i];
-
-      if (!(id in pwlib.extensions)) {
-        this.scriptInsert(base + id + '.js', true);
-      }
-
-      if (!this.extensionRegister(id)) {
-        return false;
-      }
-    }
-
-    return true;
-  };
-
-  // This function does the following:
-  // - adds the keyboard shortcuts to the status messages and to the title of 
-  // each affected element.
-  // - adds the global keyboard event listener.
-  // TODO: change all this
-  this.init_keys = function () {
-    var i, k, elem2,
-      updateTitle = function (elem) {
-        if (!elem || !elem.id) {
-          return false;
-        }
-
-        if (this.lang.status['hover' + elem.id]) {
-          this.lang.status['hover' + elem.id] += ' [ ' + i + ' ]';
-        }
-
-        if (elem.title) {
-          elem.title += ' [ ' + i + ' ]';
-        }
-
-        return true;
-      };
-
-    for (i in this.config.keys) {
-      k = this.config.keys[i];
-
-      if (k.tool && this.tools[k.tool]) {
-        updateTitle(PaintTools[k.tool].prototype._elem);
-      }
-
-      if (k.elem) {
-        elem2 = this.elems[k.elem];
-        if (!elem2) {
-          elem2 = this.doc.getElementById(k.elem);
-        }
-        updateTitle(elem2);
-      }
     }
 
     // The global keyboard events handler implements everything needed for 
@@ -842,7 +682,103 @@ function PaintWeb (win_, doc_) {
          keypress: this.ev_keyboard,
          keyup: this.ev_keyboard});
 
-    return true;
+    this.initialized = PaintWeb.INIT_DONE;
+
+    this.events.dispatch(new appEvent.initApp(this.initialized));
+  };
+
+  /**
+   * Load all the configured drawing tools.
+   * @private
+   */
+  this.initTools = function () {
+    var id   = '',
+        cfg  = this.config,
+        n    = cfg.tools.length,
+        base = cfg.baseFolder + cfg.toolsFolder + '/';
+
+    temp_.toolsLoadQueue = n;
+    console.log('initTools n ' + temp_.toolsLoadQueue);
+
+    for (var i = 0; i < n; i++) {
+      id = cfg.tools[i];
+
+      console.log('initTools i ' + i + ' id ' + id);
+
+      if (id in pwlib.tools) {
+        this.toolLoaded();
+      } else {
+        this.scriptLoad(base + id + 'js' , this.toolLoaded);
+      }
+    }
+  };
+
+  /**
+   * The <code>load</code> event handler for each tool script.
+   * @private
+   */
+  this.toolLoaded = function () {
+    console.log('toolLoaded ' + temp_.toolsLoadQueue);
+    temp_.toolsLoadQueue--;
+
+    if (temp_.toolsLoadQueue === 0) {
+      console.log('toolLoaded yay');
+      var tools = _self.config.tools,
+          n = tools.length;
+
+      for (var i = 0; i < n; i++) {
+        if (!_self.toolRegister(tools[i])) {
+          _self.initError(lang.errorInitTools);
+          return;
+        }
+      }
+
+      _self.initExtensions();
+    }
+  };
+
+  /**
+   * Load all the extensions.
+   * @private
+   */
+  this.initExtensions = function () {
+    var id   = '',
+        cfg  = this.config,
+        n    = cfg.extensions.length,
+        base = cfg.baseFolder + cfg.extensionsFolder + '/';
+
+    temp_.extensionsLoadQueue = n;
+
+    for (var i = 0; i < n; i++) {
+      id = cfg.extensions[i];
+      if (id in pwlib.extensions) {
+        this.extensionLoaded();
+      } else {
+        this.scriptInsert(base + id + '.js', this.extensionLoaded);
+      }
+    }
+  };
+
+  /**
+   * The <code>load</code> event handler for each extension script.
+   * @private
+   */
+  this.extensionLoaded = function () {
+    temp_.extensionsLoadQueue--;
+
+    if (temp_.extensionsLoadQueue === 0) {
+      var extensions = _self.config.extensions,
+          n = extensions.length;
+
+      for (var i = 0; i < n; i++) {
+        if (!_self.extensionRegister(extensions[i])) {
+          _self.initError(lang.errorInitExtensions);
+          return;
+        }
+      }
+
+      _self.initComplete();
+    }
   };
 
   /**
@@ -857,7 +793,6 @@ function PaintWeb (win_, doc_) {
         image          = _self.image;
         bufferStyle    = _self.buffer.canvas.style,
         layerStyle     = _self.layer.canvas.style,
-        containerStyle = _self.elems.container.style,
         scaleNew       = 1;
 
     var width  = parseInt(cs.width),
@@ -887,12 +822,12 @@ function PaintWeb (win_, doc_) {
       // dotsArePixels = false on the XO due to a hard-coded patch.
       // Thanks go to roc from Mozilla for his feedback on making this work.
 
-      res.dpiLocal = 134;
-      var appUnitsPerCSSPixel = 60;
-      var devPixelsPerCSSPixel = res.dpiLocal / res.dpiOptimal;
-      var appUnitsPerDevPixel = appUnitsPerCSSPixel / devPixelsPerCSSPixel;
+      res.dpiLocal = 134; // hard-coded value, we cannot determine it
+      var appUnitsPerCSSPixel = 60; // hard-coded internally in Gecko
+      var devPixelsPerCSSPixel = res.dpiLocal / res.dpiOptimal; // 1.3958333333
+      var appUnitsPerDevPixel = appUnitsPerCSSPixel / devPixelsPerCSSPixel; // 42.9850746278...
 
-      scaleNew = appUnitsPerCSSPixel / MathFloor(appUnitsPerDevPixel);
+      scaleNew = appUnitsPerCSSPixel / MathFloor(appUnitsPerDevPixel); // 1.4285714285...
     }
 
     if (scaleNew === res.scale) {
@@ -908,236 +843,6 @@ function PaintWeb (win_, doc_) {
 
     bufferStyle.width  = layerStyle.width  = styleWidth  + 'px';
     bufferStyle.height = layerStyle.height = styleHeight + 'px';
-
-    if (image.zoom <= 1) {
-      containerStyle.width  = styleWidth  + 'px';
-      containerStyle.height = styleHeight + 'px';
-    }
-  };
-
-  /**
-   * Add an event listener.
-   *
-   * @param {String} type The event you want to listen for.
-   * @param {Function} handler The event handler.
-   *
-   * @returns {Number} The event ID.
-   *
-   * @throws {TypeError} If the <var>type</var> argument is not a string.
-   * @throws {TypeError} If the <var>handler</var> argument is not a function.
-   *
-   * @see PaintWeb#eventRemove to remove events.
-   * @see PaintWeb#eventDispatch to dispatch an event.
-   * @see PaintWeb.events for the list of event types you can listen for.
-   */
-  this.eventAdd = function (type, handler) {
-    if (typeof type !== 'string') {
-      throw new TypeError('The first argument must be a string.');
-    } else if (typeof handler !== 'function') {
-      throw new TypeError('The second argument must be a function.');
-    }
-
-    var id = eventID_++;
-
-    if (!(type in this.events)) {
-      this.events[type] = {};
-    }
-
-    this.events[type][id] = handler;
-
-    return id;
-  };
-
-  /**
-   * Remove an event listener.
-   *
-   * @param {String} type The event type.
-   * @param {Number} id The event ID.
-   *
-   * @throws {TypeError} If the <var>type</var> argument is not a string.
-   *
-   * @see PaintWeb#eventAdd to add events.
-   * @see PaintWeb#eventDispatch to dispatch an event.
-   * @see PaintWeb.events for the list of event types you can listen for.
-   */
-  this.eventRemove = function (type, id) {
-    if (typeof type !== 'string') {
-      throw new TypeError('The first argument must be a string.');
-    }
-
-    if (!(type in this.events) || !(id in this.events[type])) {
-      return;
-    }
-
-    delete this.events[type][id];
-  };
-
-  /**
-   * Dispatch an event.
-   *
-   * @param {String} type The event type.
-   * @param {Object} [ev] The event object you want to pass to the event 
-   * handlers.
-   *
-   * @returns {Boolean} True if the <code>event.preventDefault()</code> has been 
-   * invoked by one of the event handlers, or false if not.
-   *
-   * @throws {TypeError} If the <var>type</var> argument is not a string.
-   *
-   * @see PaintWeb#eventAdd to add events.
-   * @see PaintWeb#eventRemove to remove events.
-   * @see PaintWeb.events for the list of event types you can dispatch.
-   */
-  this.eventDispatch = function (type, ev) {
-    if (typeof type !== 'string') {
-      throw new TypeError('The first argument must be a string.');
-    }
-
-    // No event handlers.
-    if (!(type in this.events)) {
-      return false;
-    }
-
-    if (typeof ev != 'object') {
-      ev = {};
-    }
-    ev.type = type;
-
-    var preventDefault  = false,
-        stopPropagation = false;
-
-    ev.preventDefault = function () {
-      preventDefault = true;
-    };
-
-    ev.stopPropagation = function () {
-      stopPropagation = true;
-    };
-
-    ev.target = this;
-
-    var handler, handlers = this.events[type];
-    for (handler in handlers) {
-      ev.defaultPrevented = preventDefault;
-
-      handler.call(this, ev);
-
-      if (stopPropagation) {
-        break;
-      }
-    }
-
-    return preventDefault;
-  };
-
-  /**
-   * Activate a drawing tool by ID.
-   *
-   * <p>The <var>id</var> provided must be of an existing drawing tool, one that  
-   * has been installed.
-   *
-   * <p>The <var>ev</var> argument is an optional DOM Event object which is 
-   * useful when dealing with different types of tool activation, either by 
-   * keyboard or by mouse events. Tool-specific code can implement different 
-   * functionality based on events.
-   *
-   * <p>This method dispatches the <code>toolActivate</code> event. Event 
-   * properties:
-   * 
-   * <ul>
-   *   <li><var>tool</var> - holds the ID of the tool being activated.
-   *   <li><var>toolEvent</var> - holds a reference to the <var>ev</var> 
-   *   argument being passed to this method.
-   * </ul>
-   * 
-   * <p>You can cancel the tool activation by preventing the default action of 
-   * the <code>toolActivate</code> event.
-   *
-   * @param {String} id The ID of the drawing tool to be activated.
-   * @param {Event} [ev] The DOM Event object.
-   *
-   * @returns {Boolean} True if the tool has been activated, or false if not.
-   *
-   * @see pwlib.tools The object holding all the drawing tools.
-   * @see PaintWeb#toolRegister Register a new drawing tool.
-   * @see PaintWeb#toolUnregister Unregister a drawing tool.
-   */
-  this.toolActivate = function (id, ev) {
-    if (!id) {
-      return false;
-    }
-    if (this.tool && this.tool._id === id) {
-      return true;
-    }
-
-    var cancel = this.eventDispatch('toolActivate', {tool: id, toolEvent: ev});
-    if (cancel) {
-      return false;
-    }
-
-    var tool = pwlib.tools[id];
-    if (!tool || tool.prototype._elem && tool.prototype._elem.className === 
-        'disabled') {
-      return false;
-    }
-
-
-    var tool_obj = new tool(this, ev);
-    if (!tool_obj) {
-      return false;
-    }
-
-    /*
-     * Each tool can implement its own mouse and keyboard events handler.
-     * Additionally, tool objects can implement handlers for the deactivation 
-     * and activation events.
-     * Given tool1 is active and tool2 is going to be activated, then the 
-     * following event handlers will be called:
-     *
-     * tool2.preActivate
-     * tool1.deactivate
-     * tool2.activate
-     *
-     * In the 'preActivate' event handler you can cancel the tool activation by 
-     * returning a value which evaluates to false.
-     */
-
-    if ('preActivate' in tool_obj && !tool_obj.preActivate(ev)) {
-      tool_obj = null;
-      return false;
-    }
-
-    // Deactivate the previously active tool
-    if (this.tool) {
-      if ('deactivate' in this.tool) {
-        this.tool.deactivate(ev);
-      }
-      if ('_elem' in this.tool) {
-        this.tool._elem.className = '';
-      }
-    }
-
-    this.mouse.buttonDown = false;
-
-    if ('_elem' in tool_obj) {
-      tool_obj._elem.className = 'active';
-    }
-
-    this.tool = tool_obj;
-
-    // Show the status message for the active tool.
-    if ((id + 'Active') in this.lang.status) {
-      this.statusShow(id + 'Active');
-    } else {
-      this.statusShow('');
-    }
-
-    // Besides the "constructor", each tool can also have code which is run after the deactivation of the previous tool.
-    if ('activate' in this.tool) {
-      this.tool.activate(ev);
-    }
-
-    return true;
   };
 
   /**
@@ -1350,12 +1055,13 @@ function PaintWeb (win_, doc_) {
   };
 
   // The event handler for the Zoom input field.
+  // FIXME
   this.ev_change_zoom = function (ev) {
-    if (!_self.ev_input_nr(ev)) {
+    //if (!_self.ev_input_nr(ev)) {
       return false;
-    } else {
+    //} else {
       return _self.zoomTo(this.value/100);
-    }
+    //}
   };
 
   /**
@@ -1801,7 +1507,100 @@ function PaintWeb (win_, doc_) {
   };
 
   /**
+   * Activate a drawing tool by ID.
+   *
+   * <p>The <var>id</var> provided must be of an existing drawing tool, one that  
+   * has been installed.
+   *
+   * <p>The <var>ev</var> argument is an optional DOM Event object which is 
+   * useful when dealing with different types of tool activation, either by 
+   * keyboard or by mouse events. Tool-specific code can implement different 
+   * functionality based on events.
+   *
+   * <p>This method dispatches the {@link pwlib.appEvent.toolPreactivate} event 
+   * before creating the new tool instance. Once the new tool is successfully 
+   * activated, the {@link pwlib.appEvent.toolActivate} event is also 
+   * dispatched.
+   *
+   * @param {String} id The ID of the drawing tool to be activated.
+   * @param {Event} [ev] The DOM Event object.
+   *
+   * @returns {Boolean} True if the tool has been activated, or false if not.
+   *
+   * @see PaintWeb#toolRegister Register a new drawing tool.
+   * @see PaintWeb#toolUnregister Unregister a drawing tool.
+   *
+   * @see pwlib.tools The object holding all the drawing tools.
+   * @see pwlib.appEvent.toolPreactivate
+   * @see pwlib.appEvent.toolActivate
+   */
+  this.toolActivate = function (id, ev) {
+    if (!id || !(id in pwlib.tools) || typeof pwlib.tools[id] !== 'function') {
+      return false;
+    }
+
+    var tool = pwlib.tools[id],
+        prevId = this.tool ? this.tool._id : null;
+
+    if (prevId && this.tool instanceof pwlib.tools[id]) {
+      return true;
+    }
+
+    var cancel = this.events.dispatch(new appEvent.toolPreactivate(id, prevId));
+    if (cancel) {
+      return false;
+    }
+
+    var tool_obj = new tool(this, ev);
+    if (!tool_obj) {
+      return false;
+    }
+
+    /*
+     * Each tool can implement its own mouse and keyboard events handler.
+     * Additionally, tool objects can implement handlers for the deactivation 
+     * and activation events.
+     * Given tool1 is active and tool2 is going to be activated, then the 
+     * following event handlers will be called:
+     *
+     * tool2.preActivate
+     * tool1.deactivate
+     * tool2.activate
+     *
+     * In the "preActivate" event handler you can cancel the tool activation by 
+     * returning a value which evaluates to false.
+     */
+
+    if ('preActivate' in tool_obj && !tool_obj.preActivate(ev)) {
+      tool_obj = null;
+      return false;
+    }
+
+    // Deactivate the previously active tool
+    if (this.tool && 'deactivate' in this.tool) {
+      this.tool.deactivate(ev);
+    }
+
+    this.mouse.buttonDown = false;
+
+    this.tool = tool_obj;
+
+    // Besides the "constructor", each tool can also have code which is run 
+    // after the deactivation of the previous tool.
+    if ('activate' in this.tool) {
+      this.tool.activate(ev);
+    }
+
+    this.events.dispatch(new appEvent.toolActivate(id, prevId));
+
+    return true;
+  };
+
+  /**
    * Register a new drawing tool into PaintWeb.
+   *
+   * <p>This method dispatches the {@link pwlib.appEvent.toolRegister} 
+   * application event.
    *
    * @param {String} id The ID of the new tool. The tool object must exist in 
    * {@link pwlib.tools}.
@@ -1811,6 +1610,7 @@ function PaintWeb (win_, doc_) {
    *
    * @see PaintWeb#toolUnregister allows you to unregister tools.
    * @see pwlib.tools Holds all the drawing tools.
+   * @see pwlib.appEvent.toolRegister
    */
   this.toolRegister = function (id) {
     if (typeof id !== 'string' || !id) {
@@ -1822,9 +1622,12 @@ function PaintWeb (win_, doc_) {
       return false;
     }
 
-    tool.prototype._id = id;
+    var cancel = this.events.dispatch(new appEvent.toolRegister(id));
+    if (cancel) {
+      return false;
+    }
 
-    this.gui.toolRegister(id, tool);
+    tool.prototype._id = id;
 
     if (!this.tool && id === this.config.toolDefault) {
       return this.toolActivate(id);
@@ -1836,6 +1639,9 @@ function PaintWeb (win_, doc_) {
   /**
    * Unregister a drawing tool from PaintWeb.
    *
+   * <p>This method dispatches the {@link pwlib.appEvent.toolUnregister} 
+   * application event.
+   *
    * @param {String} id The ID of the tool you want to unregister.
    *
    * @returns {Boolean} True if the tool was unregistered, or false if it does 
@@ -1843,13 +1649,18 @@ function PaintWeb (win_, doc_) {
    *
    * @see PaintWeb#toolRegister allows you to register new drawing tools.
    * @see pwlib.tools Holds all the drawing tools.
+   * @see pwlib.appEvent.toolUnregister
    */
   this.toolUnregister = function (id) {
-    if (typeof id !== 'string' || !id) {
+    if (typeof id !== 'string' || !id || !(id in pwlib.tools)) {
       return false;
     }
 
-    this.gui.toolUnregister(id);
+    // Erm... nothing to cancel at the moment.
+    var cancel = this.events.dispatch(new appEvent.toolUnregister(id));
+    if (cancel) {
+      return false;
+    }
 
     return true;
   };
@@ -1924,23 +1735,19 @@ function PaintWeb (win_, doc_) {
   };
 
   /**
-   * Insert a script into the document.
+   * Load a script into the document.
    *
    * @param {String} url The script URL you want to insert.
-   * @param {Boolean} [ugly=false] By default <var>ugly</var> is false, which 
-   * means the script is added to the DOM using a <code>&lt;script 
-   * src&gt;</code> element. If <var>ugly</var> is true, then the script is 
-   * added into the document using <code>document.write</code>
+   * @param {Function} [handler] The <code>load</code> event handler you want.
    */
-  this.scriptInsert = function (url, ugly) {
-    if (!ugly) {
-      var elem = this.doc.createElement('script');
-      elem.src = url;
-      this.elems.head.appendChild(elem);
-    } else {
-      this.doc.write('<script type="text/javascript" src="' + url +
-          '"></script>');
+  this.scriptLoad = function (url, handler) {
+    var elem = this.doc.createElement('script');
+    if (handler) {
+      elem.addEventListener('load', handler, false);
     }
+    elem.type = 'text/javascript';
+    elem.src = url;
+    this.elems.head.appendChild(elem);
   };
 
   /**
@@ -1949,7 +1756,7 @@ function PaintWeb (win_, doc_) {
    * @param {String} url The URL of the stylesheet you want to insert.
    * @param {String} [media='screen, projection'] The media attribute.
    */
-  this.scriptInsert = function (url, media) {
+  this.styleInsert = function (url, media) {
     if (!media) {
       media = 'screen, projection';
     }
@@ -1967,7 +1774,8 @@ function PaintWeb (win_, doc_) {
     return 'PaintWeb v' + this.version + ' (build ' + this.build + ')';
   };
 
-  this.elems.head = this.doc.getElementsByTagName('head')[0] || document.body;
+
+  preInit();
 };
 
 /**

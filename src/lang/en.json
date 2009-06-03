@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-05-27 20:28:02 +0300 $
+  // $Date: 2009-06-02 19:59:04 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -7,8 +7,11 @@
   "errorInitGetComputedStyle": "Error: window.getComputedStyle is not available.",
   "errorInitXMLHttpRequest": "Error: window.XMLHttpRequest is not available.",
   "errorInitJSON": "Error: window.JSON is not available.",
+  "errorInitCanvas": "Error: Your browser does not support Canvas.",
+  "errorInitTools": "Error: failed to initialize the drawing tools!",
   "errorToolActivate": "Error: the tool you want could not be properly activated!",
   "errorInitGUI": "Error: the interface failed to initialize!",
+  "errorInitMarkupImport": "Error: the interface markup code could not be imported into the main document.",
   "errorCpickerUnsupported": "Error: your browser does not support get/putImageData! The color picker tool cannot be used.",
   "errorClipboardUnsupported": "Error: your browser does not support get/putImageData! Clipboard operations like cut/copy/paste cannot be used.",
   "errorTextUnsupported": "Error: your browser does not implement the Canvas Text API! The text tool cannot be used.",
@@ -20,9 +23,24 @@
   "promptTextFont": "Type the name of the font you want:",
   "colorEditorTitle": "Color editor",
 
+  "tools": {
+    "cpicker": "Color picker",
+    "curve": "Bézier curve",
+    "drag": "Viewport drag",
+    "ellipse": "Ellipse",
+    "eraser": "Eraser",
+    "insertimg": "Insert image",
+    "line": "Line",
+    "pencil": "Pencil",
+    "poly": "Polygon",
+    "rect": "Rectangle",
+    "select": "Rectangle selection",
+    "text": "Text"
+  },
+
   "status": {
-    "cpickerNormal": "Click to change the fill color, and Shift+Click to change the stroke color.",
     "cpickerFillStyle": "Click to pick the fill color.",
+    "cpickerNormal": "Click to change the fill color, and Shift+Click to change the stroke color.",
     "cpickerStrokeStyle": "Click to pick the stroke color.",
     "curveActive": "Click to start drawing the curve. You need four points: start, end and two control points.",
     "curveControlPoint1": "Click to draw the first control point.",
@@ -33,8 +51,6 @@
     "ellipseMousedown": "Hold the Shift key down to draw a circle.",
     "eraserActive": "Click and drag to erase.",
     "hoverBtnClear": "Clear image. Hold Shift to manually change the resolution of the image.",
-    "hoverToolSelect": "Rectangle selection",
-    "hoverToolCurve": "Bézier curve",
     "insertimgActive": "Waiting for the image to load...",
     "insertimgLoaded": "Pick where you want to place the image. Click and drag to resize the image.",
     "insertimgResize": "Hold the Shift key down to preserve the aspect ratio.",
@@ -43,14 +59,14 @@
     "pencilActive": "Click and drag to draw.",
     "polyActive": "Click anywhere to start drawing a polygon.",
     "polyAddPoint": "Click to add another point to the polygon.",
-    "polyMousedown": "Hold the Shift key down for vertical/horizontal snapping.",
     "polyEnd": "To end drawing the polygon simply click in the same place as the last point.",
+    "polyMousedown": "Hold the Shift key down for vertical/horizontal snapping.",
     "rectActive": "Click and drag to draw a rectangle.", 
     "rectMousedown": "Hold the Shift key down to draw a square.",
     "selectActive": "Click and drag to draw a selection.",
-    "selectDraw": "Hold the Shift key down to draw a square selection.",
     "selectAvailable": "Drag or resize the selection. Hold the Control key down to toggle the transformation mode.",
     "selectDrag": "Hold the Shift key down for vertical/horizontal snapping.",
+    "selectDraw": "Hold the Shift key down to draw a square selection.",
     "selectResize": "Hold the Shift key down to preserve the aspect ratio.",
     "textActive": "Pick where you want to place the text. Make sure you adjust the properties as desired."
   }

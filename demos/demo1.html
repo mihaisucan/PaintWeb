@@ -6,7 +6,7 @@
     <link rel="author" type="text/html" href="http://www.robodesign.ro" 
     title="Marius and Mihai Şucan, ROBO Design">
     <!-- $URL: http://code.google.com/p/paintweb $
-         $Date: 2009-05-29 15:39:06 +0300 $ -->
+         $Date: 2009-06-03 17:17:34 +0300 $ -->
   </head>
   <body>
     <p>Welcome to PaintWeb!</p>
@@ -22,28 +22,36 @@
 
     <div id="PaintWebTarget"></div>
 
+    <script type="text/javascript" src="../src/includes/debug.js"></script>
     <script type="text/javascript" src="../src/paintweb.js"></script>
 
     <script type="text/javascript"><!--
 (function () {
-  var img = document.getElementById('editableImage'),
-      btn = document.getElementById('buttonEditImage'),
-      target = document.getElementById('PaintWebTarget'),
-      
-      // Create a PaintWeb instance.
-      pw = new PaintWeb(),
-      pwStart = function () { pw.init(); },
+  // Function called when the user clicks the "Edit image" button.
+  function pwStart () {
+    pw.init(pwInit);
+  };
 
-      pwInit = function (ev) {
-        if (ev.state === PaintWeb.INIT_ERROR) {
-          alert('PaintWeb initialization failed.');
-        } else if (ev.state !== PaintWeb.INIT_DONE) {
-          alert('Unrecognized PaintWeb initialization state ' + ev.state);
-        }
-      };
-      
-  pw.config.targetElement = target;
-  pw.eventAdd('init', pwInit);
+  // Function called when the PaintWeb application fires the "init" event.
+  function pwInit (ev) {
+    if (ev.state === PaintWeb.INIT_ERROR) {
+      alert('PaintWeb initialization failed.');
+    } else if (ev.state === PaintWeb.INIT_DONE) {
+      alert('Yay, PaintWeb loaded!');
+    } else {
+      alert('Unrecognized PaintWeb initialization state ' + ev.state);
+    }
+  };
+
+  var img    = document.getElementById('editableImage'),
+      btn    = document.getElementById('buttonEditImage'),
+      target = document.getElementById('PaintWebTarget'),
+
+      // Create a PaintWeb instance.
+      pw = new PaintWeb();
+
+  pw.config.guiPlaceholder = target;
+  pw.config.baseFolder = '../src/';
 
   btn.addEventListener('click', pwStart, false);
 })();

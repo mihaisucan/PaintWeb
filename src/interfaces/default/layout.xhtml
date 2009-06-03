@@ -1,10 +1,15 @@
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <div id="resInfo"></div>
 
   <div id="toolbar">
     <h1>Tools</h1>
 
     <ul id="tools">
+      <li id="btn_undo">Undo</li>
+      <li id="btn_redo">Redo</li>
+      <li id="btn_clear">Clear image</li>
+      <li id="btn_save">Save image</li>
+      <li class="separator">...</li>
     </ul>
 
     <div class="separator">...</div>
@@ -13,12 +18,12 @@
       <p>
         <span id="opt-strokeStyle">Stroke</span>
         <span class="colorpreview" id="in-strokeStyle" title="Stroke 
-          color">&nbsp;</span>
+          color">&#160;</span>
       </p>
       <p>
         <span id="opt-fillStyle">Fill</span>
         <span class="colorpreview" id="in-fillStyle" title="Fill 
-          color">&nbsp;</span>
+          color">&#160;</span>
       </p>
     </div>
 
@@ -67,64 +72,64 @@
 
       <ol id="coloreditor-rgb" class="ce-inputs">
         <li>
-          <input name="in-ckey" value="red" type="radio">
+          <input name="in-ckey" value="red" type="radio" />
           <label>Red
           <input name="in-ckey-red" value="0" type="number" min="0" max="255" 
-          step="1"></label>
+          step="1" /></label>
         </li>
         <li>
-          <input name="in-ckey" value="green" type="radio">
+          <input name="in-ckey" value="green" type="radio" />
           <label>Green
-          <input name="in-ckey-green" value="0" type="number" min="0" 
-          max="255" step="1"></label>
+          <input name="in-ckey-green" value="0" type="number" min="0" max="255" 
+          step="1" /></label>
         </li>
         <li>
-          <input name="in-ckey" value="blue" type="radio">
+          <input name="in-ckey" value="blue" type="radio" />
           <label>Blue
           <input name="in-ckey-blue" value="0" type="number" min="0" max="255" 
-          step="1"></label>
+          step="1" /></label>
         </li>
       </ol> <!-- #coloreditor-rgb -->
 
       <ol id="coloreditor-hsv" class="ce-inputs">
         <li>
-          <input name="in-ckey" value="hue" type="radio">
+          <input name="in-ckey" value="hue" type="radio" />
           <label>Hue
           <input name="in-ckey-hue" value="0" type="number" min="0" max="360" 
-          step="1"></label>
+          step="1" /></label>
         </li>
         <li>
-          <input name="in-ckey" value="sat" type="radio">
+          <input name="in-ckey" value="sat" type="radio" />
           <label>Saturation
           <input name="in-ckey-sat" value="0" type="number" min="0" max="255" 
-          step="1"></label>
+          step="1" /></label>
         </li>
         <li>
-          <input name="in-ckey" value="val" type="radio">
+          <input name="in-ckey" value="val" type="radio" />
           <label>Value
           <input name="in-ckey-val" value="0" type="number" min="0" max="255" 
-          step="1"></label>
+          step="1" /></label>
         </li>
       </ol> <!-- #coloreditor-hsv -->
 
       <ol id="coloreditor-lab" class="ce-inputs">
         <li>
-          <input name="in-ckey" value="cie_l" type="radio">
+          <input name="in-ckey" value="cie_l" type="radio" />
           <label>Lightness
           <input name="in-ckey-cie_l" value="0" type="number" min="0"    
-          max="100" step="1"></label>
+          max="100" step="1" /></label>
         </li>
         <li>
-          <input name="in-ckey" value="cie_a" type="radio">
+          <input name="in-ckey" value="cie_a" type="radio" />
           <label>a*
           <input name="in-ckey-cie_a" value="0" type="number" min="-85"  
-          max="94" step="1"></label>
+          max="94" step="1" /></label>
         </li>
         <li>
-          <input name="in-ckey" value="cie_b" type="radio">
+          <input name="in-ckey" value="cie_b" type="radio" />
           <label>b*
           <input name="in-ckey-cie_b" value="0" type="number" min="-109" 
-          max="95" step="1"></label>
+          max="95" step="1" /></label>
         </li>
       </ol> <!-- #coloreditor-lab -->
 
@@ -132,33 +137,33 @@
         <li>
           <label>Cyan
           <input name="in-ckey-cyan" value="0" type="number" min="0" max="100" 
-          step="1"></label>
+          step="1" /></label>
         </li>
         <li>
           <label>Magenta
           <input name="in-ckey-magenta" value="0" type="number" min="0" 
-          max="100" step="1"></label>
+          max="100" step="1" /></label>
         </li>
         <li>
           <label>Yellow
-          <input name="in-ckey-yellow" value="0" type="number" min="0" 
-          max="100" step="1"></label>
+          <input name="in-ckey-yellow" value="0" type="number" min="0" max="100" 
+          step="1" /></label>
         </li>
         <li>
           <label>Key (Black)
-          <input name="in-ckey-black" value="0" type="number" min="0" 
-          max="100" step="1"></label>
+          <input name="in-ckey-black" value="0" type="number" min="0" max="100" 
+          step="1" /></label>
         </li>
       </ol> <!-- #coloreditor-cmyk -->
 
       <ol id="coloreditor-hexalpha">
         <li><label>HEX
           <input name="in-ckey-hex" value="#RRGGBB" type="text" maxlength="7" 
-          pattern="#[a-f0-9]{6}"></label>
+          pattern="#[a-f0-9]{6}" /></label>
         </li>
         <li><label>Alpha
           <input name="in-ckey-alpha" value="100" type="number" min="0" 
-          max="100" step="1"></label>
+          max="100" step="1" /></label>
         </li>
       </ol>
     </form> <!-- #coloreditor-inputs -->
@@ -172,15 +177,13 @@
     <h1>PaintWeb</h1>
 
     <ul id="toolbar-main">
-      <li id="btn-cut">Cut selection</li>
-      <li id="btn-copy">Copy selection</li>
-      <li id="btn-paste">Paste image data</li>
-      <li id="btn-help">Help</li>
+      <li id="btn_cut">Cut selection</li>
+      <li id="btn_copy">Copy selection</li>
+      <li id="btn_paste">Paste image data</li>
+      <li id="btn_help">Help</li>
     </ul>
 
-    <div id="container">
-      <canvas id="imageLayer" width="400" height="300">Your browser does not 
-      support &lt;canvas&gt;. You cannot use this Web application.</canvas>
+    <div id="canvasContainer" class="paintweb_canvasContainer">
     </div>
 
     <p id="status">Status</p>
@@ -191,11 +194,12 @@
 
     <p id="opt-zoom" title="Zoom image">
       <label for="in-zoom">Zoom</label>
-      <input id="in-zoom" type="number" min="20" max="400" value="100" 
-      step="10">
+      <input id="in-zoom" type="number" min="20" max="400" value="100" step="10" 
+      />
     </p>
 
-    <div id="resizer" title="Resize image"></div>
+    <div id="canvasResizer" class="paintweb_canvasResizer" title="Resize 
+      image"></div>
   </div> <!-- #main -->
 
   <div id="help">
@@ -203,12 +207,12 @@
     <div id="help-tleft"></div>
     <div id="help-tright"></div>
     <h1>Help</h1>
-    <p id="btn-help_close" class="btn_close">Close</p>
+    <p id="btn_help_close" class="btn_close">Close</p>
 
     <div id="help1"><div id="help2"><div id="help3">
 
     <h2>PaintWeb</h2>
-    <p id="ver">Version: </p>
+    <p id="version">Version: </p>
     <p>Authors: <a href="http://www.robodesign.ro">Marius and Mihai Şucan 
       (ROBO Design)</a></p>
     <p>Project site: <a 
@@ -266,9 +270,9 @@
     <div id="lineOptions">
     <h2>Line</h2>
     <p class="inputText"><label>Stroke width <input id="in-lineWidth"  
-      type="number" min="1" value="1"></label></p>
+      type="number" min="1" value="1" /></label></p>
     <p class="inputText"><label>Miter limit <input  id="in-miterLimit" 
-      type="number" min="1" value="10"></label></p>
+      type="number" min="1" value="10" /></label></p>
     <div id="in-shapeType" class="inputIcon">
       <p>Shape type</p>
       <div id="shapeType-both">Both</div>
@@ -292,13 +296,13 @@
       <label title="When enabled, the background of the selection will be the 
         current fill color. The background color is only visible when you 
         enable the transformation mode as well.">
-      <input id="in-selTransparent" type="checkbox" value="1" 
-      checked="checked"> Transparent background</label>
+      <input id="in-selTransparent" type="checkbox" value="1" checked="checked" 
+      /> Transparent background</label>
     </p>
     <p class="inputInline">
       <label title="When enabled, dragging/resizing the selection also causes 
         the selected pixels to be dragged/resized. [Enter]">
-      <input id="in-selTransform" type="checkbox" value="1">
+      <input id="in-selTransform" type="checkbox" value="1" />
       Transformation mode</label>
     </p>
     </div> <!-- #selectionOptions -->
@@ -317,7 +321,7 @@
 
     <p id="opt-textString" class="inputText">
       <label for="in-textString">String</label>
-      <input id="in-textString" type="text" value="Hello world!">
+      <input id="in-textString" type="text" value="Hello world!" />
     </p>
 
     <p class="inputText"><label>Font family
@@ -334,7 +338,7 @@
     <p class="inputText">
       <label>Font size
         <input id="in-textSize" type="number" min="1" max="72" value="10" 
-        title="pixels">
+        title="pixels" />
       </label>
     </p>
     </div> <!-- #textOptions -->
@@ -342,25 +346,25 @@
     <div id="shadowOptions">
     <h2>Shadow</h2>
     <p class="inputInline"><label><input id="in-shadowActive" type="checkbox" 
-      value="1"> Draw shadows</label></p>
+      value="1" /> Draw shadows</label></p>
 
     <p class="inputText">
       <label>Offset X
-        <input id="in-shadowOffsetX" type="number" value="5">
+        <input id="in-shadowOffsetX" type="number" value="5" />
       </label>
     </p>
     <p class="inputText">
       <label>Offset Y
-        <input id="in-shadowOffsetY" type="number" value="5">
+        <input id="in-shadowOffsetY" type="number" value="5" />
       </label>
     </p>
     <p class="inputText">
       <label>Blur
-        <input id="in-shadowBlur" type="number" value="5" min="0">
+        <input id="in-shadowBlur" type="number" value="5" min="0" />
       </label>
     </p>
     <p class="inputColor">Color <span><span id="in-shadowColor" title="Shadow 
-        color">&nbsp;</span></span></p>
+        color">&#160;</span></span></p>
     </div> <!-- #shadowOptions -->
 
     <div style="clear:both"></div>

@@ -1,3 +1,11 @@
+2009-06-03:
+===========
+
+- Continued work on the new GUI code.
+- More work on the initialization code.
+- Initialization starts now and fails in the middle. You can see the GUI is 
+loading.
+
 2009-05-29:
 ===========
 
