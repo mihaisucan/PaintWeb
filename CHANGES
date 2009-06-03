@@ -3,7 +3,7 @@
 
 - Continued work on the new GUI code.
 - More work on the initialization code.
-- The application is now able to loads itself.
+- The application is now able to properly initialize. Try demos/demo1.html
 
 2009-05-29:
 ===========

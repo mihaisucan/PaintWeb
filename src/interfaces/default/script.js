@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-03 18:32:31 +0300 $
+ * $Date: 2009-06-03 20:15:43 +0300 $
  */
 
 /**
@@ -105,9 +105,6 @@ pwlib.gui['default'] = function (app) {
   this.init = function (markupDoc) {
     this.initImportDoc(markupDoc);
 
-    // #resInfo is used for resolution information (DPI / zoom).
-    app.elems.resInfo = $('resInfo');
-
     if (!this.initCanvas() ||
         !this.initButtons() ||
         !this.initProperties() ||
@@ -163,30 +160,27 @@ pwlib.gui['default'] = function (app) {
    */
   this.initCanvas = function () {
     var canvasContainer = $('canvasContainer'),
-        layerCanvas     = doc.createElement('canvas'),
-        bufferCanvas    = doc.createElement('canvas'),
-        layerStyle      = layerCanvas.style,
-        bufferStyle     = bufferCanvas.style,
+        layerCanvas     = app.layer.canvas,
+        bufferCanvas    = app.buffer.canvas,
         containerStyle  = canvasContainer.style;
 
-    this.elems.canvasContainer = canvasContainer;
-    app.elems.container = canvasContainer;
-    app.layer.canvas  = layerCanvas;
-    app.buffer.canvas = bufferCanvas;
+    if (!canvasContainer) {
+      return false;
+    }
 
     layerCanvas.className  = classPrefix_ + 'layerCanvas';
     bufferCanvas.className = classPrefix_ + 'bufferCanvas';
 
+    containerStyle.width  = layerCanvas.width  + 'px';
+    containerStyle.height = layerCanvas.height + 'px';
+
     canvasContainer.appendChild(layerCanvas);
     canvasContainer.appendChild(bufferCanvas);
 
-    layerStyle.width = bufferStyle.width = containerStyle.width  
-      = layerCanvas.width  + 'px';
+    this.elems.canvasContainer = canvasContainer;
+    app.elems.container = canvasContainer;
 
-    layerStyle.height = bufferStyle.height = containerStyle.height 
-      = layerCanvas.height + 'px';
-
-    return app.initCanvas();
+    return true;
   };
 
   /**
@@ -1098,9 +1092,9 @@ function guiFloatingPanel (gui, elem) {
    * @private
    */
   function init () {
-    var ttl, cs;
-
-    cs = win.getComputedStyle(elem, null);
+    var ttl = elem.getElementsByTagName('h1')[0],
+        cs = win.getComputedStyle(elem, null),
+        zIndex = parseInt(cs.zIndex);
 
     // Set the position in the .style for quicker usage by the mousedown handler.
     // If this is not done during initialization, it would need to be done in the mousedown handler.
@@ -1108,11 +1102,10 @@ function guiFloatingPanel (gui, elem) {
     elem.style.left   = cs.left;
     elem.style.zIndex = cs.zIndex;
 
-    if (cs.zIndex > panels.zIndex) {
-      panels.zIndex = cs.zIndex;
+    if (zIndex > panels.zIndex) {
+      panels.zIndex = zIndex;
     }
 
-    ttl = elem.getElementsByTagName('h1')[0];
     ttl.addEventListener('mousedown', ev_mousedown, false);
   };
 

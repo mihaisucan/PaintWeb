@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-03 18:33:47 +0300 $
+ * $Date: 2009-06-03 21:00:05 +0300 $
  */
 
 /**
@@ -29,11 +29,18 @@
 /**
  * The PaintWeb application object.
  *
- * @param {Window} [win_=window] The window object to use.
- * @param {Document} [doc_=document] The document object to use.
+ * @param {Window} [win=window] The window object to use.
+ * @param {Document} [doc=document] The document object to use.
  */
-function PaintWeb (win_, doc_) {
+function PaintWeb (win, doc) {
   var _self = this;
+
+  if (!win) {
+    win = window;
+  }
+  if (!doc) {
+    doc = document;
+  }
 
   /**
    * PaintWeb version.
@@ -67,7 +74,9 @@ function PaintWeb (win_, doc_) {
     "errorInitGetComputedStyle": "Error: window.getComputedStyle is not available.",
     "errorInitXMLHttpRequest": "Error: window.XMLHttpRequest is not available.",
     "errorInitJSON": "Error: window.JSON is not available.",
-    "errorInitCanvas": "Error: Your browser does not support Canvas."
+    "errorInitCanvas": "Error: Your browser does not support Canvas.",
+    "errorInitGUIPlaceholder": "Error: The config.guiPlaceholder property" 
+      + " must reference a DOM element!"
   };
 
   /**
@@ -131,7 +140,7 @@ function PaintWeb (win_, doc_) {
    * @type Document
    * @default document
    */
-  this.doc = doc_ || document;
+  this.doc = doc;
 
   /**
    * The window object we will be working with.
@@ -140,7 +149,7 @@ function PaintWeb (win_, doc_) {
    * @type Window
    * @default window
    */
-  this.win = win_ || window;
+  this.win = win;
 
   /**
    * Holds image information: width and height.
@@ -188,6 +197,15 @@ function PaintWeb (win_, doc_) {
    * @type Object
    */
   this.resolution = {
+    /**
+     * The DOM element holding information about the current browser rendering 
+     * settings (zoom / DPI).
+     *
+     * @private
+     * @type Element
+     */
+    elem: null,
+
     /**
      * Optimal DPI for the canvas elements.
      *
@@ -325,9 +343,7 @@ function PaintWeb (win_, doc_) {
    */
   function preInit() {
     _self.UID = (new Date()).getMilliseconds() * MathRound(Math.random() * 100);
-
-    _self.elems.head = _self.doc.getElementsByTagName('head')[0] || 
-      _self.doc.body;
+    _self.elems.head = doc.getElementsByTagName('head')[0] || doc.body;
   };
 
   /**
@@ -357,7 +373,7 @@ function PaintWeb (win_, doc_) {
     temp_.onInit = handler;
 
     // Check Canvas support.
-    if (!document.createElement('canvas').getContext) {
+    if (!doc.createElement('canvas').getContext) {
       this.initError(lang.errorInitCanvas);
       return false;
     }
@@ -371,6 +387,24 @@ function PaintWeb (win_, doc_) {
     if (!window.XMLHttpRequest) {
       this.initError(lang.errorInitXMLHttpRequest);
       return false;
+    }
+
+    var placeholder = this.config.guiPlaceholder;
+
+    if (typeof placeholder !== 'object' || placeholder.nodeType !== 
+        Node.ELEMENT_NODE) {
+      this.initError(lang.errorInitGUIPlaceholder);
+      return false;
+    }
+
+    // Make sure the user nicely waits for PaintWeb to load, without seeing 
+    // much.
+    placeholder.style.visibility = 'hidden';
+
+    // Silently ignore any wrong value for the config.imagePreload property.
+    if (typeof this.config.imagePreload !== 'object' || 
+        this.config.imagePreload.nodeType !== Node.ELEMENT_NODE) {
+      this.config.imagePreload = null;
     }
 
     // JSON parser and serializer.
@@ -440,8 +474,9 @@ function PaintWeb (win_, doc_) {
 
     var ev = null;
 
-    if (this.events && 'dispatch' in this.events && appEvent && 'initApp' in 
-        appEvent) {
+    if (this.events && 'dispatch' in this.events &&
+        appEvent    && 'initApp'  in appEvent) {
+
       ev = new appEvent.initApp(this.initialized, msg);
       this.events.dispatch(ev);
 
@@ -498,7 +533,7 @@ function PaintWeb (win_, doc_) {
     var config = pwlib.jsonParse(xhr.responseText);
 
     // Overwrite any existing configuration.
-    pwlib.extend(true, _self.config, config);
+    pwlib.extend(_self.config, config);
 
     _self.langLoad();
   };
@@ -534,11 +569,11 @@ function PaintWeb (win_, doc_) {
       return;
     }
 
-    var lang_new = pwlib.jsonParse(xhr.responseText);
+    pwlib.extend(_self.lang, pwlib.jsonParse(xhr.responseText));
 
-    pwlib.extend(_self.lang, lang_new);
-
-    _self.guiLoad();
+    if (!_self.initCanvas()) {
+      _self.initError(lang.errorInitCanvas);
+    }
   };
 
   /**
@@ -558,11 +593,12 @@ function PaintWeb (win_, doc_) {
         style  = base + cfg.guiStyle,
         script = base + cfg.guiScript;
 
-    if (!(gui in pwlib.gui)) {
-      this.styleInsert(style);
-      this.scriptLoad(script, this.guiScriptReady);
-    } else {
+    if (gui in pwlib.gui) {
+      this.updateCanvasScaling();
       this.guiScriptReady();
+    } else {
+      this.styleLoad(style, null, this.updateCanvasScaling);
+      this.scriptLoad(script, this.guiScriptReady);
     }
   };
 
@@ -606,38 +642,69 @@ function PaintWeb (win_, doc_) {
       return;
     }
 
-    if (!_self.gui.init(xhr.responseXML)) {
+    if (_self.gui.init(xhr.responseXML)) {
+      _self.initTools();
+    } else {
       _self.initError(lang.errorInitGUI);
-      return;
     }
-
-    _self.initTools();
   };
 
   /**
-   * Initialize the Canvas elements.
+   * Initialize the Canvas elements. This method creates the elements, sets-up 
+   * the dimensions, and calls {@link PaintWeb.updateCanvasScaling} to make sure 
+   * the current browser DPI / zoom does not affect the Canvas performance. 
+   * 
+   * <p>If {@link PaintWeb.config.imagePreload} is defined, then the image 
+   * element is inserted into the Canvas image.
+   *
+   * <p>Last, but not least, all the Canvas event listeners are added.
    *
    * @private
    * @returns {Boolean} True if the initialization was successful, or false if 
    * not.
+   *
+   * @see PaintWeb#ev_canvas The global Canvas events handler.
    */
   this.initCanvas = function () {
-    var layerCanvas = this.layer.canvas,
-        bufferCanvas = this.buffer.canvas;
+    var resInfo         = doc.getElementById('paintweb_resInfo'),
+        layerCanvas     = doc.createElement('canvas'),
+        bufferCanvas    = doc.createElement('canvas'),
+        layerContext    = layerCanvas.getContext('2d'),
+        bufferContext   = bufferCanvas.getContext('2d'),
+        cfg             = this.config,
+        width           = cfg.imageWidth,
+        height          = cfg.imageHeight,
+        imagePreload    = cfg.imagePreload;
 
-    this.layer.context = layerCanvas.getContext('2d');
-    if (!this.layer.context) {
-      this.initError(lang.errorInitContext);
+    if (!resInfo) {
+      resInfo = doc.createElement('div');
+      resInfo.id = 'paintweb_resInfo';
+      doc.body.appendChild(resInfo);
+    }
+
+    if (!resInfo || !layerCanvas || !bufferCanvas || !layerContext || 
+        !bufferContext) {
       return false;
     }
 
-    this.image.width  = layerCanvas.width;
-    this.image.height = layerCanvas.height;
+    if (imagePreload) {
+      width  = parseInt(imagePreload.width);
+      height = parseInt(imagePreload.height);
+    }
 
-    this.buffer.context = bufferCanvas.getContext('2d');
+    this.resolution.elem = resInfo;
 
-    this.updateCanvasScaling();
-    this.win.addEventListener('resize', this.updateCanvasScaling, false);
+    this.image.width  = layerCanvas.width  = bufferCanvas.width  = width;
+    this.image.height = layerCanvas.height = bufferCanvas.height = height;
+
+    this.layer.canvas   = layerCanvas;
+    this.layer.context  = layerContext;
+    this.buffer.canvas  = bufferCanvas;
+    this.buffer.context = bufferContext;
+
+    if (imagePreload) {
+      layerContext.drawImage(imagePreload, 0, 0);
+    }
 
     // The initial blank state of the image
     this.historyAdd();
@@ -654,6 +721,11 @@ function PaintWeb (win_, doc_) {
     for (var i = 0; i < n; i++) {
       bufferCanvas.addEventListener(events[i], this.ev_canvas, false);
     }
+
+    this.win.addEventListener('resize', this.updateCanvasScaling, false);
+
+    // Start GUI load now.
+    this.guiLoad();
 
     return true;
   };
@@ -676,6 +748,11 @@ function PaintWeb (win_, doc_) {
         {keydown:  this.ev_keyboard,
          keypress: this.ev_keyboard,
          keyup: this.ev_keyboard});
+
+    this.updateCanvasScaling();
+
+    // Make PaintWeb visible.
+    this.config.guiPlaceholder.style.visibility = 'visible';
 
     this.initialized = PaintWeb.INIT_DONE;
 
@@ -777,8 +854,8 @@ function PaintWeb (win_, doc_) {
    * browser.
    */
   this.updateCanvasScaling = function () {
-    var cs             = _self.win.getComputedStyle(_self.elems.resInfo, null),
-        res            = _self.resolution,
+    var res            = _self.resolution,
+        cs             = win.getComputedStyle(res.elem, null),
         image          = _self.image;
         bufferStyle    = _self.buffer.canvas.style,
         layerStyle     = _self.layer.canvas.style,
@@ -792,7 +869,7 @@ function PaintWeb (win_, doc_) {
       // The scaling factor is sufficiently accurate for zoom levels between 
       // 100% and 200% (in steps of 10%).
 
-      scaleNew = _self.win.innerHeight / height;
+      scaleNew = win.innerHeight / height;
       scaleNew = MathRound(scaleNew * 10) / 10;
 
     } else if (width && !isNaN(width) && width !== res.dpiOptimal) {
@@ -812,9 +889,10 @@ function PaintWeb (win_, doc_) {
       // Thanks go to roc from Mozilla for his feedback on making this work.
 
       res.dpiLocal = 134; // hard-coded value, we cannot determine it
-      var appUnitsPerCSSPixel = 60; // hard-coded internally in Gecko
-      var devPixelsPerCSSPixel = res.dpiLocal / res.dpiOptimal; // 1.3958333333
-      var appUnitsPerDevPixel = appUnitsPerCSSPixel / devPixelsPerCSSPixel; // 42.9850746278...
+
+      var appUnitsPerCSSPixel  = 60, // hard-coded internally in Gecko
+          devPixelsPerCSSPixel = res.dpiLocal / res.dpiOptimal; // 1.3958333333
+          appUnitsPerDevPixel  = appUnitsPerCSSPixel / devPixelsPerCSSPixel; // 42.9850746278...
 
       scaleNew = appUnitsPerCSSPixel / MathFloor(appUnitsPerDevPixel); // 1.4285714285...
     }
@@ -1371,25 +1449,17 @@ function PaintWeb (win_, doc_) {
       history.states.splice(history.pos, n);
     }
 
-    history.states.push(layerContext.getImageData(0, 0, _self.image.width, 
-          _self.image.height));
+    history.states.push(layerContext.getImageData(0, 0, _self.image.width 
+          - 1 , _self.image.height - 1));
 
     history.pos++;
     n++;
 
     // If we have too many history ImageDatas, remove the oldest ones
-    if (n > _self.config.historyLimit) {
+    if ('historyLimit' in _self.config && n > _self.config.historyLimit) {
       n -= _self.config.historyLimit;
       history.states.splice(0, n);
       history.pos = history.states.length;
-    }
-
-    if(_self.elems.btn_redo) {
-      _self.elems.btn_redo.className = 'disabled';
-    }
-
-    if(_self.elems.btn_undo) {
-      _self.elems.btn_undo.className = '';
     }
 
     return true;
@@ -1447,7 +1517,7 @@ function PaintWeb (win_, doc_) {
     } catch (err) {
       // The workaround is to use a new canvas from which we can copy the 
       // history image without causing any exceptions.
-      var tmp    = _self.doc.createElement('canvas');
+      var tmp    = doc.createElement('canvas');
       tmp.width  = himg.width;
       tmp.height = himg.height;
 
@@ -1728,10 +1798,12 @@ function PaintWeb (win_, doc_) {
    * @param {Function} [handler] The <code>load</code> event handler you want.
    */
   this.scriptLoad = function (url, handler) {
-    var elem = this.doc.createElement('script');
+    var elem = doc.createElement('script');
+
     if (handler) {
       elem.addEventListener('load', handler, false);
     }
+
     elem.type = 'text/javascript';
     elem.src = url;
     this.elems.head.appendChild(elem);
@@ -1742,13 +1814,19 @@ function PaintWeb (win_, doc_) {
    *
    * @param {String} url The URL of the stylesheet you want to insert.
    * @param {String} [media='screen, projection'] The media attribute.
+   * @param {Function} [handler] The <code>load</code> event handler.
    */
-  this.styleInsert = function (url, media) {
+  this.styleLoad = function (url, media, handler) {
     if (!media) {
       media = 'screen, projection';
     }
 
-    var elem = this.doc.createElement('link');
+    var elem = doc.createElement('link');
+
+    if (handler) {
+      elem.addEventListener('load', handler, false);
+    }
+
     elem.rel = 'stylesheet';
     elem.type = 'text/css';
     elem.media = media;

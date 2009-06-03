@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-03 18:26:09 +0300 $
+ * $Date: 2009-06-03 20:15:06 +0300 $
  */
 
 body {
@@ -41,22 +41,22 @@ label
 }
 
 @media screen and (resolution: 96dpi) {
-  #resInfo { width: 96px }
+  #paintweb_resInfo { width: 96px }
 }
 
 @media screen and (resolution: 134dpi) {
-  #resInfo { width: 134px }
+  #paintweb_resInfo { width: 134px }
 }
 
 @media screen and (resolution: 200dpi) {
-  #resInfo { width: 200px }
+  #paintweb_resInfo { width: 200px }
 }
 
 @media screen and (resolution: 300dpi) {
-  #resInfo { width: 300px }
+  #paintweb_resInfo { width: 300px }
 }
 
-#resInfo {
+#paintweb_resInfo {
   display: block;
   height: 100%;
   left: -3000px;

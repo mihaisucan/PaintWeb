@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-03 18:35:00 +0300 $
+  // $Date: 2009-06-03 20:21:42 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -51,20 +51,41 @@
   "guiScript": "script.js",
 
   /**
-   * The Canvas element ID used in the markup document for the image layer.
+   * The default image width.
    *
-   * @type String
-   * @default "imageLayer"
+   * @type Number
+   * @default 400
    */
-  "layerCanvasID": "imageLayer",
+  "imageWidth": 400,
 
   /**
-   * The Canvas element ID used in the markup document for the image buffer.
+   * The default image width.
    *
-   * @type String
-   * @default "imageBuffer"
+   * @type Number
+   * @default 300
    */
-  "bufferCanvasID": "imageBuffer",
+  "imageHeight": 300,
+
+  /**
+   * Image preload. The image you want to display when PaintWeb loads. This must 
+   * be a reference to an HTML Image element.
+   *
+   * @type HTMLImageElement
+   * @default null
+   */
+  "imagePreload": null,
+
+  /**
+   * GUI placeholder element. This element will hold all the PaintWeb interface 
+   * elements.
+   *
+   * <p>For a successful initialization of PaintWeb, you must define this 
+   * configuration value programatically from your scripts.
+   *
+   * @type Element
+   * @default null
+   */
+  "guiPlaceholder": null,
 
   /**
    * Shape drawing "type": filled, only stroke, or both. Possible values: 

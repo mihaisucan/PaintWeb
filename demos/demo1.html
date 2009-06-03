@@ -6,7 +6,7 @@
     <link rel="author" type="text/html" href="http://www.robodesign.ro" 
     title="Marius and Mihai Şucan, ROBO Design">
     <!-- $URL: http://code.google.com/p/paintweb $
-         $Date: 2009-06-03 17:17:34 +0300 $ -->
+         $Date: 2009-06-03 21:00:56 +0300 $ -->
   </head>
   <body>
     <p>Welcome to PaintWeb!</p>
@@ -14,13 +14,11 @@
 
     <p><a title="Freshalicious" 
       href="http://www.robodesign.ro/marius/my-projects/images/freshalicious"><img 
-      id="editableImage" 
-      src="http://www.robodesign.ro/files/gallery/normal/freshalicious.jpg" 
-      alt="Freshalicious"></a></p>
+      id="editableImage" src="freshalicious.jpg" alt="Freshalicious"></a></p>
 
     <p><button id="buttonEditImage">Edit image!</button></p>
 
-    <div id="PaintWebTarget"></div>
+    <div id="PaintWebTarget" style="position: relative"></div>
 
     <script type="text/javascript" src="../src/includes/debug.js"></script>
     <script type="text/javascript" src="../src/paintweb.js"></script>
@@ -32,15 +30,24 @@
     pw.init(pwInit);
   };
 
-  // Function called when the PaintWeb application fires the "init" event.
+  // Function called when the PaintWeb application fires the "initApp" event.
   function pwInit (ev) {
     if (ev.state === PaintWeb.INIT_ERROR) {
-      alert('PaintWeb initialization failed.');
-    } else if (ev.state === PaintWeb.INIT_DONE) {
-      alert('Yay, PaintWeb loaded!');
+      alert('Demo: PaintWeb initialization failed.');
+      return;
+
+    } else if (ev.state === PaintWeb.INIT_DONE && window.console && console.log) {
+      console.log('Demo: Yay, PaintWeb loaded! ' + pw.toString());
     } else {
-      alert('Unrecognized PaintWeb initialization state ' + ev.state);
+      alert('Demo: Unrecognized PaintWeb initialization state ' + ev.state);
+
+      return;
     }
+
+    this.gui.panels.main.bringOnTop();
+
+    img.style.display = 'none';
+    btn.style.display = 'none';
   };
 
   var img    = document.getElementById('editableImage'),
@@ -51,7 +58,8 @@
       pw = new PaintWeb();
 
   pw.config.guiPlaceholder = target;
-  pw.config.baseFolder = '../src/';
+  pw.config.imagePreload   = img;
+  pw.config.baseFolder     = '../src/';
 
   btn.addEventListener('click', pwStart, false);
 })();
