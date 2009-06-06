@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-02 19:59:04 +0300 $
+  // $Date: 2009-06-06 12:46:20 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -21,7 +21,18 @@
   "promptInsertimg": "Type the address of the image you want to insert:",
   "promptImageDimensions": "Please input the new image dimensions you want.",
   "promptTextFont": "Type the name of the font you want:",
-  "colorEditorTitle": "Color editor",
+  "colorMixerTitle": "Color mixer",
+
+  "colorPaletters": {
+    "_saved": "Saved colors",
+    "windows": "Windows",
+    "macos": "Mac OS",
+    "anpa": "ANPA",
+    "trumatch": "TRUMATCH colors",
+    "dic": "DIC Color Guide",
+    "pantone-solid-coated": "PANTONE solid coated",
+    "toyo94": "TOYO 94 color finder"
+  },
 
   "tools": {
     "cpicker": "Color picker",

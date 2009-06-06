@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-03 20:21:42 +0300 $
+  // $Date: 2009-06-06 12:48:57 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -177,9 +177,148 @@
   "extensionsFolder": "extensions",
 
   /**
+   * @namespace Color Mixer extension configuration.
+   */
+  "colormixer": {
+    /**
+     * Holds the minimum and maximum value for each color channel input field.  
+     * The value incrementation step is also included - this is used the user 
+     * presses the up/down arrow keys in the input of the color channel.
+     *
+     * @type Object
+     */
+    "inputValues": {
+      // RGB
+      // order: minimum, maximum, step
+      "red":   [0, 255, 1],
+      "green": [0, 255, 1],
+      "blue":  [0, 255, 1],
+
+      // HSV
+      // Hue - degrees
+      "hue": [0, 360, 1],
+      "sat": [0, 255, 1],
+      "val": [0, 255, 1],
+
+      // CMYK - all are percentages
+      "cyan":    [0, 100, 1],
+      "magenta": [0, 100, 1],
+      "yellow":  [0, 100, 1],
+      "black":   [0, 100, 1],
+
+      // CIE Lab
+      // cie_l = Lightness, it's a percentage value
+      // cie_a and cie_b are the color-opponent dimensions
+      "cie_l": [   0,   100, 1],
+      "cie_a": [ -86,    98, 1],
+      "cie_b": [-107,    94, 1],
+
+      "alpha": [0, 100, 1]
+    },
+
+    /**
+     * CIE Lab configuration.
+     * @type Object
+     */
+    "lab": {
+      // The RGB working space is sRGB which has the reference white point of 
+      // D65.
+      // These are the chromaticity coordinates for the red, green and blue 
+      // primaries.
+      "x_r": 0.64,
+      "y_r": 0.33,
+      "x_g": 0.3,
+      "y_g": 0.6,
+      "x_b": 0.13,
+      "y_b": 0.06,
+
+      // Standard observer: D65 (daylight), 2° (CIE 1931).
+      // Chromaticity coordinates.
+      "ref_x": 0.31271,
+      "ref_y": 0.32902,
+
+      // This is the calculated reference white point (xyY to XYZ) for D65, also 
+      // known as the reference illuminant tristimulus.
+      // These values are updated based on chromaticity coordinates, during 
+      // initialization.
+      "w_x": 0.95047,
+      "w_y": 1,
+      "w_z": 1.08883,
+
+      // The 3x3 matrix used for multiplying the RGB values when converting RGB 
+      // to XYZ.
+      // These values are updated based on the chromaticity coordinates, during 
+      // initialization.
+      "m": [ 0.412424,  0.212656, 0.0193324,
+             0.357579,  0.715158, 0.119193,
+             0.180464, 0.0721856, 0.950444],
+
+      // The same matrix, but inverted. This is used for the XYZ to RGB conversion.
+      "m_i": [ 3.24071,  -0.969258,   0.0556352,
+              -1.53726,   1.87599,   -0.203996,
+              -0.498571,  0.0415557,  1.05707]
+    },
+
+    /**
+     * Slider width. This value must be relative to the color space 
+     * visualisation canvas element: 1 means full width, 0.5 means half width, 
+     * etc.
+     *
+     * @type Number
+     * @default 0.10 (which is 10% of the canvas element width)
+     */
+    "sliderWidth": 0.10,
+
+    /**
+     * Spacing between the slider and the color chart.
+     *
+     * @type Number
+     * @default 0.03 (which is 3% of the canvas element width)
+     */
+    "sliderSpacing": 0.03,
+
+    /**
+     * Holds the list of color palettes.
+     * @type Object
+     */
+    "colorPalettes": {
+      "_saved" : {
+        // Color values are: red, green, blue. All three channels have values 
+        // ranging between 0 and 1.
+        "colors" : [[1,1,1], [1,1,0], [1,0,1], [0,1,1], [1,0,0], [0,1,0], [0,0,1], [0,0,0]]
+      },
+      "windows" : {
+        "file" : "colors/windows.json"
+      },
+      "macos" : {
+        "file" : "colors/macos.json"
+      },
+      "web" : {
+        "file" : "colors/web.json"
+      },
+      "anpa" : {
+        "file" : "colors/anpa.json"
+      },
+      "trumatch" : {
+        "file" : "colors/trumatch.json"
+      },
+      "dic" : {
+        "file" : "colors/dic.json"
+      },
+      "pantone-solid-coated" : {
+        "file" : "colors/pantone-solid-coated.json"
+      },
+      "toyo94" : {
+        "file" : "colors/toyo94.json"
+      }
+    },
+
+    "paletteDefault": "windows"
+  },
+
+  /**
    * @namespace Holds the MouseKeys extension options.
    */
-  // TODO: actually implement support into MouseKeys for all this.
   "mousekeys": {
     /**
      * The mouse keys movement acceleration.

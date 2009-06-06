@@ -17,15 +17,37 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-04-28 22:46:02 +0300 $
+ * $Date: 2009-06-06 12:42:08 +0300 $
  */
 
-// This is the color editor. For the implementation I used the following 
-// references:
+/**
+ * @author <a lang="ro" href="http://www.robodesign.ro/mihai">Mihai Şucan</a>
+ * @fileOverview Holds the implementation of the Color Mixer dialog.
+ */
+
+// For the implementation of this extension I used the following references:
 // - Wikipedia articles on each subject.
-// - the great brucelindbloom.com Web sites - lots of information.
-_me.coloreditor = {
-  'elems' : {
+// - the great brucelindbloom.com Web site - lots of information.
+
+// TODO: make this work.
+
+/**
+ * @class The Color Mixer extension.
+ *
+ * @param {PaintWeb} app Reference to the main paint application object.
+ */
+pwlib.extensions.colormixer = function (app) {
+  var _self = this,
+      doc   = app.doc,
+      win   = app.win;
+
+  /**
+   * Holds references to various DOM elements.
+   *
+   * @private
+   * @type Object
+   */
+  this.elems = {
     // The color editor element.
     '_self'      : false,
 
@@ -44,152 +66,82 @@ _me.coloreditor = {
 
     // The container element which holds the colors of the currently selected palette.
     'out_cpalette' : false
-  },
+  };
 
-  // This holds a reference to the 2D context of the color editor canvas.
-  // This is where the color chart and the slider are both drawn.
-  'context2d' : false,
+  /**
+   * Holds a reference to the 2D context of the color mixer canvas element. This 
+   * is where the color chart and the slider are both drawn.
+   *
+   * @private
+   * @type CanvasRenderingContext2D
+   */
+  this.context2d = false;
 
-  // Color values in various representations: RGB, HEX, HSV, CIE Lab, and CMYK. Except for 'hex', all the values *should* be from 0 to 1.
-  'color' : {
-    'red'  : false,
-    'green': false,
-    'blue' : false,
+  /**
+   * Holds the current color in several formats: RGB, HEX, HSV, CIE Lab, and 
+   * CMYK. Except for 'hex', all the values should be from 0 to 1.
+   *
+   * @type Object
+   */
+  this.color = {
+    // RGB
+    red  : 0,
+    green: 0,
+    blue : 0,
 
-    'alpha' : false,
-    'hex'   : false,
+    alpha : 0,
+    hex   : 0,
 
-    'hue' : false,
-    'sat' : false,
-    'val' : false,
+    // HSV
+    hue : 0,
+    sat : 0,
+    val : 0,
 
-    'cyan'    : false,
-    'magenta' : false,
-    'yellow'  : false,
-    'black'   : false,
+    // CMYK
+    cyan    : 0,
+    magenta : 0,
+    yellow  : 0,
+    black   : 0,
 
-    'cie_l' : false,
-    'cie_a' : false,
-    'cie_b' : false
-  },
+    // CIE Lab
+    cie_l : 0,
+    cie_a : 0,
+    cie_b : 0
+  };
 
-  // Input fields for the color values.
-  'inputs' : {
-    'red'   : false,
-    'green' : false,
-    'blue'  : false,
+  /**
+   * Holds references to all the DOM input fields, for each color channel.
+   * @type Object
+   */
+  this.inputs = {
+    red   : null,
+    green : null,
+    blue  : null,
 
-    'alpha' : false,
-    'hex'   : false,
+    alpha : null,
+    hex   : null,
 
-    'hue' : false,
-    'sat' : false,
-    'val' : false,
+    hue : null,
+    sat : null,
+    val : null,
 
-    'cyan'    : false,
-    'magenta' : false,
-    'yellow'  : false,
-    'black'   : false,
+    cyan    : null,
+    magenta : null,
+    yellow  : null,
+    black   : null,
 
-    'cie_l' : false,
-    'cie_a' : false,
-    'cie_b' : false
-  },
+    cie_l : null,
+    cie_a : null,
+    cie_b : null
+  };
 
-  // Each color editor has different minimum/maximum values for RGBA/HSV/Lab/CMYK. As such, this is a single place to configure the desired max/min value for each input field. This overrides the input[max||min] attributes.
-  // The minimum values are only relevant for CIE Lab. These are determined during initialization. 
-  // For RGB/HSV and Alpha, the minimum is assumed to be 0.
-  'value_min' : {
-    'cie_l' : 0,
-    'cie_a' : -86,
-    'cie_b' : -107
-  },
-
-  'value_max' : {
-    'red'   : 255,
-    'green' : 255,
-    'blue'  : 255,
-    'alpha' : 100, // percentage
-
-    'hue' : 360, // degrees
-    'sat' : 255,
-    'val' : 255,
-
-    'cyan'    : 100, // percentage
-    'magenta' : 100, // percentage
-    'yellow'  : 100, // percentage
-    'black'  : 100, // percentage
-
-    // Determined/updated during initialization.
-    'cie_l' : 100, // percentage
-    'cie_a' : 98,
-    'cie_b' : 94
-  },
-
-  // The "absolute maximum" value is determined based on the min/max values. E.g. for min -100 and max 100, the abs_max is 200. This is relevant only for CIE Lab.
-  'abs_max'  : {},
-
-  // ... and the step used for key up/down.
-  'value_step' : {
-    'red'   : 1,
-    'green' : 1,
-    'blue'  : 1,
-    'alpha' : 1,
-
-    'hue' : 1,
-    'sat' : 1,
-    'val' : 1,
-
-    'cyan'    : 1,
-    'magenta' : 1,
-    'yellow'  : 1,
-    'black'   : 1,
-
-    'cie_l' : 1,
-    'cie_a' : 1,
-    'cie_b' : 1
-  },
-
-  // CIE Lab configuration.
-  'lab' : {
-    // The RGB working space is sRGB which has the reference white point of D65.
-    // These are the chromaticity coordinates for the red, green and blue primaries.
-    'x_r'   : 0.64,
-    'y_r'   : 0.33,
-    'x_g'   : 0.3,
-    'y_g'   : 0.6,
-    'x_b'   : 0.13,
-    'y_b'   : 0.06,
-
-    // Standard observer: D65 (daylight), 2° (CIE 1931).
-    // Chromaticity coordinates.
-    'ref_x' : 0.31271,
-    'ref_y' : 0.32902,
-
-    // This is the calculated reference white point (xyY to XYZ) for D65, also known as the reference illuminant tristimulus.
-    // These values are determined (updated) based on chromaticity coordinates, during initialization.
-    'w_x'   : 0.95047,
-    'w_y'   : 1,
-    'w_z'   : 1.08883,
-
-    // The 3x3 matrix used for multiplying the RGB values when converting RGB to XYZ.
-    // The values are determined (updated) based on the chromaticity coordinates, during initialization.
-    'm'     : [
-      0.412424,  0.212656, 0.0193324,
-      0.357579,  0.715158, 0.119193,
-      0.180464, 0.0721856, 0.950444
-    ],
-
-    // The same matrix, but inverted. This is used for the XYZ to RGB conversion.
-    'm_i'   : [
-       3.24071,  -0.969258,   0.0556352,
-      -1.53726,   1.87599,   -0.203996,
-      -0.498571,  0.0415557,  1.05707
-    ]
-  },
+  // The "absolute maximum" value is determined based on the min/max values.  
+  // E.g. for min -100 and max 100, the abs_max is 200. This is relevant only 
+  // for CIE Lab.
+  this.abs_max  = {};
 
   // The hue spectrum used by the HSV charts.
-  'hue' : [
+  this.hue = [
     [255,   0,   0], // 0, Red,       0°
     [255, 255,   0], // 1, Yellow,   60°
     [  0, 255,   0], // 2, Green,   120°
@@ -197,16 +149,16 @@ _me.coloreditor = {
     [  0,   0, 255], // 4, Blue,    240°
     [255,   0, 255], // 5, Magenta, 300°
     [255,   0,   0]  // 6, Red,     360°
-  ],
+  ];
 
   // The active color key (input) determines how the color chart works.
-  'ckey_active' : 'red',
+  this.ckey_active = 'red';
 
   // Given a group of the inputs: red, green and blue, when one of them is active, the ckey_adjoint is set to an array of the other two input IDs.
-  'ckey_adjoint' : false,
-  'ckey_active_group' : false,
+  this.ckey_adjoint = false;
+  this.ckey_active_group = false;
 
-  'ckey_grouping' : {
+  this.ckey_grouping = {
     'red'   : 'rgb',
     'green' : 'rgb',
     'blue'  : 'rgb',
@@ -223,69 +175,22 @@ _me.coloreditor = {
     'cie_l' : 'lab',
     'cie_a' : 'lab',
     'cie_b' : 'lab'
-  },
-
-  // Slider width (scale), relative to the canvas width.
-  // During runtime these properties will hold the actual number of pixels.
-  'slider_width'   : 0.10,
-  'slider_spacing' : 0.03, // spacing between the slider and the chart
+  };
 
   // These values are automatically calculated when the color editor is initialized.
-  'slider_x'       : false,
-  'chart_width'    : false,
+  this.slider_x = false;
+  this.chart_width = false;
 
   // This holds the ID of the active tab for the color picker. This can be:
   //   - 'cmixer': this is the color chart canvas which shows a visualisation of the active color space.
   //   - 'cpalettes': this shows the user a list of predefined color palettes.
-  'tab_picker' : 'cmixer',
+  this.tab_picker = 'cmixer';
 
   // This holds the ID of the active tab for color inputs. This can be any of the color spaces: rgb, hsv, lab, cmyk.
-  'tab_inputs' : 'rgb',
-
-  // This is the list of color palettes.
-  'color_palettes' : {
-    '_saved' : {
-      'title' : 'Saved colors',
-      'colors' : [[1,1,1], [1,1,0], [1,0,1], [0,1,1], [1,0,0], [0,1,0], [0,0,1], [0,0,0]]
-    },
-    'windows' : {
-      'title' : 'Windows',
-      'file' : 'colors/windows.json'
-    },
-    'macos' : {
-      'title' : 'Mac OS',
-      'file' : 'colors/macos.json'
-    },
-    'web' : {
-      'title' : 'Web',
-      'file' : 'colors/web.json'
-    },
-    'anpa' : {
-      'title' : 'ANPA colors',
-      'file' : 'colors/anpa.json'
-    },
-    'trumatch' : {
-      'title' : 'TRUMATCH colors',
-      'file' : 'colors/trumatch.json'
-    },
-    'dic' : {
-      'title' : 'DIC Color Guide',
-      'file' : 'colors/dic.json'
-    },
-    'pantone-solid-coated' : {
-      'title' : 'PANTONE solid coated',
-      'file' : 'colors/pantone-solid-coated.json'
-    },
-    'toyo94' : {
-      'title' : 'TOYO 94 color finder',
-      'file' : 'colors/toyo94.json'
-    }
-  },
-
-  'palette_default' : 'windows',
+  this.tab_inputs = 'rgb';
 
   // Initialize the color editor. This function is called by the PaintWeb main initialization function.
-  'init' : function (ev) {
+  this.extensionRegister = function (ev) {
     var elem, ce = _me.coloreditor;
     if (!ce || !ce.color || !ce.inputs || !ce.lab || !ce.init_lab || !ce.init_lab()) {
       return false;
@@ -503,10 +408,10 @@ _me.coloreditor = {
     ce.slider_spacing_ = ce.slider_spacing;
 
     return ce.update_dimensions();
-  },
+  };
 
   // This function calculates lots of values used by the other CIE Lab-related functions.
-  'init_lab' : function () {
+  this.init_lab = function () {
     var cfg, ce = _me.coloreditor;
     if (!ce || !(cfg = ce.lab)) {
       return false;
@@ -585,7 +490,7 @@ _me.coloreditor = {
   },
 
   // The cancel button which sets back the old color and closes the dialog.
-  'btn_cancel' : function (ev) {
+  this.btn_cancel = function (ev) {
     var ce = _me.coloreditor;
     if (!ce || !ce.elems || !ce.elems.color_old || !ce.elems.color_old._color) {
       return false;
@@ -594,10 +499,11 @@ _me.coloreditor = {
     ce.ev_click_color(ce.elems.color_old, true);
 
     return ce.hide();
-  },
+  };
 
-  // The saved color only gets added into the '_saved' color palette list. The color is not saved permanently.
-  'btn_save_color' : function (ev) {
+  // The saved color only gets added into the '_saved' color palette list. The 
+  // color is not saved permanently.
+  this.btn_save_color = function (ev) {
     var ce = _me.coloreditor;
     if (!ce || !ce.color || !ce.color_palettes || !ce.color_palettes._saved) {
       return false;
@@ -615,15 +521,15 @@ _me.coloreditor = {
     }
 
     return true;
-  },
+  };
 
   // The event handler for changes made to the color palette <select> input.
-  'ev_change_cpalette' : function (ev) {
+  this.ev_change_cpalette = function (ev) {
     return _me.coloreditor.cpalette_load(this.value);
-  },
+  };
 
   // This function loads the desired color palette.
-  'cpalette_load' : function (id) {
+  this.cpalette_load = function (id) {
     var ce = _me.coloreditor;
     if (!ce || !ce.color_palettes || !id || !ce.color_palettes[id]) {
       return false;
@@ -648,10 +554,10 @@ _me.coloreditor = {
     }
 
     return true;
-  },
+  };
 
   // This is the event handler for XMLHttpRequest.onReadyStateChange.
-  'cpalette_loaded' : function (ev) {
+  this.cpalette_loaded = function (ev) {
     var ce = _me.coloreditor;
 
     // 0 UNINITIALIZED open() has not been called yet. 1 LOADING send() has not been called yet. 2 LOADED send() has been called, headers and status are available. 3 INTERACTIVE Downloading, responseText holds the partial data. 4 COMPLETED Finished with all operations.
@@ -675,10 +581,11 @@ _me.coloreditor = {
     delete json, ce.xhr;
 
     return true;
-  },
+  };
 
-  // This function takes the colors array argument which used to add each color element to the color editor (#out-cpalette).
-  'cpalette_show' : function (colors) {
+  // This function takes the colors array argument which used to add each color 
+  // element to the color editor (#out-cpalette).
+  this.cpalette_show = function (colors) {
     var ce = _me.coloreditor;
     if (!colors || !(colors instanceof Array) || !ce || !ce.elems || !ce.elems.out_cpalette || !_me.doc.createDocumentFragment) {
       return false;
@@ -714,10 +621,11 @@ _me.coloreditor = {
     delete frag, colors;
 
     return true;
-  },
+  };
 
-  // This is the 'click' event handler for colors (in the color palette list, or the old color).
-  'ev_click_color' : function (ev, cancel) {
+  // This is the 'click' event handler for colors (in the color palette list, or 
+  // the old color).
+  this.ev_click_color = function (ev, cancel) {
     var ce = _me.coloreditor;
     if (!ce || !ce.color || !ev) {
       return false;
@@ -744,10 +652,11 @@ _me.coloreditor = {
     } else {
       return ce.update_target();
     }
-  },
+  };
 
-  // Calculate the dimensions and coordinates for the slider and the color chart within the canvas element.
-  'update_dimensions' : function () {
+  // Calculate the dimensions and coordinates for the slider and the color chart 
+  // within the canvas element.
+  this.update_dimensions = function () {
     var ce = _me.coloreditor;
     if (!ce || !ce.context2d || !ce.context2d.canvas || !ce.elems) {
       return false;
@@ -775,11 +684,14 @@ _me.coloreditor = {
     style.left  = ce.slider_x     + 'px';
 
     return true;
-  },
+  };
 
-  // A simple function to calculate the matrix product of two given A and B matrices. A must be one row and 3 columns. B must be 3 rows and 3 columns.
-  // Both arguments must be arrays in the form of [a00, a01, a02, ... a10, a11, a12, ...].
-  'calc_m1x3' : function (a, b) {
+  // A simple function to calculate the matrix product of two given A and 
+  // B matrices. A must be one row and 3 columns. B must be 3 rows and 
+  // 3 columns.
+  // Both arguments must be arrays in the form of [a00, a01, a02, ... a10, a11, 
+  // a12, ...].
+  this.calc_m1x3 = function (a, b) {
     if (!(a instanceof Array) || !(b instanceof Array)) {
       return false;
     }
@@ -789,11 +701,13 @@ _me.coloreditor = {
       z = a[0] * b[2] + a[1] * b[5] + a[2] * b[8];
 
     return [x, y, z];
-  },
+  };
 
-  // Another simple function which calculates the matrix inverse, for a matrix of 3 rows and 3 columns.
-  // The argument must be an array in the form of [a00, a01, a02, ... a10, a11, a12, ...].
-  'calc_m3inv' : function (m) {
+  // Another simple function which calculates the matrix inverse, for a matrix 
+  // of 3 rows and 3 columns.
+  // The argument must be an array in the form of [a00, a01, a02, ... a10, a11, 
+  // a12, ...].
+  this.calc_m3inv = function (m) {
     if (!(m instanceof Array)) {
       return false;
     }
@@ -819,18 +733,18 @@ _me.coloreditor = {
     ];
 
     return i;
-  },
+  };
 
   // The click event handler for all the tab buttons.
-  'ev_click_tab' : function (ev) {
+  this.ev_click_tab = function (ev) {
     if (this._tab) {
       return _me.coloreditor.show_tab(this._tab);
     } else {
       return false;
     }
-  },
+  };
 
-  'show_tab' : function (tab) {
+  this.show_tab = function (tab) {
     var ce = _me.coloreditor;
     if (!ce || !tab) {
       return false;
@@ -863,19 +777,20 @@ _me.coloreditor = {
     }
 
     return true;
-  },
+  };
 
-  // The event handler for inputs of type=radio - the inputs which allow the user to change the active color key.
-  'ev_change_ckey_active' : function (ev) {
+  // The event handler for inputs of type=radio - the inputs which allow the 
+  // user to change the active color key.
+  this.ev_change_ckey_active = function (ev) {
     if (!this.value || this.value == _me.coloreditor.ckey_active || _me.coloreditor.update_ckey_active(this.value)) {
       return false;
     }
 
     return true;
-  },
+  };
 
   // The actual function which deals with the changes to the active color key.
-  'update_ckey_active' : function (ckey, only_vars) {
+  this.update_ckey_active = function (ckey, only_vars) {
     var ce = _me.coloreditor;
     if (!ce || !ckey || !ce.color || !ce.inputs[ckey]) {
       return false;
@@ -909,10 +824,13 @@ _me.coloreditor = {
     }
 
     return true;
-  },
+  };
 
-  // This function enables/disables the color editor. This is the event handler associated with any color option available (stroke and fill colors). The editor is given the target (the color option) picked by the user. Any changes to the color are propagated to the target.
-  'ev_click_color_opt' : function (ev) {
+  // This function enables/disables the color mixer. This is the event handler 
+  // associated with any color option available (stroke and fill colors). The 
+  // editor is given the target (the color option) picked by the user. Any 
+  // changes to the color are propagated to the target.
+  this.ev_click_color_opt = function (ev) {
     var i, ce  = _me.coloreditor;
     if (!ce || !ce.color || !this._value || !this._prop) {
       return false;
@@ -974,10 +892,11 @@ _me.coloreditor = {
     }
 
     return true;
-  },
+  };
 
-  // When the user double clicks the color palettes area, this event handler toggles the double size mode on/off.
-  'ev_dblclick_cpalettes' : function (ev) {
+  // When the user double clicks the color palettes area, this event handler 
+  // toggles the double size mode on/off.
+  this.ev_dblclick_cpalettes = function (ev) {
     var ce = _me.coloreditor;
     if (!ce || !ce.elems || !ce.elems.tab_cpalettes) {
       return false;
@@ -1006,9 +925,9 @@ _me.coloreditor = {
     } else {
       return true;
     }
-  },
+  };
 
-  'hide' : function () {
+  this.hide = function () {
     var ce = _me.coloreditor;
 
     ce.elems._self.style.display = 'none';
@@ -1016,10 +935,10 @@ _me.coloreditor = {
     ce.ev_canvas_mode = false;
 
     return true;
-  },
+  };
 
   // This is the event handler for the changes to the color editor inputs.
-  'ev_input_change' : function (ev) {
+  this.ev_input_change = function (ev) {
     var ce = _me.coloreditor;
     if (!ce || !ce.elems.target || !this._ckey) {
       return false;
@@ -1044,10 +963,14 @@ _me.coloreditor = {
     }
 
     return ce.update_color(this._ckey);
-  },
+  };
 
-  // This function takes the ckey parameter which tells the updated color key. Based on which color key is updated, the other color values are also updated (e.g. RGB conversion to HSV, CIE Lab, CMYK and HEX). After the color value conversions, the inputs, the color option target, and the color editor canvas are all updated to reflect the change.
-  'update_color' : function (ckey) {
+  // This function takes the ckey parameter which tells the updated color key.  
+  // Based on which color key is updated, the other color values are also 
+  // updated (e.g. RGB conversion to HSV, CIE Lab, CMYK and HEX). After the 
+  // color value conversions, the inputs, the color option target, and the color 
+  // editor canvas are all updated to reflect the change.
+  this.update_color = function (ckey) {
     var ce = _me.coloreditor;
     if (!ce) {
       return false;
@@ -1088,10 +1011,11 @@ _me.coloreditor = {
     }
 
     return true;
-  },
+  };
 
-  // This function updates the color option target. It sets the current color values.
-  'update_target' : function () {
+  // This function updates the color option target. It sets the current color 
+  // values.
+  this.update_target = function () {
     var ce = _me.coloreditor;
     if (!ce || !ce.elems.target || !_me.img_temp || !ce.color) {
       return false;
@@ -1131,10 +1055,10 @@ _me.coloreditor = {
     elem.opacity = val.alpha;
 
     return true;
-  },
+  };
 
   // Take the internal color values and show them in the inputs.
-  'update_inputs' : function () {
+  this.update_inputs = function () {
     var i, input, ce = _me.coloreditor;
     if (!ce || !ce.inputs || !ce.color) {
       return false;
@@ -1153,12 +1077,17 @@ _me.coloreditor = {
     }
 
     return true;
-  },
+  };
 
   // Quote from Wikipedia:
-  // "Since RGB and CMYK spaces are both device-dependent spaces, there is no simple or general conversion formula that converts between them. Conversions are generally done through color management systems, using color profiles that describe the spaces being converted. Nevertheless, the conversions cannot be exact, since these spaces have very different gamuts."
+  // "Since RGB and CMYK spaces are both device-dependent spaces, there is no 
+  // simple or general conversion formula that converts between them.  
+  // Conversions are generally done through color management systems, using 
+  // color profiles that describe the spaces being converted. Nevertheless, the 
+  // conversions cannot be exact, since these spaces have very different 
+  // gamuts."
   // Translation: this is just a simple RGB to CMYK conversion function.
-  'rgb2cmyk' : function () {
+  this.rgb2cmyk = function () {
     var color, ce = _me.coloreditor;
     if (!ce || !(color = ce.color)) {
       return false;
@@ -1190,9 +1119,9 @@ _me.coloreditor = {
     color.black   = black;
 
     return true;
-  },
+  };
 
-  'cmyk2rgb' : function () {
+  this.cmyk2rgb = function () {
     var color, ce = _me.coloreditor;
     if (!ce || !(color = ce.color)) {
       return false;
@@ -1205,10 +1134,10 @@ _me.coloreditor = {
     color.blue  = 1 - color.yellow  * w - color.black;
 
     return true;
-  },
+  };
 
   // This function takes the RGB color values and converts them to HSV.
-  'rgb2hsv' : function () {
+  this.rgb2hsv = function () {
     var ce = _me.coloreditor;
     if (!ce || !ce.color) {
       return false;
@@ -1250,15 +1179,21 @@ _me.coloreditor = {
     ce.color.val = val;
 
     return true;
-  },
+  };
 
-  // This function takes the internal HSV color values and converts them to RGB. The return value is either false (when there's any problem), or an array of three values [red, green, value] - this is the result of the HSV to RGB conversion.
+  // This function takes the internal HSV color values and converts them to RGB.  
+  // The return value is either false (when there's any problem), or an array of 
+  // three values [red, green, value] - this is the result of the HSV to RGB 
+  // conversion.
   // Arguments:
   //   - no_update (boolean)
-  //     Tells the function to NOT update the internal RGB color values (ce.color). This is enabled by default.
+  //     Tells the function to NOT update the internal RGB color values 
+  //     (ce.color). This is enabled by default.
   //   - hsv (array)
-  //     Instead of using the internal HSV color values (from ce.color), the function will use the values given in the array [hue, saturation, light].
-  'hsv2rgb' : function (no_update, hsv) {
+  //     Instead of using the internal HSV color values (from ce.color), the 
+  //     function will use the values given in the array [hue, saturation, 
+  //     light].
+  this.hsv2rgb = function (no_update, hsv) {
     var color, ce = _me.coloreditor;
     if (!ce || !(color = ce.color)) {
       return false;
@@ -1309,10 +1244,10 @@ _me.coloreditor = {
     }
 
     return [red, green, blue];
-  },
+  };
 
   // This updates the hexadecimal representation of the color, based on the RGB values.
-  'rgb2hex' : function () {
+  this.rgb2hex = function () {
     var hex = '#', rgb = ['red', 'green', 'blue'], i, val,
       color, ce = _me.coloreditor;
     if (!ce || !(color = ce.color)) {
@@ -1330,10 +1265,10 @@ _me.coloreditor = {
     color.hex = hex;
 
     return true;
-  },
+  };
 
   // This updates the RGB color values, based on the hexadecimal color representation.
-  'hex2rgb' : function () {
+  this.hex2rgb = function () {
     var rgb = ['red', 'green', 'blue'], i, val, color, hex,
       ce = _me.coloreditor;
     if (!ce || !(color = ce.color) || !(hex = color.hex)) {
@@ -1351,9 +1286,9 @@ _me.coloreditor = {
     }
 
     return true;
-  },
+  };
 
-  'rgb2lab' : function () {
+  this.rgb2lab = function () {
     var color, ce = _me.coloreditor;
     if (!ce || !(color = ce.color)) {
       return false;
@@ -1365,9 +1300,9 @@ _me.coloreditor = {
     color.cie_b = lab[2];
 
     return true;
-  },
+  };
 
-  'lab2rgb' : function () {
+  this.lab2rgb = function () {
     var color, ce = _me.coloreditor;
     if (!ce || !(color = ce.color)) {
       return false;
@@ -1379,9 +1314,9 @@ _me.coloreditor = {
     color.blue  = rgb[2];
 
     return true;
-  },
+  };
 
-  'xyz2lab' : function (xyz) {
+  this.xyz2lab = function (xyz) {
     var cfg = _me.coloreditor.lab,
 
       // 216/24389 or (6/29)^3 (both = 0.008856...)
@@ -1417,9 +1352,9 @@ _me.coloreditor = {
       cie_b = 200 * (xyz[1] -  xyz[2]);
 
     return [cie_l, cie_a, cie_b];
-  },
+  };
 
-  'lab2xyz' : function (cie_l, cie_a, cie_b) {
+  this.lab2xyz = function (cie_l, cie_a, cie_b) {
     var y = (cie_l + 16) / 116;
 
     var x = y + cie_a / 500,
@@ -1458,9 +1393,9 @@ _me.coloreditor = {
     z *= cfg.w_z;
 
     return [x, y, z];
-  },
+  };
 
-  'xyz2rgb' : function (xyz) {
+  this.xyz2rgb = function (xyz) {
     var rgb = _me.coloreditor.calc_m1x3(xyz, _me.coloreditor.lab.m_i);
 
     if (rgb[0] > 0.0031308) {
@@ -1500,9 +1435,9 @@ _me.coloreditor = {
     }
 
     return rgb;
-  },
+  };
 
-  'rgb2xyz' : function (rgb) {
+  this.rgb2xyz = function (rgb) {
     if (rgb[0] > 0.04045) {
       rgb[0] = Math.pow(( rgb[0] + 0.055 ) / 1.055, 2.4);
     } else {
@@ -1522,11 +1457,15 @@ _me.coloreditor = {
     }
 
     return _me.coloreditor.calc_m1x3(rgb, _me.coloreditor.lab.m);
-  },
+  };
 
-  // This function updates/redraws the entire color editor canvas. This is done by calling two methods: draw_chart() and draw_slider(). Additionally, this function updates the coordinates of the chart dot and of the slider handler.
-  // The ckey argument tells which color key has been updated. This is used to determine which canvas parts need to be updated.
-  'update_canvas' : function (updated_ckey) {
+  // This function updates/redraws the entire color editor canvas. This is done 
+  // by calling two methods: draw_chart() and draw_slider(). Additionally, this 
+  // function updates the coordinates of the chart dot and of the slider 
+  // handler.
+  // The ckey argument tells which color key has been updated. This is used to 
+  // determine which canvas parts need to be updated.
+  this.update_canvas = function (updated_ckey) {
     var ce = _me.coloreditor;
     if (!ce || !ce.draw_chart || !ce.draw_slider || !ce.ckey_active) {
       return false;
@@ -1583,10 +1522,14 @@ _me.coloreditor = {
     } else {
       return true;
     }
-  },
+  };
 
-  // This is the handler for mouse events sent to the #controls element, which is positioned on top of the canvas. This function updates the current color key value based on the mouse coordinates on the slider. If the mouse is inside the color chart, then the adjoint color keys are updated based on the coordinates.
-  'ev_canvas' : function (ev) {
+  // This is the handler for mouse events sent to the #controls element, which 
+  // is positioned on top of the canvas. This function updates the current color 
+  // key value based on the mouse coordinates on the slider. If the mouse is 
+  // inside the color chart, then the adjoint color keys are updated based on 
+  // the coordinates.
+  this.ev_canvas = function (ev) {
     var mode, ce = _me.coloreditor;
     if (!ce || !ce.elems || !ce.elems.controls || !ce.elems.slider_pos || !ce.elems.chart_pos || !ce.context2d || !ce.chart_width || !ce.ckey_active || !ce.slider_x || !ev || !ev.target) {
       return false;
@@ -1687,10 +1630,11 @@ _me.coloreditor = {
     }
 
     return false;
-  },
+  };
 
-  // When the user double clicks the canvas, this event handler toggles the double size mode on/off.
-  'ev_dblclick_canvas' : function (ev) {
+  // When the user double clicks the canvas, this event handler toggles the 
+  // double size mode on/off.
+  this.ev_dblclick_canvas = function (ev) {
     var ce = _me.coloreditor;
     if (!ce || !ce.elems || !ce.elems.tab_cmixer || !ce.context2d || !ce.context2d.canvas) {
       return false;
@@ -1717,11 +1661,12 @@ _me.coloreditor = {
     } else {
       return ce.update_canvas();
     }
-  },
+  };
 
   // Draw the canvas color chart.
-  // The ckey argument tells which color key has been updated. This is used to determine if the canvas color chart needs to be updated.
-  'draw_chart' : function (updated_ckey) {
+  // The ckey argument tells which color key has been updated. This is used to 
+  // determine if the canvas color chart needs to be updated.
+  this.draw_chart = function (updated_ckey) {
     var ce = _me.coloreditor;
     if (!ce || !ce.context2d || !ce.context2d.canvas || !ce.ckey_active || !ce.inputs || !ce.inputs[ce.ckey_active]) {
       return false;
@@ -1928,11 +1873,12 @@ _me.coloreditor = {
     }
 
     return true;
-  },
+  };
 
   // Draw the canvas color slider.
-  // The ckey argument tells which color key has been updated. This is used to determine if the canvas color chart needs to be updated.
-  'draw_slider' : function (updated_ckey) {
+  // The ckey argument tells which color key has been updated. This is used to 
+  // determine if the canvas color chart needs to be updated.
+  this.draw_slider = function (updated_ckey) {
     var ce = _me.coloreditor;
     if (!ce || !ce.context2d || !ce.context2d.canvas || !ce.ckey_active || !ce.inputs || !ce.inputs[ce.ckey_active]) {
       return false;
@@ -2083,10 +2029,12 @@ _me.coloreditor = {
     context.strokeRect(slider_x, slider_y, slider_w, slider_h);
 
     return true;
-  },
+  };
 
-  // Just like in Photoshop, if the user presses X, the fill/stroke colors are swapped.
-  'swap_fill_stroke' : function (ev) {
+  // Just like in Photoshop, if the user presses X, the fill/stroke colors are 
+  // swapped.
+  // TODO: move this into the main code.
+  this.swap_fill_stroke = function (ev) {
     var ce = _me.coloreditor;
     if (!ce) {
       return false;
@@ -2126,7 +2074,7 @@ _me.coloreditor = {
     stroke.opacity = tmp;
 
     return true;
-  }
+  };
 };
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
