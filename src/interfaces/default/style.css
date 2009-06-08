@@ -17,16 +17,10 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-03 20:15:06 +0300 $
+ * $Date: 2009-06-06 13:33:18 +0300 $
  */
 
-body {
-  background: #fff;
-  color: #000;
-  font: 12px sans-serif;
-}
-
-label
+.paintweb_placeholder label
 {
   font-weight: bold;
   cursor: pointer;
@@ -805,6 +799,7 @@ label
 /* The Properties and Help boxes */
 
 #properties {
+  display: none;
   position: absolute;
   top: 5px;
   left: 510px;

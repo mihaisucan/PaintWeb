@@ -1,3 +1,29 @@
+2009-06-08:
+==========
+
+- The new interface design and layout is all sketched-out and set pretty much in 
+stone. Ready to implement it.
+- Included all the new icons from the design in the interface folder.
+- Completed GUI code reorganization.
+- Started updating the layout file to fit with to the new GUI.
+- Started updating the interface script for the same purpose - implementation of 
+the desired user interface interaction.
+- Added support for "commands" in the main PaintWeb code. This allows the 
+association of simple function with IDs. Any such command can be triggered by 
+keyboard shortcuts and/or by user interface elements.
+- Implemented some of the current functionality as "commands" in PaintWeb.
+- New keyboard shortcuts for said commands.
+- New GUI component: tabbed panel.
+- New application events for extension (un)register.
+- New localization strings. The layout file was static - the GUI code is now 
+making sure all the strings in the layout are updated.
+
+Remaining work: complete new GUI interaction code and the new layout file.  
+Obviously, the stylesheet needs its own additional work - it's pretty much 
+untouched at the moment.
+
+Initialization fails, at the moment. Commit is for progress logging purposes.
+
 2009-06-06:
 ===========
 

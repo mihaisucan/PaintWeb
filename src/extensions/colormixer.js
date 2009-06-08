@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-06 12:42:08 +0300 $
+ * $Date: 2009-06-06 18:58:07 +0300 $
  */
 
 /**
@@ -2027,51 +2027,6 @@ pwlib.extensions.colormixer = function (app) {
 
     context.strokeStyle = '#6d6d6d';
     context.strokeRect(slider_x, slider_y, slider_w, slider_h);
-
-    return true;
-  };
-
-  // Just like in Photoshop, if the user presses X, the fill/stroke colors are 
-  // swapped.
-  // TODO: move this into the main code.
-  this.swap_fill_stroke = function (ev) {
-    var ce = _me.coloreditor;
-    if (!ce) {
-      return false;
-    }
-
-    var tmp,
-      fill   = _me.inputs.fillStyle,
-      stroke = _me.inputs.strokeStyle,
-      img    = _me.img_temp;
-
-    if (!fill || !stroke || !img) {
-      return false;
-    }
-
-    // Hide the color editor.
-    if (ce.elems.target) {
-      ce.hide();
-    }
-
-    tmp = img.fillStyle;
-    img.fillStyle   = img.strokeStyle;
-    img.strokeStyle = tmp;
-
-    tmp = fill._value;
-    fill._value   = stroke._value;
-    stroke._value = tmp;
-
-    fill   = fill.style;
-    stroke = stroke.style;
-
-    tmp = fill.backgroundColor;
-    fill.backgroundColor   = stroke.backgroundColor;
-    stroke.backgroundColor = tmp;
-
-    tmp = fill.opacity;
-    fill.opacity   = stroke.opacity;
-    stroke.opacity = tmp;
 
     return true;
   };

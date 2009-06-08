@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-06 12:46:20 +0300 $
+  // $Date: 2009-06-08 21:04:17 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -8,6 +8,8 @@
   "errorInitXMLHttpRequest": "Error: window.XMLHttpRequest is not available.",
   "errorInitJSON": "Error: window.JSON is not available.",
   "errorInitCanvas": "Error: Your browser does not support Canvas.",
+  "errorInitCommands": "Error: failed to initialize the PaintWeb commands!",
+  "errorInitExtensions": "Error: failed to initialize the extensions!",
   "errorInitTools": "Error: failed to initialize the drawing tools!",
   "errorToolActivate": "Error: the tool you want could not be properly activated!",
   "errorInitGUI": "Error: the interface failed to initialize!",
@@ -21,9 +23,9 @@
   "promptInsertimg": "Type the address of the image you want to insert:",
   "promptImageDimensions": "Please input the new image dimensions you want.",
   "promptTextFont": "Type the name of the font you want:",
-  "colorMixerTitle": "Color mixer",
 
-  "colorPaletters": {
+  "colorMixerTitle": "Color mixer",
+  "colorPalettes": {
     "_saved": "Saved colors",
     "windows": "Windows",
     "macos": "Mac OS",
@@ -32,6 +34,16 @@
     "dic": "DIC Color Guide",
     "pantone-solid-coated": "PANTONE solid coated",
     "toyo94": "TOYO 94 color finder"
+  },
+
+  "guiCanvasResizer": "Resize image",
+
+  "tabs": {
+    "toolbar_main": "Main",
+    "toolbar_line": "Line",
+    "toolbar_selection": "Selection",
+    "toolbar_text": "Text",
+    "toolbar_shadow": "Shadow"
   },
 
   "tools": {
@@ -47,6 +59,17 @@
     "rect": "Rectangle",
     "select": "Rectangle selection",
     "text": "Text"
+  },
+
+  "commands": {
+    "undo": "Undo",
+    "redo": "Redo",
+    "imageClear": "Clear image",
+    "imageSave": "Save image",
+    "selectionCut": "Cut selection",
+    "selectionCopy": "Copy selection",
+    "clipboardPaste": "Paste clipboard",
+    "help": "Help"
   },
 
   "status": {

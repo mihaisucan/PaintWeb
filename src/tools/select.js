@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-03 18:30:51 +0300 $
+ * $Date: 2009-06-06 19:11:31 +0300 $
  */
 
 /**
@@ -1107,7 +1107,7 @@ pwlib.tools.select = function (app) {
    * must be an ImageData. This method will generate a new selection which will 
    * hold the image pasted.
    */
-  this.selectionPaste = function () {
+  this.clipboardPaste = function () {
     if (_self.state != _self.STATE_NONE &&
         _self.state != _self.STATE_SELECTED) {
       return false;
@@ -1166,12 +1166,6 @@ pwlib.tools.select = function (app) {
    * the following keys:
    *
    * <ul>
-   *   <li><kbd>Control X</kbd> - Cut the selected pixels.
-   *
-   *   <li><kbd>Control C</kbd> - Copy the selected pixels to the PaintWeb 
-   *   application clipboard. The ImageData is stored in 
-   *   <var>app.clipboard</var>.
-   *
    *   <li><kbd>Enter</kbd> - Toggle the transformation mode. When 
    *   transformation mode is enabled, any selection changes also affects the 
    *   selected pixels.
@@ -1186,17 +1180,14 @@ pwlib.tools.select = function (app) {
    * </ul>
    *
    * @param {Event} ev The DOM Event object.
+   *
+   * @returns {Boolean} True if the keyboard shortcut was recognized, or false 
+   * if not.
    */
   this.keydown = function (ev) {
     var sel = _self.selection;
 
     switch (ev.kid_) {
-      case 'Control X':
-        return _self.selectionCut();
-
-      case 'Control C':
-        return _self.selectionCopy();
-
       case 'Enter':
         // Toggle the transformation mode.
         sel.transform = inputs.selTransform.checked = !sel.transform;
@@ -1210,7 +1201,6 @@ pwlib.tools.select = function (app) {
 
         layerContext.clearRect(sel.x, sel.y, sel.width, sel.height);
         historyAdd();
-        console.log('Delete');
 
       case 'Escape':
         // Drop the selection.

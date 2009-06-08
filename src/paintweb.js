@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-06 13:01:04 +0300 $
+ * $Date: 2009-06-08 23:44:43 +0300 $
  */
 
 /**
@@ -52,7 +52,7 @@ function PaintWeb (win, doc) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090606;
+  this.build = 20090608;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -134,6 +134,17 @@ function PaintWeb (win, doc) {
   this.extensions = {};
 
   /**
+   * Holds all the PaintWeb commands. Each property in this object must 
+   * reference a simple function which can be executed by keyboard shortcuts 
+   * and/or GUI elements.
+   *
+   * @type Object
+   * @see PaintWeb#commandRegister Register a new command.
+   * @see PaintWeb#commandUnregister Unregister a command.
+   */
+  this.commands = {};
+
+  /**
    * The document element we will be working with.
    *
    * @private
@@ -205,6 +216,16 @@ function PaintWeb (win, doc) {
      * @type Element
      */
     elem: null,
+
+    /**
+     * The ID of the DOM element holding information about the current browser 
+     * rendering settings (zoom / DPI).
+     *
+     * @private
+     * @type String
+     * @default 'paintweb_resInfo'
+     */
+    elemId: 'paintweb_resInfo',
 
     /**
      * Optimal DPI for the canvas elements.
@@ -389,17 +410,11 @@ function PaintWeb (win, doc) {
       return false;
     }
 
-    var placeholder = this.config.guiPlaceholder;
-
-    if (typeof placeholder !== 'object' || placeholder.nodeType !== 
-        Node.ELEMENT_NODE) {
+    if (typeof this.config.guiPlaceholder !== 'object' || 
+        this.config.guiPlaceholder.nodeType !== Node.ELEMENT_NODE) {
       this.initError(lang.errorInitGUIPlaceholder);
       return false;
     }
-
-    // Make sure the user nicely waits for PaintWeb to load, without seeing 
-    // much.
-    placeholder.style.visibility = 'hidden';
 
     // Silently ignore any wrong value for the config.imagePreload property.
     if (typeof this.config.imagePreload !== 'object' || 
@@ -574,6 +589,28 @@ function PaintWeb (win, doc) {
     if (!_self.initCanvas()) {
       _self.initError(lang.errorInitCanvas);
     }
+
+    // Start GUI load now.
+    _self.guiLoad();
+  };
+
+  /**
+   * Initialize the PaintWeb commands.
+   *
+   * @private
+   * @returns {Boolean} True if the initialization was successful, or false if 
+   * not.
+   */
+  this.initCommands = function () {
+    if (this.commandRegister('undo',           this.historyUndo) &&
+        this.commandRegister('redo',           this.historyRedo) &&
+        this.commandRegister('imageSave',      this.imageSave) &&
+        this.commandRegister('imageClear',     this.imageClear) &&
+        this.commandRegister('swapFillStroke', this.swapFillStroke)) {
+      return true;
+    } else {
+      return false;
+    }
   };
 
   /**
@@ -666,19 +703,20 @@ function PaintWeb (win, doc) {
    * @see PaintWeb#ev_canvas The global Canvas events handler.
    */
   this.initCanvas = function () {
-    var resInfo         = doc.getElementById('paintweb_resInfo'),
+    var cfg             = this.config,
+        res             = cfg.resolution,
+        resInfo         = doc.getElementById(res.elemId),
         layerCanvas     = doc.createElement('canvas'),
         bufferCanvas    = doc.createElement('canvas'),
         layerContext    = layerCanvas.getContext('2d'),
         bufferContext   = bufferCanvas.getContext('2d'),
-        cfg             = this.config,
         width           = cfg.imageWidth,
         height          = cfg.imageHeight,
         imagePreload    = cfg.imagePreload;
 
     if (!resInfo) {
       resInfo = doc.createElement('div');
-      resInfo.id = 'paintweb_resInfo';
+      resInfo.id = res.elemId;
       doc.body.appendChild(resInfo);
     }
 
@@ -692,7 +730,7 @@ function PaintWeb (win, doc) {
       height = parseInt(imagePreload.height);
     }
 
-    this.resolution.elem = resInfo;
+    res.elem = resInfo;
 
     this.image.width  = layerCanvas.width  = bufferCanvas.width  = width;
     this.image.height = layerCanvas.height = bufferCanvas.height = height;
@@ -724,9 +762,6 @@ function PaintWeb (win, doc) {
 
     this.win.addEventListener('resize', this.updateCanvasScaling, false);
 
-    // Start GUI load now.
-    this.guiLoad();
-
     return true;
   };
 
@@ -741,6 +776,11 @@ function PaintWeb (win, doc) {
    * @see pwlib.appEvent.initApp
    */
   this.initComplete = function () {
+    if (!this.initCommands()) {
+      this.initError(lang.errorInitCommands);
+      return;
+    }
+
     // The global keyboard events handler implements everything needed for 
     // switching between tools and for accessing any other functionality of the 
     // Web application.
@@ -750,9 +790,6 @@ function PaintWeb (win, doc) {
          keyup: this.ev_keyboard});
 
     this.updateCanvasScaling();
-
-    // Make PaintWeb visible.
-    this.config.guiPlaceholder.style.visibility = 'visible';
 
     this.initialized = PaintWeb.INIT_DONE;
 
@@ -1032,7 +1069,7 @@ function PaintWeb (win, doc) {
   this.ev_keyboard = function (ev) {
     // Do not continue if the key was not recognized by the lib.
     if (!ev.key_) {
-      return false;
+      return;
     }
 
     if (ev.target && ev.target.nodeName) {
@@ -1071,36 +1108,30 @@ function PaintWeb (win, doc) {
     ev.kobj_ = gkey;
 
     // Check if the keyboard shortcut has some extension associated.
-    var ext    = 'extension' in gkey ? _self.extensions[gkey.extension] : false,
-        ext_fn = false;
+    if ('extension' in gkey) {
+      var extension = _self.extensions[gkey.extension],
+          method    = gkey.method || ev.type;
 
-    // Check if the keyboard shortcut points to a specific method from the 
-    // extension object, otherwise use the current event type as the method 
-    // name.
-    if (ext) {
-      ext_fn = 'method' in gkey ? ext[gkey.method] : ext[ev.type];
-
-      // Execute the associated extension method.
-      if (ext_fn) {
-        ext_fn(ev);
+      // Call the extension method.
+      if (method in extension) {
+        extension[method].call(this, ev);
       }
+
+    } else if (ev.type === 'keydown' && 'command' in gkey && gkey.command in 
+        _self.commands) {
+
+      // Invoke the command associated with the key.
+      _self.commands[gkey.command].call(this, ev);
+
+    } else if (ev.type === 'keydown' && 'toolActivate' in gkey && 
+        gkey.toolActivate in _self.tools) {
+
+      // Active the tool associated to the key.
+      _self.toolActivate(gkey.toolActivate, ev);
+
+    } else if (ev.type === 'keypress') {
+      ev.preventDefault();
     }
-
-    switch (ev.type) {
-      case 'keydown':
-        // Activate the tool associated with the current keyboard shortcut.
-        // Do this only once, for the keydown event.
-        if ('tool' in gkey) {
-          _self.toolActivate(gkey.tool);
-        }
-        break;
-
-      case 'keypress':
-        ev.preventDefault();
-    }
-
-    // TODO: check if return is needed.
-    return true;
   };
 
   // The event handler for keys +/- (zoom in/out), and for the * (zoom to 100%).
@@ -1679,12 +1710,9 @@ function PaintWeb (win, doc) {
       return false;
     }
 
-    var cancel = this.events.dispatch(new appEvent.toolRegister(id));
-    if (cancel) {
-      return false;
-    }
-
     tool.prototype._id = id;
+
+    this.events.dispatch(new appEvent.toolRegister(id));
 
     if (!this.tool && id === this.config.toolDefault) {
       return this.toolActivate(id);
@@ -1713,11 +1741,7 @@ function PaintWeb (win, doc) {
       return false;
     }
 
-    // Erm... nothing to cancel at the moment.
-    var cancel = this.events.dispatch(new appEvent.toolUnregister(id));
-    if (cancel) {
-      return false;
-    }
+    this.events.dispatch(new appEvent.toolUnregister(id));
 
     return true;
   };
@@ -1730,6 +1754,9 @@ function PaintWeb (win, doc) {
    * any custom extension registration code to run. If the method returns false, 
    * then the extension will not be registered.
    *
+   * <p>Once the extension is successfully registered, this method dispatches 
+   * the {@link pwlib.appEvent.extensionRegister} application event.
+   *
    * @param {String} id The ID of the new extension. The extension object 
    * constructor must exist in {@link pwlib.extensions}.
    *
@@ -1737,7 +1764,8 @@ function PaintWeb (win, doc) {
    * false if not.
    *
    * @see PaintWeb#extensionUnregister allows you to unregister extensions.
-   * @see pwlib.extensions Holds all the extensions.
+   * @see PaintWeb.extensions Holds all the instances of registered extensions.
+   * @see pwlib.extensions Holds all the extension classes.
    */
   this.extensionRegister = function (id) {
     if (typeof id !== 'string' || !id) {
@@ -1755,11 +1783,12 @@ function PaintWeb (win, doc) {
 
     if ('extensionRegister' in obj && !obj.extensionRegister()) {
       return false;
-
-    } else {
-      this.extensions[id] = obj;
-      return true;
     }
+
+    this.extensions[id] = obj;
+    this.events.dispatch(new appEvent.extensionRegister(id));
+
+    return true;
   };
 
   /**
@@ -1769,24 +1798,83 @@ function PaintWeb (win, doc) {
    * <code>extensionUnregister()</code> method, then it will be invoked, 
    * allowing any custom extension removal code to run.
    *
+   * <p>Before the extension is unregistered, this method dispatches the {@link 
+   * pwlib.appEvent.extensionUnregister} application event.
+   *
    * @param {String} id The ID of the extension object you want to unregister.
    *
    * @returns {Boolean} True if the extension was removed, or false if it does 
    * not exist or some error occurred.
    *
    * @see PaintWeb#extensionRegister allows you to register new extensions.
-   * @see pwlib.extensions Holds all the extensions.
+   * @see PaintWeb.extensions Holds all the instances of registered extensions.
+   * @see pwlib.extensions Holds all the extension classes.
    */
   this.extensionUnregister = function (id) {
     if (typeof id !== 'string' || !id || !(id in this.extensions)) {
       return false;
     }
 
+    this.events.dispatch(new appEvent.extensionUnregister(id));
+
     if ('extensionUnregister' in this.extensions[id]) {
-      _self.actions[id].extensionUnregister();
+      this.extensions[id].extensionUnregister();
+    }
+    delete this.extensions[id];
+
+    return true;
+  };
+
+  /**
+   * Register a new command in PaintWeb. Commands are simple function objects 
+   * which can be invoked by keyboard shortcuts or by GUI elements.
+   *
+   * <p>Once the command is successfully registered, this method dispatches the 
+   * {@link pwlib.appEvent.commandRegister} application event.
+   *
+   * @param {String} id The ID of the new command.
+   * @param {Function} func The command function.
+   *
+   * @returns {Boolean} True if the command was successfully registered, or 
+   * false if not.
+   *
+   * @see PaintWeb#commandUnregister allows you to unregister commands.
+   * @see PaintWeb.commands Holds all the registered commands.
+   */
+  this.commandRegister = function (id, func) {
+    if (typeof id !== 'string' || !id || typeof func !== 'function' || id in 
+        this.commands) {
+      return false;
     }
 
-    delete _self.extensions[id];
+    this.commands[id] = func;
+    this.events.dispatch(new appEvent.commandRegister(id));
+
+    return true;
+  };
+
+  /**
+   * Unregister a command from PaintWeb.
+   *
+   * <p>Before the command is unregistered, this method dispatches the {@link 
+   * pwlib.appEvent.commandUnregister} application event.
+   *
+   * @param {String} id The ID of the command you want to unregister.
+   *
+   * @returns {Boolean} True if the command was removed successfully, or false 
+   * if not.
+   *
+   * @see PaintWeb#commandRegister allows you to register new commands.
+   * @see PaintWeb.commands Holds all the registered commands.
+   */
+  this.commandUnregister = function (id) {
+    if (typeof id !== 'string' || !id || !(id in this.commands)) {
+      return false;
+    }
+
+    this.events.dispatch(new appEvent.commandUnregister(id));
+
+    delete this.commands[id];
 
     return true;
   };
@@ -1833,6 +1921,150 @@ function PaintWeb (win, doc) {
     elem.href = url;
 
     this.elems.head.appendChild(elem);
+  };
+
+  /**
+   * Perform action undo.
+   *
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   *
+   * @see PaintWeb#historyGoto The method invoked by this command.
+   */
+  this.historyUndo = function () {
+    return _self.historyGoto('undo');
+  };
+
+  /**
+   * Perform action redo.
+   *
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   *
+   * @see PaintWeb#historyGoto The method invoked by this command.
+   */
+  this.historyRedo = function () {
+    return _self.historyGoto('redo');
+  };
+
+  /**
+   * Clear the image.
+   */
+  this.imageClear = function (ev) {
+    _self.layer.context.clearRect(0, 0, _self.image.width, _self.image.height);
+    _self.historyAdd();
+  };
+
+  /**
+   * Save the image.
+   *
+   * <p>This method dispatches the {@link pwlib.appEvent.imageSave} event.
+   *
+   * <p><strong>Note:</strong> the "Save image" operation relies on integration 
+   * extensions. A vanilla configuration of PaintWeb will simply open the the 
+   * image in a new tab using a data: URL. You must have some event listener for 
+   * the <code>imageSave</code> event and you must prevent the default action.
+   *
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   */
+  this.imageSave = function (ev) {
+    var canvas = _self.layer.canvas;
+
+    if (!canvas.toDataURL) {
+      return false;
+    }
+
+    var idata = canvas.toDataURL();
+    if (!idata || idata.toLowerCase() == 'data:') {
+      return false;
+    }
+
+    var img = _self.image,
+        ev = new appEvent.imageSave(idata, img.width, img.height),
+        cancel = _self.events.dispatch(ev);
+
+    if (cancel) {
+      return true;
+    }
+
+    var imgwin = _self.win.open();
+    if (!imgwin) {
+      return false;
+    }
+
+    imgwin.location = idata;
+    idata = null;
+
+    return true;
+  };
+
+  /**
+   * Swap the fill and stroke styles. This is just like in Photoshop, if the 
+   * user presses X, the fill/stroke colors are swapped.
+   *
+   * <p>This method dispatches the {@link pwlib.appEvent.swapFillStroke} event.
+   */
+  this.swapFillStroke = function () {
+    var bufferContext = _self.buffer.context,
+        fillStyle     = bufferContext.fillStyle,
+        strokeStyle   = bufferContext.strokeStyle;
+
+    var cancel = _self.events.dispatch(new appEvent.swapFillStroke(strokeStyle, 
+          fillStyle));
+
+    if (!cancel) {
+      img.fillStyle   = strokeStyle;
+      img.strokeStyle = fillStyle;
+    }
+  };
+
+  /**
+   * Cut the available selection. This only works when the selection tool is 
+   * active and when some selection is available.
+   *
+   * @param {Event} [ev] The DOM Event object which generated the request.
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   *
+   * @see {pwlib.tools.selection.selectionCut} The command implementation.
+   */
+  this.selectionCut = function (ev) {
+    if (!_self.tool || _self.tool._id !== 'select') {
+      return false;
+    } else {
+      return _self.tool.selectionCut(ev);
+    }
+  };
+
+  /**
+   * Copy the available selection. This only works when the selection tool is 
+   * active and when some selection is available.
+   *
+   * @param {Event} [ev] The DOM Event object which generated the request.
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   *
+   * @see {pwlib.tools.selection.selectionCopy} The command implementation.
+   */
+  this.selectionCopy = function (ev) {
+    if (!_self.tool || _self.tool._id !== 'select') {
+      return false;
+    } else {
+      return _self.tool.selectionCopy(ev);
+    }
+  };
+
+  /**
+   * Paste the current clipboard image. This only works when some ImageData is 
+   * available in {@link PaintWeb.clipboard}.
+   *
+   * @param {Event} [ev] The DOM Event object which generated the request.
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   *
+   * @see {pwlib.tools.selection.clipboardPaste} The command implementation.
+   */
+  this.clipboardPaste = function (ev) {
+    if (!_self.clipboard || !_self.toolActivate('select', ev)) {
+      return false;
+    } else {
+      return _self.tool.clipboardPaste(ev);
+    }
   };
 
   this.toString = function () {

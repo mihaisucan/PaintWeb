@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-06 12:48:57 +0300 $
+  // $Date: 2009-06-08 20:56:15 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -358,17 +358,30 @@
    */
   // TODO: several keyboard shortcuts are still missing. See below.
   "keys": {
-    "E": { "tool": "ellipse" },
-    "G": { "tool": "poly" },
-    "H": { "tool": "drag" },
-    "I": { "tool": "insertimg" },
-    "L": { "tool": "line" },
-    "O": { "tool": "eraser" },
-    "P": { "tool": "pencil" },
-    "R": { "tool": "rect" },
-    "S": { "tool": "select" },
-    "T": { "tool": "text" },
-    "V": { "tool": "curve" }
+    // Use "command": "id" to execute some command.
+    "Control Z": { "command": "undo" },
+    "Control Y": { "command": "redo" },
+    "Control S": { "command": "imageSave" },
+
+    "Control X":    { "command": "selectionCut" },
+    "Shift Delete": { "command": "selectionCut" },
+    "Control C":    { "command": "selectionCopy" },
+    "Control V":    { "command": "clipboardPaste" },
+
+    // Use "toolActivate": "id" to activate the tool with the given ID.
+    "E": { "toolActivate": "ellipse" },
+    "G": { "toolActivate": "poly" },
+    "H": { "toolActivate": "drag" },
+    "I": { "toolActivate": "insertimg" },
+    "L": { "toolActivate": "line" },
+    "O": { "toolActivate": "eraser" },
+    "P": { "toolActivate": "pencil" },
+    "R": { "toolActivate": "rect" },
+    "S": { "toolActivate": "select" },
+    "T": { "toolActivate": "text" },
+    "V": { "toolActivate": "curve" },
+
+    "X": { "command": "swapFillStroke" }
   }
 
   /***** FIXME old keyboard shortcuts from PaintWeb 0.5. Will be updated soon.

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-03 20:15:43 +0300 $
+ * $Date: 2009-06-08 21:05:47 +0300 $
  */
 
 /**
@@ -26,7 +26,8 @@
  */
 
 (function () {
-var pwlib = window.pwlib;
+var pwlib = window.pwlib,
+    appEvent = pwlib.appEvent;
 
 /**
  * @class The default PaintWeb interface.
@@ -35,17 +36,15 @@ var pwlib = window.pwlib;
  */
 pwlib.gui['default'] = function (app) {
   var _self        = this,
-      classPrefix_ = 'paintweb_';
       config       = app.config,
       doc          = app.doc,
-      idPrefix_    = 'paintweb' + app.UID + '_',
       lang         = app.lang,
       pwlib        = window.pwlib,
       win          = app.win,
 
-  idPrefix_ = '';
-
   this.app = app;
+  this.idPrefix = 'paintweb' + app.UID + '_',
+  this.classPrefix = 'paintweb_';
 
   /**
    * Holds references to DOM elements.
@@ -69,29 +68,36 @@ pwlib.gui['default'] = function (app) {
   this.tools = {};
 
   /**
-   * Holds references to the GUI floating panels.
+   * Holds references to DOM elements associated to PaintWeb commands.
+   *
    * @private
+   * @type Object
+   */
+  this.commands = {};
+
+  /**
+   * Holds references to the GUI floating panels.
+   *
+   * @private
+   * @type Object
    */
   this.panels = {zIndex: 0};
 
   /**
    * Holds an instance of the guiResizer object attached to the Canvas.
+   *
+   * @private
    * @type guiResizer
    */
   this.canvasResizer = null;
 
-  function $ (id) {
-    var elem = doc.getElementById(idPrefix_ + id);
-    if (elem) {
-      return elem;
-    } else {
-      if (config.showErrors) {
-        alert( pwlib.strf(lang.errorElementNotFound, {'id' : id}) );
-      }
-
-      return false;
-    }
-  };
+  /**
+   * The toolbar GUI component.
+   *
+   * @private
+   * @type guiTabPanel
+   */
+  this.toolbar = null;
 
   /**
    * Initialize the PaintWeb interface.
@@ -103,12 +109,17 @@ pwlib.gui['default'] = function (app) {
    * not.
    */
   this.init = function (markupDoc) {
-    this.initImportDoc(markupDoc);
+    // Make sure the user nicely waits for PaintWeb to load, without seeing 
+    // much.
+    config.guiPlaceholder.style.visibility = 'hidden';
+    config.guiPlaceholder.className += ' ' + this.classPrefix + 'placeholder';
 
-    if (!this.initCanvas() ||
-        !this.initButtons() ||
-        !this.initProperties() ||
-        !this.initZoomInput() ||
+    if (!this.initImportDoc(markupDoc) ||
+        !this.initCanvas() ||
+        !this.initToolbar() ||
+        //!this.initButtons() ||
+        //!this.initProperties() ||
+        //!this.initZoomInput() ||
         !this.initKeyboardShortcuts()) {
       return false;
     }
@@ -116,9 +127,9 @@ pwlib.gui['default'] = function (app) {
     // Setup the floating panels.
     var panels = this.panels;
 
-    panels.toolbar     = new guiFloatingPanel(this, $('toolbar'));
-    panels.main        = new guiFloatingPanel(this, $('main'));
-    panels.properties  = new guiFloatingPanel(this, $('properties'));
+    //panels.toolbar     = new guiFloatingPanel(this, $('toolbar'));
+    //panels.main        = new guiFloatingPanel(this, $('main'));
+    //panels.properties  = new guiFloatingPanel(this, $('properties'));
     panels.help        = new guiFloatingPanel(this, $('help'));
     panels.help.hide();
     panels.coloreditor = new guiFloatingPanel(this, $('coloreditor'));
@@ -126,27 +137,33 @@ pwlib.gui['default'] = function (app) {
 
     // Setup the Canvas resizer.
 
-    this.canvasResizer = new guiResizer(this, $('canvasResizer'), 
-        this.elems.canvasContainer);
-    this.canvasResizer.events.add('guiResizeStart', this.canvasResizeStart);
-    this.canvasResizer.events.add('guiResizeEnd',   this.canvasResizeEnd);
+    var canvasResizer = new guiResizer(this, $('canvasResizer'), 
+        this.elems.canvasContainer),
+        resizeHandle = canvasResizer.resizeHandle;
+
+    canvasResizer.events.add('guiResizeStart', this.canvasResizeStart);
+    canvasResizer.events.add('guiResizeEnd',   this.canvasResizeEnd);
+    resizeHandle.title     = lang.guiCanvasResizer;
+    resizeHandle.innerText = lang.guiCanvasResizer;
 
     // Misc elements:
-    // #status for displaying various short informational messages.
+    // #statusMessage for displaying various short informational messages.
     // #tools holds the DOM element of each tool.
 
-    this.elems.status = $('status');
-    this.elems.status._prevText = false;
-
-    this.elems.tools  = $('tools');
+    this.elems.statusMessage._prevText = false;
 
     // Update the version string in Help.
-    $('version').appendChild(doc.createTextNode(app));
+    this.elems.version.appendChild(doc.createTextNode(app));
 
     // Add application-wide event listeners.
-    app.events.add('toolActivate',   this.toolActivate);
-    app.events.add('toolRegister',   this.toolRegister);
-    app.events.add('toolUnregister', this.toolUnregister);
+    app.events.add('initApp',             this.initApp);
+    app.events.add('toolActivate',        this.toolActivate);
+    app.events.add('toolRegister',        this.toolRegister);
+    app.events.add('toolUnregister',      this.toolUnregister);
+    app.events.add('commandRegister',     this.commandRegister);
+    app.events.add('commandUnregister',   this.commandUnregister);
+
+    app.commandRegister('help', this.commandHelp);
 
     return true;
   };
@@ -159,7 +176,7 @@ pwlib.gui['default'] = function (app) {
    * not.
    */
   this.initCanvas = function () {
-    var canvasContainer = $('canvasContainer'),
+    var canvasContainer = this.elems.canvasContainer,
         layerCanvas     = app.layer.canvas,
         bufferCanvas    = app.buffer.canvas,
         containerStyle  = canvasContainer.style;
@@ -168,8 +185,9 @@ pwlib.gui['default'] = function (app) {
       return false;
     }
 
-    layerCanvas.className  = classPrefix_ + 'layerCanvas';
-    bufferCanvas.className = classPrefix_ + 'bufferCanvas';
+    canvasContainer.className = this.classPrefix + 'canvasContainer';
+    layerCanvas.className     = this.classPrefix + 'layerCanvas';
+    bufferCanvas.className    = this.classPrefix + 'bufferCanvas';
 
     containerStyle.width  = layerCanvas.width  + 'px';
     containerStyle.height = layerCanvas.height + 'px';
@@ -177,8 +195,30 @@ pwlib.gui['default'] = function (app) {
     canvasContainer.appendChild(layerCanvas);
     canvasContainer.appendChild(bufferCanvas);
 
-    this.elems.canvasContainer = canvasContainer;
-    app.elems.container = canvasContainer;
+    return true;
+  };
+
+  /**
+   * Initialize the toolbar.
+   *
+   * @private
+   * @returns {Boolean} True if the initialization was successful, or false if 
+   * not.
+   */
+  this.initToolbar = function () {
+    if (!this.elems.toolbar) {
+      return false;
+    }
+
+    var toolbar = new guiTabPanel(this, this.elems.toolbar);
+    this.toolbar = toolbar;
+
+    // Hide all the tabs except the 'main' tab
+    for (var tab in toolbar.tabs) {
+      if (tab !== 'main') {
+        toolbar.tabHide(tab);
+      }
+    }
 
     return true;
   };
@@ -191,19 +231,49 @@ pwlib.gui['default'] = function (app) {
    *
    * @private
    * @param {Document} srcDoc The source DOM document to import the nodes from.
+   * @returns {Boolean} True if the initialization was successful, or false if 
+   * not.
    */
   this.initImportDoc = function (srcDoc) {
     // I could use some XPath here, but for the sake of compatibility I don't.
-    var elem,
+    var elem  = null,
+        tag   = null,
+        cmd   = null,
+        tool  = null,
         nodes = srcDoc.getElementsByTagName('*'),
-        n = nodes.length;
+        n     = nodes.length,
+        type  = Node.ELEMENT_NODE;
 
-    // Find all the element nodes which have IDs.
-    var type = Node.ELEMENT_NODE;
     for (var i = 0; i < n; i++) {
       elem = nodes[i];
-      if (elem.nodeType == type && elem.id) {
-        elem.id = idPrefix_ + elem.id;
+      if (elem.nodeType !== type) {
+        continue;
+      }
+
+      // Store references to commands.
+      cmd = elem.getAttribute('data-pwCommand');
+      if (cmd && !(cmd in this.commands)) {
+        this.commands[cmd] = elem;
+      }
+
+      // Store references to tools.
+      tool = elem.getAttribute('data-pwTool');
+      if (tool && !(tool in this.tools)) {
+        this.tools[tool] = elem;
+      }
+
+      // Update the element ID to be unique.
+      if (elem.id) {
+        tag = elem.tagName.toLowerCase();
+
+        // Store a reference to the element.
+        if (tag === 'input' || tag === 'select') {
+          this.inputs[elem.id] = elem;
+        } else {
+          this.elems[elem.id] = elem;
+        }
+
+        elem.id = this.idPrefix + elem.id;
       }
     }
 
@@ -214,61 +284,24 @@ pwlib.gui['default'] = function (app) {
 
     // Import all the nodes.
     for (var i = 0; i < n; i++) {
-      elem = children[i];
-      destElem.appendChild(doc.importNode(elem, true));
-    }
-  };
-
-  /**
-   * Initialize the buttons in the GUI.
-   *
-   * @private
-   * @returns {Boolean} True if the initialization was successful, or false if 
-   * not.
-   */
-  this.initButtons = function () {
-    // Prepare the buttons
-    var id, elem, evfunc,
-        btn = {
-          'undo'  : false, // disabled
-          'redo'  : false,
-          'clear' : true,  // enabled
-          'save'  : true,
-          'cut'   : false,
-          'copy'  : false,
-          'paste' : false,
-          'help'  : true,
-          'help_close' : true
-        };
-
-    for (i in btn) {
-      id = 'btn_' + i;
-      if ( !(elem = $(id)) ) {
-        return false;
-      }
-
-      // Each button must have an event handler with the same name. E.g.  
-      // btn_undo
-      if ( !(evfunc = this[id]) ) {
-        continue;
-      }
-
-      if (!elem.title && elem.textContent) {
-        elem.title = elem.textContent;
-      }
-
-      elem.addEventListener('click',     evfunc,              false);
-      elem.addEventListener('mouseover', this.item_mouseover, false);
-      elem.addEventListener('mouseout',  this.item_mouseout,  false);
-
-      if (!btn[i]) {
-        elem.className = 'disabled';
-      }
-
-      this.elems[id] = elem;
+      destElem.appendChild(doc.importNode(children[i], true));
     }
 
     return true;
+  };
+
+  /**
+   * The <code>initApp</code> event handler. This method is invoked once 
+   * PaintWeb completes all the loading.
+   */
+  this.initApp = function (ev) {
+    // Initialization was not successful ...
+    if (ev.state !== PaintWeb.INIT_DONE) {
+      return;
+    }
+
+    // Make PaintWeb visible.
+    this.config.guiPlaceholder.style.visibility = 'visible';
   };
 
   /**
@@ -278,6 +311,7 @@ pwlib.gui['default'] = function (app) {
    * @returns {Boolean} True if the initialization was successful, or false if 
    * not.
    */
+  // TODO: fix this
   this.initZoomInput = function () {
     var elem = $('in-zoom');
     if (!elem) {
@@ -463,13 +497,17 @@ pwlib.gui['default'] = function (app) {
    * not.
    */
   this.initKeyboardShortcuts = function () {
-    var kid, kobj;
+    var kid = null, kobj = null;
 
     for (kid in config.keys) {
       kobj = config.keys[kid];
 
-      if (kobj.tool && kobj.tool in lang.tools) {
-        lang.tools[kobj.tool] += ' [ ' + kid + ' ]';
+      if ('toolActivate' in kobj && kobj.toolActivate in lang.tools) {
+        lang.tools[kobj.toolActivate] += ' [ ' + kid + ' ]';
+      }
+
+      if ('command' in kobj && kobj.command in lang.commands) {
+        lang.commands[kobj.command] += ' [ ' + kid + ' ]';
       }
     }
 
@@ -522,7 +560,7 @@ pwlib.gui['default'] = function (app) {
    * not.
    */
   this.statusShow = function (id, temporary) {
-    var elem = _self.elems.status;
+    var elem = _self.elems.statusMessage;
     if (id === -1 && elem._prevText === false) {
       return false;
     }
@@ -791,7 +829,10 @@ pwlib.gui['default'] = function (app) {
   // What follows are the event handlers for several buttons used in the 
   // application.
 
-  this.btn_help = function (ev) {
+  /**
+   * The "Help" command. This method displays the "Help" panel.
+   */
+  this.commandHelp = function () {
     var elem = _self.elems.help.style,
         btn  = _self.elems.btn_help;
 
@@ -813,156 +854,6 @@ pwlib.gui['default'] = function (app) {
 
     return true;
   };
-  this.btn_help_close = _self.btn_help;
-
-  this.btn_undo = function (ev) {
-    _self.historyGoto('undo');
-  };
-
-  this.btn_redo = function (ev) {
-    _self.historyGoto('redo');
-  };
-
-  // This event handler simply clears the image. If the user holds the Shift key 
-  // down, then he/she is given the option to define the new size of the image.
-  this.btn_clear = function (ev) {
-    var layerContext = _self.layer.context,
-        image        = _self.image;
-
-    if (!ev || !ev.shiftKey) {
-      layerContext.clearRect(0, 0, image.width, image.height);
-      _self.historyAdd();
-      return true;
-    }
-
-    // When the Shift key is being held down, prompt the user to input the new 
-    // image dimensions.
-
-    var res = prompt(_self.lang.promptImageDimensions, image.width + 'x' 
-        + image.height);
-
-    if (!res) {
-      return false;
-    }
-
-    res = res.replace(/\D/, ' ').replace(/\s+/, ' ').replace(/^\s+/, '').replace(/\s+$/, '');
-    if (!res) {
-      return false;
-    }
-
-    res = res.split(' ');
-    if (res.length < 2) {
-      return false;
-    }
-
-    var w = parseInt(res[0]),
-        h = parseInt(res[1]);
-
-    if (w > 1500) {
-      w = 1500;
-    }
-    if (h > 1500) {
-      h = 1500;
-    }
-
-    if (image.width == w && image.height == h) {
-      return false;
-    }
-
-    // FIXME: resizeCanvas retains the image data, but the additional work is 
-    // not needed for this use-case. Performance optimization needed.
-    _self.resizeCanvas(w, h);
-    layerContext.clearRect(0, 0, image.width, image.height);
-    _self.historyAdd();
-
-    return true;
-  };
-
-  // For the "Save image" option we simply open a new window/tab which contains 
-  // the image saved as a PNG, using a data: URL.
-  this.btn_save = function (ev) {
-    var canvas = _self.layer.canvas;
-
-    if (!canvas.toDataURL) {
-      return false;
-    }
-
-    var idata = canvas.toDataURL();
-    if (!idata || idata.toLowerCase() == 'data:') {
-      return false;
-    }
-
-    var imgwin = _self.win.open();
-    if (!imgwin) {
-      return false;
-    }
-
-    imgwin.location = idata;
-    idata = null;
-
-    return true;
-  };
-
-  this.btn_cut = function (ev) {
-    var elem = _self.elems.btn_cut;
-    if (ev == -1 || ev == 1) {
-      var nClass = ev == 1 ? '' : 'disabled';
-
-      if (elem.className != nClass) {
-        elem.className = nClass;
-      }
-
-      return true;
-    }
-
-    if (elem.className == 'disabled' || _self.tool._id != 'select') {
-      return false;
-    }
-
-    return _self.tool.selectionCut(ev);
-  };
-
-  this.btn_copy = function (ev) {
-    var elem = _self.elems.btn_copy;
-    if (ev == -1 || ev == 1) {
-      var nClass = ev == 1 ? '' : 'disabled';
-
-      if (elem.className != nClass) {
-        elem.className = nClass;
-      }
-
-      return true;
-    }
-
-    if (elem.className == 'disabled' || _self.tool._id != 'select') {
-      return false;
-    }
-
-    return _self.tool.selectionCopy(ev);
-  };
-
-  this.btn_paste = function (ev) {
-    var elem = _self.elems.btn_paste;
-    if (ev == -1 || ev == 1) {
-      var nClass = ev == 1 ? '' : 'disabled';
-
-      if (elem.className != nClass) {
-        elem.className = nClass;
-      }
-
-      return true;
-    }
-
-    if (elem.className == 'disabled' || !_self.clipboard) {
-      return false;
-    }
-
-    if (!_self.toolActivate('select', ev)) {
-      return false;
-    } else {
-      return _self.tool.selectionPaste(ev);
-    }
-  };
 
   /**
    * The <code>click</code> event handler for the tool DOM elements.
@@ -974,9 +865,7 @@ pwlib.gui['default'] = function (app) {
    * @see PaintWeb#toolActivate to activate a drawing tool.
    */
   this.toolClick = function (ev) {
-    if (this._PaintWebTool) {
-      app.toolActivate(this._PaintWebTool, ev);
-    }
+    app.toolActivate(this.getAttribute('data-pwTool'), ev);
   };
 
   /**
@@ -992,12 +881,12 @@ pwlib.gui['default'] = function (app) {
    */
   this.toolActivate = function (ev) {
     var active = _self.tools[ev.id];
-    active.className += ' ' + classPrefix_ + 'toolActive';
+    active.className += ' ' + _self.classPrefix + 'toolActive';
 
     if (ev.prevId) {
       var prev = _self.tools[ev.prevId];
       prev.className = prev.className.
-        replace(' ' + classPrefix_ + 'toolActive', '');
+        replace(' ' + _self.classPrefix + 'toolActive', '');
     }
 
     _self.statusShow(ev.id + 'Active');
@@ -1015,47 +904,121 @@ pwlib.gui['default'] = function (app) {
    * tools.
    */
   this.toolRegister = function (ev) {
+    var attr = null, elem = null;
+
     if (ev.id in _self.tools) {
+      elem = _self.tools[ev.id];
+      attr = elem.getAttribute('data-pwTool');
+      if (attr && attr !== ev.id) {
+        attr = null;
+        elem = null;
+        delete _self.tools[ev.id];
+      }
+    }
+
+    // Create a new element if there's none already associated to the tool ID.
+    if (!elem) {
+      elem = doc.createElement('li');
+    }
+
+    if (!attr) {
+      elem.setAttribute('data-pwTool', ev.id);
+    }
+
+    elem.className += ' ' + _self.classPrefix + 'tool_' + ev.id;
+    elem.title = lang.tools[ev.id];
+
+    elem.removeChild(elem.firstChild);
+    elem.appendChild(doc.createTextNode(elem.title));
+
+    elem.addEventListener('click',     _self.toolClick,      false);
+    elem.addEventListener('mouseover', _self.item_mouseover, false);
+    elem.addEventListener('mouseout',  _self.item_mouseout,  false);
+
+    if (!(ev.id in _self.tools)) {
+      _self.tools[ev.id] = elem;
+    }
+
+    _self.elems.tools.appendChild(elem);
+  };
+
+  /**
+   * The <code>toolUnregister</code> application event handler. This method the 
+   * tool element from the GUI.
+   *
+   * @param {Object} ev The application event object.
+   *
+   * @see PaintWeb#toolUnregister the method which allows you to unregister 
+   * tools.
+   */
+  this.toolUnregister = function (ev) {
+    if (ev.id in _self.tools) {
+      _self.elems.tools.removeChild(_self.tools[ev.id]);
+      delete _self.tools[id];
+    } else {
+      return;
+    }
+  };
+
+  /**
+   * The <code>commandRegister</code> application event handler. GUI elements 
+   * associated to commands are updated to ensure proper user interaction.
+   *
+   * @private
+   *
+   * @param {Object} ev The application event object.
+   *
+   * @see PaintWeb#commandRegister the method which allows you to register new 
+   * commands.
+   */
+  this.commandRegister = function (ev) {
+    var elem = _self.commands[ev.id];
+    if (!elem) {
       return;
     }
 
-    var elem = doc.createElement('li');
+    elem.className += ' ' + _self.classPrefix + 'cmd_' + ev.id;
+    elem.title = lang.commands[ev.id];
 
-    elem.className = classPrefix_ + 'tool_' + ev.id;
-    elem.title = lang.tools[ev.id];
-    elem._PaintWebTool = ev.id;
+    // Remove the text content and append the language string associated to this 
+    // command.
+    elem.removeChild(elem.firstChild);
+    elem.appendChild(doc.createTextNode(elem.title));
 
-    elem.appendChild(doc.createTextNode(lang.tools[ev.id]));
-
-    _self.elems.tools.appendChild(elem);
-    _self.tools[ev.id] = elem;
-
-    elem.addEventListener('click',     _self.toolClick,      false);
+    elem.addEventListener('click',     this.commands[ev.id], false);
     elem.addEventListener('mouseover', _self.item_mouseover, false);
     elem.addEventListener('mouseout',  _self.item_mouseout,  false);
   };
 
   /**
-   * The <code>toolRegister</code> application event handler. This method adds 
-   * the new tool into the GUI.
+   * The <code>commandUnregister</code> application event handler. This method 
+   * simply removes all the user interactivity from the GUI element associated 
+   * to the command being unregistered.
    *
    * @param {Object} ev The application event object.
    *
-   * @see PaintWeb#toolRegister the method which allows you to register new 
-   * tools.
+   * @see PaintWeb#commandUnregister the method which allows you to unregister 
+   * commands.
    */
-  this.toolUnregister = function (ev) {
-    if (!(ev.id in _self.tools)) {
+  this.commandUnregister = function (ev) {
+    var elem = _self.commands[ev.id];
+    if (!elem) {
       return;
-    } else {
-      _self.elems.tools.removeChild(_self.tools[ev.id]);
-      delete _self.tools[id];
     }
+
+    elem.className = elem.className.replace(' ' + _self.classPrefix + 'cmd_' 
+        + ev.id, '');
+
+    elem.removeEventListener('click',     this.commands[ev.id], false);
+    elem.removeEventListener('mouseover', _self.item_mouseover, false);
+    elem.removeEventListener('mouseout',  _self.item_mouseout,  false);
   };
 };
 
 /**
  * @class A floating panel GUI element.
+ *
+ * @private
  *
  * @param {pwlib.gui} gui Reference to the PaintWeb GUI object.
  *
@@ -1188,6 +1151,8 @@ function guiFloatingPanel (gui, elem) {
 /**
  * @class Resize handler.
  *
+ * @private
+ *
  * @param {pwlib.gui} gui Reference to the PaintWeb GUI object.
  *
  * @param {Element} resizeHandle Reference to the resize handle DOM element.  
@@ -1202,8 +1167,8 @@ function guiResizer (gui, resizeHandle, container) {
   var _self          = this,
       cStyle         = container.style,
       doc            = gui.app.doc,
-      guiResizeEnd   = pwlib.appEvent.guiResizeEnd,
-      guiResizeStart = pwlib.appEvent.guiResizeStart;
+      guiResizeEnd   = appEvent.guiResizeEnd,
+      guiResizeStart = appEvent.guiResizeStart;
 
   /**
    * Custom application events interface.
@@ -1321,6 +1286,220 @@ function guiResizer (gui, resizeHandle, container) {
 };
 
 /**
+ * @class The tabbed panel GUI component.
+ *
+ * @private
+ *
+ * @param {pwlib.gui} gui Reference to the PaintWeb GUI object.
+ *
+ * @param {Element} panel Reference to the panel DOM element.
+ */
+function guiTabPanel (gui, panel) {
+  var _self = this,
+      doc   = gui.app.doc,
+      lang  = gui.app.lang;
+
+  /**
+   * Custom application events interface.
+   * @type pwlib.appEvents
+   */
+  this.events = null;
+
+  /**
+   * Panel ID. The ID is determined automatically based on the panel DOM element 
+   * ID.
+   * @type String.
+   */
+  this.id = null;
+
+  /**
+   * Holds references to the DOM element of each tab and tab button.
+   * @type Object
+   */
+  this.tabs = {};
+
+  /**
+   * Reference to the tab buttons DOM element.
+   * @type Element
+   */
+  this.tabButtons = null;
+
+  /**
+   * The panel container DOM element.
+   * @type Element
+   */
+  this.container = panel;
+
+  /**
+
+  /**
+   * Holds the ID of the currently active tab.
+   * @type String
+   */
+  this.tabId = null;
+
+  /**
+   * Holds the ID of the previously active tab.
+   *
+   * @private
+   * @type String
+   */
+  var prevTabId_ = null;
+
+  /**
+   * Initialize the toolbar functionality.
+   * @private
+   */
+  function init () {
+    _self.events = new pwlib.appEvents(_self);
+    _self.id = _self.container.id.replace(new RegExp('^' + gui.idPrefix), '');
+
+    var tabButtons = doc.createElement('ul'),
+        tabButton = null,
+        childNodes = _self.container.childNodes,
+        n = childNodes.length,
+        type = Node.ELEMENT_NODE,
+        elem = null,
+        tabId = null,
+        tabTitle = null;
+
+    tabButtons.className = gui.classPrefix + 'tabs';
+
+    // Find all the tabs in the current toolbar container element.
+    for (var i = 0; elem = childNodes[i]; i++) {
+      if (elem.nodeType !== type) {
+        continue;
+      }
+
+      // A tab is any element with a given data-pwTab attribute.
+      tabId = elem.getAttribute('data-pwTab');
+      if (!tabId) {
+        continue;
+      }
+
+      elem.className += ' ' + gui.classPrefix + _self.id + '_' + tabId;
+      tabTitle = lang.tabs[_self.id][tabId];
+
+      tabButton = doc.createElement('li');
+      tabButton._PaintWebTab = tab;
+      tabButton.title = tabTitle;
+      tabButton.appendChild(doc.createTextNode(tabTitle));
+      tabButton.addEventListener('click', ev_tabClick, false);
+
+      if (!_self.tabId) {
+        _self.tabId = tabId;
+        tabButton.className = gui.classPrefix + 'tabActive';
+      } else {
+        prevTabId_ = tabId;
+        elem.style.display = 'none';
+      }
+
+      _self.tabs[tabId] = {container: elem, button: tabButton};
+
+      tabButtons.appendChild(tabButton);
+    }
+
+    _self.tabButtons = tabButtons;
+    _self.container.appendChild(tabButtons);
+  };
+
+  /**
+   * The <code>click</code> event handler for tab buttons. This function simply 
+   * activates the tab the user clicked.
+   * @private
+   */
+  function ev_tabClick (ev) {
+    if (this._PaintWebTab) {
+      _self.tabActivate(this._PaintWebTab);
+    }
+  };
+
+  /**
+   * Activate a tab by ID.
+   *
+   * <p>This method dispatches the {@link pwlib.appEvent.guiTabActivate} event.
+   *
+   * @param {String} tabId The ID of the tab you want to activate.
+   * @returns {Boolean} True if the tab has been activated successfully, or 
+   * false if not.
+   */
+  this.tabActivate = function (tabId) {
+    if (!(tabId in this.tabs)) {
+      return false;
+    } else if (tabId === this.tabId) {
+      return true;
+    }
+
+    var ev = new appEvent.guiTabActivate(tabId, this.tabId),
+        cancel = this.events.dispatch(ev),
+        elem = null,
+        tabButton = null;
+
+    if (cancel) {
+      return false;
+    }
+
+    // Deactivate the currently active tab.
+    if (this.tabId in this.tabs) {
+      elem = this.tabs[this.tabId].container;
+      elem.style.display = 'none';
+      tabButton = this.tabs[this.tabId].button;
+      tabButton.className = '';
+      prevTabId_ = this.tabId;
+    }
+
+    // Activate the new tab.
+    elem = this.tabs[tabId].container;
+    elem.style.display = '';
+    tabButton = this.tabs[tabId].button;
+    tabButton.className = gui.classPrefix + 'tabActive';
+    this.tabId = tabId;
+
+    return true;
+  };
+
+  /**
+   * Hide a tab by ID.
+   *
+   * @param {String} tabId The ID of the tab you want to hide.
+   * @returns {Boolean} True if the tab has been hidden successfully, or false 
+   * if not.
+   */
+  this.tabHide = function (tabId) {
+    if (!(tabId in this.tabs)) {
+      return false;
+    }
+
+    if (this.tabId === tabId) {
+      this.tabActivate(prevTabId_);
+    }
+
+    this.tabs[tabId].button.style.display = 'none';
+
+    return true;
+  };
+
+  /**
+   * Show a tab by ID.
+   *
+   * @param {String} tabId The ID of the tab you want to show.
+   * @returns {Boolean} True if the tab has been displayed successfully, or 
+   * false if not.
+   */
+  this.tabShow = function (tabId) {
+    if (!(tabId in this.tabs)) {
+      return false;
+    }
+
+    this.tabs[tabId].button.style.display = '';
+
+    return true;
+  };
+
+  init();
+};
+
+/**
  * @class The GUI element resize start event. This event is cancelable.
  *
  * @augments pwlib.appEvent
@@ -1330,13 +1509,13 @@ function guiResizer (gui, resizeHandle, container) {
  * @param {Number} width The element width.
  * @param {Number} height The element height.
  */
-pwlib.appEvent.guiResizeStart = function (x, y, width, height) {
+appEvent.guiResizeStart = function (x, y, width, height) {
   this.x = x;
   this.y = y;
   this.width = width;
   this.height = height;
 
-  pwlib.appEvent.call(this, 'guiResizeStart', true);
+  appEvent.call(this, 'guiResizeStart', true);
 };
 
 /**
@@ -1349,13 +1528,28 @@ pwlib.appEvent.guiResizeStart = function (x, y, width, height) {
  * @param {Number} width The element width.
  * @param {Number} height The element height.
  */
-pwlib.appEvent.guiResizeEnd = function (x, y, width, height) {
+appEvent.guiResizeEnd = function (x, y, width, height) {
   this.x = x;
   this.y = y;
   this.width = width;
   this.height = height;
 
-  pwlib.appEvent.call(this, 'guiResizeEnd', true);
+  appEvent.call(this, 'guiResizeEnd', true);
+};
+
+/**
+ * @class The GUI tab activation event. This event is cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {String} tabId The ID of the tab being activated.
+ * @param {String} prevTabId The ID of the previously active tab.
+ */
+appEvent.guiTabActivate = function (tabId, prevTabId) {
+  this.tabId = tabId;
+  this.prevTabId = prevTabId;
+
+  appEvent.call(this, 'guiTabActivate', true);
 };
 
 })();
