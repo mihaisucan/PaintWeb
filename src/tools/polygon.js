@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-03 18:30:27 +0300 $
+ * $Date: 2009-06-09 20:25:48 +0300 $
  */
 
 /**
@@ -30,7 +30,7 @@
  *
  * @param {PaintWeb} app Reference to the main paint application object.
  */
-pwlib.tools.poly = function (app) {
+pwlib.tools.polygon = function (app) {
   var _self         = this,
       clearInterval = window.clearInterval,
       config        = app.config,

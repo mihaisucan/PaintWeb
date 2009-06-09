@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-08 23:44:43 +0300 $
+ * $Date: 2009-06-09 23:20:02 +0300 $
  */
 
 /**
@@ -52,7 +52,7 @@ function PaintWeb (win, doc) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090608;
+  this.build = 20090609;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -70,13 +70,12 @@ function PaintWeb (win, doc) {
   // Here we include a minimal set of strings, used in case the language file will 
   // not load.
   this.lang = {
-    "errorElementNotFound": "Error: the following element was not found: %id%.",
-    "errorInitGetComputedStyle": "Error: window.getComputedStyle is not available.",
-    "errorInitXMLHttpRequest": "Error: window.XMLHttpRequest is not available.",
-    "errorInitJSON": "Error: window.JSON is not available.",
-    "errorInitCanvas": "Error: Your browser does not support Canvas.",
-    "errorInitGUIPlaceholder": "Error: The config.guiPlaceholder property" 
-      + " must reference a DOM element!"
+    "noComputedStyle": "Error: window.getComputedStyle is not available.",
+    "noXMLHttpRequest": "Error: window.XMLHttpRequest is not available.",
+    "noCanvasSupport": "Error: Your browser does not support Canvas.",
+    "guiPlaceholderWrong": "Error: The config.guiPlaceholder property must " +
+      "reference a DOM element!",
+    "initHandlerMustBeFunction": "The first argument must be a function."
   };
 
   /**
@@ -388,31 +387,31 @@ function PaintWeb (win, doc) {
     this.initialized = PaintWeb.INIT_STARTED;
 
     if (handler && typeof handler !== 'function') {
-      throw new TypeError("The first argument must be a function.");
+      throw new TypeError(lang.initHandlerMustBeFunction);
     }
 
     temp_.onInit = handler;
 
     // Check Canvas support.
     if (!doc.createElement('canvas').getContext) {
-      this.initError(lang.errorInitCanvas);
+      this.initError(lang.noCanvasSupport);
       return false;
     }
 
     // Basic functionality used within the Web application.
     if (!window.getComputedStyle) {
-      this.initError(lang.errorInitGetComputedStyle);
+      this.initError(lang.noComputedStyle);
       return false;
     }
 
     if (!window.XMLHttpRequest) {
-      this.initError(lang.errorInitXMLHttpRequest);
+      this.initError(lang.noXMLHttpRequest);
       return false;
     }
 
     if (typeof this.config.guiPlaceholder !== 'object' || 
         this.config.guiPlaceholder.nodeType !== Node.ELEMENT_NODE) {
-      this.initError(lang.errorInitGUIPlaceholder);
+      this.initError(lang.guiPlaceholderWrong);
       return false;
     }
 
@@ -602,13 +601,17 @@ function PaintWeb (win, doc) {
    * not.
    */
   this.initCommands = function () {
-    if (this.commandRegister('undo',           this.historyUndo) &&
-        this.commandRegister('redo',           this.historyRedo) &&
+    if (this.commandRegister('historyUndo',    this.historyUndo) &&
+        this.commandRegister('historyRedo',    this.historyRedo) &&
+        this.commandRegister('selectionCut',   this.selectionCut) &&
+        this.commandRegister('selectionCopy',  this.selectionCopy) &&
+        this.commandRegister('clipboardPaste', this.clipboardPaste) &&
         this.commandRegister('imageSave',      this.imageSave) &&
         this.commandRegister('imageClear',     this.imageClear) &&
         this.commandRegister('swapFillStroke', this.swapFillStroke)) {
       return true;
     } else {
+      this.initError(lang.errorInitCommands);
       return false;
     }
   };
@@ -704,7 +707,7 @@ function PaintWeb (win, doc) {
    */
   this.initCanvas = function () {
     var cfg             = this.config,
-        res             = cfg.resolution,
+        res             = this.resolution,
         resInfo         = doc.getElementById(res.elemId),
         layerCanvas     = doc.createElement('canvas'),
         bufferCanvas    = doc.createElement('canvas'),
@@ -720,8 +723,12 @@ function PaintWeb (win, doc) {
       doc.body.appendChild(resInfo);
     }
 
-    if (!resInfo || !layerCanvas || !bufferCanvas || !layerContext || 
-        !bufferContext) {
+    if (!resInfo) {
+      this.initError(lang.errorInitCanvas);
+      return false;
+    }
+    if (!layerCanvas || !bufferCanvas || !layerContext || !bufferContext) {
+      this.initError(lang.noCanvasSupport);
       return false;
     }
 
@@ -826,12 +833,12 @@ function PaintWeb (win, doc) {
     temp_.toolsLoadQueue--;
 
     if (temp_.toolsLoadQueue === 0) {
-      var tools = _self.config.tools,
-          n = tools.length;
+      var t = _self.config.tools,
+          n = t.length;
 
       for (var i = 0; i < n; i++) {
-        if (!_self.toolRegister(tools[i])) {
-          _self.initError(lang.errorInitTools);
+        if (!_self.toolRegister(t[i])) {
+          _self.initError(pwlib.strf(lang.toolRegisterFailed, {id: t[i]}));
           return;
         }
       }
@@ -870,12 +877,12 @@ function PaintWeb (win, doc) {
     temp_.extensionsLoadQueue--;
 
     if (temp_.extensionsLoadQueue === 0) {
-      var extensions = _self.config.extensions,
-          n = extensions.length;
+      var e = _self.config.extensions,
+          n = e.length;
 
       for (var i = 0; i < n; i++) {
-        if (!_self.extensionRegister(extensions[i])) {
-          _self.initError(lang.errorInitExtensions);
+        if (!_self.extensionRegister(e[i])) {
+          _self.initError(pwlib.strf(lang.extensionRegisterFailed, {id: e[i]}));
           return;
         }
       }
@@ -1123,8 +1130,7 @@ function PaintWeb (win, doc) {
       // Invoke the command associated with the key.
       _self.commands[gkey.command].call(this, ev);
 
-    } else if (ev.type === 'keydown' && 'toolActivate' in gkey && 
-        gkey.toolActivate in _self.tools) {
+    } else if (ev.type === 'keydown' && 'toolActivate' in gkey) {
 
       // Active the tool associated to the key.
       _self.toolActivate(gkey.toolActivate, ev);
@@ -2026,7 +2032,7 @@ function PaintWeb (win, doc) {
    * @see {pwlib.tools.selection.selectionCut} The command implementation.
    */
   this.selectionCut = function (ev) {
-    if (!_self.tool || _self.tool._id !== 'select') {
+    if (!_self.tool || _self.tool._id !== 'selection') {
       return false;
     } else {
       return _self.tool.selectionCut(ev);
@@ -2043,7 +2049,7 @@ function PaintWeb (win, doc) {
    * @see {pwlib.tools.selection.selectionCopy} The command implementation.
    */
   this.selectionCopy = function (ev) {
-    if (!_self.tool || _self.tool._id !== 'select') {
+    if (!_self.tool || _self.tool._id !== 'selection') {
       return false;
     } else {
       return _self.tool.selectionCopy(ev);
@@ -2060,7 +2066,7 @@ function PaintWeb (win, doc) {
    * @see {pwlib.tools.selection.clipboardPaste} The command implementation.
    */
   this.clipboardPaste = function (ev) {
-    if (!_self.clipboard || !_self.toolActivate('select', ev)) {
+    if (!_self.clipboard || !_self.toolActivate('selection', ev)) {
       return false;
     } else {
       return _self.tool.clipboardPaste(ev);

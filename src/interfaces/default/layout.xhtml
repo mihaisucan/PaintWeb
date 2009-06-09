@@ -1,65 +1,73 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
-  <!--- $Date: 2009-06-08 23:21:52 +0300 $ -->
-
-  <h1>PaintWeb</h1>
+  <!--- $Date: 2009-06-09 23:13:50 +0300 $ -->
+  <h1 class="paintweb_appTitle">PaintWeb</h1>
 
   <!-- All elements with data-pwTabPanel become interactive tabbed panels which 
-  will also have a class name like .paintweb_tabPanel_id. In this case the class 
-  name will be .paintweb_tabPanel_main. -->
-  <div data-pwTabPanel="main">
+  will also have a class name like .paintweb_tabPanel_id and a generic class 
+  name .paintweb_tabPanel. In this case the class names will be 
+  .paintweb_tabPanel_main and .paintweb_tabPanel.  -->
+  <div data-pwTabPanel="main" data-pwTabDefault="main">
 
-    <!-- All elements with data-pwTab will have class names like 
-    paintweb_toolbar_tabID. In this case the class name will be 
-    .paintweb_toolbar_main. -->
+    <!-- All elements with data-pwTab will have a class name like 
+    .paintweb_tabPanelId_tabID and a generic class name .paintweb_tab. In this 
+    case the class names will be .paintweb_main_main and .paintweb_tab. -->
     <div data-pwTab="main">
 
       <!-- All elements with some #id will also have a class name like 
-      paintweb_id. In this case the class name will be .paintweb_toolbar. -->
+      .paintweb_id. In this case the class name will be .paintweb_tools. -->
       <ul id="tools">
 
-        <!-- All elements with data-pwCommand will have class names like 
-        paintweb_cmd_commandID. In this case the class name will be 
-        .paintweb_cmd_undo. -->
-        <li data-pwCommand="undo">Undo</li>
-        <li data-pwCommand="redo">Redo</li>
+        <!-- All elements with data-pwCommand will have a class name like 
+        .paintweb_cmd_commandID and a generic class name .paintweb_command. In 
+        this case the class names will be .paintweb_cmd_historyUndo and 
+        .paintweb_command.  -->
+        <li data-pwCommand="historyUndo">Undo</li>
+        <li data-pwCommand="historyRedo">Redo</li>
+
+        <li class="paintweb_tool">&#160;</li>
 
         <li data-pwCommand="imageClear">Clear image</li>
         <li data-pwCommand="imageSave">Save image</li>
+
+        <!-- All elements with data-pwTool will have a class name like 
+        .paintweb_tool_toolID and a generic class name .paintweb_tool. In this 
+        case the class names will be .paintweb_tool_insertimg and 
+        .paintweb_tool.  -->
         <li data-pwTool="insertimg">Insert image</li>
 
-        <li class="paintweb_toolSeparator">&#160;</li>
+        <li class="paintweb_tool">&#160;</li>
 
         <li data-pwCommand="selectionCut">Cut selection</li>
         <li data-pwCommand="selectionCopy">Copy selection</li>
         <li data-pwCommand="clipboardPaste">Clipboard paste</li>
 
-        <li class="paintweb_toolSeparator">&#160;</li>
+        <li class="paintweb_tool">&#160;</li>
 
         <li data-pwTool="cpicker">Color picker</li>
 
-        <li class="paintweb_toolbarWrap">&#160;</li>
+        <li class="paintweb_toolsWrap">&#160;</li>
 
-        <li data-pwTool="select">Selection</li>
+        <li data-pwTool="selection">Selection</li>
         <li data-pwTool="hand">Hand</li>
 
-        <li class="paintweb_toolSeparator">&#160;</li>
+        <li class="paintweb_tool">&#160;</li>
 
-        <li data-pwTool="rect">Rectangle</li>
+        <li data-pwTool="rectangle">Rectangle</li>
         <li data-pwTool="ellipse">Ellipse</li>
-        <li data-pwTool="poly">Polygon</li>
+        <li data-pwTool="polygon">Polygon</li>
         <li data-pwTool="line">Line</li>
-        <li data-pwTool="curve">Bézier curve</li>
+        <li data-pwTool="bcurve">Bézier curve</li>
         <li data-pwTool="text">Text</li>
         <li data-pwTool="pencil">Pencil</li>
 
-        <li class="paintweb_toolSeparator">&#160;</li>
+        <li class="paintweb_tool">&#160;</li>
 
         <li data-pwTool="eraser">Eraser</li>
       </ul>
     </div>
 
-    <!-- .paintweb_toolbar_line -->
-    <div data-pwTab="line">
+    <!-- .paintweb_main_line -->
+    <div data-pwTab="line" data-pwTabHide="true">
       <p class="inputText"><label>Stroke width <input id="in-lineWidth"  
         type="number" min="1" value="1" /></label></p>
 
@@ -87,8 +95,8 @@
       </div>
     </div>
 
-    <!-- .paintweb_toolbar_selection -->
-    <div data-pwTab="selection">
+    <!-- .paintweb_main_select -->
+    <div data-pwTab="selection" data-pwTabHide="true">
       <p class="inputInline">
         <label title="When enabled, the background of the selection will be the 
           current fill color. The background color is only visible when you 
@@ -102,10 +110,10 @@
         <input id="in-selTransform" type="checkbox" value="1" />
         Transformation mode</label>
       </p>
-    </div> <!-- tab-selection -->
+    </div>
 
-    <!-- .paintweb_toolbar_text -->
-    <div data-pwTab="text">
+    <!-- .paintweb_main_text -->
+    <div data-pwTab="text" data-pwTabHide="true">
       <div id="textStyle" class="inputIcon">
           <div id="in-textBold">Bold</div>
           <div id="in-textItalic">Italic</div>
@@ -141,8 +149,8 @@
       </p>
     </div>
 
-    <!-- .paintweb_toolbar_shadow -->
-    <div data-pwTab="shadow">
+    <!-- .paintweb_main_shadow -->
+    <div data-pwTab="shadow" data-pwTabHide="true">
       <p class="inputInline"><label><input id="in-shadowActive" type="checkbox" 
         value="1" /> Draw shadows</label></p>
 
@@ -167,7 +175,7 @@
 
     <p data-pwCommand="help">Help</p>
 
-    <div id="colors_fill_stroke">
+    <div id="colors_fill_stroke" style="display: none">
       <p>
         <span id="opt-strokeStyle">Stroke</span>
         <span class="colorpreview" id="in-strokeStyle" title="Stroke 
@@ -180,15 +188,15 @@
       </p>
     </div>
 
-  </div> <!-- #toolbar -->
+  </div> <!-- .paintweb_tabPanel_main -->
 
   <div id="viewport">
     <div id="canvasContainer">
       <div id="canvasResizer">Resize image</div>
     </div>
-  </div> <!-- #viewport -->
+  </div> <!-- .paintweb_viewport -->
 
-  <div id="statusbar">
+  <div class="paintweb_statusbar">
     <p id="imageSize">Image size</p>
     <p id="statusMessage">Status</p>
 
@@ -196,9 +204,9 @@
       <label for="in-zoom">Zoom</label>
       <input id="in-zoom" type="number" min="20" max="400" value="100" step="10" />
     </p>
-  </div> <!-- #statusbar -->
+  </div> <!-- .paintweb_statusbar -->
 
-  <div data-pwFloatingPanel="colormixer">
+  <div data-pwFloatingPanel="colormixer" data-pwPanelHide="true">
     <h1>Color mixer</h1>
 
     <ol id="coloreditor-preview">
@@ -338,14 +346,8 @@
     </form> <!-- #coloreditor-inputs -->
   </div> <!-- #coloreditor -->
 
-  <div data-pwFloatingPanel="help">
-    <div id="help-top"></div>
-    <div id="help-tleft"></div>
-    <div id="help-tright"></div>
+  <div data-pwFloatingPanel="help" data-pwPanelHide="true">
     <h1>Help</h1>
-    <p id="btn_help_close" class="btn_close">Close</p>
-
-    <div id="help1"><div id="help2"><div id="help3">
 
     <h2>PaintWeb</h2>
     <p id="version">Version: </p>
@@ -387,13 +389,7 @@
     <p>Opera 9.2 does not have support for globalCompositeOperation 'lighter', 
     which makes the <abbr title="Red, Green, Blue">RGB</abbr> color 
     visualisation to fail.</p>
-
-    </div></div></div> <!-- #help3, #help2, #help1 -->
-
-    <div id="help-bottom"></div>
-    <div id="help-bleft"></div>
-    <div id="help-bright"></div>
-  </div> <!-- #help -->
+  </div>
 
   <!-- vim:set spell spl=en fo=tcroqwanl1 tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix: -->
 </html>

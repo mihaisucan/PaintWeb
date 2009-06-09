@@ -6,7 +6,7 @@
     <link rel="author" type="text/html" href="http://www.robodesign.ro" 
     title="Marius and Mihai Şucan, ROBO Design">
     <!-- $URL: http://code.google.com/p/paintweb $
-         $Date: 2009-06-06 13:32:33 +0300 $ -->
+         $Date: 2009-06-09 16:10:00 +0300 $ -->
   </head>
   <body>
     <p>Welcome to PaintWeb!</p>
@@ -42,10 +42,6 @@
       alert('Demo: Unrecognized PaintWeb initialization state ' + ev.state);
 
       return;
-    }
-
-    if ('main' in this.gui.panels) {
-      this.gui.panels.main.bringOnTop();
     }
 
     img.style.display = 'none';

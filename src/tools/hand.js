@@ -17,21 +17,21 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-29 15:42:52 +0300 $
+ * $Date: 2009-06-09 16:09:05 +0300 $
  */
 
 /**
  * @author <a lang="ro" href="http://www.robodesign.ro/mihai">Mihai Şucan</a>
- * @fileOverview Holds the canvas drag tool implementation.
+ * @fileOverview Holds the hand tool implementation.
  */
 
 /**
- * @class The canvas drag tool. This tool allows the user to drag the canvas 
+ * @class The hand tool. This tool allows the user to drag the image canvas 
  * inside the viewport.
  *
  * @param {PaintWeb} app Reference to the main paint application object.
  */
-pwlib.tools.drag = function (app) {
+pwlib.tools.hand = function (app) {
   var _self        = this,
       canvasStyle  = app.buffer.canvas.style,
       container    = app.elems.container,

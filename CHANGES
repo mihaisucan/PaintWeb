@@ -1,5 +1,19 @@
+2009-06-09:
+===========
+
+- The new interface is coming along together now: PaintWeb loads fine now. The 
+new toolbar shows the new icons.
+- Further work on the interface markup. Almost complete.
+- Further work on the interface script. Almost complete.
+- Started work on the new interface stylesheet. Mainly the new toolbar and 
+icons.
+- Renamed some tools for better consistency. Renamed some commands for better 
+consistency.
+- Some fixes for the English localization.
+- New keyboard shortcuts.
+
 2009-06-08:
-==========
+===========
 
 - The new interface design and layout is all sketched-out and set pretty much in 
 stone. Ready to implement it.

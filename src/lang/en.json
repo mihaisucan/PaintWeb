@@ -1,19 +1,21 @@
 {
-  // $Date: 2009-06-08 21:04:17 +0300 $
+  // $Date: 2009-06-09 20:52:37 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
   "errorElementNotFound": "Error: the following element was not found: %id%.",
-  "errorInitGetComputedStyle": "Error: window.getComputedStyle is not available.",
-  "errorInitXMLHttpRequest": "Error: window.XMLHttpRequest is not available.",
-  "errorInitJSON": "Error: window.JSON is not available.",
-  "errorInitCanvas": "Error: Your browser does not support Canvas.",
+  "noComputedStyle": "Error: window.getComputedStyle is not available.",
+  "noXMLHttpRequest": "Error: window.XMLHttpRequest is not available.",
+  "errorInitCanvas": "Error: Canvas initialization failed.",
+  "noCanvasSupport": "Error: Your browser does not support Canvas.",
   "errorInitCommands": "Error: failed to initialize the PaintWeb commands!",
-  "errorInitExtensions": "Error: failed to initialize the extensions!",
-  "errorInitTools": "Error: failed to initialize the drawing tools!",
+  "toolRegisterFailed": "Error: failed to register tool '%id%'!",
+  "extensionRegisterFailed": "Error: failed to register extension '%id%'!",
   "errorToolActivate": "Error: the tool you want could not be properly activated!",
   "errorInitGUI": "Error: the interface failed to initialize!",
-  "errorInitMarkupImport": "Error: the interface markup code could not be imported into the main document.",
+  "noMainTabPanel": "Error: the interface layout has no tabbed panel with ID = main.",
+  "guiMarkupImportFailed": "Error: the interface markup code could not be imported into the main document.",
+  "missingCanvasResizer": "Error: the interface markup does not have the Canvas container and/or the Canvas resize handle.",
   "errorCpickerUnsupported": "Error: your browser does not support get/putImageData! The color picker tool cannot be used.",
   "errorClipboardUnsupported": "Error: your browser does not support get/putImageData! Clipboard operations like cut/copy/paste cannot be used.",
   "errorTextUnsupported": "Error: your browser does not implement the Canvas Text API! The text tool cannot be used.",
@@ -39,31 +41,33 @@
   "guiCanvasResizer": "Resize image",
 
   "tabs": {
-    "toolbar_main": "Main",
-    "toolbar_line": "Line",
-    "toolbar_selection": "Selection",
-    "toolbar_text": "Text",
-    "toolbar_shadow": "Shadow"
+    "main": {
+      "main": "Main",
+      "line": "Line",
+      "select": "Selection",
+      "text": "Text",
+      "shadow": "Shadow"
+    }
   },
 
   "tools": {
     "cpicker": "Color picker",
-    "curve": "Bézier curve",
-    "drag": "Viewport drag",
+    "bcurve": "Bézier curve",
+    "hand": "Viewport drag",
     "ellipse": "Ellipse",
     "eraser": "Eraser",
     "insertimg": "Insert image",
     "line": "Line",
     "pencil": "Pencil",
-    "poly": "Polygon",
-    "rect": "Rectangle",
-    "select": "Rectangle selection",
+    "polygon": "Polygon",
+    "rectangle": "Rectangle",
+    "selection": "Rectangle selection",
     "text": "Text"
   },
 
   "commands": {
-    "undo": "Undo",
-    "redo": "Redo",
+    "historyUndo": "Undo",
+    "historyRedo": "Redo",
     "imageClear": "Clear image",
     "imageSave": "Save image",
     "selectionCut": "Cut selection",

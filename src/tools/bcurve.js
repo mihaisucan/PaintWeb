@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-03 18:29:08 +0300 $
+ * $Date: 2009-06-09 20:25:17 +0300 $
  */
 
 /**
@@ -30,7 +30,7 @@
  *
  * @param {PaintWeb} app Reference to the main paint application object.
  */
-pwlib.tools.curve = function (app) {
+pwlib.tools.bcurve = function (app) {
   var _self         = this,
       clearInterval = window.clearInterval,
       config        = app.config,

@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-08 20:56:15 +0300 $
+  // $Date: 2009-06-09 20:53:35 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -135,7 +135,7 @@
    * Holds the list of drawing tools you want to load.
    * @type Array
    */
-  "tools": ["select", "drag", "rect", "ellipse", "poly", "line", "text", "curve", "insertimg", "pencil", "cpicker", "eraser"],
+  "tools": ["selection", "hand", "rectangle", "ellipse", "polygon", "line", "text", "bcurve", "insertimg", "pencil", "cpicker", "eraser"],
 
   /**
    * Tools folder.
@@ -359,8 +359,11 @@
   // TODO: several keyboard shortcuts are still missing. See below.
   "keys": {
     // Use "command": "id" to execute some command.
-    "Control Z": { "command": "undo" },
-    "Control Y": { "command": "redo" },
+    "Control Z": { "command": "historyUndo" },
+    "Control Y": { "command": "historyRedo" },
+
+    "Control N": { "command": "imageClear" },
+    "Control Shift N": { "command": "imageClear" },
     "Control S": { "command": "imageSave" },
 
     "Control X":    { "command": "selectionCut" },
@@ -369,17 +372,18 @@
     "Control V":    { "command": "clipboardPaste" },
 
     // Use "toolActivate": "id" to activate the tool with the given ID.
+    "C": { "toolActivate": "cpicker" },
     "E": { "toolActivate": "ellipse" },
-    "G": { "toolActivate": "poly" },
-    "H": { "toolActivate": "drag" },
+    "G": { "toolActivate": "polygon" },
+    "H": { "toolActivate": "hand" },
     "I": { "toolActivate": "insertimg" },
     "L": { "toolActivate": "line" },
     "O": { "toolActivate": "eraser" },
     "P": { "toolActivate": "pencil" },
-    "R": { "toolActivate": "rect" },
-    "S": { "toolActivate": "select" },
+    "R": { "toolActivate": "rectangle" },
+    "S": { "toolActivate": "selection" },
     "T": { "toolActivate": "text" },
-    "V": { "toolActivate": "curve" },
+    "V": { "toolActivate": "bcurve" },
 
     "X": { "command": "swapFillStroke" }
   }
@@ -388,37 +392,6 @@
   // Global keyboard shortcuts. These can access functions and/or tools.
   // For each keyboard shortcut an element can be associated. During initialization the script will add the keyboard shortcut to the title of each element.
   _me.kshortcuts = {
-    'ctrl-z' : {
-      'func' : _me.btn_undo,
-      'elem' : 'btn_undo'
-    },
-    'ctrl-y' : {
-      'func' : _me.btn_redo,
-      'elem' : 'btn_redo'
-    },
-    'ctrl-x' : {
-      'func' : _me.btn_cut,
-      'elem' : 'btn_cut'
-    },
-    'shift-delete' : { 'func' : _me.btn_cut },
-    'ctrl-c' : {
-      'func' : _me.btn_copy,
-      'elem' : 'btn_copy'
-    },
-    'ctrl-v' : {
-      'func' : _me.btn_paste,
-      'elem' : 'btn_paste'
-    },
-    'ctrl-n' : {
-      'func' : _me.btn_clear,
-      'elem' : 'btn_clear'
-    },
-    'ctrl-shift-n' : { 'func' : _me.btn_clear },
-    'ctrl-s' : {
-      'func' : _me.btn_save,
-      'elem' : 'btn_save'
-    },
-
     '?' : {
       'func' : _me.btn_help,
       'elem' : 'btn_help'
@@ -431,20 +404,6 @@
     'shift-+' : { 'func' : _me.key_zoom },
     'shift--' : { 'func' : _me.key_zoom },
     'shift-*' : { 'func' : _me.key_zoom },
-
-    'c' : { 'tool' : 'cpicker' },
-    'e' : { 'tool' : 'ellipse' },
-    'g' : { 'tool' : 'poly' },
-    'h' : { 'tool' : 'drag' },
-    'i' : { 'tool' : 'insertimg' },
-    'l' : { 'tool' : 'line' },
-    'o' : { 'tool' : 'eraser' },
-    'p' : { 'tool' : 'pencil' },
-    'r' : { 'tool' : 'rect' },
-    't' : { 'tool' : 'text' },
-    's' : { 'tool' : 'select' },
-    'v' : { 'tool' : 'curve' },
-    'x' : { 'func' : _me.coloreditor.swap_fill_stroke }
   }; */
 
   // vim:set spell spl=en fo=wan1croql tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix ft=javascript:

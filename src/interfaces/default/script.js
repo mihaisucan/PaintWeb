@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-08 21:05:47 +0300 $
+ * $Date: 2009-06-09 19:43:50 +0300 $
  */
 
 /**
@@ -40,7 +40,7 @@ pwlib.gui['default'] = function (app) {
       doc          = app.doc,
       lang         = app.lang,
       pwlib        = window.pwlib,
-      win          = app.win,
+      win          = app.win;
 
   this.app = app;
   this.idPrefix = 'paintweb' + app.UID + '_',
@@ -76,12 +76,16 @@ pwlib.gui['default'] = function (app) {
   this.commands = {};
 
   /**
-   * Holds references to the GUI floating panels.
-   *
-   * @private
+   * Holds references to floating panels GUI components.
    * @type Object
    */
-  this.panels = {zIndex: 0};
+  this.floatingPanels = {zIndex_: 0};
+
+  /**
+   * Holds references to tab panel GUI components.
+   * @type Object
+   */
+  this.tabPanels = {};
 
   /**
    * Holds an instance of the guiResizer object attached to the Canvas.
@@ -90,14 +94,6 @@ pwlib.gui['default'] = function (app) {
    * @type guiResizer
    */
   this.canvasResizer = null;
-
-  /**
-   * The toolbar GUI component.
-   *
-   * @private
-   * @type guiTabPanel
-   */
-  this.toolbar = null;
 
   /**
    * Initialize the PaintWeb interface.
@@ -114,46 +110,55 @@ pwlib.gui['default'] = function (app) {
     config.guiPlaceholder.style.visibility = 'hidden';
     config.guiPlaceholder.className += ' ' + this.classPrefix + 'placeholder';
 
-    if (!this.initImportDoc(markupDoc) ||
-        !this.initCanvas() ||
-        !this.initToolbar() ||
-        //!this.initButtons() ||
+    if (!this.initImportDoc(markupDoc)) {
+      app.initError(lang.guiMarkupImportFailed);
+      return false;
+    }
+
+    if (!this.initCanvas() ||
         //!this.initProperties() ||
         //!this.initZoomInput() ||
         !this.initKeyboardShortcuts()) {
       return false;
     }
 
-    // Setup the floating panels.
-    var panels = this.panels;
+    // Setup the main tabbed panel.
+    var tab = null, panel = this.tabPanels.main;
+    if (!panel) {
+      app.initError(lang.noMainTabPanel);
+      return false;
+    }
 
-    //panels.toolbar     = new guiFloatingPanel(this, $('toolbar'));
-    //panels.main        = new guiFloatingPanel(this, $('main'));
-    //panels.properties  = new guiFloatingPanel(this, $('properties'));
-    panels.help        = new guiFloatingPanel(this, $('help'));
-    panels.help.hide();
-    panels.coloreditor = new guiFloatingPanel(this, $('coloreditor'));
-    panels.coloreditor.hide();
+    // Hide all the tabs except the 'main' tab.
+    for (tab in panel.tabs) {
+      if (tab !== 'main') {
+        panel.tabHide(tab);
+      }
+    }
 
     // Setup the Canvas resizer.
-
-    var canvasResizer = new guiResizer(this, $('canvasResizer'), 
-        this.elems.canvasContainer),
-        resizeHandle = canvasResizer.resizeHandle;
-
-    canvasResizer.events.add('guiResizeStart', this.canvasResizeStart);
-    canvasResizer.events.add('guiResizeEnd',   this.canvasResizeEnd);
+    var resizeHandle = this.elems.canvasResizer;
+    if (!resizeHandle || !('canvasContainer' in this.elems)) {
+      app.initError(lang.missingCanvasResizer);
+      return false;
+    }
     resizeHandle.title     = lang.guiCanvasResizer;
     resizeHandle.innerText = lang.guiCanvasResizer;
 
-    // Misc elements:
-    // #statusMessage for displaying various short informational messages.
-    // #tools holds the DOM element of each tool.
+    this.canvasResizer = new guiResizer(this, resizeHandle, 
+        this.elems.canvasContainer);
 
-    this.elems.statusMessage._prevText = false;
+    this.canvasResizer.events.add('guiResizeStart', this.canvasResizeStart);
+    this.canvasResizer.events.add('guiResizeEnd',   this.canvasResizeEnd);
+
+    if ('statusMessage' in this.elems) {
+      this.elems.statusMessage._prevText = false;
+    }
 
     // Update the version string in Help.
-    this.elems.version.appendChild(doc.createTextNode(app));
+    if ('version' in this.elems) {
+      this.elems.version.appendChild(doc.createTextNode(app.toString()));
+    }
 
     // Add application-wide event listeners.
     app.events.add('initApp',             this.initApp);
@@ -182,6 +187,7 @@ pwlib.gui['default'] = function (app) {
         containerStyle  = canvasContainer.style;
 
     if (!canvasContainer) {
+      app.initError(lang.missingCanvasResizer);
       return false;
     }
 
@@ -199,35 +205,25 @@ pwlib.gui['default'] = function (app) {
   };
 
   /**
-   * Initialize the toolbar.
-   *
-   * @private
-   * @returns {Boolean} True if the initialization was successful, or false if 
-   * not.
-   */
-  this.initToolbar = function () {
-    if (!this.elems.toolbar) {
-      return false;
-    }
-
-    var toolbar = new guiTabPanel(this, this.elems.toolbar);
-    this.toolbar = toolbar;
-
-    // Hide all the tabs except the 'main' tab
-    for (var tab in toolbar.tabs) {
-      if (tab !== 'main') {
-        toolbar.tabHide(tab);
-      }
-    }
-
-    return true;
-  };
-
-  /**
-   * Import the DOM nodes from the interface DOM document. All the nodes are 
-   * inserted into the {@link PaintWeb.config.guiPlaceholder} element.
+   * Import the DOM nodes from the interface DOM document and parse all the 
+   * PaintWeb-specific attributes. All the nodes are inserted into the {@link 
+   * PaintWeb.config.guiPlaceholder} element.
    *
    * <p>Elements with IDs are added to <var>this.elems</var> object.
+   *
+   * <p>Elements having the <code>data-pwCommand</code> attribute are added to 
+   * the <var>this.commands</var> object.
+   *
+   * <p>Elements having the <code>data-pwTool</code> attribute are added to the 
+   * <var>this.tools</var> object.
+   *
+   * <p>Elements having the <code>data-pwTabPanel</code> attribute are added to 
+   * the <var>this.tabPanels</var> object. These become interactive GUI 
+   * components (see {@link guiTabPanel}).
+   *
+   * <p>Elements having the <code>data-pwFloatingPanel</code> attribute are 
+   * added to the <var>this.floatingPanels</var> object. These become 
+   * interactive GUI components (see {@link guiFloatingPanel}).
    *
    * @private
    * @param {Document} srcDoc The source DOM document to import the nodes from.
@@ -236,55 +232,89 @@ pwlib.gui['default'] = function (app) {
    */
   this.initImportDoc = function (srcDoc) {
     // I could use some XPath here, but for the sake of compatibility I don't.
-    var elem  = null,
-        tag   = null,
-        cmd   = null,
-        tool  = null,
-        nodes = srcDoc.getElementsByTagName('*'),
-        n     = nodes.length,
-        type  = Node.ELEMENT_NODE;
 
-    for (var i = 0; i < n; i++) {
+    var cmd = null,
+        destElem = config.guiPlaceholder,
+        docChildren = srcDoc.documentElement.childNodes,
+        elem = null,
+        elType = Node.ELEMENT_NODE,
+        floatingPanel = null,
+        i = 0,
+        id = null,
+        nodes = srcDoc.getElementsByTagName('*'),
+        n = nodes.length,
+        tabPanel = null,
+        tag = null,
+        tool = null;
+
+    // Change all the id attributes to be data-pwId attributes.
+    for (i = 0; i < n; i++) {
       elem = nodes[i];
-      if (elem.nodeType !== type) {
+      if (elem.nodeType !== elType) {
+        continue;
+      }
+
+      if (elem.id) {
+        elem.setAttribute('data-pwId', elem.id);
+        elem.removeAttribute('id');
+      }
+    }
+
+    n = docChildren.length;
+
+    // Import all the nodes.
+    for (i = 0; i < n; i++) {
+      destElem.appendChild(doc.importNode(docChildren[i], true));
+    }
+
+    nodes = destElem.getElementsByTagName('*');
+    n = nodes.length;
+
+    // Store references to important elements.
+    for (i = 0; i < n; i++) {
+      elem = nodes[i];
+      if (elem.nodeType !== elType) {
         continue;
       }
 
       // Store references to commands.
       cmd = elem.getAttribute('data-pwCommand');
       if (cmd && !(cmd in this.commands)) {
+        elem.className += ' ' + this.classPrefix + 'command';
         this.commands[cmd] = elem;
       }
 
       // Store references to tools.
       tool = elem.getAttribute('data-pwTool');
       if (tool && !(tool in this.tools)) {
+        elem.className += ' ' + this.classPrefix + 'tool';
         this.tools[tool] = elem;
       }
 
-      // Update the element ID to be unique.
-      if (elem.id) {
-        tag = elem.tagName.toLowerCase();
+      // Create tab panels.
+      tabPanel = elem.getAttribute('data-pwTabPanel');
+      if (tabPanel) {
+        this.tabPanels[tabPanel] = new guiTabPanel(this, elem);
+      }
 
+      // Create floating panels.
+      floatingPanel = elem.getAttribute('data-pwFloatingPanel');
+      if (floatingPanel) {
+        this.floatingPanels[floatingPanel] = new guiFloatingPanel(this, elem);
+      }
+
+      id = elem.getAttribute('data-pwId');
+      if (id) {
+        elem.className += ' ' + this.classPrefix + id;
+
+        tag = elem.tagName.toLowerCase();
         // Store a reference to the element.
         if (tag === 'input' || tag === 'select') {
-          this.inputs[elem.id] = elem;
+          this.inputs[id] = elem;
         } else {
-          this.elems[elem.id] = elem;
+          this.elems[id] = elem;
         }
-
-        elem.id = this.idPrefix + elem.id;
       }
-    }
-
-    var destElem = config.guiPlaceholder,
-        children = srcDoc.documentElement.childNodes;
-
-    n = children.length;
-
-    // Import all the nodes.
-    for (var i = 0; i < n; i++) {
-      destElem.appendChild(doc.importNode(children[i], true));
     }
 
     return true;
@@ -301,7 +331,7 @@ pwlib.gui['default'] = function (app) {
     }
 
     // Make PaintWeb visible.
-    this.config.guiPlaceholder.style.visibility = 'visible';
+    this.config.guiPlaceholder.style.visibility = '';
   };
 
   /**
@@ -313,7 +343,7 @@ pwlib.gui['default'] = function (app) {
    */
   // TODO: fix this
   this.initZoomInput = function () {
-    var elem = $('in-zoom');
+    var elem = this.inputs.zoom;
     if (!elem) {
       return false;
     }
@@ -327,8 +357,6 @@ pwlib.gui['default'] = function (app) {
     elem.setAttribute('step', config.zoomStep * 100);
     elem.setAttribute('max',  config.zoomMax  * 100);
     elem.setAttribute('min',  config.zoomMin  * 100);
-
-    this.inputs.zoom = elem;
 
     return true;
   };
@@ -885,9 +913,14 @@ pwlib.gui['default'] = function (app) {
 
     if (ev.prevId) {
       var prev = _self.tools[ev.prevId];
+
       prev.className = prev.className.
         replace(' ' + _self.classPrefix + 'toolActive', '');
+
+      _self.tabPanels.main.tabHide(ev.prevId);
     }
+
+    _self.tabPanels.main.tabShow(ev.id);
 
     _self.statusShow(ev.id + 'Active');
   };
@@ -937,9 +970,8 @@ pwlib.gui['default'] = function (app) {
 
     if (!(ev.id in _self.tools)) {
       _self.tools[ev.id] = elem;
+      _self.elems.tools.appendChild(elem);
     }
-
-    _self.elems.tools.appendChild(elem);
   };
 
   /**
@@ -1029,7 +1061,7 @@ function guiFloatingPanel (gui, elem) {
   var _self       = this,
       win         = gui.app.win,
       doc         = gui.app.doc,
-      panels      = gui.panels,
+      panels      = gui.floatingPanels,
       zIndex_step = 200;
 
   // These hold the mouse starting location during the drag operation.
@@ -1055,21 +1087,26 @@ function guiFloatingPanel (gui, elem) {
    * @private
    */
   function init () {
-    var ttl = elem.getElementsByTagName('h1')[0],
-        cs = win.getComputedStyle(elem, null),
+    var ttl = _self.elem.getElementsByTagName('h1')[0],
+        cs = win.getComputedStyle(_self.elem, null),
         zIndex = parseInt(cs.zIndex);
 
     // Set the position in the .style for quicker usage by the mousedown handler.
     // If this is not done during initialization, it would need to be done in the mousedown handler.
-    elem.style.top    = cs.top;
-    elem.style.left   = cs.left;
-    elem.style.zIndex = cs.zIndex;
+    _self.elem.style.top    = cs.top;
+    _self.elem.style.left   = cs.left;
+    _self.elem.style.zIndex = cs.zIndex;
 
-    if (zIndex > panels.zIndex) {
-      panels.zIndex = zIndex;
+    if (zIndex > panels.zIndex_) {
+      panels.zIndex_ = zIndex;
     }
 
     ttl.addEventListener('mousedown', ev_mousedown, false);
+
+    // allow auto-hide for the panel
+    if (_self.elem.getAttribute('data-pwPanelHide') === 'true') {
+      _self.hide();
+    }
   };
 
   /**
@@ -1127,8 +1164,8 @@ function guiFloatingPanel (gui, elem) {
    * panel is visible.
    */
   this.bringOnTop = function () {
-    panels.zIndex += zIndex_step;
-    elem.style.zIndex = panels.zIndex;
+    panels.zIndex_ += zIndex_step;
+    elem.style.zIndex = panels.zIndex_;
   };
 
   /**
@@ -1306,8 +1343,9 @@ function guiTabPanel (gui, panel) {
   this.events = null;
 
   /**
-   * Panel ID. The ID is determined automatically based on the panel DOM element 
-   * ID.
+   * Panel ID. The ID is the same as the data-pwTabPanel attribute value of the 
+   * panel DOM element .
+   *
    * @type String.
    */
   this.id = null;
@@ -1352,10 +1390,16 @@ function guiTabPanel (gui, panel) {
    */
   function init () {
     _self.events = new pwlib.appEvents(_self);
-    _self.id = _self.container.id.replace(new RegExp('^' + gui.idPrefix), '');
+    _self.id = _self.container.getAttribute('data-pwTabPanel');
+
+    // Add two class names, the generic .paintweb_tabPanel and another class 
+    // name specific to the current tab panel: .paintweb_tabPanel_id. 
+    _self.container.className += ' ' + gui.classPrefix + 'tabPanel' 
+      + ' ' + gui.classPrefix + 'tabPanel_' + _self.id;
 
     var tabButtons = doc.createElement('ul'),
         tabButton = null,
+        tabDefault = _self.container.getAttribute('data-pwTabDefault') || null,
         childNodes = _self.container.childNodes,
         n = childNodes.length,
         type = Node.ELEMENT_NODE,
@@ -1363,9 +1407,9 @@ function guiTabPanel (gui, panel) {
         tabId = null,
         tabTitle = null;
 
-    tabButtons.className = gui.classPrefix + 'tabs';
+    tabButtons.className = gui.classPrefix + 'tabsList';
 
-    // Find all the tabs in the current toolbar container element.
+    // Find all the tabs in the current panel container element.
     for (var i = 0; elem = childNodes[i]; i++) {
       if (elem.nodeType !== type) {
         continue;
@@ -1377,21 +1421,34 @@ function guiTabPanel (gui, panel) {
         continue;
       }
 
-      elem.className += ' ' + gui.classPrefix + _self.id + '_' + tabId;
-      tabTitle = lang.tabs[_self.id][tabId];
+      // two class names, the generic .paintweb_tab and the tab-specific class 
+      // name .paintweb_tabPanelId_tabId.
+      elem.className += ' ' + gui.classPrefix + 'tab ' + gui.classPrefix 
+        + _self.id + '_' + tabId;
 
       tabButton = doc.createElement('li');
-      tabButton._PaintWebTab = tab;
-      tabButton.title = tabTitle;
-      tabButton.appendChild(doc.createTextNode(tabTitle));
+      tabButton.className = gui.classPrefix + 'tabButton';
+      tabButton._PaintWebTab = tabId;
       tabButton.addEventListener('click', ev_tabClick, false);
 
-      if (!_self.tabId) {
+      if (_self.id in lang.tabs) {
+        tabTitle = lang.tabs[_self.id][tabId];
+        tabButton.title = tabTitle;
+        tabButton.appendChild(doc.createTextNode(tabTitle));
+      }
+
+      if ((tabDefault && tabId === tabDefault) ||
+          (!tabDefault && !_self.tabId)) {
         _self.tabId = tabId;
-        tabButton.className = gui.classPrefix + 'tabActive';
+        tabButton.className += ' ' + gui.classPrefix + 'tabActive';
       } else {
         prevTabId_ = tabId;
         elem.style.display = 'none';
+      }
+
+      // automatically hide the tab
+      if (elem.getAttribute('data-pwTabHide') === 'true') {
+        tabButton.style.display = 'none';
       }
 
       _self.tabs[tabId] = {container: elem, button: tabButton};
@@ -1444,7 +1501,8 @@ function guiTabPanel (gui, panel) {
       elem = this.tabs[this.tabId].container;
       elem.style.display = 'none';
       tabButton = this.tabs[this.tabId].button;
-      tabButton.className = '';
+      tabButton.className = tabButton.className.replace(' ' + gui.classPrefix 
+          + 'tabActive', '');
       prevTabId_ = this.tabId;
     }
 
@@ -1452,7 +1510,8 @@ function guiTabPanel (gui, panel) {
     elem = this.tabs[tabId].container;
     elem.style.display = '';
     tabButton = this.tabs[tabId].button;
-    tabButton.className = gui.classPrefix + 'tabActive';
+    tabButton.className += ' ' + gui.classPrefix + 'tabActive';
+    tabButton.style.display = ''; // make sure the tab is not hidden
     this.tabId = tabId;
 
     return true;
