@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-09 23:20:02 +0300 $
+ * $Date: 2009-06-10 20:34:59 +0300 $
  */
 
 /**
@@ -52,7 +52,7 @@ function PaintWeb (win, doc) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090609;
+  this.build = 20090610;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -751,9 +751,6 @@ function PaintWeb (win, doc) {
       layerContext.drawImage(imagePreload, 0, 0);
     }
 
-    // The initial blank state of the image
-    this.historyAdd();
-
     /*
      * Setup the event listeners for the canvas element.
      *
@@ -787,6 +784,9 @@ function PaintWeb (win, doc) {
       this.initError(lang.errorInitCommands);
       return;
     }
+
+    // The initial blank state of the image
+    this.historyAdd();
 
     // The global keyboard events handler implements everything needed for 
     // switching between tools and for accessing any other functionality of the 
@@ -1237,77 +1237,102 @@ function PaintWeb (win, doc) {
     return true;
   };
 
-  // This function resizes the canvas to the desired dimensions.
-  this.resizeCanvas = function (w, h, resizer) {
-    if (!w || !h || isNaN(w) || isNaN(h)) {
+  /**
+   * Crop the image.
+   *
+   * <p>The content of the image is retained only if the browser implements the 
+   * <code>getImageData</code> and <code>putImageData</code> methods.
+   *
+   * <p>This method dispatches two application events: {@link 
+   * pwlib.appEvent.imageSizeChange} and {@link pwlib.appEvent.imageCrop}.  The 
+   * <code>imageCrop</code> event is dispatched before the image is cropped. The 
+   * <code>imageSizeChange</code> event is dispatched after the image is 
+   * cropped.
+   *
+   * @param {Number} cropX Image cropping start position on the x-axis.
+   * @param {Number} cropY Image cropping start position on the y-axis.
+   * @param {Number} cropWidth Image crop width.
+   * @param {Number} cropHeight Image crop height.
+   *
+   * @returns {Boolean} True if the image was cropped successfully, or false if 
+   * not.
+   */
+  this.imageCrop = function (cropX, cropY, cropWidth, cropHeight) {
+    var bufferCanvas  = this.buffer.canvas,
+        bufferContext = this.buffer.context,
+        image         = this.image,
+        layerCanvas   = this.layer.canvas,
+        layerContext  = this.layer.context;
+
+    if (!cropWidth || !cropHeight || isNaN(cropWidth) || isNaN(cropHeight) || 
+        cropX >= image.width || cropY >= image.height) {
       return false;
     }
 
-    if (w > 1500) {
-      w = 1500;
-    }
-
-    if (h > 1500) {
-      h = 1500;
-    }
-
-    if (_self.image.width == w && _self.image.height == h) {
+    var cancel = this.events.dispatch(new appEvent.imageCrop(cropX, cropY, 
+          cropWidth, cropHeight));
+    if (cancel) {
       return false;
     }
 
-    var w2 = w * _self.image.canvasScale,
-        h2 = h * _self.image.canvasScale;
+    if (cropWidth > this.config.imageWidthMax) {
+      cropWidth = this.config.imageWidthMax;
+    }
 
-    if (_self.image.zoom <= 1) {
-      _self.elems.container.style.width  = w2 + 'px';
-      _self.elems.container.style.height = h2 + 'px';
-    } else if (resizer && _self.image.zoom > 1) {
+    if (cropHeight > this.config.imageHeightMax) {
+      cropHeight = this.config.imageHeightMax;
+    }
+
+    if (cropX === 0 && cropY === 0 && image.width === cropWidth && image.height 
+        === cropHeight) {
       return true;
     }
 
-    _self.buffer.canvas.style.width = _self.layer.canvas.style.width = w2 
-      + 'px';
-    _self.buffer.canvas.style.height = _self.layer.canvas.style.height = h2 
-      + 'px';
+    var scaledWidth  = cropWidth  * image.canvasScale,
+        scaledHeight = cropHeight * image.canvasScale;
 
-    // The canvas state gets reset once the dimensions change.
-    var state = _self.state_save(_self.layer.context),
-        dw    = MathMin(_self.image.width,  w),
-        dh    = MathMin(_self.image.height, h);
+    bufferCanvas.style.width  = layerCanvas.style.width  = scaledWidth  + 'px';
+    bufferCanvas.style.height = layerCanvas.style.height = scaledHeight + 'px';
+
+    // The canvas state is reset once the dimensions change.
+    var state      = this.stateSave(layerContext),
+        dataWidth  = MathMin(image.width,  cropWidth)  - cropX,
+        dataHeight = MathMin(image.height, cropHeight) - cropY;
 
     // The image is cleared once the dimensions change. We need to restore the image.
-    // This does not work in Opera 9.2 and older, nor in Safari. This works in new WebKit builds.
     var idata = false;
-    if (_self.layer.context.getImageData) {
-      idata = _self.layer.context.getImageData(0, 0, dw, dh);
+    if (layerContext.getImageData) {
+      idata = layerContext.getImageData(cropX, cropY, dataWidth, dataHeight);
     }
 
-    _self.layer.canvas.width  = w;
-    _self.layer.canvas.height = h;
+    layerCanvas.width  = cropWidth;
+    layerCanvas.height = cropHeight;
 
-    if (idata && _self.layer.context.putImageData) {
-      _self.layer.context.putImageData(idata, 0, 0);
+    if (idata && layerContext.putImageData) {
+      layerContext.putImageData(idata, 0, 0);
     }
 
-    _self.state_restore(_self.layer.context, state);
-    state = _self.state_save(_self.buffer.context);
+    this.stateRestore(layerContext, state);
+    state = this.stateSave(bufferContext);
 
     idata = false;
-    if (_self.buffer.context.getImageData) {
-      idata = _self.buffer.context.getImageData(0, 0, dw, dh);
+    if (bufferContext.getImageData) {
+      idata = bufferContext.getImageData(cropX, cropY, dataWidth, dataHeight);
     }
 
-    _self.buffer.canvas.width  = w;
-    _self.buffer.canvas.height = h;
+    bufferCanvas.width  = cropWidth;
+    bufferCanvas.height = cropHeight;
 
-    if (idata && _self.buffer.context.putImageData) {
-      _self.buffer.context.putImageData(idata, 0, 0);
+    if (idata && bufferContext.putImageData) {
+      bufferContext.putImageData(idata, 0, 0);
     }
 
-    _self.state_restore(_self.buffer.context, state);
+    this.stateRestore(bufferContext, state);
 
-    _self.image.width  = w;
-    _self.image.height = h;
+    image.width  = cropWidth;
+    image.height = cropHeight;
+
+    this.events.dispatch(new appEvent.imageSizeChange(cropWidth, cropHeight));
 
     return true;
   };
@@ -1322,7 +1347,7 @@ function PaintWeb (win, doc) {
     'shadowBlur', 'shadowColor', 'globalCompositeOperation', 'font', 
     'textAlign', 'textBaseline'];
 
-  this.state_save = function (context) {
+  this.stateSave = function (context) {
     if (!context || !context.canvas || !_self.state_props) {
       return false;
     }
@@ -1337,7 +1362,7 @@ function PaintWeb (win, doc) {
     return stateObj;
   };
 
-  this.state_restore = function (context, stateObj) {
+  this.stateRestore = function (context, stateObj) {
     if (!context || !context.canvas) {
       return false;
     }
@@ -1463,12 +1488,16 @@ function PaintWeb (win, doc) {
   /**
    * Add the current image layer to the history.
    *
+   * <p>Once the history state has been updated, this method dispatches the 
+   * {@link pwlib.appEvent.historyUpdate} event.
+   *
    * @returns {Boolean} True if the operation was successful, or false if not.
    */
   // TODO: some day it would be nice to implement a hybrid history system.
   this.historyAdd = function () {
-    var layerContext = _self.layer.context,
-        history      = _self.history;
+    var layerContext = this.layer.context,
+        history      = this.history,
+        prevPos      = history.pos;
 
     // The get/putImageData methods do not work in Opera Merlin, nor in Safari 
     // (tested with 20080324 svn trunk, webkitgtk). However, in webkit svn trunk 
@@ -1478,32 +1507,34 @@ function PaintWeb (win, doc) {
       return false;
     }
 
-    var n = history.states.length;
-
     // We are in an undo-step, trim until the end, eliminating any possible redo-steps.
-    if (history.pos < n) {
-      n -= history.pos;
-      history.states.splice(history.pos, n);
+    if (prevPos < history.states.length) {
+      history.states.splice(prevPos, history.states.length);
     }
 
-    history.states.push(layerContext.getImageData(0, 0, _self.image.width 
-          - 1 , _self.image.height - 1));
-
-    history.pos++;
-    n++;
+    history.states.push(layerContext.getImageData(0, 0, this.image.width 
+          - 1 , this.image.height - 1));
 
     // If we have too many history ImageDatas, remove the oldest ones
-    if ('historyLimit' in _self.config && n > _self.config.historyLimit) {
-      n -= _self.config.historyLimit;
-      history.states.splice(0, n);
-      history.pos = history.states.length;
+    if ('historyLimit' in this.config &&
+        history.states.length > this.config.historyLimit) {
+
+      history.states.splice(0, history.states.length 
+          - this.config.historyLimit);
     }
+    history.pos = history.states.length;
+
+    this.events.dispatch(new appEvent.historyUpdate(history.pos, prevPos, 
+          history.pos));
 
     return true;
   };
 
   /**
    * Jump to any ImageData/position in the history.
+   *
+   * <p>Once the history state has been updated, this method dispatches the 
+   * {@link pwlib.appEvent.historyUpdate} event.
    *
    * @param {Number|String} pos The history position to jump to.
    * 
@@ -1515,8 +1546,9 @@ function PaintWeb (win, doc) {
    * @returns {Boolean} True if the operation was successful, or false if not.
    */
   this.historyGoto = function (pos) {
-    var layerContext = _self.layer.context,
-        history      = _self.history;
+    var layerContext = this.layer.context,
+        image        = this.image,
+        history      = this.history;
 
     if (!history.states.length || !layerContext.putImageData) {
       return false;
@@ -1530,8 +1562,7 @@ function PaintWeb (win, doc) {
       pos = cpos+1;
     }
 
-    pos = parseInt(pos);
-    if (pos == cpos || isNaN(pos) || pos < 1 || pos > history.states.length) {
+    if (pos === cpos || pos < 1 || pos > history.states.length) {
       return false;
     }
 
@@ -1542,10 +1573,10 @@ function PaintWeb (win, doc) {
 
     // Each image in the history can have a different size. As such, the script 
     // must take this into consideration.
-    var w = Math.min(_self.image.width,  himg.width),
-        h = Math.min(_self.image.height, himg.height);
+    var w = Math.min(this.image.width,  himg.width),
+        h = Math.min(this.image.height, himg.height);
 
-    layerContext.clearRect(0, 0, _self.image.width, _self.image.height);
+    layerContext.clearRect(0, 0, this.image.width, this.image.height);
 
     try {
       // Firefox 3 does not clip the image, if needed.
@@ -1567,24 +1598,8 @@ function PaintWeb (win, doc) {
 
     history.pos = pos;
 
-    var btn_redo = _self.elems.btn_redo,
-        btn_undo = _self.elems.btn_undo;
-
-    if (!btn_redo || !btn_undo) {
-      return true;
-    }
-
-    if (pos === history.states.length) {
-      btn_redo.className = 'disabled';
-    } else {
-      btn_redo.className = '';
-    }
-
-    if (pos === 1) {
-      btn_undo.className = 'disabled';
-    } else {
-      btn_undo.className = '';
-    }
+    this.events.dispatch(new appEvent.historyUpdate(pos, cpos, 
+          history.states.length));
 
     return true;
   };

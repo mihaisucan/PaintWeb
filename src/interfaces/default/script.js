@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-09 19:43:50 +0300 $
+ * $Date: 2009-06-10 20:33:54 +0300 $
  */
 
 /**
@@ -142,8 +142,9 @@ pwlib.gui['default'] = function (app) {
       app.initError(lang.missingCanvasResizer);
       return false;
     }
-    resizeHandle.title     = lang.guiCanvasResizer;
-    resizeHandle.innerText = lang.guiCanvasResizer;
+    resizeHandle.title = lang.guiCanvasResizer;
+    resizeHandle.removeChild(resizeHandle.firstChild);
+    resizeHandle.appendChild(doc.createTextNode(lang.guiCanvasResizer));
 
     this.canvasResizer = new guiResizer(this, resizeHandle, 
         this.elems.canvasContainer);
@@ -160,13 +161,30 @@ pwlib.gui['default'] = function (app) {
       this.elems.version.appendChild(doc.createTextNode(app.toString()));
     }
 
+    // Update the image dimensions in the GUI
+    var imageSize = this.elems.imageSize;
+    if (imageSize) {
+      imageSize.removeChild(imageSize.firstChild);
+      imageSize.appendChild(doc.createTextNode(app.image.width + 'x' 
+            + app.image.height));
+
+      // Make sure the imageSize element is always updated.
+      app.events.add('imageSizeChange', this.imageSizeChange);
+    }
+
     // Add application-wide event listeners.
-    app.events.add('initApp',             this.initApp);
-    app.events.add('toolActivate',        this.toolActivate);
-    app.events.add('toolRegister',        this.toolRegister);
-    app.events.add('toolUnregister',      this.toolUnregister);
-    app.events.add('commandRegister',     this.commandRegister);
-    app.events.add('commandUnregister',   this.commandUnregister);
+    app.events.add('initApp',           this.initApp);
+    app.events.add('toolActivate',      this.toolActivate);
+    app.events.add('toolRegister',      this.toolRegister);
+    app.events.add('toolUnregister',    this.toolUnregister);
+    app.events.add('commandRegister',   this.commandRegister);
+    app.events.add('commandUnregister', this.commandUnregister);
+
+    // Make sure the historyUndo and historyRedo command elements are 
+    // synchronized with the application history state.
+    if ('historyUndo' in this.commands && 'historyRedo' in this.commands) {
+      app.events.add('historyUpdate', this.historyUpdate);
+    }
 
     app.commandRegister('help', this.commandHelp);
 
@@ -174,7 +192,7 @@ pwlib.gui['default'] = function (app) {
   };
 
   /**
-   * Initialize the canvas elements.
+   * Initialize the Canvas elements.
    *
    * @private
    * @returns {Boolean} True if the initialization was successful, or false if 
@@ -323,6 +341,9 @@ pwlib.gui['default'] = function (app) {
   /**
    * The <code>initApp</code> event handler. This method is invoked once 
    * PaintWeb completes all the loading.
+   *
+   * @private
+   * @param {pwlib.appEvent.initApp} ev The application event object.
    */
   this.initApp = function (ev) {
     // Initialization was not successful ...
@@ -543,24 +564,25 @@ pwlib.gui['default'] = function (app) {
   };
 
   /**
-   * The <code>start</code> event handler for the Canvas resize operation.
+   * The <code>guiResizeStart</code> event handler for the Canvas resize 
+   * operation.
    * @private
    */
   this.canvasResizeStart = function () {
-    this.container.style.overflow = 'hidden';
-    _self.panels.main.bringOnTop();
+    //this.container.style.overflow = 'hidden';
   };
 
   /**
-   * The <code>end</code> event handler for the Canvas resize operation.
+   * The <code>guiResizeEnd</code> event handler for the Canvas resize 
+   * operation.
    *
    * @private
-   * @param {Object} ev The application event object.
+   * @param {pwlib.appEvent.guiResizeEnd} ev The application event object.
    */
   this.canvasResizeEnd = function (ev) {
-    this.container.style.overflow = 'auto';
-    app.resizeCanvas(ev.width / app.image.canvasScale,
-        ev.height / app.image.canvasScale, true);
+    //this.container.style.overflow = 'auto';
+    app.imageCrop(0, 0, ev.width / app.image.canvasScale,
+        ev.height / app.image.canvasScale);
   };
 
   // This is the event handler which shows a temporary status message when hovering buttons/tools.
@@ -902,7 +924,7 @@ pwlib.gui['default'] = function (app) {
    *
    * @private
    *
-   * @param {Object} ev The application event object.
+   * @param {pwlib.appEvent.toolActivate} ev The application event object.
    *
    * @see PaintWeb#toolActivate the method which allows you to activate 
    * a drawing tool.
@@ -931,7 +953,7 @@ pwlib.gui['default'] = function (app) {
    *
    * @private
    *
-   * @param {Object} ev The application event object.
+   * @param {pwlib.appEvent.toolRegister} ev The application event object.
    *
    * @see PaintWeb#toolRegister the method which allows you to register new 
    * tools.
@@ -978,7 +1000,7 @@ pwlib.gui['default'] = function (app) {
    * The <code>toolUnregister</code> application event handler. This method the 
    * tool element from the GUI.
    *
-   * @param {Object} ev The application event object.
+   * @param {pwlib.appEvent.toolUnregister} ev The application event object.
    *
    * @see PaintWeb#toolUnregister the method which allows you to unregister 
    * tools.
@@ -998,7 +1020,7 @@ pwlib.gui['default'] = function (app) {
    *
    * @private
    *
-   * @param {Object} ev The application event object.
+   * @param {pwlib.appEvent.commandRegister} ev The application event object.
    *
    * @see PaintWeb#commandRegister the method which allows you to register new 
    * commands.
@@ -1027,7 +1049,7 @@ pwlib.gui['default'] = function (app) {
    * simply removes all the user interactivity from the GUI element associated 
    * to the command being unregistered.
    *
-   * @param {Object} ev The application event object.
+   * @param {pwlib.appEvent.commandUnregister} ev The application event object.
    *
    * @see PaintWeb#commandUnregister the method which allows you to unregister 
    * commands.
@@ -1044,6 +1066,64 @@ pwlib.gui['default'] = function (app) {
     elem.removeEventListener('click',     this.commands[ev.id], false);
     elem.removeEventListener('mouseover', _self.item_mouseover, false);
     elem.removeEventListener('mouseout',  _self.item_mouseout,  false);
+  };
+
+  /**
+   * The <code>historyUpdate</code> application event handler. GUI elements 
+   * associated to the <code>historyUndo</code> and to the 
+   * <code>historyRedo</code> commands are updated such that they are either 
+   * enabled or disabled, depending on the current history position.
+   *
+   * @param {pwlib.appEvent.historyUpdate} ev The application event object.
+   * @see PaintWeb#historyGoto the method which allows you to go to different 
+   * history states.
+   */
+  this.historyUpdate = function (ev) {
+    var undoElem  = _self.commands.historyUndo,
+        undoState = false,
+        redoElem  = _self.commands.historyRedo,
+        redoState = false,
+        className = ' ' + _self.classPrefix + 'disabled',
+        undoElemState = undoElem.className.indexOf(className) === -1,
+        redoElemState = redoElem.className.indexOf(className) === -1;
+
+    if (ev.currentPos > 1) {
+      undoState = true;
+    }
+    if (ev.currentPos < ev.states) {
+      redoState = true;
+    }
+
+    if (undoElemState !== undoState) {
+      if (undoState) {
+        undoElem.className = undoElem.className.replace(className, '');
+      } else {
+        undoElem.className += className;
+      }
+    }
+
+    if (redoElemState !== redoState) {
+      if (redoState) {
+        redoElem.className = redoElem.className.replace(className, '');
+      } else {
+        redoElem.className += className;
+      }
+    }
+  };
+
+  /**
+   * The <code>imageSizeChange</code> application event handler. The GUI element 
+   * which displays the image dimensions is updated to display the new image 
+   * size.
+   *
+   * @param {pwlib.appEvent.imageSizeChange} ev The application event object.
+   */
+  this.imageSizeChange = function (ev) {
+    var elem = _self.elems.imageSize;
+    if (elem) {
+      elem.removeChild(elem.firstChild);
+      elem.appendChild(doc.createTextNode(ev.width + 'x' + ev.height));
+    }
   };
 };
 
@@ -1427,7 +1507,6 @@ function guiTabPanel (gui, panel) {
         + _self.id + '_' + tabId;
 
       tabButton = doc.createElement('li');
-      tabButton.className = gui.classPrefix + 'tabButton';
       tabButton._PaintWebTab = tabId;
       tabButton.addEventListener('click', ev_tabClick, false);
 
@@ -1440,7 +1519,7 @@ function guiTabPanel (gui, panel) {
       if ((tabDefault && tabId === tabDefault) ||
           (!tabDefault && !_self.tabId)) {
         _self.tabId = tabId;
-        tabButton.className += ' ' + gui.classPrefix + 'tabActive';
+        tabButton.className = gui.classPrefix + 'tabActive';
       } else {
         prevTabId_ = tabId;
         elem.style.display = 'none';
@@ -1501,8 +1580,7 @@ function guiTabPanel (gui, panel) {
       elem = this.tabs[this.tabId].container;
       elem.style.display = 'none';
       tabButton = this.tabs[this.tabId].button;
-      tabButton.className = tabButton.className.replace(' ' + gui.classPrefix 
-          + 'tabActive', '');
+      tabButton.className = '';
       prevTabId_ = this.tabId;
     }
 
@@ -1510,7 +1588,7 @@ function guiTabPanel (gui, panel) {
     elem = this.tabs[tabId].container;
     elem.style.display = '';
     tabButton = this.tabs[tabId].button;
-    tabButton.className += ' ' + gui.classPrefix + 'tabActive';
+    tabButton.className = gui.classPrefix + 'tabActive';
     tabButton.style.display = ''; // make sure the tab is not hidden
     this.tabId = tabId;
 

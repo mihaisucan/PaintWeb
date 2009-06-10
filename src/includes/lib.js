@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-06-08 19:49:31 +0300 $
+ * $Date: 2009-06-10 20:20:41 +0300 $
  */
 
 /**
@@ -456,6 +456,77 @@ pwlib.appEvent.swapFillStroke = function (fillStyle, strokeStyle) {
   this.strokeStyle = strokeStyle;
 
   pwlib.appEvent.call(this, 'swapFillStroke', true);
+};
+
+/**
+ * @class History navigation event. This event is not cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {Number} currentPos The new history position.
+ * @param {Number} previousPos The previous history position.
+ * @param {Number} states The number of history states available.
+ *
+ * @throws {TypeError} If any of the arguments are not numbers.
+ */
+pwlib.appEvent.historyUpdate = function (currentPos, previousPos, states) {
+  if (typeof currentPos !== 'number' || typeof previousPos !== 'number' || 
+      typeof states !== 'number') {
+    throw new TypeError('All arguments must be numbers.');
+  }
+
+  this.currentPos = currentPos;
+  this.previousPos = previousPos;
+  this.states = states;
+
+  pwlib.appEvent.call(this, 'historyUpdate');
+};
+
+/**
+ * @class Image size change event. This event is not cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {Number} width The new image width.
+ * @param {Number} height The new image height.
+ *
+ * @throws {TypeError} If any of the arguments are not numbers.
+ */
+pwlib.appEvent.imageSizeChange = function (width, height) {
+  if (typeof width !== 'number' || typeof height !== 'number') {
+    throw new TypeError('Both arguments must be numbers.');
+  }
+
+  this.width  = width;
+  this.height = height;
+
+  pwlib.appEvent.call(this, 'imageSizeChange');
+};
+
+/**
+ * @class Image crop event. This event is cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {Number} x The crop start position on the x-axis.
+ * @param {Number} y The crop start position on the y-axis.
+ * @param {Number} width The cropped image width.
+ * @param {Number} height The cropped image height.
+ *
+ * @throws {TypeError} If any of the arguments are not numbers.
+ */
+pwlib.appEvent.imageCrop = function (x, y, width, height) {
+  if (typeof x !== 'number' || typeof y !== 'number' || typeof width !== 
+      'number' || typeof height !== 'number') {
+    throw new TypeError('All arguments must be numbers.');
+  }
+
+  this.x      = x;
+  this.y      = y;
+  this.width  = width;
+  this.height = height;
+
+  pwlib.appEvent.call(this, 'imageCrop', true);
 };
 
 /**

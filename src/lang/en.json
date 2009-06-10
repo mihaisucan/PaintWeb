@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-09 20:52:37 +0300 $
+  // $Date: 2009-06-10 20:22:35 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -38,7 +38,7 @@
     "toyo94": "TOYO 94 color finder"
   },
 
-  "guiCanvasResizer": "Resize image",
+  "guiCanvasResizer": "Resize the image canvas",
 
   "tabs": {
     "main": {
@@ -80,11 +80,11 @@
     "cpickerFillStyle": "Click to pick the fill color.",
     "cpickerNormal": "Click to change the fill color, and Shift+Click to change the stroke color.",
     "cpickerStrokeStyle": "Click to pick the stroke color.",
-    "curveActive": "Click to start drawing the curve. You need four points: start, end and two control points.",
-    "curveControlPoint1": "Click to draw the first control point.",
-    "curveControlPoint2": "Click to draw the second control point. This will also end the drawing operation.",
-    "curveSnapping": "Hold the Shift key down for vertical/horizontal snapping.",
-    "dragActive": "Click and drag the image to scroll.",
+    "bcurveActive": "Click to start drawing the curve. You need four points: start, end and two control points.",
+    "bcurveControlPoint1": "Click to draw the first control point.",
+    "bcurveControlPoint2": "Click to draw the second control point. This will also end the drawing operation.",
+    "bcurveSnapping": "Hold the Shift key down for vertical/horizontal snapping.",
+    "handActive": "Click and drag the image to scroll.",
     "ellipseActive": "Click and drag to draw an ellipse.",
     "ellipseMousedown": "Hold the Shift key down to draw a circle.",
     "eraserActive": "Click and drag to erase.",
@@ -95,17 +95,17 @@
     "lineActive": "Click anywhere to start drawing a line.",
     "lineMousedown": "Hold the Shift key down for vertical/horizontal snapping.",
     "pencilActive": "Click and drag to draw.",
-    "polyActive": "Click anywhere to start drawing a polygon.",
-    "polyAddPoint": "Click to add another point to the polygon.",
-    "polyEnd": "To end drawing the polygon simply click in the same place as the last point.",
-    "polyMousedown": "Hold the Shift key down for vertical/horizontal snapping.",
-    "rectActive": "Click and drag to draw a rectangle.", 
-    "rectMousedown": "Hold the Shift key down to draw a square.",
-    "selectActive": "Click and drag to draw a selection.",
-    "selectAvailable": "Drag or resize the selection. Hold the Control key down to toggle the transformation mode.",
-    "selectDrag": "Hold the Shift key down for vertical/horizontal snapping.",
-    "selectDraw": "Hold the Shift key down to draw a square selection.",
-    "selectResize": "Hold the Shift key down to preserve the aspect ratio.",
+    "polygonActive": "Click anywhere to start drawing a polygon.",
+    "polygonAddPoint": "Click to add another point to the polygon.",
+    "polygonEnd": "To end drawing the polygon simply click in the same place as the last point.",
+    "polygonMousedown": "Hold the Shift key down for vertical/horizontal snapping.",
+    "rectangleActive": "Click and drag to draw a rectangle.", 
+    "rectangleMousedown": "Hold the Shift key down to draw a square.",
+    "selectionActive": "Click and drag to draw a selection.",
+    "selectionAvailable": "Drag or resize the selection. Hold the Control key down to toggle the transformation mode.",
+    "selectionDrag": "Hold the Shift key down for vertical/horizontal snapping.",
+    "selectionDraw": "Hold the Shift key down to draw a square selection.",
+    "selectionResize": "Hold the Shift key down to preserve the aspect ratio.",
     "textActive": "Pick where you want to place the text. Make sure you adjust the properties as desired."
   }
 

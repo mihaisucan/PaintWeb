@@ -1,3 +1,20 @@
+2009-06-10:
+===========
+
+- Added keyboard shortcut for Help.
+- Added application events for image size changes, image cropping and history 
+updates.
+- Updated the canvasResize function to be imageCrop - because that's what it 
+really did.
+- Updated the GUI:
+  - made the tabs look as expected.
+  - fixes for the rendering of tools.
+  - now the status bar looks almost as expected (just need to add the zoom 
+      icon).
+  - work on the viewport.
+- English localization fixes.
+
+
 2009-06-09:
 ===========
 

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-09 23:18:56 +0300 $
+ * $Date: 2009-06-10 20:40:05 +0300 $
  */
 
 /* OLPC XO DPI resolution detection */
@@ -54,17 +54,24 @@
   font: 12px sans-serif
 }
 
-.paintweb_placeholder label {
-  cursor: pointer;
-  font-weight: bold
+.paintweb_placeholder label { cursor: pointer }
+
+.paintweb_placeholder input[type=text], .paintweb_placeholder input[type=password], .paintweb_placeholder input[type=number] {
+  border: 1px solid #000;
 }
 
 .paintweb_appTitle { display: none }
 
+.paintweb_viewport {
+  background: #999;
+  border: 1px solid #000;
+  overflow: auto;
+  height: 400px
+}
+
 .paintweb_canvasContainer {
   background: #fff;
   border: 1px solid #000;
-  overflow: auto;
   position: relative
 }
 
@@ -79,12 +86,14 @@
 
 .paintweb_canvasResizer {
   background: #000;
-  bottom: -3px;
+  bottom: -4px;
   cursor: se-resize;
-  height: 3px;
+  height: 4px;
+  overflow: hidden;
   position: absolute;
-  right: -3px;
-  width: 3px
+  right: -4px;
+  text-indent: 5px;
+  width: 4px
 }
 
 .paintweb_selectionBuffer { display: none }
@@ -116,31 +125,43 @@
 
 .paintweb_tabsList {
   background: #d7d7d7;
-  border: 1px solid #9e9e9e;
+  border-top: 1px solid #9e9e9e;
   list-style: none;
   margin: 0;
   padding: 0;
+  height: 2em;
   clear: both;
 }
 
-.paintweb_tabButton {
+.paintweb_tabsList li {
   background: #e4e4e4;
-  border: 1px solid #acacac;
+  border-right: 1px solid #acacac;
   cursor: pointer;
   float: left;
+  line-height: 2em;
+  padding: 0 8px;
+  vertical-align: middle
 }
 
 .paintweb_tabActive {
-  background: #eee;
+  background: #eee !important;
+  padding-top: 1px !important;
+  margin-top: -1px;
+}
+
+.paintweb_tabsList li:hover, .paintweb_tabsList li:focus {
+  background: #fff;
 }
 
 .paintweb_tools {
-  margin: 0;
-  padding: 0;
+  background: #f2f2f2;
   list-style: none;
+  margin: 0;
+  padding: 0
 }
 
-.paintweb_tools:after, .paintweb_tabPanel_main > .paintweb_tab:after, .paintweb_tabsList:after {
+/* .clearfix */
+.paintweb_statusbar:after, .paintweb_tools:after, .paintweb_tabPanel_main > .paintweb_tab:after, .paintweb_tabsList:after {
   content: ".";
   display: block;
   visibility: hidden;
@@ -149,17 +170,24 @@
 }
 
 .paintweb_tabPanel_main {
-  border-top: 1px solid #d6d6d6;
-  border-left: 1px solid #d6d6d6;
+  border: 1px solid #9e9e9e;
+  border-width: 1px 1px 0 1px;
 }
 
-.paintweb_tab {
+.paintweb_tabPanel_main .paintweb_tab {
+  border-left: 1px solid #d6d6d6;
+  border-top: 1px solid #d6d6d6;
   float: left;
+  margin: 5px
+}
+
+.paintweb_tools li {
+  border-top: 0;
+  border-left: 0
 }
 
 .paintweb_tool, .paintweb_command {
   background-repeat: no-repeat;
-  background: #f2f2f2;
   border: 1px solid #d6d6d6;
   cursor: pointer;
   float: left;
@@ -170,19 +198,21 @@
   width: 31px
 }
 
-.paintweb_tools li {
-  border-top: 0;
-  border-left: 0;
-}
-
 .paintweb_tool:hover, .paintweb_tool:focus, .paintweb_command:hover, .paintweb_command:focus {
-  background-color: #fafafa;
+  background-color: #fff;
   color: #000;
+  opacity: 0.7
 }
 
 .paintweb_toolActive {
   background-color: #929292;
-  color: #fff;
+  color: #fff
+}
+
+.paintweb_tool.paintweb_disabled, .paintweb_command.paintweb_disabled {
+  background-color: #eee;
+  cursor: default;
+  opacity: 0.4
 }
 
 .paintweb_toolsWrap {
@@ -190,13 +220,52 @@
   height: 0;
 }
 
-.paintweb_statusbar {
-  background: #eee;
+.paintweb_toolSeparator {
+  border: 1px solid #d6d6d6;
+  cursor: default;
+  float: left;
+  height: 31px;
+  overflow: hidden;
+  width: 31px
 }
 
-.paintweb_imageSize, .paintweb_zoom {
+.paintweb_statusbar {
+  background: #eee;
+  border: 1px solid #9e9e9e;
+  border-width: 0 1px 1px 1px;
+  position: relative
+}
+
+.paintweb_imageSize {
   background: #cbcbcb;
   border: 1px solid #a3a3a3;
+  float: left;
+  line-height: 2em;
+  margin: 0 8px 0 0;
+  padding: 0 8px;
+  vertical-align: middle
+}
+
+.paintweb_statusMessage {
+  line-height: 2em;
+  margin: 0 10em 0 0;
+  padding: 0;
+  vertical-align: middle
+}
+
+.paintweb_statusZoom {
+  background: #cbcbcb;
+  border: 1px solid #a3a3a3;
+  float: right;
+  height: 2em;
+  line-height: 2em;
+  margin: 0;
+  padding: 0 8px;
+  vertical-align: middle
+}
+
+.paintweb_zoom {
+  width: 4em;
 }
 
 /* Icons */
@@ -232,8 +301,8 @@
 .paintweb_cmd_help {
   background-image: url('icons/help.png');
   position: absolute;
-  top: 3px;
-  right: 3px;
+  top: 5px;
+  right: 5px;
   margin: 0;
 }
 

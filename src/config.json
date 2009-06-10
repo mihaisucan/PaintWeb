@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-09 20:53:35 +0300 $
+  // $Date: 2009-06-10 18:29:12 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -385,19 +385,15 @@
     "T": { "toolActivate": "text" },
     "V": { "toolActivate": "bcurve" },
 
-    "X": { "command": "swapFillStroke" }
+    "X": { "command": "swapFillStroke" },
+
+    "F1": { "command": "help" }
   }
 
   /***** FIXME old keyboard shortcuts from PaintWeb 0.5. Will be updated soon.
   // Global keyboard shortcuts. These can access functions and/or tools.
   // For each keyboard shortcut an element can be associated. During initialization the script will add the keyboard shortcut to the title of each element.
   _me.kshortcuts = {
-    '?' : {
-      'func' : _me.btn_help,
-      'elem' : 'btn_help'
-    },
-    'shift-?' : { 'func' : _me.btn_help },
-
     '+' : { 'func' : _me.key_zoom },
     '-' : { 'func' : _me.key_zoom },
     '*' : { 'func' : _me.key_zoom },
