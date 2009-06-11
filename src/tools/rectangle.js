@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-09 20:24:55 +0300 $
+ * $Date: 2009-06-11 20:21:13 +0300 $
  */
 
 /**
@@ -32,16 +32,15 @@
  */
 pwlib.tools.rectangle = function (app) {
   var _self         = this,
-      clearInterval = window.clearInterval,
+      clearInterval = app.win.clearInterval,
       config        = app.config,
       context       = app.buffer.context,
+      gui           = app.gui,
       image         = app.image,
-      layerUpdate   = app.layerUpdate,
       MathAbs       = Math.abs,
       MathMin       = Math.min,
       mouse         = app.mouse,
-      setInterval   = window.setInterval,
-      statusShow    = app.gui.statusShow;
+      setInterval   = app.win.setInterval;
 
   /**
    * The interval ID used for invoking the drawing operation every few 
@@ -103,8 +102,6 @@ pwlib.tools.rectangle = function (app) {
     }
 
     needsRedraw = false;
-
-    return true;
   };
 
   /**
@@ -122,7 +119,7 @@ pwlib.tools.rectangle = function (app) {
     shiftKey = ev.shiftKey;
     needsRedraw = false;
 
-    statusShow('rectMousedown');
+    gui.statusShow('rectangleMousedown');
 
     return true;
   };
@@ -208,8 +205,8 @@ pwlib.tools.rectangle = function (app) {
 
     shiftKey = ev.shiftKey;
     _self.draw();
-    layerUpdate();
-    statusShow('rectActive');
+    app.layerUpdate();
+    gui.statusShow('rectangleActive');
 
     return true;
   };
@@ -236,7 +233,7 @@ pwlib.tools.rectangle = function (app) {
     mouse.buttonDown = false;
     needsRedraw = false;
 
-    statusShow('rectActive');
+    gui.statusShow('rectangleActive');
 
     return true;
   };

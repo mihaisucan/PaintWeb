@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-10 20:40:05 +0300 $
+ * $Date: 2009-06-11 23:44:04 +0300 $
  */
 
 /* OLPC XO DPI resolution detection */
@@ -86,14 +86,14 @@
 
 .paintweb_canvasResizer {
   background: #000;
-  bottom: -4px;
+  bottom: -5px;
   cursor: se-resize;
-  height: 4px;
+  height: 5px;
   overflow: hidden;
   position: absolute;
-  right: -4px;
-  text-indent: 5px;
-  width: 4px
+  right: -5px;
+  text-indent: 6px;
+  width: 5px
 }
 
 .paintweb_selectionBuffer { display: none }
@@ -128,33 +128,37 @@
   border-top: 1px solid #9e9e9e;
   list-style: none;
   margin: 0;
-  padding: 0;
-  height: 2em;
+  padding: 0 0 6px 0;
   clear: both;
 }
 
 .paintweb_tabsList li {
+  display: inline;
+}
+
+.paintweb_tabsList a {
   background: #e4e4e4;
+  border-bottom: 1px solid #999;
   border-right: 1px solid #acacac;
-  cursor: pointer;
+  color: #000;
   float: left;
-  line-height: 2em;
-  padding: 0 8px;
-  vertical-align: middle
+  padding: 4px 8px;
+  text-decoration: none
 }
 
-.paintweb_tabActive {
+.paintweb_tabActive a {
   background: #eee !important;
-  padding-top: 1px !important;
-  margin-top: -1px;
+  padding-top: 5px !important;
+  padding-bottom: 6px !important;
+  margin-top: -1px
 }
 
-.paintweb_tabsList li:hover, .paintweb_tabsList li:focus {
+.paintweb_tabsList a:hover, .paintweb_tabsList a:focus {
   background: #fff;
+  color: #000
 }
 
 .paintweb_tools {
-  background: #f2f2f2;
   list-style: none;
   margin: 0;
   padding: 0
@@ -181,16 +185,21 @@
   margin: 5px
 }
 
-.paintweb_tools li {
-  border-top: 0;
-  border-left: 0
+.paintweb_tool, .paintweb_command {
+  background: #f2f2f2;
+  border: 1px solid #d6d6d6;
 }
 
-.paintweb_tool, .paintweb_command {
+.paintweb_tools li {
+  border-top: 0;
+  border-left: 0;
+  float: left
+}
+
+.paintweb_tool a, .paintweb_command a {
   background-repeat: no-repeat;
-  border: 1px solid #d6d6d6;
-  cursor: pointer;
-  float: left;
+  color: #000;
+  display: block;
   height: 0;
   overflow: hidden;
   padding: 31px 0 0 0;
@@ -199,9 +208,12 @@
 }
 
 .paintweb_tool:hover, .paintweb_tool:focus, .paintweb_command:hover, .paintweb_command:focus {
-  background-color: #fff;
+  background: #fff;
+}
+
+.paintweb_tool a:hover, .paintweb_tool a:focus, .paintweb_command a:hover, .paintweb_command a:focus {
   color: #000;
-  opacity: 0.7
+  opacity: 0.5
 }
 
 .paintweb_toolActive {
@@ -210,7 +222,10 @@
 }
 
 .paintweb_tool.paintweb_disabled, .paintweb_command.paintweb_disabled {
-  background-color: #eee;
+  background-color: transparent
+}
+
+.paintweb_tool.paintweb_disabled a, .paintweb_command.paintweb_disabled a {
   cursor: default;
   opacity: 0.4
 }
@@ -239,7 +254,9 @@
 .paintweb_imageSize {
   background: #cbcbcb;
   border: 1px solid #a3a3a3;
+  color: #333;
   float: left;
+  font-size: 0.9em;
   line-height: 2em;
   margin: 0 8px 0 0;
   padding: 0 8px;
@@ -248,111 +265,73 @@
 
 .paintweb_statusMessage {
   line-height: 2em;
-  margin: 0 10em 0 0;
+  margin: 0 13em 0 0;
   padding: 0;
   vertical-align: middle
 }
 
 .paintweb_statusZoom {
-  background: #cbcbcb;
+  background: #cbcbcb url('icons/zoom.png') left center no-repeat;
   border: 1px solid #a3a3a3;
   float: right;
+  font-size: 0.9em;
   height: 2em;
   line-height: 2em;
   margin: 0;
-  padding: 0 8px;
+  padding: 0 8px 0 31px;
   vertical-align: middle
 }
 
-.paintweb_zoom {
-  width: 4em;
-}
+.paintweb_imageZoom { width: 4em }
 
 /* Icons */
 
-.paintweb_cmd_historyUndo {
-  background-image: url('icons/historyUndo.png');
-}
+.paintweb_cmd_historyUndo a { background-image: url('icons/historyUndo.png') }
 
-.paintweb_cmd_historyRedo {
-  background-image: url('icons/historyRedo.png');
-}
+.paintweb_cmd_historyRedo a { background-image: url('icons/historyRedo.png') }
 
-.paintweb_cmd_selectionCut {
-  background-image: url('icons/selectionCut.png');
-}
+.paintweb_cmd_selectionCut a { background-image: url('icons/selectionCut.png') }
 
-.paintweb_cmd_selectionCopy {
-  background-image: url('icons/selectionCopy.png');
-}
+.paintweb_cmd_selectionCopy a { background-image: url('icons/selectionCopy.png') }
 
-.paintweb_cmd_clipboardPaste {
-  background-image: url('icons/clipboardPaste.png');
-}
+.paintweb_cmd_clipboardPaste a { background-image: url('icons/clipboardPaste.png') }
 
-.paintweb_cmd_imageSave {
-  background-image: url('icons/imageSave.png');
-}
+.paintweb_cmd_imageSave a { background-image: url('icons/imageSave.png') }
 
-.paintweb_cmd_imageClear {
-  background-image: url('icons/imageClear.png');
-}
+.paintweb_cmd_imageClear a { background-image: url('icons/imageClear.png') }
 
 .paintweb_cmd_help {
-  background-image: url('icons/help.png');
   position: absolute;
   top: 5px;
   right: 5px;
-  margin: 0;
+  margin: 0
 }
 
-.paintweb_tool_cpicker {
-  background-image: url('icons/cpicker.png');
-}
+.paintweb_cmd_help a { background-image: url('icons/help.png') }
 
-.paintweb_tool_bcurve {
-  background-image: url('icons/bcurve.png');
-}
+.paintweb_tool_cpicker a { background-image: url('icons/cpicker.png') }
 
-.paintweb_tool_ellipse {
-  background-image: url('icons/ellipse.png');
-}
+.paintweb_tool_bcurve a { background-image: url('icons/bcurve.png') }
 
-.paintweb_tool_line {
-  background-image: url('icons/line.png');
-}
+.paintweb_tool_ellipse a { background-image: url('icons/ellipse.png') }
 
-.paintweb_tool_pencil {
-  background-image: url('icons/pencil.png');
-}
+.paintweb_tool_line a { background-image: url('icons/line.png') }
 
-.paintweb_tool_hand {
-  background-image: url('icons/hand.png');
-}
+.paintweb_tool_pencil a { background-image: url('icons/pencil.png') }
 
-.paintweb_tool_polygon {
-  background-image: url('icons/polygon.png');
-}
+.paintweb_tool_hand a { background-image: url('icons/hand.png') }
 
-.paintweb_tool_rectangle {
-  background-image: url('icons/rectangle.png');
-}
+.paintweb_tool_polygon a { background-image: url('icons/polygon.png') }
 
-.paintweb_tool_selection {
-  background-image: url('icons/selection.png');
-}
+.paintweb_tool_rectangle a { background-image: url('icons/rectangle.png') }
 
-.paintweb_tool_text {
-  background-image: url('icons/text.png');
-}
+.paintweb_tool_selection a { background-image: url('icons/selection.png') }
 
-.paintweb_tool_insertimg {
-  background-image: url('icons/insertimg.png');
-}
+.paintweb_tool_text a { background-image: url('icons/text.png') }
 
-.paintweb_tool_eraser {
-  background-image: url('icons/eraser.png');
-}
+.paintweb_tool_insertimg a { background-image: url('icons/insertimg.png') }
+
+.paintweb_tool_eraser a { background-image: url('icons/eraser.png') }
 
 
 /*

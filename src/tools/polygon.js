@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-09 20:25:48 +0300 $
+ * $Date: 2009-06-11 20:28:07 +0300 $
  */
 
 /**
@@ -32,16 +32,15 @@
  */
 pwlib.tools.polygon = function (app) {
   var _self         = this,
-      clearInterval = window.clearInterval,
+      clearInterval = app.win.clearInterval,
       config        = app.config,
       context       = app.buffer.context,
+      gui           = app.gui,
       image         = app.image,
-      layerUpdate   = app.layerUpdate,
       MathAbs       = Math.abs,
       mouse         = app.mouse,
-      setInterval   = window.setInterval,
-      snapXY        = app.toolSnapXY,
-      statusShow    = app.gui.statusShow;
+      setInterval   = app.win.setInterval,
+      snapXY        = app.toolSnapXY;
 
   /**
    * Holds the points in the polygon being drawn.
@@ -116,7 +115,7 @@ pwlib.tools.polygon = function (app) {
     shiftKey = ev.shiftKey;
     needsRedraw = false;
 
-    statusShow('polyMousedown');
+    gui.statusShow('polygonMousedown');
 
     return true;
   };
@@ -222,16 +221,16 @@ pwlib.tools.polygon = function (app) {
       _self.draw();
       points = [];
 
-      statusShow('polyActive');
-      layerUpdate();
+      gui.statusShow('polygonActive');
+      app.layerUpdate();
 
       return true;
     }
 
     if (n > 3) {
-      statusShow('polyEnd');
+      gui.statusShow('polygonEnd');
     } else {
-      statusShow('polyAddPoint');
+      gui.statusShow('polygonAddPoint');
     }
 
     points.push([mouse.x, mouse.y]);
@@ -274,11 +273,11 @@ pwlib.tools.polygon = function (app) {
       points.push(points[0]);
       needsRedraw = true;
       _self.draw();
-      layerUpdate();
+      app.layerUpdate();
     }
 
     points = [];
-    statusShow('polyActive');
+    gui.statusShow('polygonActive');
 
     return true;
   };

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-03 18:29:30 +0300 $
+ * $Date: 2009-06-11 20:25:36 +0300 $
  */
 
 /**
@@ -32,17 +32,16 @@
  */
 pwlib.tools.ellipse = function (app) {
   var _self         = this,
-      clearInterval = window.clearInterval,
+      clearInterval = app.win.clearInterval,
       config        = app.config,
       context       = app.buffer.context,
+      gui           = app.gui,
       image         = app.image,
-      layerUpdate   = app.layerUpdate,
       MathMax       = Math.max,
       MathMin       = Math.min,
       mouse         = app.mouse,
-      setInterval   = window.setInterval,
-      snapXY        = app.toolSnapXY,
-      statusShow    = app.gui.statusShow;
+      setInterval   = app.win.setInterval,
+      snapXY        = app.toolSnapXY;
 
   /**
    * The interval ID used for invoking the drawing operation every few 
@@ -126,7 +125,7 @@ pwlib.tools.ellipse = function (app) {
     shiftKey = ev.shiftKey;
     needsRedraw = false;
 
-    statusShow('ellipseMousedown');
+    gui.statusShow('ellipseMousedown');
 
     return true;
   };
@@ -249,8 +248,8 @@ pwlib.tools.ellipse = function (app) {
 
     shiftKey = ev.shiftKey;
     _self.draw();
-    layerUpdate();
-    statusShow('ellipseActive');
+    app.layerUpdate();
+    gui.statusShow('ellipseActive');
 
     return true;
   };
@@ -277,7 +276,7 @@ pwlib.tools.ellipse = function (app) {
     mouse.buttonDown = false;
     needsRedraw = false;
 
-    statusShow('ellipseActive');
+    gui.statusShow('ellipseActive');
 
     return true;
   };

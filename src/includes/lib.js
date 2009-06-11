@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-06-10 20:20:41 +0300 $
+ * $Date: 2009-06-11 15:35:56 +0300 $
  */
 
 /**
@@ -501,6 +501,50 @@ pwlib.appEvent.imageSizeChange = function (width, height) {
   this.height = height;
 
   pwlib.appEvent.call(this, 'imageSizeChange');
+};
+
+/**
+ * @class Canvas size change event. This event is not cancelable.
+ *
+ * <p>Note that the Canvas size is not the same as the image size. Canvas size 
+ * refers to the scaling of the Canvas elements being applied (due to image 
+ * zooming or due to browser zoom / DPI).
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {Number} width The new Canvas style width.
+ * @param {Number} height The new Canvas style height.
+ *
+ * @throws {TypeError} If any of the arguments are not numbers.
+ */
+pwlib.appEvent.canvasSizeChange = function (width, height) {
+  if (typeof width !== 'number' || typeof height !== 'number') {
+    throw new TypeError('Both arguments must be numbers.');
+  }
+
+  this.width  = width;
+  this.height = height;
+
+  pwlib.appEvent.call(this, 'canvasSizeChange');
+};
+
+/**
+ * @class Image zoom event. This event is cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {Number} zoom The new image zoom level.
+ *
+ * @throws {TypeError} If the <var>zoom</var> argument is not a number.
+ */
+pwlib.appEvent.imageZoom = function (zoom) {
+  if (typeof zoom !== 'number') {
+    throw new TypeError('The first argument must be a number.');
+  }
+
+  this.zoom = zoom;
+
+  pwlib.appEvent.call(this, 'imageZoom', true);
 };
 
 /**

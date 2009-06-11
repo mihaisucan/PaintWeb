@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-10 20:33:54 +0300 $
+ * $Date: 2009-06-11 23:37:03 +0300 $
  */
 
 /**
@@ -39,6 +39,7 @@ pwlib.gui['default'] = function (app) {
       config       = app.config,
       doc          = app.doc,
       lang         = app.lang,
+      MathRound    = Math.round,
       pwlib        = window.pwlib,
       win          = app.win;
 
@@ -117,7 +118,7 @@ pwlib.gui['default'] = function (app) {
 
     if (!this.initCanvas() ||
         //!this.initProperties() ||
-        //!this.initZoomInput() ||
+        !this.initImageZoom() ||
         !this.initKeyboardShortcuts()) {
       return false;
     }
@@ -136,6 +137,11 @@ pwlib.gui['default'] = function (app) {
       }
     }
 
+    // Setup the viewport.
+    if ('viewport' in this.elems) {
+      this.elems.viewport.style.height = config.viewportHeight + 'px';
+    }
+
     // Setup the Canvas resizer.
     var resizeHandle = this.elems.canvasResizer;
     if (!resizeHandle || !('canvasContainer' in this.elems)) {
@@ -145,6 +151,8 @@ pwlib.gui['default'] = function (app) {
     resizeHandle.title = lang.guiCanvasResizer;
     resizeHandle.removeChild(resizeHandle.firstChild);
     resizeHandle.appendChild(doc.createTextNode(lang.guiCanvasResizer));
+    resizeHandle.addEventListener('mouseover', this.item_mouseover, false);
+    resizeHandle.addEventListener('mouseout',  this.item_mouseout,  false);
 
     this.canvasResizer = new guiResizer(this, resizeHandle, 
         this.elems.canvasContainer);
@@ -161,15 +169,12 @@ pwlib.gui['default'] = function (app) {
       this.elems.version.appendChild(doc.createTextNode(app.toString()));
     }
 
-    // Update the image dimensions in the GUI
+    // Update the image dimensions in the GUI.
     var imageSize = this.elems.imageSize;
     if (imageSize) {
       imageSize.removeChild(imageSize.firstChild);
       imageSize.appendChild(doc.createTextNode(app.image.width + 'x' 
             + app.image.height));
-
-      // Make sure the imageSize element is always updated.
-      app.events.add('imageSizeChange', this.imageSizeChange);
     }
 
     // Add application-wide event listeners.
@@ -179,6 +184,9 @@ pwlib.gui['default'] = function (app) {
     app.events.add('toolUnregister',    this.toolUnregister);
     app.events.add('commandRegister',   this.commandRegister);
     app.events.add('commandUnregister', this.commandUnregister);
+    app.events.add('imageZoom',         this.imageZoom);
+    app.events.add('imageSizeChange',   this.imageSizeChange);
+    app.events.add('canvasSizeChange',  this.canvasSizeChange);
 
     // Make sure the historyUndo and historyRedo command elements are 
     // synchronized with the application history state.
@@ -201,6 +209,7 @@ pwlib.gui['default'] = function (app) {
   this.initCanvas = function () {
     var canvasContainer = this.elems.canvasContainer,
         layerCanvas     = app.layer.canvas,
+        layerStyle      = layerCanvas.style,
         bufferCanvas    = app.buffer.canvas,
         containerStyle  = canvasContainer.style;
 
@@ -213,8 +222,8 @@ pwlib.gui['default'] = function (app) {
     layerCanvas.className     = this.classPrefix + 'layerCanvas';
     bufferCanvas.className    = this.classPrefix + 'bufferCanvas';
 
-    containerStyle.width  = layerCanvas.width  + 'px';
-    containerStyle.height = layerCanvas.height + 'px';
+    containerStyle.width  = layerStyle.width;
+    containerStyle.height = layerStyle.height;
 
     canvasContainer.appendChild(layerCanvas);
     canvasContainer.appendChild(bufferCanvas);
@@ -362,22 +371,39 @@ pwlib.gui['default'] = function (app) {
    * @returns {Boolean} True if the initialization was successful, or false if 
    * not.
    */
-  // TODO: fix this
-  this.initZoomInput = function () {
-    var elem = this.inputs.zoom;
-    if (!elem) {
-      return false;
+  this.initImageZoom = function () {
+    var input = this.inputs.imageZoom;
+    if (!input) {
+      return true; // allow layouts without the zoom input
     }
 
-    elem.value = 100;
-    elem._old_value = 100;
-    elem.addEventListener('keypress', this.ev_input_nr, false);
-    elem.addEventListener('change',   app.ev_change_zoom, false);
+    input.value = 100;
+    input._old_value = 100;
 
     // Override the attributes, based on the settings.
-    elem.setAttribute('step', config.zoomStep * 100);
-    elem.setAttribute('max',  config.zoomMax  * 100);
-    elem.setAttribute('min',  config.zoomMin  * 100);
+    input.setAttribute('step', config.imageZoomStep * 100);
+    input.setAttribute('max',  config.imageZoomMax  * 100);
+    input.setAttribute('min',  config.imageZoomMin  * 100);
+
+    //elem.addEventListener('keypress', this.ev_input_nr, false);
+    input.addEventListener('change', function () {
+      app.imageZoomTo(parseInt(this.value) / 100);
+    }, false);
+
+    // Update some language strings
+
+    var label = input.parentNode;
+    if (label.tagName.toLowerCase() === 'label') {
+      label.removeChild(label.firstChild);
+      label.insertBefore(doc.createTextNode(lang.imageZoomLabel), input);
+    }
+
+    var elem = this.elems.statusZoom;
+    if (!elem) {
+      return true;
+    }
+
+    elem.title = lang.imageZoomTitle;
 
     return true;
   };
@@ -569,7 +595,14 @@ pwlib.gui['default'] = function (app) {
    * @private
    */
   this.canvasResizeStart = function () {
-    //this.container.style.overflow = 'hidden';
+    this.container.style.overflow = 'hidden';
+
+    // ugly...
+    this.timeout_ = setTimeout(function () {
+      _self.statusShow('guiCanvasResizerActive', true)
+      clearTimeout(_self.canvasResizer.timeout_);
+      delete _self.canvasResizer.timeout_;
+    }, 400);
   };
 
   /**
@@ -580,9 +613,17 @@ pwlib.gui['default'] = function (app) {
    * @param {pwlib.appEvent.guiResizeEnd} ev The application event object.
    */
   this.canvasResizeEnd = function (ev) {
-    //this.container.style.overflow = 'auto';
+    this.container.style.overflow = '';
+
     app.imageCrop(0, 0, ev.width / app.image.canvasScale,
         ev.height / app.image.canvasScale);
+
+    if (this.timeout_) {
+      clearTimeout(this.timeout_);
+      delete this.timeout_;
+    } else {
+      _self.statusShow(-1);
+    }
   };
 
   // This is the event handler which shows a temporary status message when hovering buttons/tools.
@@ -602,26 +643,32 @@ pwlib.gui['default'] = function (app) {
   /**
    * Show a message in the status bar.
    *
-   * @param {String|Number} id The message ID you want to display. The ID must 
-   * be available in the {@link PaintWeb.lang.status} object. If the value is -1 
-   * then the previous non-temporary message will be displayed.
+   * @param {String|Number} msg The message ID you want to display. The ID 
+   * should be available in the {@link PaintWeb.lang.status} object. If the 
+   * value is -1 then the previous non-temporary message will be displayed. If 
+   * the ID is not available in the language file, then the string is shown 
+   * as-is.
    *
    * @param {Boolean} [temporary=false] Tells if the message is temporary or 
    * not.
    */
-  this.statusShow = function (id, temporary) {
-    var elem = _self.elems.statusMessage;
-    if (id === -1 && elem._prevText === false) {
+  this.statusShow = function (msg, temporary) {
+    var elem = this.elems.statusMessage;
+    if (msg === -1 && elem._prevText === false) {
       return false;
     }
 
-    if (id === -1) {
-      id = elem._prevText;
-    } else if (!temporary) {
-      elem._prevText = id;
+    if (msg === -1) {
+      msg = elem._prevText;
     }
 
-    var msg = lang.status[id];
+    if (msg in lang.status) {
+      msg = lang.status[msg];
+    }
+
+    if (!temporary) {
+      elem._prevText = msg;
+    }
 
     if (elem.firstChild) {
       elem.removeChild(elem.firstChild);
@@ -915,7 +962,8 @@ pwlib.gui['default'] = function (app) {
    * @see PaintWeb#toolActivate to activate a drawing tool.
    */
   this.toolClick = function (ev) {
-    app.toolActivate(this.getAttribute('data-pwTool'), ev);
+    app.toolActivate(this.parentNode.getAttribute('data-pwTool'), ev);
+    ev.preventDefault();
   };
 
   /**
@@ -959,7 +1007,7 @@ pwlib.gui['default'] = function (app) {
    * tools.
    */
   this.toolRegister = function (ev) {
-    var attr = null, elem = null;
+    var attr = null, elem = null, anchor = null;
 
     if (ev.id in _self.tools) {
       elem = _self.tools[ev.id];
@@ -981,14 +1029,19 @@ pwlib.gui['default'] = function (app) {
     }
 
     elem.className += ' ' + _self.classPrefix + 'tool_' + ev.id;
-    elem.title = lang.tools[ev.id];
+
+    // Append an anchor element which holds the locale string.
+    anchor = doc.createElement('a');
+    anchor.title = lang.tools[ev.id];
+    anchor.href = '#';
+    anchor.appendChild(doc.createTextNode(anchor.title));
 
     elem.removeChild(elem.firstChild);
-    elem.appendChild(doc.createTextNode(elem.title));
+    elem.appendChild(anchor);
 
-    elem.addEventListener('click',     _self.toolClick,      false);
-    elem.addEventListener('mouseover', _self.item_mouseover, false);
-    elem.addEventListener('mouseout',  _self.item_mouseout,  false);
+    anchor.addEventListener('click',     _self.toolClick,      false);
+    anchor.addEventListener('mouseover', _self.item_mouseover, false);
+    anchor.addEventListener('mouseout',  _self.item_mouseout,  false);
 
     if (!(ev.id in _self.tools)) {
       _self.tools[ev.id] = elem;
@@ -1026,22 +1079,30 @@ pwlib.gui['default'] = function (app) {
    * commands.
    */
   this.commandRegister = function (ev) {
-    var elem = _self.commands[ev.id];
+    var elem   = _self.commands[ev.id],
+        anchor = null;
     if (!elem) {
       return;
     }
 
     elem.className += ' ' + _self.classPrefix + 'cmd_' + ev.id;
-    elem.title = lang.commands[ev.id];
 
-    // Remove the text content and append the language string associated to this 
-    // command.
-    elem.removeChild(elem.firstChild);
-    elem.appendChild(doc.createTextNode(elem.title));
+    anchor = doc.createElement('a');
+    anchor.title = lang.commands[ev.id];
+    anchor.href = '#';
+    anchor.appendChild(doc.createTextNode(anchor.title));
 
-    elem.addEventListener('click',     this.commands[ev.id], false);
-    elem.addEventListener('mouseover', _self.item_mouseover, false);
-    elem.addEventListener('mouseout',  _self.item_mouseout,  false);
+    // Remove the text content and append the locale string associated to 
+    // current command inside an anchor element (for better keyboard 
+    // accessibility).
+    if (elem.firstChild) {
+      elem.removeChild(elem.firstChild);
+    }
+    elem.appendChild(anchor);
+
+    anchor.addEventListener('click',     this.commands[ev.id], false);
+    anchor.addEventListener('mouseover', _self.item_mouseover, false);
+    anchor.addEventListener('mouseout',  _self.item_mouseout,  false);
   };
 
   /**
@@ -1055,7 +1116,8 @@ pwlib.gui['default'] = function (app) {
    * commands.
    */
   this.commandUnregister = function (ev) {
-    var elem = _self.commands[ev.id];
+    var elem   = _self.commands[ev.id],
+        anchor = null;
     if (!elem) {
       return;
     }
@@ -1063,9 +1125,12 @@ pwlib.gui['default'] = function (app) {
     elem.className = elem.className.replace(' ' + _self.classPrefix + 'cmd_' 
         + ev.id, '');
 
-    elem.removeEventListener('click',     this.commands[ev.id], false);
-    elem.removeEventListener('mouseover', _self.item_mouseover, false);
-    elem.removeEventListener('mouseout',  _self.item_mouseout,  false);
+    anchor = elem.firstChild;
+    anchor.removeEventListener('click',     this.commands[ev.id], false);
+    anchor.removeEventListener('mouseover', _self.item_mouseover, false);
+    anchor.removeEventListener('mouseout',  _self.item_mouseout,  false);
+
+    elem.removeChild(anchor);
   };
 
   /**
@@ -1116,13 +1181,79 @@ pwlib.gui['default'] = function (app) {
    * which displays the image dimensions is updated to display the new image 
    * size.
    *
+   * <p>Image size refers strictly to the dimensions of the image being edited 
+   * by the user, that's width and height.
+   *
    * @param {pwlib.appEvent.imageSizeChange} ev The application event object.
    */
   this.imageSizeChange = function (ev) {
-    var elem = _self.elems.imageSize;
-    if (elem) {
-      elem.removeChild(elem.firstChild);
-      elem.appendChild(doc.createTextNode(ev.width + 'x' + ev.height));
+    var imageSize  = _self.elems.imageSize;
+    if (imageSize) {
+      imageSize.removeChild(imageSize.firstChild);
+      imageSize.appendChild(doc.createTextNode(ev.width + 'x' + ev.height));
+    }
+  };
+
+  /**
+   * The <code>canvasSizeChange</code> application event handler. The Canvas 
+   * container element dimensions are updated to the new values and the Hand 
+   * tool is enabled/disabled as necessary.
+   *
+   * <p>Canvas size refers strictly to the dimensions of the Canvas elements in 
+   * the browser, changed with CSS style properties, width and height. Scaling 
+   * of the Canvas elements is applied when the user zooms the image or when the 
+   * browser changes the render DPI / zoom.
+   *
+   * @param {pwlib.appEvent.canvasSizeChange} ev The application event object.
+   */
+  this.canvasSizeChange = function (ev) {
+    var canvasContainer = _self.elems.canvasContainer,
+        className       = ' ' + _self.classPrefix + 'disabled',
+        hand            = _self.tools.hand,
+        viewport        = _self.elems.viewport;
+
+    // Update the Canvas container to be the same size as the Canvas elements.
+    canvasContainer.style.width  = ev.width  + 'px';
+    canvasContainer.style.height = ev.height + 'px';
+
+    if (!hand || !viewport) {
+      return;
+    }
+
+    // Update Hand tool state.
+    var cs         = win.getComputedStyle(viewport, null),
+        vwidth     = parseInt(cs.width),
+        vheight    = parseInt(cs.height),
+        enableHand = false,
+        handState  = hand.className.indexOf(className) === -1;
+
+    if (vheight < ev.height || vwidth < ev.width) {
+      enableHand = true;
+    }
+
+    if (enableHand && !handState) {
+      hand.className = hand.className.replace(className, '');
+    } else if (!enableHand && handState) {
+      hand.className += className;
+    }
+
+    if (!enableHand && app.tool && app.tool._id === 'hand' && 'prevTool' in 
+        app.tool) {
+      app.toolActivate(app.tool.prevTool);
+    }
+  };
+
+  /**
+   * The <code>imageZoom</code> application event handler. The GUI input element 
+   * which displays the image zoom level is updated to display the new value.
+   *
+   * @param {pwlib.appEvent.imageZoom} ev The application event object.
+   */
+  this.imageZoom = function (ev) {
+    var elem  = _self.inputs.imageZoom,
+        val   = MathRound(ev.zoom * 100);
+    if (elem && elem.value != val) {
+      elem.value = val;
     }
   };
 };
@@ -1485,7 +1616,8 @@ function guiTabPanel (gui, panel) {
         type = Node.ELEMENT_NODE,
         elem = null,
         tabId = null,
-        tabTitle = null;
+        tabTitle = null,
+        anchor = null;
 
     tabButtons.className = gui.classPrefix + 'tabsList';
 
@@ -1507,13 +1639,15 @@ function guiTabPanel (gui, panel) {
         + _self.id + '_' + tabId;
 
       tabButton = doc.createElement('li');
-      tabButton._PaintWebTab = tabId;
-      tabButton.addEventListener('click', ev_tabClick, false);
+      anchor = doc.createElement('a');
+      anchor._PaintWebTab = tabId;
+      anchor.href = '#';
+      anchor.addEventListener('click', ev_tabClick, false);
 
       if (_self.id in lang.tabs) {
         tabTitle = lang.tabs[_self.id][tabId];
-        tabButton.title = tabTitle;
-        tabButton.appendChild(doc.createTextNode(tabTitle));
+        anchor.title = tabTitle;
+        anchor.appendChild(doc.createTextNode(tabTitle));
       }
 
       if ((tabDefault && tabId === tabDefault) ||
@@ -1532,6 +1666,7 @@ function guiTabPanel (gui, panel) {
 
       _self.tabs[tabId] = {container: elem, button: tabButton};
 
+      tabButton.appendChild(anchor);
       tabButtons.appendChild(tabButton);
     }
 
@@ -1542,11 +1677,14 @@ function guiTabPanel (gui, panel) {
   /**
    * The <code>click</code> event handler for tab buttons. This function simply 
    * activates the tab the user clicked.
+   *
    * @private
+   * @param {Event} ev The DOM Event object.
    */
   function ev_tabClick (ev) {
     if (this._PaintWebTab) {
       _self.tabActivate(this._PaintWebTab);
+      ev.preventDefault();
     }
   };
 

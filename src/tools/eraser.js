@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-05-29 15:43:13 +0300 $
+ * $Date: 2009-06-11 20:33:12 +0300 $
  */
 
 /**
@@ -32,13 +32,12 @@
  */
 pwlib.tools.eraser = function (app) {
   var _self         = this,
-      clearInterval = window.clearInterval,
+      clearInterval = app.win.clearInterval,
       context       = app.buffer.context,
       image         = app.image,
       layerContext  = app.layer.context,
-      layerUpdate   = app.layerUpdate,
       mouse         = app.mouse,
-      setInterval   = window.setInterval;
+      setInterval   = app.win.setInterval;
 
   /**
    * The interval ID used for running the pencil drawing operation every few 
@@ -198,7 +197,7 @@ pwlib.tools.eraser = function (app) {
     var op = layerContext.globalCompositeOperation;
     layerContext.globalCompositeOperation = 'destination-out';
 
-    layerUpdate();
+    app.layerUpdate();
 
     layerContext.globalCompositeOperation = op;
     context.strokeStyle = _self.strokeStyle;

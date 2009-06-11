@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-10 20:34:59 +0300 $
+ * $Date: 2009-06-11 23:50:40 +0300 $
  */
 
 /**
@@ -52,7 +52,7 @@ function PaintWeb (win, doc) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090610;
+  this.build = 20090611;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -142,6 +142,12 @@ function PaintWeb (win, doc) {
    * @see PaintWeb#commandUnregister Unregister a command.
    */
   this.commands = {};
+
+  /**
+   * The graphical user interface object instance.
+   * @type pwlib.gui
+   */
+  this.gui = null;
 
   /**
    * The document element we will be working with.
@@ -257,9 +263,9 @@ function PaintWeb (win, doc) {
      *
      * @private
      * @type Number
-     * @default 1
+     * @default -1
      */
-    scale: 1
+    scale: -1
   };
 
   /**
@@ -608,7 +614,10 @@ function PaintWeb (win, doc) {
         this.commandRegister('clipboardPaste', this.clipboardPaste) &&
         this.commandRegister('imageSave',      this.imageSave) &&
         this.commandRegister('imageClear',     this.imageClear) &&
-        this.commandRegister('swapFillStroke', this.swapFillStroke)) {
+        this.commandRegister('swapFillStroke', this.swapFillStroke) &&
+        this.commandRegister('imageZoomIn',    this.imageZoomIn) &&
+        this.commandRegister('imageZoomOut',   this.imageZoomOut) &&
+        this.commandRegister('imageZoomReset', this.imageZoomReset)) {
       return true;
     } else {
       this.initError(lang.errorInitCommands);
@@ -634,10 +643,9 @@ function PaintWeb (win, doc) {
         script = base + cfg.guiScript;
 
     if (gui in pwlib.gui) {
-      this.updateCanvasScaling();
       this.guiScriptReady();
     } else {
-      this.styleLoad(style, null, this.updateCanvasScaling);
+      this.styleLoad(style, null);
       this.scriptLoad(script, this.guiScriptReady);
     }
   };
@@ -690,9 +698,8 @@ function PaintWeb (win, doc) {
   };
 
   /**
-   * Initialize the Canvas elements. This method creates the elements, sets-up 
-   * the dimensions, and calls {@link PaintWeb.updateCanvasScaling} to make sure 
-   * the current browser DPI / zoom does not affect the Canvas performance. 
+   * Initialize the Canvas elements. This method creates the elements and 
+   * sets-up their dimensions.
    * 
    * <p>If {@link PaintWeb.config.imagePreload} is defined, then the image 
    * element is inserted into the Canvas image.
@@ -764,8 +771,6 @@ function PaintWeb (win, doc) {
       bufferCanvas.addEventListener(events[i], this.ev_canvas, false);
     }
 
-    this.win.addEventListener('resize', this.updateCanvasScaling, false);
-
     return true;
   };
 
@@ -797,6 +802,7 @@ function PaintWeb (win, doc) {
          keyup: this.ev_keyboard});
 
     this.updateCanvasScaling();
+    this.win.addEventListener('resize', this.updateCanvasScaling, false);
 
     this.initialized = PaintWeb.INIT_DONE;
 
@@ -812,6 +818,11 @@ function PaintWeb (win, doc) {
         cfg  = this.config,
         n    = cfg.tools.length,
         base = cfg.baseFolder + cfg.toolsFolder + '/';
+
+    if (n < 1) {
+      this.initError(lang.noToolConfigured);
+      return;
+    }
 
     temp_.toolsLoadQueue = n;
 
@@ -857,6 +868,11 @@ function PaintWeb (win, doc) {
         n    = cfg.extensions.length,
         base = cfg.baseFolder + cfg.extensionsFolder + '/';
 
+    if (n < 1) {
+      this.initComplete();
+      return;
+    }
+
     temp_.extensionsLoadQueue = n;
 
     for (var i = 0; i < n; i++) {
@@ -896,6 +912,9 @@ function PaintWeb (win, doc) {
    * used by the browser to render the application. Based on these values, the 
    * canvas elements are scaled down to cancel any upscaling performed by the 
    * browser.
+   *
+   * <p>The {@link pwlib.appEvent.canvasSizeChange} application event is 
+   * dispatched.
    */
   this.updateCanvasScaling = function () {
     var res            = _self.resolution,
@@ -954,6 +973,9 @@ function PaintWeb (win, doc) {
 
     bufferStyle.width  = layerStyle.width  = styleWidth  + 'px';
     bufferStyle.height = layerStyle.height = styleHeight + 'px';
+
+    _self.events.dispatch(new appEvent.canvasSizeChange(styleWidth, 
+          styleHeight));
   };
 
   /**
@@ -1065,6 +1087,9 @@ function PaintWeb (win, doc) {
    * If the keyboard combination is found in that list, then the associated tool 
    * is activated.
    *
+   * <p>Note: this method includes some work-around for making the image zoom 
+   * keys work well both in Opera and Firefox.
+   *
    * @private
    *
    * @param {Event} ev The DOM Event object.
@@ -1084,6 +1109,34 @@ function PaintWeb (win, doc) {
         case 'input':
         case 'select':
           return;
+      }
+    }
+
+    // Rather ugly, buuut the only way, at the moment, to detect the keys in 
+    // Opera and Firefox.
+    if (ev.type === 'keypress' && ev.char_) {
+      var isZoomKey = true,
+          imageZoomKeys = _self.config.imageZoomKeys;
+
+      // Check if this is a zoom key and execute the commands as needed.
+      switch (ev.char_) {
+        case imageZoomKeys['in']:
+          _self.imageZoomIn(ev);
+          break;
+
+        case imageZoomKeys['out']:
+          _self.imageZoomOut(ev);
+          break;
+        case imageZoomKeys['reset']:
+          _self.imageZoomReset(ev);
+          break;
+        default:
+          isZoomKey = false;
+      }
+
+      if (isZoomKey) {
+        ev.preventDefault();
+        return;
       }
     }
 
@@ -1124,9 +1177,7 @@ function PaintWeb (win, doc) {
         extension[method].call(this, ev);
       }
 
-    } else if (ev.type === 'keydown' && 'command' in gkey && gkey.command in 
-        _self.commands) {
-
+    } else if ('command' in gkey && gkey.command in _self.commands) {
       // Invoke the command associated with the key.
       _self.commands[gkey.command].call(this, ev);
 
@@ -1135,46 +1186,87 @@ function PaintWeb (win, doc) {
       // Active the tool associated to the key.
       _self.toolActivate(gkey.toolActivate, ev);
 
-    } else if (ev.type === 'keypress') {
+    }
+
+    if (ev.type === 'keypress') {
       ev.preventDefault();
     }
   };
 
-  // The event handler for keys +/- (zoom in/out), and for the * (zoom to 100%).
-  // FIXME
-  this.key_zoom = function (ev) {
-    if (ev.key_ === '*') {
-      return _self.zoomTo(1);
+  /**
+   * Zoom into the image.
+   *
+   * @param {mixed} ev An event object which might have the <var>shiftKey</var> 
+   * property. If the property evaluates to true, then the zoom level will 
+   * increase twice more than normal.
+   *
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   *
+   * @see PaintWeb#zoomTo The method used for changing the zoom level.
+   * @see PaintWeb.config.zoomStep The value used for increasing the zoom level.
+   */
+  this.imageZoomIn = function (ev) {
+    if (ev && ev.shiftKey) {
+      _self.config.imageZoomStep *= 2;
     }
 
-    if (ev.shiftKey) {
-      _self.config.zoomStep *= 2;
+    var res = _self.imageZoomTo('+');
+
+    if (ev && ev.shiftKey) {
+      _self.config.imageZoomStep /= 2;
     }
 
-    _self.zoomTo(ev.key_);
-
-    if (ev.shiftKey) {
-      _self.config.zoomStep /= 2;
-    }
-  };
-
-  // The event handler for the Zoom input field.
-  // FIXME
-  this.ev_change_zoom = function (ev) {
-    //if (!_self.ev_input_nr(ev)) {
-      return false;
-    //} else {
-      return _self.zoomTo(this.value/100);
-    //}
+    return res;
   };
 
   /**
-   * Zoom image to the given level.
+   * Zoom out of the image.
+   *
+   * @param {mixed} ev An event object which might have the <var>shiftKey</var> 
+   * property. If the property evaluates to true, then the zoom level will 
+   * decrease twice more than normal.
+   *
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   *
+   * @see PaintWeb#zoomTo The method used for changing the zoom level.
+   * @see PaintWeb.config.zoomStep The value used for decreasing the zoom level.
+   */
+  this.imageZoomOut = function (ev) {
+    if (ev && ev.shiftKey) {
+      _self.config.imageZoomStep *= 2;
+    }
+
+    var res = _self.imageZoomTo('-');
+
+    if (ev && ev.shiftKey) {
+      _self.config.imageZoomStep /= 2;
+    }
+
+    return res;
+  };
+
+  /**
+   * Reset the image zoom level to normal.
+   *
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   *
+   * @see PaintWeb#imageZoomTo The method used for changing the zoom level.
+   */
+  this.imageZoomReset = function (ev) {
+    return _self.imageZoomTo(1);
+  };
+
+  /**
+   * Change the image zoom level.
+   *
+   * <p>This method dispatches the {@link pwlib.appEvent.imageZoom} application 
+   * event before zooming the image. Once the image zoom is applied, the {@link 
+   * pwlib.appEvent.canvasSizeChange} event is dispatched.
    *
    * @param {Number|String} The level you want to zoom the image to.
    * 
    * <p>If the value is a number, it must be a floating point positive number, 
-   * where 1 means 100% (normal) zoom, 4 means 400% and so on.
+   * where 0.5 means 50%, 1 means 100% (normal) zoom, 4 means 400% and so on.
    *
    * <p>If the value is a string it must be "+" or "-". This means that the zoom 
    * level will increase/decrease using the configured {@link 
@@ -1183,56 +1275,50 @@ function PaintWeb (win, doc) {
    * @returns {Boolean} True if the image zoom level changed successfully, or 
    * false if not.
    */
-  this.zoomTo = function (level) {
-    var image  = _self.image,
-        config = _self.config;
+  this.imageZoomTo = function (level) {
+    var image  = this.image,
+        config = this.config,
+        res    = this.resolution;
 
     if (!level) {
       return false;
     } else if (level === '+') {
-      level = image.zoom + config.zoomStep;
+      level = image.zoom + config.imageZoomStep;
     } else if (level === '-') {
-      level = image.zoom - config.zoomStep;
-    } else if (isNaN(level)) {
+      level = image.zoom - config.imageZoomStep;
+    } else if (typeof level !== 'number') {
       return false;
     }
 
-    if (level > config.zoomMax) {
-      level = config.zoomMax;
-    } else if (level < config.zoomMin) {
-      level = config.zoomMin;
+    if (level > config.imageZoomMax) {
+      level = config.imageZoomMax;
+    } else if (level < config.imageZoomMin) {
+      level = config.imageZoomMin;
     }
 
     if (level === image.zoom) {
       return true;
     }
 
-    var input = _self.inputs.zoom,
-        w = image.width  / _self.resolution.scale * level,
-        h = image.height / _self.resolution.scale * level,
-        bufferStyle = _self.buffer.canvas.style,
-        layerStyle = _self.layer.canvas.style,
-        containerStyle = _self.gui.elems.canvasContainer.style;
-
-    image.canvasScale = w / image.width;
-
-    if (input.value != level*100) {
-      input.value = MathRound(level*100);
+    var cancel = this.events.dispatch(new appEvent.imageZoom(level));
+    if (cancel) {
+      return false;
     }
 
-    bufferStyle.width  = layerStyle.width  = w + 'px';
-    bufferStyle.height = layerStyle.height = h + 'px';
+    var styleWidth  = image.width  / res.scale * level,
+        styleHeight = image.height / res.scale * level,
+        bufferStyle = this.buffer.canvas.style,
+        layerStyle  = this.layer.canvas.style;
 
-    // The container should only be smaller than the image dimensions
-    if (level <= 1) {
-      containerStyle.width  = w + 'px';
-      containerStyle.height = h + 'px';
-    } else {
-      containerStyle.width  = image.width  / _self.resolution.scale + 'px';
-      containerStyle.height = image.height / _self.resolution.scale + 'px';
-    }
+    image.canvasScale = styleWidth / image.width;
+
+    bufferStyle.width  = layerStyle.width  = styleWidth  + 'px';
+    bufferStyle.height = layerStyle.height = styleHeight + 'px';
 
     image.zoom = level;
+
+    this.events.dispatch(new appEvent.canvasSizeChange(styleWidth, 
+          styleHeight));
 
     return true;
   };
@@ -1244,9 +1330,10 @@ function PaintWeb (win, doc) {
    * <code>getImageData</code> and <code>putImageData</code> methods.
    *
    * <p>This method dispatches two application events: {@link 
-   * pwlib.appEvent.imageSizeChange} and {@link pwlib.appEvent.imageCrop}.  The 
-   * <code>imageCrop</code> event is dispatched before the image is cropped. The 
-   * <code>imageSizeChange</code> event is dispatched after the image is 
+   * pwlib.appEvent.imageSizeChange}, {@link pwlib.appEvent.canvasSizeChange} 
+   * and {@link pwlib.appEvent.imageCrop}. The <code>imageCrop</code> event is 
+   * dispatched before the image is cropped. The <code>imageSizeChange</code> 
+   * and <code>canvasSizeChange</code> events are dispatched after the image is 
    * cropped.
    *
    * @param {Number} cropX Image cropping start position on the x-axis.
@@ -1333,6 +1420,8 @@ function PaintWeb (win, doc) {
     image.height = cropHeight;
 
     this.events.dispatch(new appEvent.imageSizeChange(cropWidth, cropHeight));
+    this.events.dispatch(new appEvent.canvasSizeChange(scaledWidth, 
+          scaledHeight));
 
     return true;
   };
@@ -1478,9 +1567,9 @@ function PaintWeb (win, doc) {
    * @returns {Boolean} True if the operation was successful, or false if not.
    */
   this.layerUpdate = function () {
-    _self.layer.context.drawImage(_self.buffer.canvas, 0, 0);
-    _self.buffer.context.clearRect(0, 0, _self.image.width, _self.image.height);
-    _self.historyAdd();
+    this.layer.context.drawImage(this.buffer.canvas, 0, 0);
+    this.buffer.context.clearRect(0, 0, this.image.width, this.image.height);
+    this.historyAdd();
 
     return true;
   };
@@ -2022,6 +2111,8 @@ function PaintWeb (win, doc) {
    * user presses X, the fill/stroke colors are swapped.
    *
    * <p>This method dispatches the {@link pwlib.appEvent.swapFillStroke} event.
+   *
+   * @returns {Boolean} True if the colors were swapped, or false if not.
    */
   this.swapFillStroke = function () {
     var bufferContext = _self.buffer.context,
@@ -2031,9 +2122,12 @@ function PaintWeb (win, doc) {
     var cancel = _self.events.dispatch(new appEvent.swapFillStroke(strokeStyle, 
           fillStyle));
 
-    if (!cancel) {
+    if (cancel) {
+      return false;
+    } else {
       img.fillStyle   = strokeStyle;
       img.strokeStyle = fillStyle;
+      return true;
     }
   };
 

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-09 16:09:05 +0300 $
+ * $Date: 2009-06-11 20:11:13 +0300 $
  */
 
 /**
@@ -32,15 +32,36 @@
  * @param {PaintWeb} app Reference to the main paint application object.
  */
 pwlib.tools.hand = function (app) {
-  var _self        = this,
-      canvasStyle  = app.buffer.canvas.style,
-      container    = app.elems.container,
-      image        = app.image,
-      MathRound    = Math.round,
-      mouse        = app.mouse,
-      toolActivate = app.toolActivate;
+  var _self         = this,
+      bufferCanvas  = app.buffer.canvas,
+      bufferStyle   = bufferCanvas.style,
+      config        = app.config;
+      clearInterval = app.win.clearInterval,
+      image         = app.image,
+      MathRound     = Math.round,
+      mouse         = app.mouse,
+      viewport      = app.gui.elems.viewport,
+      vheight       = 0,
+      vwidth        = 0,
+      setInterval   = app.win.setInterval;
 
-  canvasStyle.cursor = 'move';
+  /**
+   * The interval ID used for invoking the viewport drag operation every few 
+   * milliseconds.
+   *
+   * @private
+   * @see PaintWeb.config.toolDrawDelay
+   */
+  var timer = null;
+
+  /**
+   * Tells if the viewport needs to be scrolled.
+   *
+   * @private
+   * @type Boolean
+   * @default false
+   */
+  var needsScroll = false;
 
   /**
    * Holds the previous tool ID.
@@ -48,54 +69,127 @@ pwlib.tools.hand = function (app) {
    * @private
    * @type String
    */
-  var prevTool = app.tool._id;
+  this.prevTool = null;
+
+  var x0 = 0, y0 = 0,
+      x1 = 0, y1 = 0,
+      l0 = 0, t0 = 0;
 
   /**
-   * Holds the starting point on the <var>x</var> axis of the image, for the 
-   * current drawing operation.
+   * Tool preactivation event handler.
    *
-   * @private
-   * @type Number
+   * @returns {Boolean} True if the tool can become active, or false if not.
    */
-  var x0 = 0;
+  this.preActivate = function () {
+    if (!viewport) {
+      return false;
+    }
 
-  /**
-   * Holds the starting point on the <var>y</var> axis of the image, for the 
-   * current drawing operation.
-   *
-   * @private
-   * @type Number
-   */
-  var y0 = 0;
+    _self.prevTool = app.tool._id;
 
-  /**
-   * Initialize the canvas drag.
-   */
-  this.mousedown = function () {
-    x0 = MathRound(mouse.x * image.zoom);
-    y0 = MathRound(mouse.y * image.zoom);
+    // Check if the image canvas can be scrolled within the viewport.
+
+    var cs      = app.win.getComputedStyle(viewport, null),
+        bwidth  = parseInt(bufferStyle.width),
+        bheight = parseInt(bufferStyle.height);
+
+    vwidth  = parseInt(cs.width),
+    vheight = parseInt(cs.height);
+
+    if (vheight < bheight || vwidth < bwidth) {
+      return true;
+    } else {
+      return false;
+    }
   };
 
   /**
-   * Perform the canvas drag, while the user moves the mouse.
+   * Tool activation event handler.
+   */
+  this.activate = function () {
+    bufferStyle.cursor = 'move';
+  };
+
+  /**
+   * Tool deactivation event handler.
+   */
+  this.deactivate = function (ev) {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+      app.doc.removeEventListener('mousemove', ev_mousemove, false);
+      app.doc.removeEventListener('mouseup',   ev_mouseup, false);
+    }
+
+    bufferStyle.cursor = '';
+  };
+
+  /**
+   * Initialize the canvas drag.
+   *
+   * @param {Event} ev The DOM event object.
+   */
+  this.mousedown = function (ev) {
+    x0 = ev.clientX;
+    y0 = ev.clientY;
+    l0 = viewport.scrollLeft;
+    t0 = viewport.scrollTop;
+
+    needsScroll = false;
+
+    app.doc.addEventListener('mousemove', ev_mousemove, false);
+    app.doc.addEventListener('mouseup',   ev_mouseup, false);
+
+    if (!timer) {
+      timer = setInterval(viewportScroll, config.toolDrawDelay);
+    }
+
+    return true;
+  };
+
+  /**
+   * The <code>mousemove</code> event handler. This simply stores the current 
+   * mouse location.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
+  function ev_mousemove (ev) {
+    x1 = ev.clientX;
+    y1 = ev.clientY;
+    needsScroll = true;
+  };
+
+  /**
+   * Perform the canvas drag operation. This function is called every few 
+   * milliseconds.
    *
    * <p>Press <kbd>Escape</kbd> to stop dragging and to get back to the previous 
    * tool.
    */
-  this.mousemove = function () {
-    if (!mouse.buttonDown) {
-      return false;
+  function viewportScroll () {
+    if (needsScroll) {
+      viewport.scrollTop  = t0 - y1 + y0;
+      viewport.scrollLeft = l0 - x1 + x0;
+      needsScroll = false;
     }
-
-    var dx = MathRound(mouse.x * image.zoom) - x0,
-        dy = MathRound(mouse.y * image.zoom) - y0;
-
-    container.scrollTop  -= dy;
-    container.scrollLeft -= dx;
   };
 
-  this.deactivate = function (ev) {
-    canvasStyle.cursor = '';
+  /**
+   * The <code>mouseup</code> event handler.
+   */
+  function ev_mouseup (ev) {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+
+    ev_mousemove(ev);
+    viewportScroll();
+
+    app.doc.removeEventListener('mousemove', ev_mousemove, false);
+    app.doc.removeEventListener('mouseup',   ev_mouseup, false);
+
+    mouse.buttonDown = false;
   };
 
   /**
@@ -107,15 +201,13 @@ pwlib.tools.hand = function (app) {
    * @returns {Boolean} True if the key was recognized, or false if not.
    */
   this.keydown = function (ev) {
-    if (!prevTool || ev.kid_ != 'Escape') {
+    if (!_self.prevTool || ev.kid_ != 'Escape') {
       return false;
     }
 
-    toolActivate(prevTool, ev);
+    app.toolActivate(_self.prevTool, ev);
     return true;
   };
-
-  return true;
 };
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:

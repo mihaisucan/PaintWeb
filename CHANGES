@@ -1,3 +1,29 @@
+2009-06-11:
+===========
+
+- Made image zoom to work again and now it's better than it was before, with 
+complete GUI feedback.
+- Added keyboard shortcuts for zoom. This makes the list of keyboard shortcuts 
+complete. Yay, no more "FIXME".
+- Several fixes for the viewport display and interactivity. It's done.
+- Several improvements and fixes for the status bar. It's pretty much done.
+- Keyboard accessibility improvements. All icons and tabs can be tabbed to using 
+the keyboard Tab key. People can use the GUI with the keyboard entirely.
+- Some initialization fixes. For example, now PaintWeb will load without 
+failures when there are no extensions configured. When no drawing tool is 
+configured the initialization fails nicely.
+- Some new application events for image size change, canvas size change and zoom 
+level change.
+- Added a new configuration option for setting-up the viewport height. The 
+viewport width is automatically 100% - the value is not used by the current GUI 
+implementation.
+- More work on the interface stylesheet.
+- Fixed and made lots of improvements to the Hand tool. Now it works much better 
+than the previous implementation.
+- Fixes for the following tools: rectangle, Bézier curve, ellipse, line, 
+  polygon, pencil, and for the eraser (which still needs some more fixes).
+- English localization updates.
+
 2009-06-10:
 ===========
 
@@ -13,7 +39,6 @@ really did.
       icon).
   - work on the viewport.
 - English localization fixes.
-
 
 2009-06-09:
 ===========

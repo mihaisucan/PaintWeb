@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-10 20:22:35 +0300 $
+  // $Date: 2009-06-11 21:48:51 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -9,6 +9,7 @@
   "errorInitCanvas": "Error: Canvas initialization failed.",
   "noCanvasSupport": "Error: Your browser does not support Canvas.",
   "errorInitCommands": "Error: failed to initialize the PaintWeb commands!",
+  "noToolConfigured": "Error: you have no drawing tool configured to load!",
   "toolRegisterFailed": "Error: failed to register tool '%id%'!",
   "extensionRegisterFailed": "Error: failed to register extension '%id%'!",
   "errorToolActivate": "Error: the tool you want could not be properly activated!",
@@ -26,6 +27,10 @@
   "promptImageDimensions": "Please input the new image dimensions you want.",
   "promptTextFont": "Type the name of the font you want:",
 
+  "guiCanvasResizer": "Resize the image canvas.",
+  "imageZoomTitle": "Zoom image",
+  "imageZoomLabel": "Zoom:",
+
   "colorMixerTitle": "Color mixer",
   "colorPalettes": {
     "_saved": "Saved colors",
@@ -38,7 +43,6 @@
     "toyo94": "TOYO 94 color finder"
   },
 
-  "guiCanvasResizer": "Resize the image canvas",
 
   "tabs": {
     "main": {
@@ -88,7 +92,6 @@
     "ellipseActive": "Click and drag to draw an ellipse.",
     "ellipseMousedown": "Hold the Shift key down to draw a circle.",
     "eraserActive": "Click and drag to erase.",
-    "hoverBtnClear": "Clear image. Hold Shift to manually change the resolution of the image.",
     "insertimgActive": "Waiting for the image to load...",
     "insertimgLoaded": "Pick where you want to place the image. Click and drag to resize the image.",
     "insertimgResize": "Hold the Shift key down to preserve the aspect ratio.",
@@ -106,7 +109,8 @@
     "selectionDrag": "Hold the Shift key down for vertical/horizontal snapping.",
     "selectionDraw": "Hold the Shift key down to draw a square selection.",
     "selectionResize": "Hold the Shift key down to preserve the aspect ratio.",
-    "textActive": "Pick where you want to place the text. Make sure you adjust the properties as desired."
+    "textActive": "Pick where you want to place the text. Make sure you adjust the properties as desired.",
+    "guiCanvasResizerActive": "Move the mouse to resize the image canvas."
   }
 
   // vim:set spell spl=en fo=wan1croql tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix ft=javascript:

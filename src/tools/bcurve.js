@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-09 20:25:17 +0300 $
+ * $Date: 2009-06-11 20:31:13 +0300 $
  */
 
 /**
@@ -32,15 +32,14 @@
  */
 pwlib.tools.bcurve = function (app) {
   var _self         = this,
-      clearInterval = window.clearInterval,
+      clearInterval = app.win.clearInterval,
       config        = app.config,
       context       = app.buffer.context,
+      gui           = app.gui,
       image         = app.image,
-      layerUpdate   = app.layerUpdate,
       mouse         = app.mouse,
-      setInterval   = window.setInterval,
-      snapXY        = app.toolSnapXY,
-      statusShow    = app.gui.statusShow;
+      setInterval   = app.win.setInterval,
+      snapXY        = app.toolSnapXY;
 
   /**
    * Holds the points in the Bézier curve being drawn.
@@ -104,7 +103,7 @@ pwlib.tools.bcurve = function (app) {
    */
   this.mousedown = function (ev) {
     if (points.length == 0) {
-      statusShow('curveSnapping');
+      gui.statusShow('bcurveSnapping');
       points.push([mouse.x, mouse.y]);
     }
 
@@ -245,10 +244,10 @@ pwlib.tools.bcurve = function (app) {
     _self.draw();
 
     if (n == 2 || n == 3) {
-      statusShow('curveControlPoint' + (n-1));
+      gui.statusShow('bcurveControlPoint' + (n-1));
     } else if (n == 4) {
-      statusShow('curveActive');
-      layerUpdate();
+      gui.statusShow('bcurveActive');
+      app.layerUpdate();
       points = [];
     }
 
@@ -280,7 +279,7 @@ pwlib.tools.bcurve = function (app) {
     needsRedraw = false;
     mouse.buttonDown = false;
 
-    statusShow('curveActive');
+    gui.statusShow('bcurveActive');
 
     return true;
   };

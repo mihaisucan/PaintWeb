@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-10 18:29:12 +0300 $
+  // $Date: 2009-06-11 23:26:55 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -49,6 +49,26 @@
    * @default script.js
    */
   "guiScript": "script.js",
+
+  /**
+   * Viewport width.
+   *
+   * <p>Note: the GUI implementation might ignore this value.
+   *
+   * @type Number
+   * @default -1
+   */
+  "viewportWidth": -1,
+
+  /**
+   * Viewport height.
+   *
+   * <p>Note: the GUI implementation might ignore this value.
+   *
+   * @type Number
+   * @default 400
+   */
+  "viewportHeight": 400,
 
   /**
    * The default image width.
@@ -105,31 +125,41 @@
   "historyLimit": 10,
 
   /**
-   * Zoom factor when the user increases/decreases the zoom level.
+   * Zoom factor when the user increases/decreases the image zoom level.
    *
    * @type Number
    * @default 0.05
    */
   // 0.05 means 5% zoom.
-  "zoomStep": 0.05,
+  "imageZoomStep": 0.05,
 
   /**
-   * The maximum allowed zoom level.
+   * The maximum allowed image zoom level.
    *
    * @type Number
    * @default 4
    */
   // 4 means 400% zoom.
-  "zoomMax": 4,
+  "imageZoomMax": 4,
 
   /**
-   * The minimum allowed zoom level.
+   * The minimum allowed image zoom level.
    *
    * @type Number
    * @default 0.2
    */
   // 0.2 means 20% zoom.
-  "zoomMin": 0.2,
+  "imageZoomMin": 0.2,
+
+  /**
+   * The image zoom control keys, for zoom in, zoom out and zoom reset.
+   * @type Object
+   */
+  "imageZoomKeys": {
+    "in":    "+",
+    "out":   "-",
+    "reset": "*"
+  },
 
   /**
    * Holds the list of drawing tools you want to load.
@@ -347,6 +377,20 @@
       "NorthWest":    [7, "Shift Home"],
       "North":        [8, "Shift Up"],
       "NorthEast":    [9, "Shift PageUp"]
+      
+      /*
+      You might want Shift+NumPad keys as well ...
+      "ButtonToggle": [0, "Shift Insert"],
+      "SouthWest":    [1, "Shift End"],
+      "South":        [2, "Shift Down"],
+      "SouthEast":    [3, "Shift PageDown"],
+      "West":         [4, "Shift Left"],
+      "ButtonClick":  [5, "Shift Clear"],
+      "East":         [6, "Shift Right"],
+      "NorthWest":    [7, "Shift Home"],
+      "North":        [8, "Shift Up"],
+      "NorthEast":    [9, "Shift PageUp"]
+      */
     }
   },
 
@@ -363,7 +407,6 @@
     "Control Y": { "command": "historyRedo" },
 
     "Control N": { "command": "imageClear" },
-    "Control Shift N": { "command": "imageClear" },
     "Control S": { "command": "imageSave" },
 
     "Control X":    { "command": "selectionCut" },
@@ -385,22 +428,10 @@
     "T": { "toolActivate": "text" },
     "V": { "toolActivate": "bcurve" },
 
-    "X": { "command": "swapFillStroke" },
-
-    "F1": { "command": "help" }
+    // Miscellaneous commands.
+    "X":  { "command": "swapFillStroke" },
+    "F1": { "command": "help" },
   }
-
-  /***** FIXME old keyboard shortcuts from PaintWeb 0.5. Will be updated soon.
-  // Global keyboard shortcuts. These can access functions and/or tools.
-  // For each keyboard shortcut an element can be associated. During initialization the script will add the keyboard shortcut to the title of each element.
-  _me.kshortcuts = {
-    '+' : { 'func' : _me.key_zoom },
-    '-' : { 'func' : _me.key_zoom },
-    '*' : { 'func' : _me.key_zoom },
-    'shift-+' : { 'func' : _me.key_zoom },
-    'shift--' : { 'func' : _me.key_zoom },
-    'shift-*' : { 'func' : _me.key_zoom },
-  }; */
 
   // vim:set spell spl=en fo=wan1croql tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix ft=javascript:
 }

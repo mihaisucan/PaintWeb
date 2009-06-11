@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-03 18:30:05 +0300 $
+ * $Date: 2009-06-11 20:23:04 +0300 $
  */
 
 /**
@@ -32,15 +32,14 @@
  */
 pwlib.tools.line = function (app) {
   var _self         = this,
-      clearInterval = window.clearInterval,
+      clearInterval = app.win.clearInterval,
       config        = app.config,
       context       = app.buffer.context,
+      gui           = app.gui,
       image         = app.image,
-      layerUpdate   = app.layerUpdate,
       mouse         = app.mouse,
-      setInterval   = window.setInterval,
-      snapXY        = app.toolSnapXY,
-      statusShow    = app.gui.statusShow;
+      setInterval   = app.win.setInterval,
+      snapXY        = app.toolSnapXY;
 
   /**
    * The interval ID used for invoking the drawing operation every few 
@@ -122,7 +121,7 @@ pwlib.tools.line = function (app) {
     shiftKey = ev.shiftKey;
     needsRedraw = false;
 
-    statusShow('lineMousedown');
+    gui.statusShow('lineMousedown');
 
     return true;
   };
@@ -187,8 +186,8 @@ pwlib.tools.line = function (app) {
 
     shiftKey = ev.shiftKey;
     _self.draw();
-    statusShow('lineActive');
-    layerUpdate();
+    gui.statusShow('lineActive');
+    app.layerUpdate();
 
     return true;
   };
@@ -215,7 +214,7 @@ pwlib.tools.line = function (app) {
     mouse.buttonDown = false;
     needsRedraw = false;
 
-    statusShow('lineActive');
+    gui.statusShow('lineActive');
 
     return true;
   };

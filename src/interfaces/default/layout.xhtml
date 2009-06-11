@@ -1,5 +1,5 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
-  <!--- $Date: 2009-06-10 20:33:05 +0300 $ -->
+  <!--- $Date: 2009-06-11 20:37:31 +0300 $ -->
   <h1 class="paintweb_appTitle">PaintWeb</h1>
 
   <!-- All elements with data-pwTabPanel become interactive tabbed panels which 
@@ -65,6 +65,11 @@
         <li data-pwTool="eraser">Eraser</li>
       </ul>
     </div>
+
+    <!-- Note that all tool/command elements will have an anchor elements as the 
+    only child. The locale string will be added as child of the anchor.  Having 
+    the anchors allows users to tab through the tools and commands - keyboard 
+    accessibility. -->
 
     <!-- .paintweb_main_line -->
     <div data-pwTab="line" data-pwTabHide="true">
@@ -200,8 +205,8 @@
     <p id="imageSize">WxH</p>
 
     <p id="statusZoom" title="Zoom image">
-      <label>Zoom <input id="zoom" type="number" min="20" max="400" value="100" 
-        step="10" /></label>
+      <label>Zoom: <input id="imageZoom" type="number" min="20" max="400" 
+        value="100" step="10" /></label>
     </p>
 
     <p id="statusMessage">Status</p>
