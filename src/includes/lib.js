@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-06-11 15:35:56 +0300 $
+ * $Date: 2009-06-12 19:30:10 +0300 $
  */
 
 /**
@@ -571,6 +571,41 @@ pwlib.appEvent.imageCrop = function (x, y, width, height) {
   this.height = height;
 
   pwlib.appEvent.call(this, 'imageCrop', true);
+};
+
+/**
+ * @class Configuration change event. This event is not cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {String|Number|Boolean} value The new value.
+ * @param {String|Number|Boolean} previousValue The previous value.
+ * @param {String} config The configuration property that just changed.
+ * @param {String} group The configuration group where the property is found.
+ * @param {Object} groupRef The configuration group object reference.
+ *
+ * @throws {TypeError} If the <var>prop</var> argument is not a string.
+ * @throws {TypeError} If the <var>group</var> argument is not a string.
+ * @throws {TypeError} If the <var>groupRef</var> argument is not an object.
+ */
+pwlib.appEvent.configChange = function (value, previousValue, config, group, 
+    groupRef) {
+
+  if (typeof config !== 'string') {
+    throw new TypeError('The third argument must be a string.');
+  } else if (typeof group !== 'string') {
+    throw new TypeError('The fourth argument must be a string.');
+  } else if (typeof groupRef !== 'object') {
+    throw new TypeError('The fifth argument must be an object.');
+  }
+
+  this.value         = value;
+  this.previousValue = previousValue;
+  this.config        = config;
+  this.group         = group;
+  this.groupRef      = groupRef;
+
+  pwlib.appEvent.call(this, 'configChange');
 };
 
 /**

@@ -1,3 +1,16 @@
+2009-06-12:
+===========
+
+- Several bug fixes.
+- New application event for changes to configuration properties.
+- Implemented support for inputs associated to configuration properties in the 
+layout and interface script.
+- Implemented the Line options tab. Working fine.
+- Did the user interface for Line options as well - might need some additional 
+adjustments.
+- New configuration options.
+- New English strings.
+
 2009-06-11:
 ===========
 

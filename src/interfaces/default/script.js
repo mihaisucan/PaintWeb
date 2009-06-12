@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-11 23:37:03 +0300 $
+ * $Date: 2009-06-12 20:48:16 +0300 $
  */
 
 /**
@@ -35,13 +35,14 @@ var pwlib = window.pwlib,
  * @param {PaintWeb} app Reference to the main paint application object.
  */
 pwlib.gui['default'] = function (app) {
-  var _self        = this,
-      config       = app.config,
-      doc          = app.doc,
-      lang         = app.lang,
-      MathRound    = Math.round,
-      pwlib        = window.pwlib,
-      win          = app.win;
+  var _self     = this,
+      config    = app.config,
+      doc       = app.doc,
+      lang      = app.lang,
+      MathRound = Math.round,
+      pwlib     = window.pwlib,
+      appEvent  = pwlib.appEvent,
+      win       = app.win;
 
   this.app = app;
   this.idPrefix = 'paintweb' + app.UID + '_',
@@ -54,10 +55,17 @@ pwlib.gui['default'] = function (app) {
   this.elems = {};
 
   /**
-   * Holds references to DOM input elements.
+   * Holds references to DOM elements which hold inputs for the PaintWeb 
+   * configuration.
    * @type Object
    */
   this.inputs = {};
+
+  /**
+   * Holds references to DOM elements which holds input configuration values.
+   * @type Object
+   */
+  this.inputValues = {};
 
   /**
    * Holds references to DOM elements associated to each tool registered in the 
@@ -108,11 +116,20 @@ pwlib.gui['default'] = function (app) {
   this.init = function (markupDoc) {
     // Make sure the user nicely waits for PaintWeb to load, without seeing 
     // much.
-    config.guiPlaceholder.style.visibility = 'hidden';
-    config.guiPlaceholder.className += ' ' + this.classPrefix + 'placeholder';
+    var placeholder = config.guiPlaceholder;
+    placeholder.style.visibility = 'hidden';
+    placeholder.style.position = 'absolute';
+    placeholder.style.height = '1px';
+    placeholder.style.overflow = 'hidden';
+    placeholder.className += ' ' + this.classPrefix + 'placeholder';
 
     if (!this.initImportDoc(markupDoc)) {
       app.initError(lang.guiMarkupImportFailed);
+      return false;
+    }
+
+    if (!this.initParseMarkup()) {
+      app.initError(lang.guiMarkupParseFailed);
       return false;
     }
 
@@ -130,21 +147,14 @@ pwlib.gui['default'] = function (app) {
       return false;
     }
 
-    // Hide all the tabs except the 'main' tab.
-    for (tab in panel.tabs) {
-      if (tab !== 'main') {
-        panel.tabHide(tab);
-      }
-    }
-
-    // Setup the viewport.
+    // Setup the viewport height.
     if ('viewport' in this.elems) {
       this.elems.viewport.style.height = config.viewportHeight + 'px';
     }
 
     // Setup the Canvas resizer.
     var resizeHandle = this.elems.canvasResizer;
-    if (!resizeHandle || !('canvasContainer' in this.elems)) {
+    if (!resizeHandle) {
       app.initError(lang.missingCanvasResizer);
       return false;
     }
@@ -210,13 +220,14 @@ pwlib.gui['default'] = function (app) {
     var canvasContainer = this.elems.canvasContainer,
         layerCanvas     = app.layer.canvas,
         layerStyle      = layerCanvas.style,
-        bufferCanvas    = app.buffer.canvas,
-        containerStyle  = canvasContainer.style;
+        bufferCanvas    = app.buffer.canvas;
 
     if (!canvasContainer) {
-      app.initError(lang.missingCanvasResizer);
+      app.initError(lang.missingCanvasContainer);
       return false;
     }
+
+    var containerStyle  = canvasContainer.style;
 
     canvasContainer.className = this.classPrefix + 'canvasContainer';
     layerCanvas.className     = this.classPrefix + 'layerCanvas';
@@ -232,11 +243,57 @@ pwlib.gui['default'] = function (app) {
   };
 
   /**
-   * Import the DOM nodes from the interface DOM document and parse all the 
-   * PaintWeb-specific attributes. All the nodes are inserted into the {@link 
-   * PaintWeb.config.guiPlaceholder} element.
+   * Import the DOM nodes from the interface DOM document. All the nodes are 
+   * inserted into the {@link PaintWeb.config.guiPlaceholder} element.
    *
-   * <p>Elements with IDs are added to <var>this.elems</var> object.
+   * <p>Elements which have the ID attribute will have the attribute renamed to 
+   * <code>data-pwId</code>.
+   *
+   * @private
+   *
+   * @param {Document} srcDoc The source DOM document to import the nodes from.
+   *
+   * @returns {Boolean} True if the initialization was successful, or false if 
+   * not.
+   */
+  this.initImportDoc = function (srcDoc) {
+    // I could use some XPath here, but for the sake of compatibility I don't.
+
+    var destElem = config.guiPlaceholder,
+        elem = null,
+        elType = Node.ELEMENT_NODE,
+        nodes = srcDoc.getElementsByTagName('*');
+
+    // Change all the id attributes to be data-pwId attributes.
+    for (var i = 0; i < nodes.length; i++) {
+      elem = nodes[i];
+      if (elem.nodeType !== elType) {
+        continue;
+      }
+
+      if (elem.id) {
+        elem.setAttribute('data-pwId', elem.id);
+        elem.removeAttribute('id');
+      }
+    }
+
+    var docChildren = srcDoc.documentElement.childNodes;
+    n = docChildren.length;
+
+    // Import all the nodes.
+    for (i = 0; i < n; i++) {
+      destElem.appendChild(doc.importNode(docChildren[i], true));
+    }
+
+    return true;
+  };
+
+  /**
+   * Parse the interface markup. The layout file can have custom 
+   * PaintWeb-specific attributes.
+   *
+   * <p>Elements with the <code>data-pwId</code> attribute are added to 
+   * <var>this.elems</var> object.
    *
    * <p>Elements having the <code>data-pwCommand</code> attribute are added to 
    * the <var>this.commands</var> object.
@@ -252,57 +309,31 @@ pwlib.gui['default'] = function (app) {
    * added to the <var>this.floatingPanels</var> object. These become 
    * interactive GUI components (see {@link guiFloatingPanel}).
    *
-   * @private
-   * @param {Document} srcDoc The source DOM document to import the nodes from.
-   * @returns {Boolean} True if the initialization was successful, or false if 
-   * not.
+   * <p>Elements having the <code>data-pwConfig</code> attribute are added to 
+   * the <var>this.inputs</var> object. These become interactive GUI components 
+   * which allow users to change configuration options.
+   *
+   * <p>Elements having the <code>data-pwConfigValue</code> attribute are added 
+   * to the <var>this.inputValues</var> object. These can only be child nodes of 
+   * elements which have the <code>data-pwConfig</code> attribute.
+   *
+   * @returns {Boolean} True if the parsing was successful, or false if not.
    */
-  this.initImportDoc = function (srcDoc) {
-    // I could use some XPath here, but for the sake of compatibility I don't.
-
-    var cmd = null,
-        destElem = config.guiPlaceholder,
-        docChildren = srcDoc.documentElement.childNodes,
-        elem = null,
+  this.initParseMarkup = function () {
+    var nodes = config.guiPlaceholder.getElementsByTagName('*'),
         elType = Node.ELEMENT_NODE,
-        floatingPanel = null,
-        i = 0,
-        id = null,
-        nodes = srcDoc.getElementsByTagName('*'),
-        n = nodes.length,
-        tabPanel = null,
-        tag = null,
-        tool = null;
+        elem, tag, isInput, tool, tabPanel, floatingPanel, cmd, id, cfgAttr, 
+        cfgGroup, cfgProp;
 
-    // Change all the id attributes to be data-pwId attributes.
-    for (i = 0; i < n; i++) {
+    // Store references to important elements and parse PaintWeb-specific 
+    // attributes.
+    for (var i = 0; i < nodes.length; i++) {
       elem = nodes[i];
       if (elem.nodeType !== elType) {
         continue;
       }
-
-      if (elem.id) {
-        elem.setAttribute('data-pwId', elem.id);
-        elem.removeAttribute('id');
-      }
-    }
-
-    n = docChildren.length;
-
-    // Import all the nodes.
-    for (i = 0; i < n; i++) {
-      destElem.appendChild(doc.importNode(docChildren[i], true));
-    }
-
-    nodes = destElem.getElementsByTagName('*');
-    n = nodes.length;
-
-    // Store references to important elements.
-    for (i = 0; i < n; i++) {
-      elem = nodes[i];
-      if (elem.nodeType !== elType) {
-        continue;
-      }
+      tag = elem.tagName.toLowerCase();
+      isInput = tag === 'input' || tag === 'select';
 
       // Store references to commands.
       cmd = elem.getAttribute('data-pwCommand');
@@ -330,21 +361,115 @@ pwlib.gui['default'] = function (app) {
         this.floatingPanels[floatingPanel] = new guiFloatingPanel(this, elem);
       }
 
+      cfgAttr = elem.getAttribute('data-pwConfig');
+      if (cfgAttr) {
+        this.initConfigInput(elem, cfgAttr, isInput);
+      }
+
       id = elem.getAttribute('data-pwId');
       if (id) {
         elem.className += ' ' + this.classPrefix + id;
 
-        tag = elem.tagName.toLowerCase();
         // Store a reference to the element.
-        if (tag === 'input' || tag === 'select') {
-          this.inputs[id] = elem;
-        } else {
+        if (!isInput) {
           this.elems[id] = elem;
         }
       }
     }
 
     return true;
+  };
+
+  /**
+   * Initialize an element associated to a configuration property.
+   *
+   * @private
+   *
+   * @param {Element} elem The DOM element which is associated to the 
+   * configuration property.
+   *
+   * @param {String} cfgAttr The configuration attribute. This tells the 
+   * configuration group and property to which the DOM element is attached to.
+   *
+   * @param {Boolean} isInput Tells if the element is considered an input or an 
+   * element with several sub-values.
+   */
+  this.initConfigInput = function (input, cfgAttr, isInput) {
+    var cfgNoDots = cfgAttr.replace('.', '_'),
+        cfgArray = cfgAttr.split('.'),
+        cfgProp = cfgArray.pop(),
+        n = cfgArray.length,
+        cfgGroup = cfgArray.join('.'),
+        cfgGroupRef = config,
+        langGroup = lang.inputs,
+        labelElem;
+
+    for (var i = 0; i < n; i++) {
+      cfgGroupRef = cfgGroupRef[cfgArray[i]];
+      langGroup = langGroup[cfgArray[i]];
+    }
+
+    input._pwConfigProperty = cfgProp;
+    input._pwConfigGroup = cfgGroup;
+    input._pwConfigGroupRef = cfgGroupRef;
+    input.title = langGroup[cfgProp];
+    input.className += ' ' + this.classPrefix + 'cfg_' + cfgNoDots;
+
+    this.inputs[cfgNoDots] = input;
+
+    if (isInput) {
+      labelElem = input.parentNode;
+      labelElem.removeChild(labelElem.firstChild);
+      labelElem.insertBefore(doc.createTextNode(input.title), input);
+
+      input.addEventListener('change', this.configInputChange, false);
+      return;
+    }
+
+    labelElem = input.getElementsByTagName('p')[0];
+
+    labelElem.removeChild(labelElem.firstChild);
+    labelElem.appendChild(doc.createTextNode(input.title));
+
+    // If this is not an input we consider it has child elements with 
+    // data-pwConfigValue attributes.
+    var elem, anchor, val,
+        className = ' ' + this.classPrefix + 'configActive';
+        nodes = input.getElementsByTagName('*'),
+        elType = Node.ELEMENT_NODE;
+
+    for (var i = 0; i < nodes.length; i++) {
+      elem = nodes[i];
+      if (elem.nodeType !== elType) {
+        continue;
+      }
+
+      val = elem.getAttribute('data-pwConfigValue');
+      if (!val) {
+        continue;
+      }
+
+      anchor = doc.createElement('a');
+      anchor.href = '#';
+      anchor.title = langGroup[cfgProp + '_' + val];
+      anchor.appendChild(doc.createTextNode(anchor.title));
+
+      elem.className += ' ' + this.classPrefix + cfgProp + '_' + val;
+      elem._pwConfigParent = input;
+
+      if (cfgGroupRef[cfgProp] == val) {
+        elem.className += className;
+      }
+
+      anchor.addEventListener('click',     this.configValueClick, false);
+      anchor.addEventListener('mouseover', this.item_mouseover,   false);
+      anchor.addEventListener('mouseout',  this.item_mouseout,    false);
+
+      elem.removeChild(elem.firstChild);
+      elem.appendChild(anchor);
+
+      this.inputValues[cfgProp + '_' + val] = elem;
+    }
   };
 
   /**
@@ -361,7 +486,11 @@ pwlib.gui['default'] = function (app) {
     }
 
     // Make PaintWeb visible.
-    this.config.guiPlaceholder.style.visibility = '';
+    var placeholder = this.config.guiPlaceholder.style;
+    placeholder.visibility = '';
+    placeholder.position = '';
+    placeholder.height = '';
+    placeholder.overflow = 'visible';
   };
 
   /**
@@ -626,16 +755,28 @@ pwlib.gui['default'] = function (app) {
     }
   };
 
-  // This is the event handler which shows a temporary status message when hovering buttons/tools.
+  /**
+   * The <code>mouseover</code> event handler for all tools, commands and icons.  
+   * This simply shows the title / text content of the element in the GUI status 
+   * bar.
+   *
+   * @see this#statusShow The method used for displaying the message in the GUI 
+   * status bar.
+   */
   this.item_mouseover = function () {
-    if (this.title) {
-      _self.statusShow(this.title, true);
-    } else if (this.textContent) {
-      _self.statusShow(this.textContent, true);
+    if (this.title || this.textConent) {
+      _self.statusShow(this.title || this.textContent, true);
     }
   };
 
-  // This simply goes back to the previous status message.
+  /**
+   * The <code>mouseout</code> event handler for all tools, commands and icons.  
+   * This method simply resets the GUI status bar to the previous message it was 
+   * displaying before the user hovered the current element.
+   *
+   * @see this#statusShow The method used for displaying the message in the GUI 
+   * status bar.
+   */
   this.item_mouseout = function () {
     _self.statusShow(-1);
   };
@@ -1068,6 +1209,23 @@ pwlib.gui['default'] = function (app) {
   };
 
   /**
+   * The <code>click</code> event handler for the command DOM elements.
+   *
+   * @private
+   *
+   * @param {Event} ev The DOM Event object.
+   *
+   * @see PaintWeb#commandRegister to register a new command.
+   */
+  this.commandClick = function (ev) {
+    var cmd = this.parentNode.getAttribute('data-pwCommand');
+    if (cmd && cmd in app.commands) {
+      app.commands[cmd].call(this, ev);
+    }
+    ev.preventDefault();
+  };
+
+  /**
    * The <code>commandRegister</code> application event handler. GUI elements 
    * associated to commands are updated to ensure proper user interaction.
    *
@@ -1100,7 +1258,7 @@ pwlib.gui['default'] = function (app) {
     }
     elem.appendChild(anchor);
 
-    anchor.addEventListener('click',     this.commands[ev.id], false);
+    anchor.addEventListener('click',     _self.commandClick,   false);
     anchor.addEventListener('mouseover', _self.item_mouseover, false);
     anchor.addEventListener('mouseout',  _self.item_mouseout,  false);
   };
@@ -1255,6 +1413,125 @@ pwlib.gui['default'] = function (app) {
     if (elem && elem.value != val) {
       elem.value = val;
     }
+  };
+
+  /**
+   * The <code>configChange</code> application event handler. This method 
+   * ensures the GUI input elements stay up-to-date when some PaintWeb 
+   * configuration is modified.
+   *
+   * @param {pwlib.appEvent.configChange} ev The application event object.
+   */
+  this.configChangeHandler = function (ev) {
+    var input = _self.inputs[ev.config];
+    if (!input || ev.previousValue === ev.value) {
+      return;
+    }
+
+    var tag = input.tagName.toLowerCase(),
+        isInput = tag === 'select' || tag === 'input';
+
+    if (isInput) {
+      if (input.type === 'checkbox' && input.checked !== ev.value) {
+        input.checked = ev.value;
+      }
+      if (input.type !== 'checkbox' && input.value !== ev.value) {
+        input.value = ev.value;
+      }
+
+      return;
+    }
+
+    var className = ' ' + _self.className + 'configActive',
+        prevValElem = _self.inputValues[ev.config + '_' + ev.previousValue],
+        valElem = _self.inputValues[ev.config + '_' + ev.value];
+
+    if (prevValElem && prevValElem.className.indexOf(className) !== -1) {
+      prevValElem.className = prevValElem.className.replace(className, '');
+    }
+
+    if (valElem && valElem.className.indexOf(className) === -1) {
+      valElem.className += className;
+    }
+  };
+
+  /**
+   * The <code>click</code> event handler for DOM elements associated to 
+   * PaintWeb configuration values. These elements rely on parent elements which 
+   * are associated to configuration properties.
+   *
+   * <p>This method dispatches the {@link pwlib.appEvent.configChange} event.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
+  this.configValueClick = function (ev) {
+    var pNode = this.parentNode,
+        input = pNode._pwConfigParent,
+        val = pNode.getAttribute('data-pwConfigValue');
+
+    if (!input || !input._pwConfigProperty) {
+      return;
+    }
+
+    ev.preventDefault();
+
+    var className = ' ' + _self.classPrefix + 'configActive',
+        groupRef = input._pwConfigGroupRef,
+        group = input._pwConfigGroup,
+        prop = input._pwConfigProperty,
+        prevVal = groupRef[prop],
+        prevValElem = _self.inputValues[prop + '_' + prevVal];
+
+    if (prevVal == val) {
+      return;
+    }
+
+    if (prevValElem && prevValElem.className.indexOf(className) !== -1) {
+      prevValElem.className = prevValElem.className.replace(className, '');
+    }
+
+    groupRef[prop] = val;
+
+    if (pNode.className.indexOf(className) === -1) {
+      pNode.className += className;
+    }
+
+    app.events.dispatch(new appEvent.configChange(val, prevVal, prop, group, 
+          groupRef));
+  };
+
+  /**
+   * The <code>change</code> event handler for input elements associated to 
+   * PaintWeb configuration properties.
+   *
+   * <p>This method dispatches the {@link pwlib.appEvent.configChange} event.
+   */
+  this.configInputChange = function () {
+    if (!this._pwConfigProperty) {
+      return;
+    }
+
+    var val = this.type === 'checkbox' ? this.checked : this.value,
+        groupRef = this._pwConfigGroupRef,
+        group = this._pwConfigGroup,
+        prop = this._pwConfigProperty,
+        prevVal = groupRef[prop];
+
+    if (this.getAttribute('type') === 'number') {
+      val = parseInt(val);
+      if (val != this.value) {
+        this.value = val;
+      }
+    }
+
+    if (val == prevVal) {
+      return;
+    }
+
+    groupRef[prop] = val;
+
+    app.events.dispatch(new appEvent.configChange(val, prevVal, prop, group, 
+          groupRef));
   };
 };
 
@@ -1639,8 +1916,9 @@ function guiTabPanel (gui, panel) {
         + _self.id + '_' + tabId;
 
       tabButton = doc.createElement('li');
+      tabButton._pwTab = tabId;
+
       anchor = doc.createElement('a');
-      anchor._PaintWebTab = tabId;
       anchor.href = '#';
       anchor.addEventListener('click', ev_tabClick, false);
 
@@ -1682,10 +1960,8 @@ function guiTabPanel (gui, panel) {
    * @param {Event} ev The DOM Event object.
    */
   function ev_tabClick (ev) {
-    if (this._PaintWebTab) {
-      _self.tabActivate(this._PaintWebTab);
-      ev.preventDefault();
-    }
+    _self.tabActivate(this.parentNode._pwTab);
+    ev.preventDefault();
   };
 
   /**
@@ -1698,7 +1974,7 @@ function guiTabPanel (gui, panel) {
    * false if not.
    */
   this.tabActivate = function (tabId) {
-    if (!(tabId in this.tabs)) {
+    if (!tabId || !(tabId in this.tabs)) {
       return false;
     } else if (tabId === this.tabId) {
       return true;

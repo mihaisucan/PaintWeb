@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-11 23:26:55 +0300 $
+  // $Date: 2009-06-12 16:09:56 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -201,10 +201,48 @@
 
   /**
    * Extensions folder.
+   *
    * @type String
    * @default "extensions"
    */
   "extensionsFolder": "extensions",
+
+  /**
+   * @namespace Line options.
+   */
+  "line": {
+    /**
+     * Line cap. Possible values: "butt", "round", "square".
+     *
+     * @type String
+     * @default "butt"
+     */
+    "lineCap": "butt",
+
+    /**
+     * Line join. Possible values: "round", "bevel", "miter".
+     *
+     * @type String
+     * @default "miter"
+     */
+    "lineJoin": "miter",
+
+    /**
+     * Line width.
+     *
+     * @type Number
+     * @default 1
+     */
+    "lineWidth": 1,
+
+    /**
+     * Miter limit.
+     *
+     * @type Number
+     * @default 10
+     */
+    "miterLimit": 10
+  },
 
   /**
    * @namespace Color Mixer extension configuration.

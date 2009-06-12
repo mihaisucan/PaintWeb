@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-11 21:48:51 +0300 $
+  // $Date: 2009-06-12 20:54:32 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -16,7 +16,9 @@
   "errorInitGUI": "Error: the interface failed to initialize!",
   "noMainTabPanel": "Error: the interface layout has no tabbed panel with ID = main.",
   "guiMarkupImportFailed": "Error: the interface markup code could not be imported into the main document.",
-  "missingCanvasResizer": "Error: the interface markup does not have the Canvas container and/or the Canvas resize handle.",
+  "guiMarkupParseFailed": "Error: the interface markup code could not be properly parsed.",
+  "missingCanvasResizer": "Error: the interface markup does not have the Canvas resize handle.",
+  "missingCanvasContainer": "Error: the interface markup does not have the Canvas container.",
   "errorCpickerUnsupported": "Error: your browser does not support get/putImageData! The color picker tool cannot be used.",
   "errorClipboardUnsupported": "Error: your browser does not support get/putImageData! Clipboard operations like cut/copy/paste cannot be used.",
   "errorTextUnsupported": "Error: your browser does not implement the Canvas Text API! The text tool cannot be used.",
@@ -42,7 +44,6 @@
     "pantone-solid-coated": "PANTONE solid coated",
     "toyo94": "TOYO 94 color finder"
   },
-
 
   "tabs": {
     "main": {
@@ -78,6 +79,25 @@
     "selectionCopy": "Copy selection",
     "clipboardPaste": "Paste clipboard",
     "help": "Help"
+  },
+
+  "inputs": {
+    "line": {
+      "lineWidth": "Line width:",
+      "miterLimit": "Miter limit:",
+      "lineCap": "Line cap",
+      "lineCap_butt": "Butt",
+      "lineCap_square": "Square",
+      "lineCap_round": "Round",
+      "lineJoin": "Line join",
+      "lineJoin_miter": "Miter",
+      "lineJoin_round": "Round",
+      "lineJoin_bevel": "Bevel"
+    },
+    "shapeType": "Shape type",
+    "shapeType_both": "Both",
+    "shapeType_fill": "Fill",
+    "shapeType_stroke": "Stroke"
   },
 
   "status": {

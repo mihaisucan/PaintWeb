@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-11 23:50:40 +0300 $
+ * $Date: 2009-06-13 00:19:57 +0300 $
  */
 
 /**
@@ -52,7 +52,7 @@ function PaintWeb (win, doc) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090611;
+  this.build = 20090612;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -333,6 +333,26 @@ function PaintWeb (win, doc) {
    * @type Number
    */
   this.UID = 0;
+
+  /**
+   * List of Canvas context properties to save and restore.
+   *
+   * <p>When the Canvas is resized the state is lost. Using context.save/restore 
+   * state does work only in Opera. In Firefox/Gecko and WebKit saved states are 
+   * lost after resize, so there's no state to restore. As such, PaintWeb has 
+   * its own simple state save/restore mechanism. The property values are saved 
+   * into a JavaScript object.
+   *
+   * @private
+   * @type Array
+   *
+   * @see PaintWeb#stateSave to save the canvas context state.
+   * @see PaintWeb#stateRestore to restore a canvas context state.
+   */
+  this.stateProperties = ['strokeStyle', 'fillStyle', 'globalAlpha', 
+    'lineWidth', 'lineCap', 'lineJoin', 'miterLimit', 'shadowOffsetX', 
+    'shadowOffsetY', 'shadowBlur', 'shadowColor', 'globalCompositeOperation', 
+    'font', 'textAlign', 'textBaseline'];
 
   /**
    * Holds the keyboard event listener object.
@@ -803,6 +823,8 @@ function PaintWeb (win, doc) {
 
     this.updateCanvasScaling();
     this.win.addEventListener('resize', this.updateCanvasScaling, false);
+
+    this.events.add('configChange', this.configChangeHandler);
 
     this.initialized = PaintWeb.INIT_DONE;
 
@@ -1426,31 +1448,42 @@ function PaintWeb (win, doc) {
     return true;
   };
 
-  // When the canvas is resized the state is lost. Using context.save/restore 
-  // state does work only in Opera. In Firefox/Gecko and WebKit saved states are 
-  // lost after resize, so there's no state to restore.
-  // As such, this is the internal state save/restore mechanism. The property 
-  // values are saved into a simple JS object.
-  this.state_props = ['strokeStyle', 'fillStyle', 'globalAlpha', 'lineWidth', 
-    'lineCap', 'lineJoin', 'miterLimit', 'shadowOffsetX', 'shadowOffsetY', 
-    'shadowBlur', 'shadowColor', 'globalCompositeOperation', 'font', 
-    'textAlign', 'textBaseline'];
-
+  /**
+   * Save the state of a Canvas context.
+   *
+   * @param {CanvasRenderingContext2D} context The 2D context of the Canvas 
+   * element you want to save the state.
+   *
+   * @returns {Object} The object has all the state properties and values.
+   */
   this.stateSave = function (context) {
-    if (!context || !context.canvas || !_self.state_props) {
+    if (!context || !context.canvas || !this.stateProperties) {
       return false;
     }
 
-    var stateObj = {}, state;
+    var stateObj = {},
+        prop = null,
+        n = this.stateProperties.length;
 
-    for (var i = 0, n = _self.state_props.length; i < n; i++) {
-      state = _self.state_props[i];
-      stateObj[state] = context[state];
+    for (var i = 0; i < n; i++) {
+      prop = this.stateProperties[i];
+      stateObj[prop] = context[prop];
     }
 
     return stateObj;
   };
 
+  /**
+   * Restore the state of a Canvas context.
+   *
+   * @param {CanvasRenderingContext2D} context The 2D context where you want to 
+   * restore the state.
+   *
+   * @param {Object} stateObj The state object saved by the {@link 
+   * PaintWeb#stateSave} method.
+   *
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   */
   this.stateRestore = function (context, stateObj) {
     if (!context || !context.canvas) {
       return false;
@@ -1588,10 +1621,6 @@ function PaintWeb (win, doc) {
         history      = this.history,
         prevPos      = history.pos;
 
-    // The get/putImageData methods do not work in Opera Merlin, nor in Safari 
-    // (tested with 20080324 svn trunk, webkitgtk). However, in webkit svn trunk 
-    // revision 37376 (20081007) these methods finally work (meaning Safari 
-    // 4 might work).
     if (!layerContext.getImageData) {
       return false;
     }
@@ -1601,8 +1630,8 @@ function PaintWeb (win, doc) {
       history.states.splice(prevPos, history.states.length);
     }
 
-    history.states.push(layerContext.getImageData(0, 0, this.image.width 
-          - 1 , this.image.height - 1));
+    history.states.push(layerContext.getImageData(0, 0, this.image.width, 
+          this.image.height));
 
     // If we have too many history ImageDatas, remove the oldest ones
     if ('historyLimit' in this.config &&
@@ -2179,6 +2208,27 @@ function PaintWeb (win, doc) {
       return false;
     } else {
       return _self.tool.clipboardPaste(ev);
+    }
+  };
+
+  /**
+   * The <code>configChange</code> application event handler. This method 
+   * updates the Canvas context properties depending on which configuration 
+   * property changed.
+   *
+   * @private
+   * @param {pwlib.appEvent.configChange} ev The application event object.
+   */
+  this.configChangeHandler = function (ev) {
+    if (ev.group === 'line') {
+      switch (ev.config) {
+        case 'lineWidth':
+        case 'miterLimit':
+          ev.value = parseInt(ev.value);
+        case 'lineJoin':
+        case 'lineCap':
+          _self.buffer.context[ev.config] = ev.value;
+      }
     }
   };
 
