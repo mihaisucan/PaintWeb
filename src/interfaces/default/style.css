@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-13 00:15:49 +0300 $
+ * $Date: 2009-06-13 15:55:55 +0300 $
  */
 
 /* OLPC XO DPI resolution detection */
@@ -259,32 +259,36 @@
 
 .paintweb_imageSize {
   background: #cbcbcb;
-  border: 1px solid #a3a3a3;
+  border-right: 1px solid #a3a3a3;
   color: #333;
-  float: left;
   font-size: 0.9em;
-  line-height: 2em;
-  margin: 0 8px 0 0;
+  height: 100%;
+  left: 0;
+  line-height: 26px;
+  margin: 0;
   padding: 0 8px;
+  position: absolute;
+  top: 0;
   vertical-align: middle
 }
 
 .paintweb_statusMessage {
-  line-height: 2em;
-  margin: 0 13em 0 0;
-  padding: 0;
-  vertical-align: middle
+  margin: 0 11em 0 6em;
+  padding: 5px 0
 }
 
 .paintweb_statusZoom {
-  background: #cbcbcb url('icons/zoom.png') left center no-repeat;
-  border: 1px solid #a3a3a3;
+  background: #cbcbcb url('icons/zoom.png') no-repeat;
+  border-left: 1px solid #a3a3a3;
   float: right;
   font-size: 0.9em;
-  height: 2em;
-  line-height: 2em;
+  height: 100%;
+  line-height: 28px;
   margin: 0;
   padding: 0 8px 0 31px;
+  position: absolute;
+  right: 0;
+  top: 0;
   vertical-align: middle
 }
 
@@ -310,17 +314,17 @@
 }
 
 .paintweb_opt_miterLimit {
-  top: -1px;
+  border-top: 0;
 }
 
 .paintweb_cfg_line_lineWidth, .paintweb_cfg_line_miterLimit {
-  width: 4em;
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  height: 20px;
+  height: 1.4em;
   margin: 0;
-  padding: 0
+  padding: 0;
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  width: 4em
 }
 
 .paintweb_cfg_line_lineCap {

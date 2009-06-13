@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-12 20:54:32 +0300 $
+  // $Date: 2009-06-13 23:17:58 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -47,11 +47,17 @@
 
   "tabs": {
     "main": {
-      "main": "Main",
+      "bcurve": "Bézier curve",
+      "ellipse": "Ellipse",
+      "eraser": "Eraser",
       "line": "Line",
-      "select": "Selection",
-      "text": "Text",
-      "shadow": "Shadow"
+      "main": "Main",
+      "pencil": "Pencil",
+      "polygon": "Polygon",
+      "rectangle": "Rectangle",
+      "selection": "Selection",
+      "shadow": "Shadow",
+      "text": "Text"
     }
   },
 
@@ -97,7 +103,9 @@
     "shapeType": "Shape type",
     "shapeType_both": "Both",
     "shapeType_fill": "Fill",
-    "shapeType_stroke": "Stroke"
+    "shapeType_stroke": "Stroke",
+    "pencilSize": "Pencil size:",
+    "eraserSize": "Eraser size:"
   },
 
   "status": {

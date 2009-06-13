@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-12 20:48:16 +0300 $
+ * $Date: 2009-06-13 23:24:18 +0300 $
  */
 
 /**
@@ -371,7 +371,9 @@ pwlib.gui['default'] = function (app) {
         elem.className += ' ' + this.classPrefix + id;
 
         // Store a reference to the element.
-        if (!isInput) {
+        if (isInput && !cfgAttr) {
+          this.inputs[id] = elem;
+        } else if (!isInput) {
           this.elems[id] = elem;
         }
       }
@@ -1119,21 +1121,93 @@ pwlib.gui['default'] = function (app) {
    * a drawing tool.
    */
   this.toolActivate = function (ev) {
-    var active = _self.tools[ev.id];
+    var tabAnchor,
+        tabAlias = {
+          bcurve: 'line',
+          ellipse: 'line',
+          pencil: 'line',
+          polygon: 'line',
+          rectangle: 'line'
+        },
+        shapeTypeVisibility = {
+          bcurve: true,
+          ellipse: true,
+          polygon: true,
+          rectangle: true,
+          text: true
+        },
+        tabId = tabAlias[ev.id],
+        tabPanel = _self.tabPanels.main,
+        active = _self.tools[ev.id],
+        shapeType = _self.inputs.shapeType,
+        lineWidth = _self.inputs.line_lineWidth,
+        label, labelElem;
+
     active.className += ' ' + _self.classPrefix + 'toolActive';
+    _self.statusShow(ev.id + 'Active');
+
+    // show/hide the shapeType input config.
+    if (shapeType) {
+      if (shapeTypeVisibility[ev.id]) {
+        shapeType.style.display = '';
+      } else {
+        shapeType.style.display = 'none';
+      }
+    }
 
     if (ev.prevId) {
-      var prev = _self.tools[ev.prevId];
+      var prev = _self.tools[ev.prevId],
+          prevTabId = tabAlias[ev.prevId];
 
       prev.className = prev.className.
         replace(' ' + _self.classPrefix + 'toolActive', '');
 
-      _self.tabPanels.main.tabHide(ev.prevId);
+      // hide the tab associated to the previous tool.
+      if (prevTabId && prevTabId in tabPanel.tabs) {
+        tabAnchor = tabPanel.tabs[prevTabId].button.firstChild;
+        tabAnchor.title = lang.tabs.main[prevTabId];
+        tabAnchor.removeChild(tabAnchor.firstChild);
+        tabAnchor.appendChild(doc.createTextNode(tabAnchor.title));
+        tabPanel.tabHide(prevTabId);
+      }
+
+      if (lineWidth && (ev.prevId === 'pencil' || ev.prevId === 'eraser')) {
+        label = lang.inputs.line.lineWidth;
+        labelElem = lineWidth.parentNode;
+        labelElem.removeChild(labelElem.firstChild);
+        labelElem.insertBefore(doc.createTextNode(label), labelElem.firstChild);
+
+      } else if (ev.prevId === 'text') {
+        // for the text tool we hide the line tab as well.
+        tabPanel.tabHide('line');
+      }
+
+      // hide the tab for the current tool.
+      tabPanel.tabHide(ev.prevId);
     }
 
-    _self.tabPanels.main.tabShow(ev.id);
+    // show a tab associated to the current tool.
+    if (tabId && tabId in tabPanel.tabs) {
+      tabAnchor = tabPanel.tabs[tabId].button.firstChild;
+      tabAnchor.title = lang.tabs.main[ev.id];
+      tabAnchor.removeChild(tabAnchor.firstChild);
+      tabAnchor.appendChild(doc.createTextNode(tabAnchor.title));
+      tabPanel.tabShow(tabId);
+    }
 
-    _self.statusShow(ev.id + 'Active');
+    if (ev.id === 'pencil' || ev.id === 'eraser') {
+      label = lang.inputs[ev.id + 'Size'];
+      labelElem = lineWidth.parentNode;
+      labelElem.removeChild(labelElem.firstChild);
+      labelElem.insertBefore(doc.createTextNode(label), labelElem.firstChild);
+
+    } else if (ev.id === 'text') {
+      // for the text tool we show the line tab as well.
+      tabPanel.tabShow('line');
+    }
+
+    // show the tab for the current tool, if there's one.
+    tabPanel.tabShow(ev.id);
   };
 
   /**

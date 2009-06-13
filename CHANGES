@@ -1,3 +1,12 @@
+2009-06-13:
+===========
+
+- Some bug fixes.
+- Made the tabs for rectangle, ellipse, bcurve, polygon, selection, text, pencil 
+and eraser show up nicely. At the moment the selection, text and eraser tools 
+still need minor updates - activation fails.
+- New English strings.
+
 2009-06-12:
 ===========
 
