@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-13 23:17:58 +0300 $
+  // $Date: 2009-06-15 23:53:18 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -57,7 +57,8 @@
       "rectangle": "Rectangle",
       "selection": "Selection",
       "shadow": "Shadow",
-      "text": "Text"
+      "text": "Text",
+      "textBorder": "Border"
     }
   },
 
@@ -100,12 +101,19 @@
       "lineJoin_round": "Round",
       "lineJoin_bevel": "Bevel"
     },
+    "shadow": {
+      "enable": "Enable shadows",
+      "shadowBlur": "Blur:",
+      "shadowOffsetX": "Distance X:",
+      "shadowOffsetY": "Distance Y:"
+    },
     "shapeType": "Shape type",
     "shapeType_both": "Both",
     "shapeType_fill": "Fill",
     "shapeType_stroke": "Stroke",
     "pencilSize": "Pencil size:",
-    "eraserSize": "Eraser size:"
+    "eraserSize": "Eraser size:",
+    "borderWidth": "Border width:"
   },
 
   "status": {

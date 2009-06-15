@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-11 20:11:13 +0300 $
+ * $Date: 2009-06-15 20:27:08 +0300 $
  */
 
 /**
@@ -108,6 +108,7 @@ pwlib.tools.hand = function (app) {
    */
   this.activate = function () {
     bufferStyle.cursor = 'move';
+    app.shadowDisallow();
   };
 
   /**
@@ -122,6 +123,7 @@ pwlib.tools.hand = function (app) {
     }
 
     bufferStyle.cursor = '';
+    app.shadowAllow();
   };
 
   /**

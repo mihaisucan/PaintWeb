@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-13 23:24:18 +0300 $
+ * $Date: 2009-06-16 00:03:45 +0300 $
  */
 
 /**
@@ -105,6 +105,72 @@ pwlib.gui['default'] = function (app) {
   this.canvasResizer = null;
 
   /**
+   * Holds tab configuration information for most drawing tools.
+   * @type Object
+   */
+  this.toolTabConfig = {
+    bcurve: {
+      lineTab: true,
+      shapeType: true,
+      lineWidth: true,
+      lineWidthLabel: lang.inputs.borderWidth,
+      lineCap: true
+    },
+    ellipse: {
+      lineTab: true,
+      shapeType: true,
+      lineWidth: true,
+      lineWidthLabel: lang.inputs.borderWidth
+    },
+    rectangle: {
+      lineTab: true,
+      shapeType: true,
+      lineWidth: true,
+      lineWidthLabel: lang.inputs.borderWidth,
+      lineJoin: true
+    },
+    polygon: {
+      lineTab: true,
+      shapeType: true,
+      lineWidth: true,
+      lineWidthLabel: lang.inputs.borderWidth,
+      lineJoin: true,
+      lineCap: true,
+      miterLimit: true
+    },
+    eraser: {
+      lineTab: true,
+      lineWidth: true,
+      lineWidthLabel: lang.inputs.eraserSize,
+      lineJoin: true,
+      lineCap: true,
+      miterLimit: true
+    },
+    pencil: {
+      lineTab: true,
+      lineWidth: true,
+      lineWidthLabel: lang.inputs.pencilSize,
+      lineJoin: true,
+      lineCap: true,
+      miterLimit: true
+    },
+    line: {
+      lineTab: true,
+      lineWidth: true,
+      lineWidthLabel: lang.inputs.line.lineWidth,
+      lineJoin: true,
+      lineCap: true,
+      miterLimit: true
+    },
+    text: {
+      lineTab: true,
+      lineTabLabel: lang.tabs.textBorder,
+      lineWidth: true,
+      lineWidthLabel: lang.inputs.borderWidth
+    }
+  };
+
+  /**
    * Initialize the PaintWeb interface.
    *
    * @param {Document} markupDoc The interface markup loaded and parsed as DOM 
@@ -134,7 +200,6 @@ pwlib.gui['default'] = function (app) {
     }
 
     if (!this.initCanvas() ||
-        //!this.initProperties() ||
         !this.initImageZoom() ||
         !this.initKeyboardShortcuts()) {
       return false;
@@ -145,6 +210,11 @@ pwlib.gui['default'] = function (app) {
     if (!panel) {
       app.initError(lang.noMainTabPanel);
       return false;
+    }
+
+    // Hide the "Shadow" tab if the drawing of shadows is not supported.
+    if (!app.shadowSupported && 'shadow' in panel.tabs) {
+      panel.tabHide('shadow');
     }
 
     // Setup the viewport height.
@@ -197,6 +267,7 @@ pwlib.gui['default'] = function (app) {
     app.events.add('imageZoom',         this.imageZoom);
     app.events.add('imageSizeChange',   this.imageSizeChange);
     app.events.add('canvasSizeChange',  this.canvasSizeChange);
+    app.events.add('shadowAllow',       this.shadowAllow);
 
     // Make sure the historyUndo and historyRedo command elements are 
     // synchronized with the application history state.
@@ -238,6 +309,7 @@ pwlib.gui['default'] = function (app) {
 
     canvasContainer.appendChild(layerCanvas);
     canvasContainer.appendChild(bufferCanvas);
+    canvasContainer.style.backgroundColor = config.backgroundColor;
 
     return true;
   };
@@ -421,8 +493,16 @@ pwlib.gui['default'] = function (app) {
 
     if (isInput) {
       labelElem = input.parentNode;
-      labelElem.removeChild(labelElem.firstChild);
-      labelElem.insertBefore(doc.createTextNode(input.title), input);
+
+      if (input.type === 'checkbox') {
+        labelElem.removeChild(labelElem.lastChild);
+        labelElem.appendChild(doc.createTextNode(input.title));
+        input.checked = cfgGroupRef[cfgProp];
+      } else {
+        labelElem.removeChild(labelElem.firstChild);
+        labelElem.insertBefore(doc.createTextNode(input.title), input);
+        input.value = cfgGroupRef[cfgProp];
+      }
 
       input.addEventListener('change', this.configInputChange, false);
       return;
@@ -456,7 +536,8 @@ pwlib.gui['default'] = function (app) {
       anchor.title = langGroup[cfgProp + '_' + val];
       anchor.appendChild(doc.createTextNode(anchor.title));
 
-      elem.className += ' ' + this.classPrefix + cfgProp + '_' + val;
+      elem.className += ' ' + this.classPrefix + cfgProp + '_' + val 
+        + ' paintweb_icon';
       elem._pwConfigParent = input;
 
       if (cfgGroupRef[cfgProp] == val) {
@@ -470,7 +551,7 @@ pwlib.gui['default'] = function (app) {
       elem.removeChild(elem.firstChild);
       elem.appendChild(anchor);
 
-      this.inputValues[cfgProp + '_' + val] = elem;
+      this.inputValues[cfgGroup + '_' + cfgProp + '_' + val] = elem;
     }
   };
 
@@ -535,161 +616,6 @@ pwlib.gui['default'] = function (app) {
     }
 
     elem.title = lang.imageZoomTitle;
-
-    return true;
-  };
-
-  /**
-   * Initialize all the inputs in the Properties box.
-   * @private
-   */
-  // TODO: FIXME: this needs a better organization.
-  this.initProperties = function () {
-    var i, elem,
-
-      ev_simple_prop = function (ev) {
-        if (!this._prop || !_self.ev_input_nr(ev)) {
-          return false;
-        }
-        _self.buffer.context[this._prop] = this.value;
-      },
-
-      // Inputs of type=number.
-      n, id, opt_nr = ['lineWidth', 'miterLimit', 'shadowOffsetX', 'shadowOffsetY', 'shadowBlur'];
-
-    for (i = 0, n = opt_nr.length; i < n; i++) {
-      id = opt_nr[i];
-      if ( !(elem = $('in-' + id)) ) {
-        return false;
-      }
-
-      elem.addEventListener('keypress', this.ev_input_nr, false);
-      elem.addEventListener('input', ev_simple_prop, false);
-
-      elem._old_value = elem.value;
-      elem._prop = id;
-      this.inputs[id] = elem;
-    }
-
-    // The icon-based options.
-    var y, icons, opt_icon = ['shapeType', 'lineCap', 'lineJoin', 'textAlign'];
-    for (i = 0, n = opt_icon.length; i < n; i++) {
-      id = opt_icon[i];
-      if ( !(elem = $('in-' + id)) ) {
-        return false;
-      }
-
-      elem._prop = id;
-
-      icons = elem.getElementsByTagName('div');
-
-      // The first icon is also the default one for activation.
-      icons[0].className = 'active';
-      if (id != 'shapeType') {
-        app.buffer.context[id] = icons[0].id.replace(id + '-', '');
-      }
-
-      for (y = 0; y < icons.length; y++) {
-        icons[y].addEventListener('click', this.opt_icon, false);
-        if (!icons[y].title) {
-          icons[y].title = icons[y].textContent;
-        }
-      }
-    }
-
-    // Cache several inputs
-    var inputs = ['selTransform', 'selTransparent', 'textFont', 'textSize', 
-        'textString', 'shadowActive'];
-    for (i = 0, n = inputs.length; i < n; i++) {
-      id = inputs[i];
-      if ( !(this.inputs[id] = $('in-' + id)) ) {
-        return false;
-      }
-    }
-
-    // The selection transparency cannot be disabled if the browser does not 
-    // implement put/getImageData.
-    if (!app.layer.context.getImageData || !app.layer.context.putImageData) {
-      this.inputs.selTransparent.parentNode.className += ' disabled';
-      this.inputs.selTransparent.disabled = true;
-    }
-
-    // The Shadow API is only supported by Firefox 3.1.
-    // Opera reports all the shadow-related properties as available, even if it currently doesn't implement the Shadow API.
-    elem = this.inputs.shadowActive;
-    if (!app.layer.context.shadowColor) {
-      elem.parentNode.className += ' disabled';
-      elem.disabled = true;
-    }
-    elem.addEventListener('change', app.shadowToggle, false);
-    elem.checked = true;
-    app.shadowDisable();
-
-    // The Text API is only supported by Firefox 3.1, and new WebKit builds.
-    if (app.layer.context.fillText && app.layer.context.strokeText) {
-      elem = this.inputs.textSize;
-      elem._old_value = elem.value;
-      elem.addEventListener('keypress', this.ev_input_nr,      false);
-      elem.addEventListener('input',    this.update_textProps, false);
-
-      this.inputs.textFont.addEventListener('change', this.opt_textFont, false);
-
-      var textStyle = ['textItalic', 'textBold'];
-      for (i = 0, n = textStyle.length; i < n; i++) {
-        id = textStyle[i];
-        if ( !(elem = $('in-' + id)) ) {
-          return false;
-        }
-        elem._prop = id;
-
-        if (!elem.title && elem.textContent) {
-          elem.title = elem.textContent;
-        }
-
-        elem.addEventListener('click', this.opt_textStyle, false);
-        this[id] = false;
-      }
-    }
-
-    var ttl, sections = {
-      'lineOptions'      : true, // the condition to make the section available or not
-      'selectionOptions' : true,
-      'textOptions'      : app.layer.context.fillText && 
-        app.layer.context.strokeText,
-      'shadowOptions'    : app.layer.context.shadowColor
-    };
-
-    // Make each section from Properties minimizable.
-    // By default all sections are minimized, except lineOptions.
-    for (i in sections) {
-      if ( !(elem = $(i)) ) {
-        return false;
-      }
-
-      _self.elems[i] = elem;
-
-      if (i != 'lineOptions') {
-        elem.className = 'minimized';
-      }
-
-      if (!sections[i]) {
-        elem.style.display = 'none';
-        continue;
-      }
-
-      ttl = elem.getElementsByTagName('h2')[0];
-      if (!ttl) {
-        continue;
-      }
-
-      ttl.addEventListener('click', function () {
-        if (this.parentNode.className == 'minimized') {
-          this.parentNode.className = '';
-        } else {
-          this.parentNode.className = 'minimized';
-        }
-      }, false);
-    }
 
     return true;
   };
@@ -1122,33 +1048,22 @@ pwlib.gui['default'] = function (app) {
    */
   this.toolActivate = function (ev) {
     var tabAnchor,
-        tabAlias = {
-          bcurve: 'line',
-          ellipse: 'line',
-          pencil: 'line',
-          polygon: 'line',
-          rectangle: 'line'
-        },
-        shapeTypeVisibility = {
-          bcurve: true,
-          ellipse: true,
-          polygon: true,
-          rectangle: true,
-          text: true
-        },
-        tabId = tabAlias[ev.id],
+        tabConfig = _self.toolTabConfig[ev.id] || {},
         tabPanel = _self.tabPanels.main,
-        active = _self.tools[ev.id],
+        tabActive = _self.tools[ev.id],
         shapeType = _self.inputs.shapeType,
         lineWidth = _self.inputs.line_lineWidth,
-        label, labelElem;
+        lineCap = _self.inputs.line_lineCap,
+        lineJoin = _self.inputs.line_lineJoin,
+        miterLimit = _self.inputs.line_miterLimit,
+        lineWidthLabel = null;
 
-    active.className += ' ' + _self.classPrefix + 'toolActive';
+    tabActive.className += ' ' + _self.classPrefix + 'toolActive';
     _self.statusShow(ev.id + 'Active');
 
     // show/hide the shapeType input config.
     if (shapeType) {
-      if (shapeTypeVisibility[ev.id]) {
+      if (tabConfig.shapeType) {
         shapeType.style.display = '';
       } else {
         shapeType.style.display = 'none';
@@ -1156,58 +1071,77 @@ pwlib.gui['default'] = function (app) {
     }
 
     if (ev.prevId) {
-      var prev = _self.tools[ev.prevId],
-          prevTabId = tabAlias[ev.prevId];
+      var prevTab = _self.tools[ev.prevId],
+          prevTabConfig = _self.toolTabConfig[ev.prevId] || {};
 
-      prev.className = prev.className.
+      prevTab.className = prevTab.className.
         replace(' ' + _self.classPrefix + 'toolActive', '');
 
-      // hide the tab associated to the previous tool.
-      if (prevTabId && prevTabId in tabPanel.tabs) {
-        tabAnchor = tabPanel.tabs[prevTabId].button.firstChild;
-        tabAnchor.title = lang.tabs.main[prevTabId];
-        tabAnchor.removeChild(tabAnchor.firstChild);
-        tabAnchor.appendChild(doc.createTextNode(tabAnchor.title));
-        tabPanel.tabHide(prevTabId);
-      }
-
-      if (lineWidth && (ev.prevId === 'pencil' || ev.prevId === 'eraser')) {
-        label = lang.inputs.line.lineWidth;
-        labelElem = lineWidth.parentNode;
-        labelElem.removeChild(labelElem.firstChild);
-        labelElem.insertBefore(doc.createTextNode(label), labelElem.firstChild);
-
-      } else if (ev.prevId === 'text') {
-        // for the text tool we hide the line tab as well.
+      // hide the line tab
+      if (prevTabConfig.lineTab) {
         tabPanel.tabHide('line');
       }
 
       // hide the tab for the current tool.
-      tabPanel.tabHide(ev.prevId);
+      if (ev.prevId in tabPanel.tabs) {
+        tabPanel.tabHide(ev.prevId);
+      }
     }
 
-    // show a tab associated to the current tool.
-    if (tabId && tabId in tabPanel.tabs) {
-      tabAnchor = tabPanel.tabs[tabId].button.firstChild;
-      tabAnchor.title = lang.tabs.main[ev.id];
+    // Change the label of the lineWidth input element.
+    if (tabConfig.lineWidthLabel) {
+      lineWidthLabel = lineWidth.parentNode;
+      lineWidthLabel.removeChild(lineWidthLabel.firstChild);
+      lineWidthLabel.insertBefore(doc.createTextNode(tabConfig.lineWidthLabel), 
+          lineWidthLabel.firstChild);
+
+    }
+
+    if (lineJoin) {
+      if (tabConfig.lineJoin) {
+        lineJoin.style.display = '';
+      } else {
+        lineJoin.style.display = 'none';
+      }
+    }
+
+    if (lineCap) {
+      if (tabConfig.lineCap) {
+        lineCap.style.display = '';
+      } else {
+        lineCap.style.display = 'none';
+      }
+    }
+
+    if (miterLimit) {
+      if (tabConfig.miterLimit) {
+        miterLimit.parentNode.parentNode.style.display = '';
+      } else {
+        miterLimit.parentNode.parentNode.style.display = 'none';
+      }
+    }
+
+    if (lineWidth) {
+      if (tabConfig.lineWidth) {
+        lineWidth.parentNode.parentNode.style.display = '';
+      } else {
+        lineWidth.parentNode.parentNode.style.display = 'none';
+      }
+    }
+
+    // show the line tab, if configured
+    if (tabConfig.lineTab && 'line' in tabPanel.tabs) {
+      tabAnchor = tabPanel.tabs.line.button.firstChild;
+      tabAnchor.title = tabConfig.lineTabLabel || lang.tabs.main[ev.id];
       tabAnchor.removeChild(tabAnchor.firstChild);
       tabAnchor.appendChild(doc.createTextNode(tabAnchor.title));
-      tabPanel.tabShow(tabId);
-    }
-
-    if (ev.id === 'pencil' || ev.id === 'eraser') {
-      label = lang.inputs[ev.id + 'Size'];
-      labelElem = lineWidth.parentNode;
-      labelElem.removeChild(labelElem.firstChild);
-      labelElem.insertBefore(doc.createTextNode(label), labelElem.firstChild);
-
-    } else if (ev.id === 'text') {
-      // for the text tool we show the line tab as well.
       tabPanel.tabShow('line');
     }
 
     // show the tab for the current tool, if there's one.
-    tabPanel.tabShow(ev.id);
+    if (ev.id in tabPanel.tabs) {
+      tabPanel.tabShow(ev.id);
+    }
   };
 
   /**
@@ -1497,7 +1431,8 @@ pwlib.gui['default'] = function (app) {
    * @param {pwlib.appEvent.configChange} ev The application event object.
    */
   this.configChangeHandler = function (ev) {
-    var input = _self.inputs[ev.config];
+    var cfg = ev.group.replace('.', '_') + '_' + ev.config,
+        input = _self.inputs[cfg];
     if (!input || ev.previousValue === ev.value) {
       return;
     }
@@ -1517,8 +1452,8 @@ pwlib.gui['default'] = function (app) {
     }
 
     var className = ' ' + _self.className + 'configActive',
-        prevValElem = _self.inputValues[ev.config + '_' + ev.previousValue],
-        valElem = _self.inputValues[ev.config + '_' + ev.value];
+        prevValElem = _self.inputValues[cfg + '_' + ev.previousValue],
+        valElem = _self.inputValues[cfg + '_' + ev.value];
 
     if (prevValElem && prevValElem.className.indexOf(className) !== -1) {
       prevValElem.className = prevValElem.className.replace(className, '');
@@ -1554,7 +1489,8 @@ pwlib.gui['default'] = function (app) {
         group = input._pwConfigGroup,
         prop = input._pwConfigProperty,
         prevVal = groupRef[prop],
-        prevValElem = _self.inputValues[prop + '_' + prevVal];
+        prevValElem = _self.inputValues[group.replace('.', '_') + '_' + prop 
+          + '_' + prevVal];
 
     if (prevVal == val) {
       return;
@@ -1606,6 +1542,22 @@ pwlib.gui['default'] = function (app) {
 
     app.events.dispatch(new appEvent.configChange(val, prevVal, prop, group, 
           groupRef));
+  };
+
+  /**
+   * The <code>shadowAllow</code> application event handler. This method 
+   * shows/hide the shadow tab when shadows are allowed/disallowed.
+   *
+   * @param {pwlib.appEvent.shadowAllow} ev The application event object.
+   */
+  this.shadowAllow = function (ev) {
+    if ('shadow' in _self.tabPanels.main.tabs) {
+      if (ev.allowed) {
+        _self.tabPanels.main.tabShow('shadow');
+      } else {
+        _self.tabPanels.main.tabHide('shadow');
+      }
+    }
   };
 };
 

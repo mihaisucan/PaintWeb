@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-06-12 19:30:10 +0300 $
+ * $Date: 2009-06-15 16:14:16 +0300 $
  */
 
 /**
@@ -590,7 +590,6 @@ pwlib.appEvent.imageCrop = function (x, y, width, height) {
  */
 pwlib.appEvent.configChange = function (value, previousValue, config, group, 
     groupRef) {
-
   if (typeof config !== 'string') {
     throw new TypeError('The third argument must be a string.');
   } else if (typeof group !== 'string') {
@@ -606,6 +605,25 @@ pwlib.appEvent.configChange = function (value, previousValue, config, group,
   this.groupRef      = groupRef;
 
   pwlib.appEvent.call(this, 'configChange');
+};
+
+/**
+ * @class Canvas shadows allowed change event. This event is not cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {Boolean} allowed Tells the new allowance value.
+ *
+ * @throws {TypeError} If the argument is not a boolean value.
+ */
+pwlib.appEvent.shadowAllow = function (allowed) {
+  if (typeof allowed !== 'boolean') {
+    throw new TypeError('The first argument must be a boolean.');
+  }
+
+  this.allowed = allowed;
+
+  pwlib.appEvent.call(this, 'shadowAllow');
 };
 
 /**

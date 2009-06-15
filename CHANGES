@@ -1,3 +1,16 @@
+2009-06-15:
+===========
+
+- Shadows work again. The Shadows tab shows-up only when shadows can be 
+rendered.
+- Adjustments to how the GUI shows/hides different inputs for each drawing tool.  
+Needs stylesheet updates (coming tomorrow).
+- The eraser tool is now working.
+- New application event: shadowAllow.
+- New configuration options: shadows and colors.
+- Icon fixes for line cap.
+- New English strings.
+
 2009-06-13:
 ===========
 

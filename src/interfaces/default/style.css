@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-13 15:55:55 +0300 $
+ * $Date: 2009-06-15 21:51:22 +0300 $
  */
 
 /* OLPC XO DPI resolution detection */
@@ -294,28 +294,22 @@
 
 .paintweb_imageZoom { width: 4em }
 
-.paintweb_main_line {
-  margin: 5px;
-}
+.paintweb_main_line { margin: 5px }
 
-.paintweb_main_line .paintweb_icon {
-  float: left;
-}
+.paintweb_main_line .paintweb_icon { float: left }
 
 .paintweb_opt_lineWidth, .paintweb_opt_miterLimit {
   background: #f2f2f2;
   border: 1px solid #d6d6d6;
-  width: 11em;
-  position: relative;
-  padding: 0 5px;
-  margin: 0;
   line-height: 31px;
+  margin: 0;
+  padding: 0 5px;
+  position: relative;
   white-space: nowrap;
+  width: 11em
 }
 
-.paintweb_opt_miterLimit {
-  border-top: 0;
-}
+.paintweb_opt_miterLimit { border-top: 0 }
 
 .paintweb_cfg_line_lineWidth, .paintweb_cfg_line_miterLimit {
   height: 1.4em;
@@ -328,59 +322,104 @@
 }
 
 .paintweb_cfg_line_lineCap {
-  border: 1px solid #d6d6d6;
   background: #f2f2f2;
+  border: 1px solid #d6d6d6;
+  left: 13em;
   position: absolute;
   top: 0;
-  left: 13em;
-  white-space: nowrap;
+  white-space: nowrap
 }
 
 .paintweb_cfg_line_lineJoin {
-  border: 1px solid #d6d6d6;
   background: #f2f2f2;
+  border: 1px solid #d6d6d6;
+  left: 13em;
   position: absolute;
   top: 32px;
-  left: 13em;
-  white-space: nowrap;
+  white-space: nowrap
 }
 
 .paintweb_cfg_line_lineCap p, .paintweb_cfg_line_lineJoin p {
   float: left;
-  width: 5em;
+  line-height: 31px;
   margin: 0;
   padding: 0 5px;
-  line-height: 31px;
+  width: 5em
 }
 
 .paintweb_cfg_line_lineCap div, .paintweb_cfg_line_lineJoin div {
-  border-top: 0;
-  border-right: 0;
   border-bottom: 0;
+  border-right: 0;
+  border-top: 0
 }
 
 .paintweb_cfg_shapeType {
-  border: 1px solid #d6d6d6;
   background: #f2f2f2;
+  border: 1px solid #d6d6d6;
+  left: 28em;
   position: absolute;
   top: 0;
-  left: 28em;
-  white-space: nowrap;
+  white-space: nowrap
 }
 
 .paintweb_cfg_shapeType p {
-  margin: 0;
-  padding: 0 5px;
   line-height: 31px;
+  margin: 0;
+  padding: 0 5px
 }
 
-.paintweb_cfg_shapeType div:first-child {
-  border-left: 0;
-}
+.paintweb_cfg_shapeType div:first-child { border-left: 0 }
 
 .paintweb_cfg_shapeType div {
-  border-right: 0;
   border-bottom: 0;
+  border-right: 0
+}
+
+.paintweb_main_shadow { margin: 5px }
+
+.paintweb_main_shadow p {
+  background: #f2f2f2;
+  border: 1px solid #d6d6d6;
+  line-height: 31px;
+  margin: 0;
+  padding: 0 5px;
+  position: relative;
+  vertical-align: middle;
+  white-space: nowrap;
+  width: 11em
+}
+
+.paintweb_main_shadow input { vertical-align: middle }
+
+.paintweb_cfg_shadow_shadowBlur, .paintweb_cfg_shadow_shadowOffsetX, .paintweb_cfg_shadow_shadowOffsetY {
+  height: 1.5em;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  width: 4em
+}
+
+.paintweb_opt_shadowOffsetX {
+  left: 13em;
+  position: absolute !important;
+  top: 0
+}
+
+.paintweb_opt_shadowOffsetY {
+  left: 13em;
+  position: absolute !important;
+  top: 31px
+}
+
+.paintweb_opt_shadowColor { border-top: 0 !important }
+
+.paintweb_opt_shadowBlur {
+  left: 26em;
+  position: absolute !important;
+  top: 0;
+  width: 9em !important
 }
 
 /* Icons */

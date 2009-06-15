@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-11 20:32:42 +0300 $
+ * $Date: 2009-06-15 15:25:29 +0300 $
  */
 
 /**
@@ -88,8 +88,6 @@ pwlib.tools.pencil = function (app) {
     }
 
     points = [];
-
-    return true;
   };
 
   /**

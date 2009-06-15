@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-13 23:30:09 +0300 $
+ * $Date: 2009-06-15 23:07:42 +0300 $
  */
 
 /**
@@ -52,7 +52,7 @@ function PaintWeb (win, doc) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090613;
+  this.build = 20090615;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -290,6 +290,22 @@ function PaintWeb (win, doc) {
      */
     states: []
   };
+
+  /**
+   * Tells if the browser supports the Canvas Shadows API.
+   *
+   * @type Boolean
+   * @default true
+   */
+  this.shadowSupported = true;
+
+  /**
+   * Tells if the current tool allows the drawing of shadows.
+   *
+   * @type Boolean
+   * @default true
+   */
+  this.shadowAllowed = true;
 
   /**
    * Image in the clipboard. This is used when some selection is copy/pasted.  
@@ -724,7 +740,11 @@ function PaintWeb (win, doc) {
    * <p>If {@link PaintWeb.config.imagePreload} is defined, then the image 
    * element is inserted into the Canvas image.
    *
-   * <p>Last, but not least, all the Canvas event listeners are added.
+   * <p>All the Canvas event listeners are also attached to the buffer Canvas 
+   * element.
+   *
+   * <p>Shadows support is determined. The {@link PaintWeb.shadowSupported} 
+   * value is updated accordingly.
    *
    * @private
    * @returns {Boolean} True if the initialization was successful, or false if 
@@ -789,6 +809,15 @@ function PaintWeb (win, doc) {
 
     for (var i = 0; i < n; i++) {
       bufferCanvas.addEventListener(events[i], this.ev_canvas, false);
+    }
+
+    // Opera does not render shadows, at the moment.
+    if (!pwlib.browser.opera && 'shadowColor' in bufferContext && 
+        'shadowOffsetX' in bufferContext && 'shadowOffsetY' in bufferContext && 
+        'shadowBlur' in bufferContext) {
+      this.shadowSupported = true;
+    } else {
+      this.shadowSupported = false;
     }
 
     return true;
@@ -1496,101 +1525,55 @@ function PaintWeb (win, doc) {
     return true;
   };
 
-  // This function can be used to quickly toggle the canvas shadow.
-  // This is also the event handler for the "Draw shadows" check box.
-  this.shadowToggle = function (ev) {
-    var input;
-    if (!_self.inputs || !(input = _self.inputs.shadowActive)) {
-      return false;
+  /**
+   * Allow shadows. This method re-enabled shadow rendering, if it was enabled 
+   * before shadows were disallowed.
+   *
+   * <p>The {@link pwlib.appEvent.shadowAllow} event is dispatched.
+   */
+  this.shadowAllow = function () {
+    if (this.shadowAllowed || !this.shadowSupported) {
+      return;
     }
 
-    if (input.checked) {
-      return _self.shadowEnable();
-    } else {
-      return _self.shadowDisable();
+    // Note that some daily builds of Webkit in Chromium fail to render the 
+    // shadow when context.drawImage() is used (see the this.layerUpdate()).
+    var context = this.layer.context,
+        cfg = this.config.shadow;
+
+    if (cfg.enable) {
+      context.shadowColor   = cfg.shadowColor;
+      context.shadowOffsetX = cfg.shadowOffsetX;
+      context.shadowOffsetY = cfg.shadowOffsetY;
+      context.shadowBlur    = cfg.shadowBlur;
     }
+
+    this.shadowAllowed = true;
+
+    this.events.dispatch(new appEvent.shadowAllow(true));
   };
 
-  // Shadows are applied as a post-effect: once the drawing operation is completed.
-  this.shadowEnable = function (ev) {
-    var input, shadowColor;
-    if (!_self.inputs || !(shadowColor = _self.inputs.shadowColor) ||
-        !(input = _self.inputs.shadowActive)) {
-      return false;
+  /**
+   * Disallow shadows. This method disables shadow rendering, if it is enabled.
+   *
+   * <p>The {@link pwlib.appEvent.shadowAllow} event is dispatched.
+   */
+  this.shadowDisallow = function () {
+    if (!this.shadowAllowed || !this.shadowSupported) {
+      return;
     }
 
-    if (!ev || ev.type !== 'change') {
-      input.checked = true;
-    } else if (input.checked) {
-      return true;
+    if (this.config.shadow.enable) {
+      var context = this.layer.context;
+      context.shadowColor   = 'rgba(0,0,0,0)';
+      context.shadowOffsetX = 0;
+      context.shadowOffsetY = 0;
+      context.shadowBlur    = 0;
     }
 
-    var _value = shadowColor._value;
+    this.shadowAllowed = false;
 
-    _self.layer.context.shadowColor = 'rgba(' +
-        Math.round(_value.red   * 255) + ', ' +
-        Math.round(_value.green * 255) + ', ' +
-        Math.round(_value.blue  * 255) + ', ' +
-                   _value.alpha +')';
-
-    shadowColor._disabled = false;
-
-    var parentNode = shadowColor.parentNode.parentNode;
-    parentNode.className = parentNode.className.replace(' disabled', '', 'g');
-
-    var id, i, n, props = ['shadowOffsetX', 'shadowOffsetY', 'shadowBlur'];
-    for (i = 0, n = props.length; i < n; i++) {
-      id = props[i];
-      input = _self.inputs[id];
-      if (!input) {
-        continue;
-      }
-
-      input.disabled = false;
-
-      parentNode = input.parentNode;
-      parentNode.className = parentNode.className.replace(' disabled', '', 'g');
-
-      _self.layer.context[id] = input.value;
-    }
-
-    return true;
-  };
-
-  this.shadowDisable = function (ev) {
-    var input;
-    if (!_self.inputs || !_self.inputs.shadowColor ||
-        !(input = _self.inputs.shadowActive)) {
-      return false;
-    }
-
-    if (!ev || ev.type !== 'change') {
-      input.checked = false;
-    } else if (!input.checked) {
-      return true;
-    }
-
-    _self.layer.context.shadowColor = _self.buffer.context.shadowColor 
-      = 'rgba(0, 0, 0, 0)';
-
-    input = _self.inputs.shadowColor;
-    input._disabled = true;
-    input.parentNode.parentNode.className += ' disabled';
-
-    var id, i, n, props = ['shadowOffsetX', 'shadowOffsetY', 'shadowBlur'];
-    for (i = 0, n = props.length; i < n; i++) {
-      id = props[i];
-      input = _self.inputs[id];
-      if (!input) {
-        continue;
-      }
-
-      input.disabled = true;
-      input.parentNode.className += ' disabled';
-      _self.layer.context[id] = 0;
-    }
-
-    return true;
+    this.events.dispatch(new appEvent.shadowAllow(false));
   };
 
   /**
@@ -2220,7 +2203,36 @@ function PaintWeb (win, doc) {
    * @param {pwlib.appEvent.configChange} ev The application event object.
    */
   this.configChangeHandler = function (ev) {
-    if (ev.group === 'line') {
+    if (ev.group === 'shadow' && _self.shadowSupported && _self.shadowAllowed) {
+      var context = _self.layer.context,
+          cfg = ev.groupRef;
+
+      switch (ev.config) {
+        case 'enable':
+          if (ev.value) {
+            // Enable shadows
+            context.shadowColor   = cfg.shadowColor;
+            context.shadowOffsetX = cfg.shadowOffsetX;
+            context.shadowOffsetY = cfg.shadowOffsetY;
+            context.shadowBlur    = cfg.shadowBlur;
+          } else {
+            // Disable shadows
+            context.shadowColor   = 'rgba(0,0,0,0)';
+            context.shadowOffsetX = 0;
+            context.shadowOffsetY = 0;
+            context.shadowBlur    = 0;
+          }
+          break;
+
+        case 'shadowBlur':
+        case 'shadowOffsetX':
+        case 'shadowOffsetY':
+          ev.value = parseInt(ev.value);
+        case 'shadowColor':
+          context[ev.config] = ev.value;
+      }
+
+    } else if (ev.group === 'line') {
       switch (ev.config) {
         case 'lineWidth':
         case 'miterLimit':

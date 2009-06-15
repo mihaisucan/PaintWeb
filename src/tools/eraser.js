@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-11 20:33:12 +0300 $
+ * $Date: 2009-06-15 16:11:13 +0300 $
  */
 
 /**
@@ -33,11 +33,13 @@
 pwlib.tools.eraser = function (app) {
   var _self         = this,
       clearInterval = app.win.clearInterval,
+      config        = app.config,
       context       = app.buffer.context,
       image         = app.image,
       layerContext  = app.layer.context,
       mouse         = app.mouse,
-      setInterval   = app.win.setInterval;
+      setInterval   = app.win.setInterval,
+      configChange  = pwlib.appEvent.configChange;
 
   /**
    * The interval ID used for running the pencil drawing operation every few 
@@ -75,8 +77,15 @@ pwlib.tools.eraser = function (app) {
    */
   var y0 = 0;
 
-  _self.strokeStyle = context.strokeStyle;
+  var strokeStyle_ = null;
 
+  /**
+   * The tool deactivation event handler. This function clears timers, clears 
+   * the canvas and allows shadows to be rendered again.
+   *
+   * <p>This function dispatches the {@link pwlib.appEvent.configChange} event 
+   * if the {@link PaintWeb.config.shadow.enable} property is changed.
+   */
   this.deactivate = function () {
     if (timer) {
       clearInterval(timer);
@@ -89,32 +98,18 @@ pwlib.tools.eraser = function (app) {
 
     points = [];
 
-    if (_self.strokeStyle) {
-      context.strokeStyle = _self.strokeStyle;
-    }
-
-    // Enable canvas shadow.
-    if (app.inputs.shadowActive) {
-      app.inputs.shadowActive.disabled = false;
-      if (_self.shadowActive) {
-        app.shadowEnable();
-      }
-    }
-
-    return true;
+    // Allow Canvas shadows.
+    app.shadowAllow();
   };
 
-  // Activation code. This is run after the tool construction and after the 
-  // deactivation of the previous tool.
+  /**
+   * The tool activation event handler. This is run after the tool construction 
+   * and after the deactivation of the previous tool. This function simply 
+   * disallows the rendering of shadows.
+   */
   this.activate = function () {
-    // Disable the canvas shadow.
-    if (app.inputs.shadowActive) {
-      _self.shadowActive = app.inputs.shadowActive.checked;
-      app.shadowDisable();
-      app.inputs.shadowActive.disabled = true;
-    }
-
-    return true;
+    // Do not allow Canvas shadows.
+    app.shadowDisallow();
   };
 
   /**
@@ -125,16 +120,15 @@ pwlib.tools.eraser = function (app) {
     // colored stroke (same as the background), such that the user gets live 
     // feedback of what he/she erases.
 
-    _self.strokeStyle = context.strokeStyle;
-    // FIXME: ...
-    context.strokeStyle = 'rgb(255,255,255)';
+    strokeStyle_ = context.strokeStyle;
+    context.strokeStyle = config.backgroundColor;
 
     x0 = mouse.x;
     y0 = mouse.y;
 
     points = [];
     if (!timer) {
-      timer = setInterval(_self.draw, app.config.toolDrawDelay);
+      timer = setInterval(_self.draw, config.toolDrawDelay);
     }
 
     return true;
@@ -200,7 +194,7 @@ pwlib.tools.eraser = function (app) {
     app.layerUpdate();
 
     layerContext.globalCompositeOperation = op;
-    context.strokeStyle = _self.strokeStyle;
+    context.strokeStyle = strokeStyle_;
 
     return true;
   };
@@ -224,7 +218,7 @@ pwlib.tools.eraser = function (app) {
     }
 
     context.clearRect(0, 0, image.width, image.height);
-    context.strokeStyle = _self.strokeStyle;
+    context.strokeStyle = strokeStyle_;
     mouse.buttonDown = false;
     points = [];
 

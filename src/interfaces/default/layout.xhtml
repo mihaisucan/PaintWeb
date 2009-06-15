@@ -1,5 +1,5 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
-  <!--- $Date: 2009-06-12 23:47:14 +0300 $ -->
+  <!--- $Date: 2009-06-15 23:02:51 +0300 $ -->
   <h1 class="paintweb_appTitle">PaintWeb</h1>
 
   <!-- All elements with data-pwTabPanel become interactive tabbed panels which 
@@ -78,7 +78,7 @@
       paintweb_cfg_configVariable. In this case the class name will be 
       .paintweb_cfg_line_lineWidth. -->
       <p class="paintweb_opt_lineWidth"><label>Line width <input 
-        data-pwConfig="line.lineWidth"  type="number" min="1" value="1" 
+        data-pwConfig="line.lineWidth" type="number" min="1" value="1" 
         /></label></p>
 
       <!-- .paintweb_cfg_line_miterLimit (dot becomes underscore) -->
@@ -93,12 +93,12 @@
         <!-- Elements with data-pwConfigValue will have the class name based on  
         the configuration property name and value. In this case the class name 
         will be .paintweb_lineCap_butt -->
-        <div data-pwConfigValue="butt" class="paintweb_icon">Butt</div>
+        <div data-pwConfigValue="butt">Butt</div>
 
         <!-- .paintweb_lineCap_square -->
-        <div data-pwConfigValue="square" class="paintweb_icon">Square</div>
+        <div data-pwConfigValue="square">Square</div>
         <!-- .paintweb_lineCap_round -->
-        <div data-pwConfigValue="round" class="paintweb_icon">Round</div>
+        <div data-pwConfigValue="round">Round</div>
       </div>
 
       <!-- .paintweb_cfg_line_lineJoin -->
@@ -106,11 +106,11 @@
         <p>Line join</p>
 
         <!-- .paintweb_lineJoin_miter -->
-        <div data-pwConfigValue="miter" class="paintweb_icon">Miter</div>
+        <div data-pwConfigValue="miter">Miter</div>
         <!-- .paintweb_lineJoin_round -->
-        <div data-pwConfigValue="round" class="paintweb_icon">Round</div>
+        <div data-pwConfigValue="round">Round</div>
         <!-- .paintweb_lineJoin_bevel -->
-        <div data-pwConfigValue="bevel" class="paintweb_icon">Bevel</div>
+        <div data-pwConfigValue="bevel">Bevel</div>
       </div>
 
       <!-- .paintweb_cfg_shapeType -->
@@ -118,15 +118,16 @@
         <p>Shape type</p>
 
         <!-- .paintweb_shapeType_both -->
-        <div data-pwConfigValue="both" class="paintweb_icon">Both</div>
+        <div data-pwConfigValue="both">Both</div>
         <!-- .paintweb_shapeType_fill -->
-        <div data-pwConfigValue="fill" class="paintweb_icon">Fill</div>
+        <div data-pwConfigValue="fill">Fill</div>
         <!-- .paintweb_shapeType_stroke -->
-        <div data-pwConfigValue="stroke" class="paintweb_icon">Stroke</div>
+        <div data-pwConfigValue="stroke">Stroke</div>
       </div>
 
-      <!-- erm *cough* elements with data-pwConfigValue will be considered 
-      icons. They will have an anchor element appended. -->
+      <!-- erm *cough* elements with data-pwConfigValue will be considered icons 
+      (class name .paintweb_icon is added). They will also have an anchor 
+      element appended.  -->
     </div>
 
     <!-- .paintweb_main_selection -->
@@ -184,27 +185,33 @@
     </div>
 
     <!-- .paintweb_main_shadow -->
-    <div data-pwTab="shadow" data-pwTabHide="true">
-      <p class="inputInline"><label><input id="in-shadowActive" type="checkbox" 
-        value="1" /> Draw shadows</label></p>
+    <div data-pwTab="shadow">
+      <p class="paintweb_opt_shadowEnable"><label><input 
+        data-pwConfig="shadow.enable" type="checkbox" value="1" /> Draw 
+        shadows</label></p>
 
-      <p class="inputText">
-        <label>Offset X
-          <input id="in-shadowOffsetX" type="number" value="5" />
-        </label>
-      </p>
-      <p class="inputText">
-        <label>Offset Y
-          <input id="in-shadowOffsetY" type="number" value="5" />
-        </label>
-      </p>
-      <p class="inputText">
-        <label>Blur
-          <input id="in-shadowBlur" type="number" value="5" min="0" />
-        </label>
-      </p>
-      <p class="inputColor">Color <span><span id="in-shadowColor" title="Shadow 
+      <p class="paintweb_opt_shadowColor">Color <span><span 
+          data-pwColorInput="shadowColor" title="Shadow 
           color">&#160;</span></span></p>
+
+      <p class="paintweb_opt_shadowOffsetX">
+        <label>Offset X
+          <input data-pwConfig="shadow.shadowOffsetX" type="number" value="5" />
+        </label>
+      </p>
+
+      <p class="paintweb_opt_shadowOffsetY">
+        <label>Offset Y
+          <input data-pwConfig="shadow.shadowOffsetY" type="number" value="5" />
+        </label>
+      </p>
+
+      <p class="paintweb_opt_shadowBlur">
+        <label>Blur
+          <input data-pwConfig="shadow.shadowBlur" type="number" value="5" 
+          min="0" />
+        </label>
+      </p>
     </div>
 
     <p data-pwCommand="help">Help</p>

@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-12 16:09:56 +0300 $
+  // $Date: 2009-06-15 22:58:33 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -94,6 +94,30 @@
    * @default null
    */
   "imagePreload": null,
+
+  /**
+   * Default background color.
+   *
+   * @type CSS3Color
+   * @default "#fff"
+   */
+  "backgroundColor": "#fff",
+
+  /**
+   * Default fill style.
+   *
+   * @type CSS3Color
+   * @default "#00f"
+   */
+  "fillStyle": "#000",
+
+  /**
+   * Default stroke style.
+   *
+   * @type CSS3Color
+   * @default "#00f"
+   */
+  "strokeStyle": "#00f",
 
   /**
    * GUI placeholder element. This element will hold all the PaintWeb interface 
@@ -208,7 +232,7 @@
   "extensionsFolder": "extensions",
 
   /**
-   * @namespace Line options.
+   * @namespace Line tool options.
    */
   "line": {
     /**
@@ -242,6 +266,43 @@
      * @default 10
      */
     "miterLimit": 10
+  },
+
+  /**
+   * @namespace Shadow options.
+   */
+  "shadow": {
+    /**
+     * Shadow color
+     *
+     * @type String
+     * @default "#000"
+     */
+    "shadowColor": "#000",
+
+    /**
+     * Shadow blur.
+     *
+     * @type Number
+     * @default 5
+     */
+    "shadowBlur": 5,
+
+    /**
+     * Shadow offset X.
+     *
+     * @type Number
+     * @default 5
+     */
+    "shadowOffsetX": 5,
+
+    /**
+     * Shadow offset %.
+     *
+     * @type Number
+     * @default 5
+     */
+    "shadowOffsetY": 5
   },
 
   /**
@@ -438,7 +499,6 @@
    * @type Object
    * @see PaintTools The object holding all the drawing tools.
    */
-  // TODO: several keyboard shortcuts are still missing. See below.
   "keys": {
     // Use "command": "id" to execute some command.
     "Control Z": { "command": "historyUndo" },
