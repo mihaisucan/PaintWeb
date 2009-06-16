@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-15 22:58:33 +0300 $
+  // $Date: 2009-06-16 23:52:30 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -306,6 +306,36 @@
   },
 
   /**
+   * @namespace Selection tool options.
+   */
+  "selection": {
+    /**
+     * Selection transformation mode. This tells if any drag/resize would also 
+     * affect the selected pixels or not.
+     *
+     * @type Boolean
+     * @default false
+     */
+    "transform": false,
+
+    /**
+     * Transparent selection.
+     *
+     * @type Boolean
+     * @default true
+     */
+    "transparent": true,
+
+    /**
+     * Selection marquee border width.
+     *
+     * @type Number
+     * @default 2
+     */
+    "borderWidth": 2
+  },
+
+  /**
    * @namespace Color Mixer extension configuration.
    */
   "colormixer": {
@@ -466,19 +496,20 @@
     // We make sure the number keys on the NumPad also work when the Shift key 
     // is down.
     "actions": {
-      "ButtonToggle": [0, "Shift Insert"],
-      "SouthWest":    [1, "Shift End"],
-      "South":        [2, "Shift Down"],
-      "SouthEast":    [3, "Shift PageDown"],
-      "West":         [4, "Shift Left"],
-      "ButtonClick":  [5, "Shift Clear"],
-      "East":         [6, "Shift Right"],
-      "NorthWest":    [7, "Shift Home"],
-      "North":        [8, "Shift Up"],
-      "NorthEast":    [9, "Shift PageUp"]
-      
+      "ButtonToggle": [0],
+      "SouthWest":    [1],
+      "South":        [2],
+      "SouthEast":    [3],
+      "West":         [4],
+      "ButtonClick":  [5],
+      "East":         [6],
+      "NorthWest":    [7],
+      "North":        [8],
+      "NorthEast":    [9]
+
       /*
       You might want Shift+NumPad keys as well ...
+      Shift+Arrows breaks spatial navigation in Opera.
       "ButtonToggle": [0, "Shift Insert"],
       "SouthWest":    [1, "Shift End"],
       "South":        [2, "Shift Down"],

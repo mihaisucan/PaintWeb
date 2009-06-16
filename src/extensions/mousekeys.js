@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-03 18:09:24 +0300 $
+ * $Date: 2009-06-16 21:56:40 +0300 $
  */
 
 /**
@@ -37,6 +37,7 @@ pwlib.extensions.mousekeys = function (app) {
       config    = app.config,
       container = app.gui.elems.canvasContainer,
       doc       = app.doc,
+      gui       = app.gui,
       image     = app.image,
       MathCeil  = Math.ceil,
       mouse     = app.mouse,
@@ -68,6 +69,7 @@ pwlib.extensions.mousekeys = function (app) {
    * @type Element
    */
   var pointer = null;
+  var pointerStyle = null;
 
   /**
    * The <code>extensionRegister</code> event handler. This initializes the 
@@ -82,12 +84,12 @@ pwlib.extensions.mousekeys = function (app) {
 
     pointer = doc.createElement('div');
     if (!pointer) {
-      _self._cancel = true;
       return false;
     }
+    pointerStyle = pointer.style;
 
-    pointer.id = 'mousekeysPointer';
-    pointer.style.display = 'none';
+    pointer.className = gui.classPrefix + 'mousekeysPointer';
+    pointerStyle.display = 'none';
     container.appendChild(pointer);
 
     canvas.addEventListener('mousemove', pointerMousemove, false);
@@ -118,7 +120,7 @@ pwlib.extensions.mousekeys = function (app) {
     var key, kobj;
     for (key in config.keys) {
       kobj = config.keys[key];
-      if (kobj.extension == _self._id) {
+      if (kobj.extension === _self._id) {
         delete config.keys[key];
       }
     }
@@ -133,9 +135,9 @@ pwlib.extensions.mousekeys = function (app) {
    */
   function pointerMousemove (ev) {
     if (!('kobj_' in ev) || !('extension' in ev.kobj_) ||
-        ev.kobj_.extension != _self._id) {
-      if (pointer.style.display == 'block') {
-        pointer.style.display = 'none';
+        ev.kobj_.extension !== _self._id) {
+      if (pointerStyle.display === 'block') {
+        pointerStyle.display = 'none';
       }
     }
   };
@@ -179,11 +181,17 @@ pwlib.extensions.mousekeys = function (app) {
     speed = 1;
     accel = config.mousekeys.accel;
 
-    if (pointer.style.display == 'none') {
-      pointer.style.display = 'block';
-      pointer.style.top  = (mouse.y * image.canvasScale) + 'px';
-      pointer.style.left = (mouse.x * image.canvasScale) + 'px';
-      pointer.className = mouse.buttonDown ? 'mouseDown' : '';
+    if (pointerStyle.display === 'none') {
+      pointerStyle.display = 'block';
+      pointerStyle.top  = (mouse.y * image.canvasScale) + 'px';
+      pointerStyle.left = (mouse.x * image.canvasScale) + 'px';
+
+      if (mouse.buttonDown) {
+        pointer.className += ' ' + gui.classPrefix + 'mouseDown';
+      } else {
+        pointer.className = pointer.className.replace(' ' + gui.classPrefix 
+            + 'mouseDown', '');
+      }
     }
 
     tool = app.tool || {};
@@ -223,7 +231,12 @@ pwlib.extensions.mousekeys = function (app) {
         return false;
     }
 
-    pointer.className = mouse.buttonDown ? 'mouseDown' : '';
+    if (mouse.buttonDown) {
+      pointer.className += ' ' + gui.classPrefix + 'mouseDown';
+    } else {
+      pointer.className = pointer.className.replace(' ' + gui.classPrefix 
+          + 'mouseDown', '');
+    }
 
     return true;
   };
@@ -304,8 +317,8 @@ pwlib.extensions.mousekeys = function (app) {
       mouse.y = image.height;
     }
 
-    pointer.style.top  = (mouse.y * image.canvasScale) + 'px';
-    pointer.style.left = (mouse.x * image.canvasScale) + 'px';
+    pointerStyle.top  = (mouse.y * image.canvasScale) + 'px';
+    pointerStyle.left = (mouse.x * image.canvasScale) + 'px';
 
     if ('mousemove' in tool) {
       tool.mousemove(ev);
@@ -349,7 +362,8 @@ pwlib.extensions.mousekeys = function (app) {
         tool.click(ev);
       }
 
-      pointer.className = '';
+      pointer.className = pointer.className.replace(' ' + gui.classPrefix 
+          + 'mouseDown', '');
       return true;
     }
 

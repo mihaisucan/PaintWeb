@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-06-15 16:14:16 +0300 $
+ * $Date: 2009-06-16 23:05:48 +0300 $
  */
 
 /**
@@ -514,16 +514,19 @@ pwlib.appEvent.imageSizeChange = function (width, height) {
  *
  * @param {Number} width The new Canvas style width.
  * @param {Number} height The new Canvas style height.
+ * @param {Number} scale The new Canvas scaling factor.
  *
  * @throws {TypeError} If any of the arguments are not numbers.
  */
-pwlib.appEvent.canvasSizeChange = function (width, height) {
-  if (typeof width !== 'number' || typeof height !== 'number') {
-    throw new TypeError('Both arguments must be numbers.');
+pwlib.appEvent.canvasSizeChange = function (width, height, scale) {
+  if (typeof width !== 'number' || typeof height !== 'number' || typeof scale 
+      !== 'number') {
+    throw new TypeError('All the arguments must be numbers.');
   }
 
   this.width  = width;
   this.height = height;
+  this.scale  = scale;
 
   pwlib.appEvent.call(this, 'canvasSizeChange');
 };
@@ -624,6 +627,40 @@ pwlib.appEvent.shadowAllow = function (allowed) {
   this.allowed = allowed;
 
   pwlib.appEvent.call(this, 'shadowAllow');
+};
+
+/**
+ * @class Selection change event. This event is not cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {Number} state Tells the new state of the selection.
+ * @param {Number} [x] Selection start position on the x-axis of the image.
+ * @param {Number} [y] Selection start position on the y-axis of the image.
+ * @param {Number} [width] Selection width.
+ * @param {Number} [height] Selection height.
+ */
+pwlib.appEvent.selectionChange = function (state, x, y, width, height) {
+  this.state  = state;
+  this.x      = x;
+  this.y      = y;
+  this.width  = width;
+  this.height = height;
+
+  pwlib.appEvent.call(this, 'selectionChange');
+};
+
+/**
+ * @class Clipboard update event. This event is not cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {ImageData} data Holds the clipboard ImageData.
+ */
+pwlib.appEvent.clipboardUpdate = function (data) {
+  this.data = data;
+
+  pwlib.appEvent.call(this, 'clipboardUpdate');
 };
 
 /**

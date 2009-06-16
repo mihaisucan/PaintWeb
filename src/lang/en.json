@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-15 23:53:18 +0300 $
+  // $Date: 2009-06-16 15:21:54 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -106,6 +106,10 @@
       "shadowBlur": "Blur:",
       "shadowOffsetX": "Distance X:",
       "shadowOffsetY": "Distance Y:"
+    },
+    "selection": {
+      "transform": "Image manipulation",
+      "transparent": "Transparent selection"
     },
     "shapeType": "Shape type",
     "shapeType_both": "Both",

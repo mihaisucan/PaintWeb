@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-15 21:51:22 +0300 $
+ * $Date: 2009-06-16 21:53:18 +0300 $
  */
 
 /* OLPC XO DPI resolution detection */
@@ -115,7 +115,7 @@
   width: 4px
 }
 
-.paintweb_mousekeysPointer.mouseDown {
+.paintweb_mousekeysPointer.paintweb_mouseDown {
   background: #0ff;
   border: 1px solid #000
 }
@@ -294,16 +294,20 @@
 
 .paintweb_imageZoom { width: 4em }
 
-.paintweb_main_line { margin: 5px }
-
-.paintweb_main_line .paintweb_icon { float: left }
+.paintweb_main_line,
+.paintweb_main_line_rectangle,
+.paintweb_main_line_ellipse,
+.paintweb_main_line_polygon,
+.paintweb_main_line_bcurve,
+.paintweb_main_line_pencil,
+.paintweb_main_line_eraser { margin: 5px }
 
 .paintweb_opt_lineWidth, .paintweb_opt_miterLimit {
   background: #f2f2f2;
   border: 1px solid #d6d6d6;
   line-height: 31px;
   margin: 0;
-  padding: 0 5px;
+  padding: 0 0 0 5px;
   position: relative;
   white-space: nowrap;
   width: 11em
@@ -321,37 +325,36 @@
   width: 4em
 }
 
-.paintweb_cfg_line_lineCap {
+.paintweb_cfg_line_lineCap, .paintweb_cfg_line_lineJoin {
   background: #f2f2f2;
   border: 1px solid #d6d6d6;
-  left: 13em;
+  left: 12.5em;
   position: absolute;
   top: 0;
-  white-space: nowrap
+  white-space: nowrap;
+  padding: 0 96px 0 5px;
+  line-height: 31px;
+  width: 5em
 }
 
-.paintweb_cfg_line_lineJoin {
-  background: #f2f2f2;
-  border: 1px solid #d6d6d6;
-  left: 13em;
-  position: absolute;
-  top: 32px;
-  white-space: nowrap
-}
+.paintweb_cfg_line_lineJoin { top: 32px }
 
 .paintweb_cfg_line_lineCap p, .paintweb_cfg_line_lineJoin p {
-  float: left;
-  line-height: 31px;
   margin: 0;
-  padding: 0 5px;
-  width: 5em
+  padding: 0;
 }
 
 .paintweb_cfg_line_lineCap div, .paintweb_cfg_line_lineJoin div {
   border-bottom: 0;
   border-right: 0;
-  border-top: 0
+  border-top: 0;
+  position: absolute;
+  top: 0
 }
+
+.paintweb_lineJoin_miter, .paintweb_lineCap_butt { right: 64px }
+.paintweb_lineJoin_round, .paintweb_lineCap_square { right: 32px }
+.paintweb_lineJoin_bevel, .paintweb_lineCap_round { right: 0 }
 
 .paintweb_cfg_shapeType {
   background: #f2f2f2;
@@ -368,12 +371,65 @@
   padding: 0 5px
 }
 
-.paintweb_cfg_shapeType div:first-child { border-left: 0 }
+.paintweb_cfg_shapeType p + div { border-left: 0 }
 
 .paintweb_cfg_shapeType div {
   border-bottom: 0;
-  border-right: 0
+  border-right: 0;
+  float: left
 }
+
+.paintweb_main_line_bcurve .paintweb_cfg_line_lineCap,
+.paintweb_main_line_rectangle .paintweb_cfg_line_lineJoin {
+  border-top: 0;
+  left: 0;
+  padding-right: 0;
+  position: relative;
+  top: 0;
+  width: 14em
+}
+
+.paintweb_main_line_bcurve .paintweb_opt_lineWidth,
+.paintweb_main_line_rectangle .paintweb_opt_lineWidth { width: 14em }
+
+.paintweb_main_line_rectangle .paintweb_cfg_shapeType,
+.paintweb_main_line_bcurve .paintweb_cfg_shapeType { left: 15.6em }
+
+.paintweb_main_line_polygon .paintweb_opt_lineWidth,
+.paintweb_main_line_polygon .paintweb_opt_miterLimit { width: 12em }
+
+.paintweb_main_line_polygon .paintweb_cfg_line_lineCap,
+.paintweb_main_line_polygon .paintweb_cfg_line_lineJoin { left: 13.5em }
+
+.paintweb_main_line_polygon .paintweb_cfg_shapeType { left: 28.2em }
+
+.paintweb_main_line_ellipse .paintweb_opt_lineWidth { width: 15em }
+
+.paintweb_main_line_ellipse .paintweb_cfg_shapeType {
+  border-top: 0;
+  left: 0;
+  padding: 0 9em 0 5px;
+  position: relative;
+  top: 0;
+  width: 6em
+}
+
+.paintweb_main_line_ellipse .paintweb_cfg_shapeType p { padding: 0 }
+
+.paintweb_main_line_ellipse .paintweb_icon {
+  border-left: 1px solid #d6d6d6;
+  border-right: 0;
+  border-top: 0;
+  float: none;
+  position: absolute;
+  top: 0
+}
+
+.paintweb_main_line_ellipse .paintweb_shapeType_stroke { right: 0 }
+
+.paintweb_main_line_ellipse .paintweb_shapeType_fill { right: 32px }
+
+.paintweb_main_line_ellipse .paintweb_shapeType_both { right: 64px }
 
 .paintweb_main_shadow { margin: 5px }
 
@@ -420,6 +476,11 @@
   position: absolute !important;
   top: 0;
   width: 9em !important
+}
+
+.paintweb_selectionMarquee {
+  position: absolute;
+  border: 2px dashed #000;
 }
 
 /* Icons */
@@ -890,345 +951,6 @@
   background-position: left -20px;
 }
 
-/* Tool bar buttons * /
-
-#tools {
-  margin: 0;
-  padding: 0;
-}
-
-#tools li {
-  float: left;
-  background-repeat: no-repeat;
-  padding-top: 29px;
-  margin: 6px 0 0 5px;
-  width: 29px;
-  height: 0;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-#tools li.disabled {
-  cursor: default;
-}
-
-#tools .separator {
-  clear: both;
-  padding-top: 0;
-  margin-left: 0;
-  width: 100%;
-  height: 10px;
-  background: url("images/separator.png") no-repeat;
-  background-position: center center !important;
-  cursor: default;
-}
-
-#tools li:hover, #tools li:focus {
-  background-position: 0 -29px;
-}
-
-#tools li.paintweb_toolActive {
-  background-position: 0 -58px;
-}
-
-#tools li.disabled {
-  background-position: 0 -87px;
-}
-
-/* The tool bar buttons * /
-
-#btn_clear {
-  background-image: url("images/buttons/new-image.png");
-}
-
-#btn_save {
-  background-image: url("images/buttons/save.png");
-}
-
-
-
-/* The main window: the image container * /
-
-#main {
-  position: absolute;
-  top: 5px;
-  left: 90px;
-  z-index: 1010;
-}
-
-#main-top {
-  background: url("images/canvas-top-middle.png") repeat-x;
-  height: 78px;
-  margin: 0 98px 0 99px;
-}
-
-#main-tleft {
-  background: url("images/canvas-top-left.png") no-repeat;
-  width: 99px;
-  height: 78px;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
-#main-tright {
-  background: url("images/canvas-top-right.png") no-repeat;
-  width: 102px;
-  height: 78px;
-  position: absolute;
-  top: 0;
-  right: -4px;
-}
-
-#main-bottom {
-  background: url("images/canvas-bottom-middle.png") repeat-x;
-  height: 39px;
-  margin: 0 102px 0 110px;
-}
-
-#main-bleft {
-  background: url("images/canvas-bottom-left.png") no-repeat;
-  width: 110px;
-  height: 39px;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-}
-
-#main-bright {
-  background: url("images/canvas-bottom-right.png") no-repeat;
-  width: 106px;
-  height: 39px;
-  position: absolute;
-  bottom: 0;
-  right: -4px;
-}
-
-#toolbar-main {
-  display: inline;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-#toolbar-main li {
-  position: absolute;
-  top: 35px;
-  margin: 0;
-  padding: 0;
-  background-repeat: no-repeat;
-  width: 36px;
-  height: 0;
-  padding-top: 36px;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-#toolbar-main li:hover, #toolbar-main li:focus {
-  background-position: 0 -36px;
-}
-
-#toolbar-main li.paintweb_toolActive {
-  background-position: 0 -72px;
-}
-
-#toolbar-main li.disabled {
-  cursor: default;
-  background-position: 0 -108px;
-}
-
-#btn_cut {
-  background-image: url("images/buttons/cut.png");
-  left: 15px;
-}
-
-#btn_copy {
-  background-image: url("images/buttons/copy.png");
-  left: 56px;
-}
-
-#btn_paste {
-  background-image: url("images/buttons/paste.png");
-  left: 97px;
-}
-
-#btn_help {
-  background-image: url("images/buttons/help.png");
-  right: 15px;
-}
-
-#status {
-  position: absolute;
-  z-index: 1001;
-  left: 10px;
-  margin: 7px 105px 0 0;
-  padding: 0;
-  color: #fff;
-  line-height: 0.9em;
-  font-size: 0.9em;
-}
-
-#opt-zoom {
-  position: absolute;
-  bottom: 7px;
-  right: 10px;
-  background: url("images/zoom.png") top left no-repeat;
-  height: 27px;
-  padding: 0 0 0 35px;
-  margin: 0;
-}
-
-#opt-zoom label {
-  display: none;
-}
-
-#in-zoom {
-  width: 4em;
-  border: 1px solid #000;
-  padding: 2px;
-  margin-top: 2px;
-}
-
-
-/* The Properties and Help boxes * /
-
-.inputText label, .inputIcon p, .inputInline, .inputColor {
-  display: block;
-  background: url("images/label-bgr.png");
-  border: 1px solid #9C9B9A;
-  position: relative;
-  left: -19px;
-  width: 14em;
-  margin: 2px 0 0 0 !important;
-  padding: 2px 0 !important;
-  text-indent: 19px;
-  font-weight: bold;
-}
-
-.inputInline {
-  width: 25em;
-}
-
-.inputColor span {
-  display: block;
-  width: 4.2em;
-  height: 18px;
-  cursor: pointer;
-}
-
-.inputColor > span {
-  background: url("images/checker.png");
-  position: absolute;
-  top: 0;
-  right: -4.2em;
-  margin-right: -7px;
-  border: 1px solid #9C9B9A;
-}
-
-.inputText input {
-  background: #fff url("images/field-bgr.png") no-repeat;
-  border: 1px solid #000;
-  position: absolute;
-  left: 103%;
-  width: 3em;
-  padding: 2px 6px;
-}
-
-.inputText select {
-  position: absolute;
-  left: 103%;
-}
-
-.inputIcon div {
-  float: left;
-  width: 31px;
-  padding-top: 31px;
-  height: 0;
-  overflow: hidden;
-  margin-left: 3px;
-  background-repeat: no-repeat;
-  cursor: pointer;
-}
-
-#in-textAlign {
-  display: inline;
-  float: none;
-}
-
-#in-textAlign p {
-  display: none;
-}
-
-#in-textString {
-  position: static;
-  width: 20em;
-}
-
-#properties .disabled {
-  color: #ccc;
-}
-
-.inputIcon div:hover, .inputIcon div:focus {
-  background-position: 0 -31px;
-}
-
-.inputIcon div.active {
-  background-position: 0 -62px;
-}
-
-/* Icons used within Properties * /
-
-#shapeType-fill {
-  background-image: url("images/buttons/shape-fill.png");
-}
-
-#shapeType-stroke {
-  background-image: url("images/buttons/shape-stroke.png");
-}
-
-#shapeType-both {
-  background-image: url("images/buttons/shape-both.png");
-}
-
-#lineCap-round {
-  background-image: url("images/buttons/line-cap-round.png");
-}
-
-#lineCap-square {
-  background-image: url("images/buttons/line-cap-square.png");
-}
-
-#lineJoin-miter {
-  background-image: url("images/buttons/line-join-miter.png");
-}
-
-#lineJoin-round {
-  background-image: url("images/buttons/line-join-round.png");
-}
-
-#lineJoin-bevel {
-  background-image: url("images/buttons/line-join-bevel.png");
-}
-
-#in-textBold {
-  background-image: url("images/buttons/text-bold.png");
-}
-
-#in-textItalic {
-  background-image: url("images/buttons/text-italic.png");
-}
-
-#textAlign-left {
-  background-image: url("images/buttons/text-left.png");
-}
-
-#textAlign-center {
-  background-image: url("images/buttons/text-center.png");
-}
-
-#textAlign-right {
-  background-image: url("images/buttons/text-right.png");
-}
 
 /* vim:set fo=wan1croql tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix: */
 

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-16 00:03:45 +0300 $
+ * $Date: 2009-06-16 23:42:56 +0300 $
  */
 
 /**
@@ -258,16 +258,31 @@ pwlib.gui['default'] = function (app) {
     }
 
     // Add application-wide event listeners.
+    app.events.add('canvasSizeChange',  this.canvasSizeChange);
+    app.events.add('commandRegister',   this.commandRegister);
+    app.events.add('commandUnregister', this.commandUnregister);
+    app.events.add('configChange',      this.configChangeHandler);
+    app.events.add('imageSizeChange',   this.imageSizeChange);
+    app.events.add('imageZoom',         this.imageZoom);
     app.events.add('initApp',           this.initApp);
+    app.events.add('shadowAllow',       this.shadowAllow);
     app.events.add('toolActivate',      this.toolActivate);
     app.events.add('toolRegister',      this.toolRegister);
     app.events.add('toolUnregister',    this.toolUnregister);
-    app.events.add('commandRegister',   this.commandRegister);
-    app.events.add('commandUnregister', this.commandUnregister);
-    app.events.add('imageZoom',         this.imageZoom);
-    app.events.add('imageSizeChange',   this.imageSizeChange);
-    app.events.add('canvasSizeChange',  this.canvasSizeChange);
-    app.events.add('shadowAllow',       this.shadowAllow);
+
+    if ('clipboardPaste' in this.commands) {
+      app.events.add('clipboardUpdate', this.clipboardUpdate);
+      this.commands.clipboardPaste.className += ' ' + this.classPrefix 
+        + 'disabled';
+    }
+
+    if ('selectionCut' in this.commands && 'selectionCopy' in this.commands) {
+      app.events.add('selectionChange', this.selectionChange);
+      this.commands.selectionCut.className  += ' ' + this.classPrefix 
+        + 'disabled';
+      this.commands.selectionCopy.className += ' ' + this.classPrefix 
+        + 'disabled';
+    }
 
     // Make sure the historyUndo and historyRedo command elements are 
     // synchronized with the application history state.
@@ -290,6 +305,7 @@ pwlib.gui['default'] = function (app) {
   this.initCanvas = function () {
     var canvasContainer = this.elems.canvasContainer,
         layerCanvas     = app.layer.canvas,
+        layerContext    = app.layer.context,
         layerStyle      = layerCanvas.style,
         bufferCanvas    = app.buffer.canvas;
 
@@ -310,6 +326,14 @@ pwlib.gui['default'] = function (app) {
     canvasContainer.appendChild(layerCanvas);
     canvasContainer.appendChild(bufferCanvas);
     canvasContainer.style.backgroundColor = config.backgroundColor;
+
+    // Make sure the selection transparency input checkbox is disabled if the 
+    // putImageData and getImageData methods are unsupported.
+    if ('selection_transparent' in this.inputs && (!layerContext.putImageData || 
+          !layerContext.getImageData)) {
+      this.inputs.selection_transparent.disabled = true;
+      this.inputs.selection_transparent.checked = true;
+    }
 
     return true;
   };
@@ -1050,6 +1074,7 @@ pwlib.gui['default'] = function (app) {
     var tabAnchor,
         tabConfig = _self.toolTabConfig[ev.id] || {},
         tabPanel = _self.tabPanels.main,
+        lineTab = tabPanel.tabs.line,
         tabActive = _self.tools[ev.id],
         shapeType = _self.inputs.shapeType,
         lineWidth = _self.inputs.line_lineWidth,
@@ -1078,8 +1103,11 @@ pwlib.gui['default'] = function (app) {
         replace(' ' + _self.classPrefix + 'toolActive', '');
 
       // hide the line tab
-      if (prevTabConfig.lineTab) {
+      if (prevTabConfig.lineTab && lineTab) {
         tabPanel.tabHide('line');
+        lineTab.container.className = lineTab.container.className.
+          replace(' ' + _self.classPrefix + 'main_line_' + ev.prevId, 
+              ' ' + _self.classPrefix + 'main_line');
       }
 
       // hide the tab for the current tool.
@@ -1131,10 +1159,17 @@ pwlib.gui['default'] = function (app) {
 
     // show the line tab, if configured
     if (tabConfig.lineTab && 'line' in tabPanel.tabs) {
-      tabAnchor = tabPanel.tabs.line.button.firstChild;
+      tabAnchor = lineTab.button.firstChild;
       tabAnchor.title = tabConfig.lineTabLabel || lang.tabs.main[ev.id];
       tabAnchor.removeChild(tabAnchor.firstChild);
       tabAnchor.appendChild(doc.createTextNode(tabAnchor.title));
+
+      if (ev.id !== 'line') {
+        lineTab.container.className = lineTab.container.className.
+            replace(' ' + _self.classPrefix + 'main_line', ' ' + _self.classPrefix 
+                + 'main_line_' + ev.id);
+      }
+
       tabPanel.tabShow('line');
     }
 
@@ -1433,6 +1468,7 @@ pwlib.gui['default'] = function (app) {
   this.configChangeHandler = function (ev) {
     var cfg = ev.group.replace('.', '_') + '_' + ev.config,
         input = _self.inputs[cfg];
+
     if (!input || ev.previousValue === ev.value) {
       return;
     }
@@ -1557,6 +1593,58 @@ pwlib.gui['default'] = function (app) {
       } else {
         _self.tabPanels.main.tabHide('shadow');
       }
+    }
+  };
+
+  /**
+   * The <code>clipboardUpdate</code> application event handler. The GUI element 
+   * associated to the <code>clipboardPaste</code> command is updated to be 
+   * disabled/enabled depending on the event.
+   *
+   * @param {pwlib.appEvent.clipboardUpdate} ev The application event object.
+   */
+  this.clipboardUpdate = function (ev) {
+    var className = ' ' + _self.classPrefix + 'disabled',
+        pasteElem = _self.commands.clipboardPaste;
+
+    if (!pasteElem) {
+      return;
+    }
+
+    var enabled = pasteElem.className.indexOf(className) === -1;
+
+    if (!ev.data && enabled) {
+      pasteElem.className += className;
+    } else if (ev.data && !enabled) {
+      pasteElem.className = pasteElem.className.replace(className, '');
+    }
+  };
+
+  /**
+   * The <code>selectionChange</code> application event handler. The GUI 
+   * elements associated to the <code>selectionCut</code> and 
+   * <code>selectionCopy</code> commands are updated to be disabled/enabled 
+   * depending on the event.
+   *
+   * @param {pwlib.appEvent.selectionChange} ev The application event object.
+   */
+  this.selectionChange = function (ev) {
+    var className   = ' ' + _self.classPrefix + 'disabled',
+        cutElem     = _self.commands.selectionCut,
+        cutEnabled  = cutElem.className.indexOf(className) === -1,
+        copyElem    = _self.commands.selectionCopy,
+        copyEnabled = copyElem.className.indexOf(className) === -1;
+
+    if (!ev.state && copyEnabled) {
+      copyElem.className += className;
+    } else if (ev.state && !copyEnabled) {
+      copyElem.className = copyElem.className.replace(className, '');
+    }
+
+    if (!ev.state && cutEnabled) {
+      cutElem.className += className;
+    } else if (ev.state && !cutEnabled) {
+      cutElem.className = cutElem.className.replace(className, '');
     }
   };
 };

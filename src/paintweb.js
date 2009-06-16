@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-15 23:07:42 +0300 $
+ * $Date: 2009-06-16 23:51:26 +0300 $
  */
 
 /**
@@ -52,7 +52,7 @@ function PaintWeb (win, doc) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090615;
+  this.build = 20090616;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -1025,8 +1025,8 @@ function PaintWeb (win, doc) {
     bufferStyle.width  = layerStyle.width  = styleWidth  + 'px';
     bufferStyle.height = layerStyle.height = styleHeight + 'px';
 
-    _self.events.dispatch(new appEvent.canvasSizeChange(styleWidth, 
-          styleHeight));
+    _self.events.dispatch(new appEvent.canvasSizeChange(styleWidth, styleHeight, 
+          image.canvasScale));
   };
 
   /**
@@ -1368,8 +1368,8 @@ function PaintWeb (win, doc) {
 
     image.zoom = level;
 
-    this.events.dispatch(new appEvent.canvasSizeChange(styleWidth, 
-          styleHeight));
+    this.events.dispatch(new appEvent.canvasSizeChange(styleWidth, styleHeight, 
+          image.canvasScale));
 
     return true;
   };
@@ -1472,7 +1472,7 @@ function PaintWeb (win, doc) {
 
     this.events.dispatch(new appEvent.imageSizeChange(cropWidth, cropHeight));
     this.events.dispatch(new appEvent.canvasSizeChange(scaledWidth, 
-          scaledHeight));
+          scaledHeight, image.canvasScale));
 
     return true;
   };

@@ -1,5 +1,5 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
-  <!--- $Date: 2009-06-15 23:02:51 +0300 $ -->
+  <!--- $Date: 2009-06-16 14:17:34 +0300 $ -->
   <h1 class="paintweb_appTitle">PaintWeb</h1>
 
   <!-- All elements with data-pwTabPanel become interactive tabbed panels which 
@@ -132,17 +132,17 @@
 
     <!-- .paintweb_main_selection -->
     <div data-pwTab="selection" data-pwTabHide="true">
-      <p class="inputInline">
+      <p class="paintweb_opt_selectionTransparent">
         <label title="When enabled, the background of the selection will be the 
           current fill color. The background color is only visible when you 
           enable the transformation mode as well.">
-        <input id="in-selTransparent" type="checkbox" value="1" checked="checked" 
-        /> Transparent background</label>
+        <input data-pwConfig="selection.transparent" type="checkbox" value="1" 
+        checked="checked" /> Transparent background</label>
       </p>
-      <p class="inputInline">
+      <p class="paintweb_opt_selectionTransform">
         <label title="When enabled, dragging/resizing the selection also causes 
           the selected pixels to be dragged/resized. [Enter]">
-        <input id="in-selTransform" type="checkbox" value="1" />
+        <input data-pwConfig="selection.transform" type="checkbox" value="1" /> 
         Transformation mode</label>
       </p>
     </div>
