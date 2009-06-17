@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-16 23:59:04 +0300 $
+ * $Date: 2009-06-17 23:24:07 +0300 $
  */
 
 /**
@@ -255,16 +255,6 @@ pwlib.tools.selection = function (app) {
    */
   var mouseResize = null;
 
-  /**
-   * Tells if the shadow effect was enabled before activating the selection 
-   * tool.
-   *
-   * @private
-   * @type Boolean
-   * @default false
-   */
-  var shadowActive = false;
-
   // shorthands / private variables
   var sel = this.selection,
       borderDouble = config.borderWidth * 2,
@@ -272,6 +262,15 @@ pwlib.tools.selection = function (app) {
       ev_configChangeId = null,
       ctrlKey = false,
       shiftKey = false;
+
+  /**
+   * The last selection rectangle that was drawn. This is used by the selection 
+   * drawing functions.
+   * @private
+   */
+  // We avoid retrieving the mouse coordinates during the mouseup event, due to 
+  // the Opera bug DSK-232264.
+  var lastSel = {};
 
   /**
    * The tool preactivation code. This function prepares the selection canvas 
@@ -293,7 +292,6 @@ pwlib.tools.selection = function (app) {
       return false;
     }
 
-    sel.canvas.className = gui.classPrefix + 'selectionBuffer';
     sel.canvas.width  = image.width;
     sel.canvas.height = image.height;
 
@@ -315,8 +313,8 @@ pwlib.tools.selection = function (app) {
   };
 
   /**
-   * The tool activation code. This is run after the tool construction and after 
-   * the previous tool is deactivated.
+   * The tool activation code. This method sets-up multiple event listeners for 
+   * several target objects.
    */
   this.activate = function () {
     // Older browsers do not support get/putImageData, thus non-transparent 
@@ -342,6 +340,11 @@ pwlib.tools.selection = function (app) {
         ev_canvasSizeChange);
     ev_configChangeId = app.events.add('configChange', ev_configChange);
 
+    // Register selection-related commands
+    app.commandRegister('selectionCrop',   _self.selectionCrop);
+    app.commandRegister('selectionDelete', _self.selectionDelete);
+    app.commandRegister('selectionFill',   _self.selectionFill);
+
     if (!timer) {
       timer = setInterval(timerFn, app.config.toolDrawDelay);
     }
@@ -359,7 +362,7 @@ pwlib.tools.selection = function (app) {
       timer = null;
     }
 
-    selectionBufferMerge();
+    _self.selectionMerge();
 
     sel.marquee.removeEventListener('mousedown', marqueeMousedown, false);
     sel.marquee.removeEventListener('mousemove', marqueeMousemove, false);
@@ -380,6 +383,11 @@ pwlib.tools.selection = function (app) {
     if (ev_configChangeId) {
       app.events.remove('configChange', ev_configChangeId);
     }
+
+    // Unregister selection-related commands
+    app.commandUnregister('selectionCrop');
+    app.commandUnregister('selectionDelete');
+    app.commandUnregister('selectionFill');
 
     return true;
   };
@@ -410,7 +418,7 @@ pwlib.tools.selection = function (app) {
     // No selection is available, then start drawing a selection.
     if (_self.state === _self.STATE_NONE) {
       _self.state = _self.STATE_DRAWING;
-      sel.marquee.style.display = '';
+      marqueeStyle.display = '';
       gui.statusShow('selectionDraw');
 
       return true;
@@ -436,7 +444,9 @@ pwlib.tools.selection = function (app) {
         _self.state = _self.STATE_PENDING;
         marqueeHide();
         gui.statusShow('selectionActive');
-        return selectionBufferMerge(); // done
+        selectionMergeStrict();
+
+        return true;
 
       case 'in':
         // The mouse area: 'in' for drag.
@@ -462,12 +472,11 @@ pwlib.tools.selection = function (app) {
     // drag/resize operation only changes the selection, not the pixels 
     // themselves.
     if (sel.layerCleared && !config.transform) {
-      selectionBufferMerge(true);
-    }
+      selectionMergeStrict();
 
-    // When the user starts dragging/resizing the ImageData we must cut out the 
-    // current selection from the image layer.
-    if (!sel.layerCleared && config.transform) {
+    } else if (!sel.layerCleared && config.transform) {
+      // When the user starts dragging/resizing the ImageData we must cut out 
+      // the current selection from the image layer.
       selectionBufferInit();
     }
 
@@ -540,53 +549,27 @@ pwlib.tools.selection = function (app) {
       return true;
     }
 
-    var result  = null;
+    needsRedraw = false;
 
     shiftKey = ev.shiftKey;
     if (ctrlKey) {
       config.transform = !config.transform;
     }
 
-    needsRedraw = false;
-
-    switch (_self.state) {
-      case _self.STATE_PENDING:
-        // Selection dropped? If yes, switch to the no selection state.
-        _self.state = _self.STATE_NONE;
-        gui.statusShow('selectionActive');
-        app.events.dispatch(new appEvent.selectionChange(_self.state));
-
-        return true;
-
-      case _self.STATE_DRAWING:
-        result = selectionDraw();
-        break;
-
-      case _self.STATE_DRAGGING:
-        result = selectionDrag();
-        break;
-
-      case _self.STATE_RESIZING:
-        result = selectionResize();
-        break;
-
-      default:
-        return false;
-    }
-
-    if (!result) {
+    if (_self.state === _self.STATE_PENDING) {
+      // Selection dropped? If yes, switch to the no selection state.
       _self.state = _self.STATE_NONE;
-      marqueeHide();
       app.events.dispatch(new appEvent.selectionChange(_self.state));
-      return false;
+
+      return true;
     }
 
-    sel.x = result[0];
-    sel.y = result[1];
+    sel.x = lastSel.x;
+    sel.y = lastSel.y;
 
-    if (result.length === 4) {
-      sel.width  = result[2];
-      sel.height = result[3];
+    if ('width' in lastSel) {
+      sel.width  = lastSel.width;
+      sel.height = lastSel.height;
     }
 
     _self.state = _self.STATE_SELECTED;
@@ -658,20 +641,17 @@ pwlib.tools.selection = function (app) {
    */
   function marqueeHide () {
     marqueeStyle.display = 'none';
-    marqueeStyle.top     = '-' + borderDouble + 'px';
-    marqueeStyle.left    = '-' + borderDouble + 'px';
+    marqueeStyle.top     = '-' + (borderDouble + 50) + 'px';
+    marqueeStyle.left    = '-' + (borderDouble + 50) + 'px';
     marqueeStyle.width   = '1px';
     marqueeStyle.height  = '1px';
+    marqueeStyle.cursor  = '';
   };
 
   /**
    * Perform the selection rectangle drawing operation.
    *
    * @private
-   *
-   * @returns {false|Array} False is returned if the selection is too small, 
-   * otherwise an array of four elements is returned. The array holds the 
-   * selection information: x, y, width and height.
    */
   function selectionDraw () {
     var x = MathMin(mouse.x,  x0),
@@ -698,20 +678,15 @@ pwlib.tools.selection = function (app) {
         mh = h * image.canvasScale - borderDouble;
 
     if (mw < 1 || mh < 1) {
-      return false;
+      return;
     }
-
-    // debug
-    //bufferContext.clearRect(0, 0, image.width, image.height);
-    //bufferContext.fillStyle = 'red';
-    //bufferContext.fillRect(x, y, w, h);
 
     marqueeStyle.top    = (y * image.canvasScale) + 'px';
     marqueeStyle.left   = (x * image.canvasScale) + 'px';
     marqueeStyle.width  = mw + 'px';
     marqueeStyle.height = mh + 'px';
 
-    return [x, y, w, h];
+    lastSel = {'x': x, 'y': y, 'width': w, 'height': h};
   };
 
   /**
@@ -746,34 +721,10 @@ pwlib.tools.selection = function (app) {
           sel.heightOriginal, x, y, sel.width, sel.height);
     }
 
-    // debug
-    //bufferContext.clearRect(0, 0, image.width, image.height);
-    //bufferContext.fillStyle = 'red';
-    //bufferContext.fillRect(x, y, sel.width, sel.height);
+    marqueeStyle.top  = (y * image.canvasScale) + 'px';
+    marqueeStyle.left = (x * image.canvasScale) + 'px';
 
-    var mx   = x * image.canvasScale,
-        my   = y * image.canvasScale,
-        mw   = sel.width  * image.canvasScale - borderDouble,
-        mh   = sel.height * image.canvasScale - borderDouble,
-        maxW = image.width  * image.canvasScale,
-        maxH = image.height * image.canvasScale,
-        sumX = mx + mw + borderDouble,
-        sumY = my + mh + borderDouble;
-
-    if (sumX > maxW) {
-      mw -= sumX - maxW;
-    }
-
-    if (sumY > maxH) {
-      mh -= sumY - maxH;
-    }
-
-    marqueeStyle.top    = my + 'px';
-    marqueeStyle.left   = mx + 'px';
-    marqueeStyle.width  = mw + 'px';
-    marqueeStyle.height = mh + 'px';
-
-    return [x, y];
+    lastSel = {'x': x, 'y': y};
   };
 
   /**
@@ -829,11 +780,11 @@ pwlib.tools.selection = function (app) {
         w -= diffx;
         break;
       default:
-        return false;
+        return;
     }
 
     if (!w || !h) {
-      return false;
+      return;
     }
 
     // Constrain the rectangle to have the same aspect ratio as the initial 
@@ -872,25 +823,11 @@ pwlib.tools.selection = function (app) {
       h *= -1;
     }
 
-    var mx   = x * image.canvasScale,
-        my   = y * image.canvasScale,
-        mw   = w * image.canvasScale - borderDouble,
-        mh   = h * image.canvasScale - borderDouble,
-        maxW = image.width  * image.canvasScale,
-        maxH = image.height * image.canvasScale,
-        sumX = mx + mw + borderDouble,
-        sumY = my + mh + borderDouble;
-
-    if (sumX > maxW) {
-      mw -= sumX - maxW;
-    }
-
-    if (sumY > maxH) {
-      mh -= sumY - maxH;
-    }
+    var mw   = w * image.canvasScale - borderDouble,
+        mh   = h * image.canvasScale - borderDouble;
 
     if (mw < 1 || mh < 1) {
-      return false;
+      return;
     }
 
     // Resizing the ImageData
@@ -907,17 +844,12 @@ pwlib.tools.selection = function (app) {
           sel.heightOriginal, x, y, w, h);
     }
 
-    // debug
-    //bufferContext.clearRect(0, 0, image.width, image.height);
-    //bufferContext.fillStyle = 'red';
-    //bufferContext.fillRect(x, y, w, h);
-
-    marqueeStyle.top    = my + 'px';
-    marqueeStyle.left   = mx + 'px';
+    marqueeStyle.top    = (y * image.canvasScale) + 'px';
+    marqueeStyle.left   = (x * image.canvasScale) + 'px';
     marqueeStyle.width  = mw + 'px';
     marqueeStyle.height = mh + 'px';
 
-    return [x, y, w, h];
+    lastSel = {'x': x, 'y': y, 'width': w, 'height': h};
   };
 
   /**
@@ -1086,32 +1018,50 @@ pwlib.tools.selection = function (app) {
   };
 
   /**
-   * Merge the ImageData from the selection buffer, when the user stops dragging 
-   * or resizing the selection.
-   *
+   * Perform the selection buffer merge onto the current image layer.
    * @private
-   * @param {Boolean} [onlyMerge=false] Only merge the selection buffer onto the 
-   * image layer. Do not clear the image buffer.
    */
-  function selectionBufferMerge (onlyMerge) {
-    if (!onlyMerge) {
-      bufferContext.clearRect(0, 0, image.width, image.height);
-      marqueeStyle.cursor = '';
-      //app.btn_cut(-1);
-      //app.btn_copy(-1);
+  function selectionMergeStrict () {
+    if (!sel.layerCleared) {
+      return;
     }
 
-    if (sel.layerCleared) {
-      if (!config.transparent) {
-        layerContext.fillRect(sel.x, sel.y, sel.width, sel.height);
-      }
-
-      layerContext.drawImage(sel.canvas, 0, 0, sel.widthOriginal, 
-          sel.heightOriginal, sel.x, sel.y, sel.width, sel.height);
-
-      app.historyAdd();
-      sel.layerCleared = false;
+    if (!config.transparent) {
+      layerContext.fillRect(sel.x, sel.y, sel.width, sel.height);
     }
+
+    layerContext.drawImage(sel.canvas, 0, 0, sel.widthOriginal, 
+        sel.heightOriginal, sel.x, sel.y, sel.width, sel.height);
+
+    bufferContext.clearRect(0, 0, image.width, image.height);
+
+    sel.layerCleared = false;
+
+    app.historyAdd();
+  };
+
+  /**
+   * Merge the selection buffer onto the current image layer.
+   *
+   * <p>This method dispatches the {@link pwlib.appEvent.selectionChange} 
+   * application event.
+   *
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   */
+  this.selectionMerge = function () {
+    if (_self.state !== _self.STATE_SELECTED) {
+      return false;
+    }
+
+    selectionMergeStrict();
+
+    _self.state = _self.STATE_NONE;
+    marqueeHide();
+    gui.statusShow('selectionActive');
+
+    app.events.dispatch(new appEvent.selectionChange(_self.state));
+
+    return true;
   };
 
   /**
@@ -1138,7 +1088,6 @@ pwlib.tools.selection = function (app) {
 
     sel.layerCleared = false;
     _self.state = _self.STATE_NONE;
-    marqueeStyle.cursor = '';
     marqueeHide();
 
     app.events.dispatch(new appEvent.selectionChange(_self.state));
@@ -1266,76 +1215,155 @@ pwlib.tools.selection = function (app) {
   };
 
   /**
-   * The <code>keydown</code> event handler. This method implements support for 
-   * the following keys:
+   * Perform selection delete.
    *
-   * <ul>
-   *   <li><kbd>Enter</kbd> - Toggle the transformation mode. When 
-   *   transformation mode is enabled, any selection changes also affects the 
-   *   selected pixels.
+   * <p>This method changes the {@link PaintWeb.config.selection.transform} 
+   * value to false if the current selection has pixels that are currently being 
+   * manipulated. In such cases, the {@link pwlib.appEvent.configChange} 
+   * application event is also dispatched.
    *
-   *   <li><kbd>Delete</kbd> - Delete the selected pixels.
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   */
+  this.selectionDelete = function () {
+    // Delete the pixels from the image if they are not deleted already.
+    if (_self.state !== _self.STATE_SELECTED) {
+      return false;
+    }
+
+    if (!sel.layerCleared) {
+      layerContext.clearRect(sel.x, sel.y, sel.width, sel.height);
+      app.historyAdd();
+
+    } else {
+      bufferContext.clearRect(sel.x, sel.y, sel.width, sel.height);
+      sel.layerCleared = false;
+
+      if (config.transform) {
+        config.transform = false;
+        app.events.dispatch(new appEvent.configChange(false, true, 'transform', 
+              'selection', config));
+      }
+    }
+  };
+
+  /**
+   * Drop the current selection.
    *
-   *   <li><kbd>Escape</kbd> - Drop the selection / deselect.
+   * <p>This method dispatches the {@link pwlib.appEvent.selectionChange} 
+   * application event.
    *
-   *   <li><kbd>Alt Backspace</kbd> - Fill the selection with the current 
-   *   <var>fillStyle</var>. This is only allowed when transformation mode is 
-   *   disabled.
-   * </ul>
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   */
+  this.selectionDrop = function () {
+    if (_self.state !== _self.STATE_SELECTED) {
+      return false;
+    }
+
+    if (sel.layerCleared) {
+      bufferContext.clearRect(0, 0, image.width, image.height);
+      sel.layerCleared = false;
+    }
+
+    _self.state = _self.STATE_NONE;
+
+    marqueeHide();
+    gui.statusShow('selectionActive');
+
+    app.events.dispatch(new appEvent.selectionChange(_self.state));
+
+    return true;
+  };
+
+  /**
+   * Fill the available selection with the current 
+   * <var>bufferContext.fillStyle</var>.
+   *
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   */
+  this.selectionFill = function () {
+    if (_self.state !== _self.STATE_SELECTED) {
+      return false;
+    }
+
+    if (sel.layerCleared) {
+      sel.context.fillStyle = bufferContext.fillStyle;
+      sel.context.fillRect(0,  0, sel.widthOriginal, sel.heightOriginal);
+      bufferContext.fillRect(sel.x, sel.y, sel.width, sel.height);
+
+    } else {
+      layerContext.fillStyle = bufferContext.fillStyle;
+      layerContext.fillRect(sel.x, sel.y, sel.width, sel.height);
+      app.historyAdd();
+    }
+
+    return true;
+  };
+
+  /**
+   * Crop the image to selection width and height. The selected pixels become 
+   * the image itself.
+   *
+   * <p>This method invokes the {@link this#selectionMerge} and {@link 
+   * PaintWeb#imageCrop} methods.
+   *
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   */
+  this.selectionCrop = function () {
+    if (_self.state !== _self.STATE_SELECTED) {
+      return false;
+    }
+
+    _self.selectionMerge();
+
+    var w    = sel.width,
+        h    = sel.height,
+        sumX = sel.x + w,
+        sumY = sel.y + h;
+
+    if (sumX > image.width) {
+      w -= sumX - image.width;
+    }
+    if (sumY > image.height) {
+      h -= sumY - image.height;
+    }
+
+    app.imageCrop(sel.x, sel.y, w, h);
+
+    return true;
+  };
+
+  /**
+   * The <code>keydown</code> event handler. This method calls selection-related 
+   * commands associated to keyboard shortcuts.
    *
    * @param {Event} ev The DOM Event object.
    *
    * @returns {Boolean} True if the keyboard shortcut was recognized, or false 
    * if not.
+   *
+   * @see PaintWeb.config.selection.keys holds the keyboard shortcuts 
+   * configuration.
    */
   this.keydown = function (ev) {
-    var sel = _self.selection;
-
     switch (ev.kid_) {
-      case 'Enter':
-        // Toggle the transformation mode.
+      case config.keys.transformToggle:
+        // Toggle the selection transformation mode.
         config.transform = !config.transform;
+        app.events.dispatch(new appEvent.configChange(config.transform, 
+              !config.transform, 'transform', 'selection', config));
         break;
 
-      case 'Delete':
-        // Delete the pixels from the image if they are not deleted already.
-        if (sel.layerCleared || _self.state !== _self.STATE_SELECTED) {
-          return false;
-        }
+      case config.keys.selectionCrop:
+        return _self.selectionCrop(ev);
 
-        layerContext.clearRect(sel.x, sel.y, sel.width, sel.height);
-        app.historyAdd();
+      case config.keys.selectionDelete:
+        return _self.selectionDelete(ev);
 
-      case 'Escape':
-        // Drop the selection.
-        if (_self.state !== _self.STATE_SELECTED) {
-          return false;
-        }
+      case config.keys.selectionDrop:
+        return _self.selectionDrop(ev);
 
-        sel.layerCleared = false;
-        sel.context.clearRect(0, 0, image.width, image.height);
-
-        bufferContext.clearRect(0, 0, image.width, image.height);
-        marqueeStyle.cursor = '';
-
-        //app.btn_cut(-1);
-        //app.btn_copy(-1);
-        gui.statusShow('selectionActive');
-        _self.state = _self.STATE_NONE;
-
-        break;
-
-      case 'Alt Backspace':
-        // Fill the selection with fillStyle.
-        if (config.transform) {
-          return false;
-        }
-
-        layerContext.fillStyle = bufferContext.fillStyle;
-        layerContext.fillRect(sel.x, sel.y, sel.width, sel.height);
-        app.historyAdd();
-
-        break;
+      case config.keys.selectionFill:
+        return _self.selectionFill(ev);
 
       default:
         return false;

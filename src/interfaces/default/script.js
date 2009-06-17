@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-16 23:42:56 +0300 $
+ * $Date: 2009-06-17 21:10:38 +0300 $
  */
 
 /**
@@ -201,6 +201,7 @@ pwlib.gui['default'] = function (app) {
 
     if (!this.initCanvas() ||
         !this.initImageZoom() ||
+        !this.initSelection() ||
         !this.initKeyboardShortcuts()) {
       return false;
     }
@@ -269,20 +270,6 @@ pwlib.gui['default'] = function (app) {
     app.events.add('toolActivate',      this.toolActivate);
     app.events.add('toolRegister',      this.toolRegister);
     app.events.add('toolUnregister',    this.toolUnregister);
-
-    if ('clipboardPaste' in this.commands) {
-      app.events.add('clipboardUpdate', this.clipboardUpdate);
-      this.commands.clipboardPaste.className += ' ' + this.classPrefix 
-        + 'disabled';
-    }
-
-    if ('selectionCut' in this.commands && 'selectionCopy' in this.commands) {
-      app.events.add('selectionChange', this.selectionChange);
-      this.commands.selectionCut.className  += ' ' + this.classPrefix 
-        + 'disabled';
-      this.commands.selectionCopy.className += ' ' + this.classPrefix 
-        + 'disabled';
-    }
 
     // Make sure the historyUndo and historyRedo command elements are 
     // synchronized with the application history state.
@@ -510,7 +497,7 @@ pwlib.gui['default'] = function (app) {
     input._pwConfigProperty = cfgProp;
     input._pwConfigGroup = cfgGroup;
     input._pwConfigGroupRef = cfgGroupRef;
-    input.title = langGroup[cfgProp];
+    input.title = langGroup[cfgProp + 'Title'] || langGroup[cfgProp];
     input.className += ' ' + this.classPrefix + 'cfg_' + cfgNoDots;
 
     this.inputs[cfgNoDots] = input;
@@ -520,11 +507,11 @@ pwlib.gui['default'] = function (app) {
 
       if (input.type === 'checkbox') {
         labelElem.removeChild(labelElem.lastChild);
-        labelElem.appendChild(doc.createTextNode(input.title));
+        labelElem.appendChild(doc.createTextNode(langGroup[cfgProp]));
         input.checked = cfgGroupRef[cfgProp];
       } else {
         labelElem.removeChild(labelElem.firstChild);
-        labelElem.insertBefore(doc.createTextNode(input.title), input);
+        labelElem.insertBefore(doc.createTextNode(langGroup[cfgProp]), input);
         input.value = cfgGroupRef[cfgProp];
       }
 
@@ -533,9 +520,8 @@ pwlib.gui['default'] = function (app) {
     }
 
     labelElem = input.getElementsByTagName('p')[0];
-
     labelElem.removeChild(labelElem.firstChild);
-    labelElem.appendChild(doc.createTextNode(input.title));
+    labelElem.appendChild(doc.createTextNode(langGroup[cfgProp]));
 
     // If this is not an input we consider it has child elements with 
     // data-pwConfigValue attributes.
@@ -577,27 +563,6 @@ pwlib.gui['default'] = function (app) {
 
       this.inputValues[cfgGroup + '_' + cfgProp + '_' + val] = elem;
     }
-  };
-
-  /**
-   * The <code>initApp</code> event handler. This method is invoked once 
-   * PaintWeb completes all the loading.
-   *
-   * @private
-   * @param {pwlib.appEvent.initApp} ev The application event object.
-   */
-  this.initApp = function (ev) {
-    // Initialization was not successful ...
-    if (ev.state !== PaintWeb.INIT_DONE) {
-      return;
-    }
-
-    // Make PaintWeb visible.
-    var placeholder = this.config.guiPlaceholder.style;
-    placeholder.visibility = '';
-    placeholder.position = '';
-    placeholder.height = '';
-    placeholder.overflow = 'visible';
   };
 
   /**
@@ -645,6 +610,65 @@ pwlib.gui['default'] = function (app) {
   };
 
   /**
+   * Initialize GUI elements associated to the selection tool.
+   *
+   * @private
+   * @returns {Boolean} True if the initialization was successful, or false if 
+   * not.
+   */
+  this.initSelection = function () {
+    var classDisabled = ' ' + this.classPrefix + 'disabled',
+        cut   = this.commands.selectionCut,
+        copy  = this.commands.selectionCopy,
+        paste = this.commands.clipboardPaste;
+
+    if (paste) {
+      app.events.add('clipboardUpdate', this.clipboardUpdate);
+      paste.className += classDisabled;
+
+    }
+
+    if (cut && copy) {
+      app.events.add('selectionChange', this.selectionChange);
+      cut.className  += classDisabled;
+      copy.className += classDisabled;
+    }
+
+    var selTab_cmds = ['selectionCut', 'selectionCopy', 'clipboardPaste'],
+        anchor, elem, cmd;
+
+    for (var i = 0, n = selTab_cmds.length; i < n; i++) {
+      cmd = selTab_cmds[i];
+      elem = this.elems['selTab_' + cmd];
+      if (!elem) {
+        continue;
+      }
+
+      anchor = doc.createElement('a');
+      anchor.title = lang.commands[cmd];
+      anchor.href = '#';
+      anchor.appendChild(doc.createTextNode(anchor.title));
+      anchor.addEventListener('click', this.commandClick, false);
+
+      elem.className += classDisabled + ' ' + this.classPrefix + 'command' 
+        + ' ' + this.classPrefix + 'cmd_' + cmd;
+      elem.setAttribute('data-pwCommand', cmd);
+      elem.removeChild(elem.firstChild);
+      elem.appendChild(anchor);
+    }
+
+    var selCrop   = this.commands.selectionCrop,
+        selFill   = this.commands.selectionFill,
+        selDelete = this.commands.selectionDelete;
+
+    selCrop.className   += classDisabled;
+    selFill.className   += classDisabled;
+    selDelete.className += classDisabled;
+
+    return true;
+  };
+
+  /**
    * Initialize the keyboard shortcuts. Basically, this updates various strings 
    * to ensure the user interface is informational.
    *
@@ -671,12 +695,33 @@ pwlib.gui['default'] = function (app) {
   };
 
   /**
+   * The <code>initApp</code> event handler. This method is invoked once 
+   * PaintWeb completes all the loading.
+   *
+   * @private
+   * @param {pwlib.appEvent.initApp} ev The application event object.
+   */
+  this.initApp = function (ev) {
+    // Initialization was not successful ...
+    if (ev.state !== PaintWeb.INIT_DONE) {
+      return;
+    }
+
+    // Make PaintWeb visible.
+    var placeholder = this.config.guiPlaceholder.style;
+    placeholder.visibility = '';
+    placeholder.position = '';
+    placeholder.height = '';
+    placeholder.overflow = 'visible';
+  };
+
+  /**
    * The <code>guiResizeStart</code> event handler for the Canvas resize 
    * operation.
    * @private
    */
   this.canvasResizeStart = function () {
-    this.container.style.overflow = 'hidden';
+    this.resizeHandle.style.display = 'none';
 
     // ugly...
     this.timeout_ = setTimeout(function () {
@@ -694,7 +739,7 @@ pwlib.gui['default'] = function (app) {
    * @param {pwlib.appEvent.guiResizeEnd} ev The application event object.
    */
   this.canvasResizeEnd = function (ev) {
-    this.container.style.overflow = '';
+    this.resizeHandle.style.display = '';
 
     app.imageCrop(0, 0, ev.width / app.image.canvasScale,
         ev.height / app.image.canvasScale);
@@ -1409,13 +1454,20 @@ pwlib.gui['default'] = function (app) {
    */
   this.canvasSizeChange = function (ev) {
     var canvasContainer = _self.elems.canvasContainer,
+        canvasResizer   = _self.canvasResizer,
         className       = ' ' + _self.classPrefix + 'disabled',
         hand            = _self.tools.hand,
+        resizeHandle    = canvasResizer.resizeHandle,
         viewport        = _self.elems.viewport;
 
     // Update the Canvas container to be the same size as the Canvas elements.
     canvasContainer.style.width  = ev.width  + 'px';
     canvasContainer.style.height = ev.height + 'px';
+
+    if (resizeHandle) {
+      resizeHandle.style.top  = ev.height + 'px';
+      resizeHandle.style.left = ev.width  + 'px';
+    }
 
     if (!hand || !viewport) {
       return;
@@ -1604,19 +1656,24 @@ pwlib.gui['default'] = function (app) {
    * @param {pwlib.appEvent.clipboardUpdate} ev The application event object.
    */
   this.clipboardUpdate = function (ev) {
-    var className = ' ' + _self.classPrefix + 'disabled',
-        pasteElem = _self.commands.clipboardPaste;
+    var classDisabled = ' ' + _self.classPrefix + 'disabled',
+        elem, elemEnabled,
+        elems = [_self.commands.clipboardPaste, 
+        _self.elems.selTab_clipboardPaste];
 
-    if (!pasteElem) {
-      return;
-    }
+    for (var i = 0, n = elems.length; i < n; i++) {
+      elem = elems[i];
+      if (!elem) {
+        continue;
+      }
 
-    var enabled = pasteElem.className.indexOf(className) === -1;
+      elemEnabled = elem.className.indexOf(classDisabled) === -1;
 
-    if (!ev.data && enabled) {
-      pasteElem.className += className;
-    } else if (ev.data && !enabled) {
-      pasteElem.className = pasteElem.className.replace(className, '');
+      if (ev.state === ev.STATE_NONE && elemEnabled) {
+        elem.className += classDisabled;
+      } else if (ev.state === ev.STATE_SELECTED && !elemEnabled) {
+        elem.className = elem.className.replace(classDisabled, '');
+      }
     }
   };
 
@@ -1629,22 +1686,26 @@ pwlib.gui['default'] = function (app) {
    * @param {pwlib.appEvent.selectionChange} ev The application event object.
    */
   this.selectionChange = function (ev) {
-    var className   = ' ' + _self.classPrefix + 'disabled',
-        cutElem     = _self.commands.selectionCut,
-        cutEnabled  = cutElem.className.indexOf(className) === -1,
-        copyElem    = _self.commands.selectionCopy,
-        copyEnabled = copyElem.className.indexOf(className) === -1;
+    var classDisabled  = ' ' + _self.classPrefix + 'disabled',
+        elem, elemEnabled,
+        elems = [_self.commands.selectionCut, _self.commands.selectionCopy, 
+        _self.elems.selTab_selectionCut, _self.elems.selTab_selectionCopy, 
+        _self.commands.selectionDelete, _self.commands.selectionFill, 
+        _self.commands.selectionCrop];
 
-    if (!ev.state && copyEnabled) {
-      copyElem.className += className;
-    } else if (ev.state && !copyEnabled) {
-      copyElem.className = copyElem.className.replace(className, '');
-    }
+    for (var i = 0, n = elems.length; i < n; i++) {
+      elem = elems[i];
+      if (!elem) {
+        continue;
+      }
 
-    if (!ev.state && cutEnabled) {
-      cutElem.className += className;
-    } else if (ev.state && !cutEnabled) {
-      cutElem.className = cutElem.className.replace(className, '');
+      elemEnabled = elem.className.indexOf(classDisabled) === -1;
+
+      if (ev.state === ev.STATE_NONE && elemEnabled) {
+        elem.className += classDisabled;
+      } else if (ev.state === ev.STATE_SELECTED && !elemEnabled) {
+        elem.className = elem.className.replace(classDisabled, '');
+      }
     }
   };
 };
@@ -1802,6 +1863,7 @@ function guiFloatingPanel (gui, elem) {
  * the element users will be able to resize using the <var>resizeHandle</var> 
  * element.
  */
+// TODO: FIXME: make this work when scrolling of the viewport changes.
 function guiResizer (gui, resizeHandle, container) {
   var _self          = this,
       cStyle         = container.style,

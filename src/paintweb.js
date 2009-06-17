@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-16 23:51:26 +0300 $
+ * $Date: 2009-06-17 23:28:50 +0300 $
  */
 
 /**
@@ -52,7 +52,7 @@ function PaintWeb (win, doc) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090616;
+  this.build = 20090617;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -1434,8 +1434,17 @@ function PaintWeb (win, doc) {
 
     // The canvas state is reset once the dimensions change.
     var state      = this.stateSave(layerContext),
-        dataWidth  = MathMin(image.width,  cropWidth)  - cropX,
-        dataHeight = MathMin(image.height, cropHeight) - cropY;
+        dataWidth  = MathMin(image.width,  cropWidth),
+        dataHeight = MathMin(image.height, cropHeight),
+        sumX       = cropX + dataWidth,
+        sumY       = cropY + dataHeight;
+
+    if (sumX > image.width) {
+      dataWidth -= sumX - image.width;
+    }
+    if (sumY > image.height) {
+      dataHeight -= sumY - image.height;
+    }
 
     // The image is cleared once the dimensions change. We need to restore the image.
     var idata = false;
@@ -1826,6 +1835,9 @@ function PaintWeb (win, doc) {
     if (typeof id !== 'string' || !id) {
       return false;
     }
+
+    // TODO: it would be very nice to create the tool instance on register, for 
+    // further extensibility.
 
     var tool = pwlib.tools[id];
     if (typeof tool !== 'function') {

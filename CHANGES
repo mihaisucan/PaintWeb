@@ -1,3 +1,14 @@
+2009-06-17:
+===========
+
+- New commands within the selection tool.
+- Several important fixes for the selection tool (marquee 'management' issues).
+- The Selection tab is now done and properly styled, with proper interactivity.
+- Worked around some Opera bug regarding the handling of the selection marquee.
+- Fixed PaintWeb.imageCrop().
+- New configuration options for the selection tool: keyboard shortcuts.
+- New English strings.
+
 2009-06-16:
 ===========
 
@@ -7,6 +18,7 @@ and more.
 - Selection tool now uses a dashed marquee rendered with an HTML DIV element.
 - Fixed the mousekeys extension.
 - New application events: selectionChange and clipboardUpdate.
+- New configuration options for the selection tool.
 - New English strings.
 
 2009-06-15:

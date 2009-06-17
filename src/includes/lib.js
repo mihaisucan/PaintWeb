@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-06-16 23:05:48 +0300 $
+ * $Date: 2009-06-17 19:16:31 +0300 $
  */
 
 /**
@@ -641,6 +641,9 @@ pwlib.appEvent.shadowAllow = function (allowed) {
  * @param {Number} [height] Selection height.
  */
 pwlib.appEvent.selectionChange = function (state, x, y, width, height) {
+  this.STATE_NONE     = 0;
+  this.STATE_SELECTED = 2;
+
   this.state  = state;
   this.x      = x;
   this.y      = y;

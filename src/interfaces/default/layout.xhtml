@@ -1,5 +1,5 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
-  <!--- $Date: 2009-06-16 14:17:34 +0300 $ -->
+  <!--- $Date: 2009-06-17 20:03:49 +0300 $ -->
   <h1 class="paintweb_appTitle">PaintWeb</h1>
 
   <!-- All elements with data-pwTabPanel become interactive tabbed panels which 
@@ -132,18 +132,21 @@
 
     <!-- .paintweb_main_selection -->
     <div data-pwTab="selection" data-pwTabHide="true">
+      <p data-pwId="selTab_selectionCut">Cut selection</p>
+      <p data-pwId="selTab_selectionCopy">Copy selection</p>
+      <p data-pwId="selTab_clipboardPaste">Clipboard paste</p>
+
+      <p data-pwCommand="selectionCrop">Crop selection</p>
+      <p data-pwCommand="selectionDelete">Delete selection</p>
+      <p data-pwCommand="selectionFill">Fill selection</p>
+
       <p class="paintweb_opt_selectionTransparent">
-        <label title="When enabled, the background of the selection will be the 
-          current fill color. The background color is only visible when you 
-          enable the transformation mode as well.">
-        <input data-pwConfig="selection.transparent" type="checkbox" value="1" 
-        checked="checked" /> Transparent background</label>
+        <label><input data-pwConfig="selection.transparent" type="checkbox" 
+          value="1" checked="checked" /> Transparent background</label>
       </p>
       <p class="paintweb_opt_selectionTransform">
-        <label title="When enabled, dragging/resizing the selection also causes 
-          the selected pixels to be dragged/resized. [Enter]">
-        <input data-pwConfig="selection.transform" type="checkbox" value="1" /> 
-        Transformation mode</label>
+        <label><input data-pwConfig="selection.transform" type="checkbox" 
+          value="1" /> Transformation mode</label>
       </p>
     </div>
 
@@ -233,8 +236,8 @@
 
   <div id="viewport">
     <div id="canvasContainer">
-      <div id="canvasResizer">Resize the image Canvas</div>
     </div>
+    <div id="canvasResizer">Resize the image Canvas</div>
   </div> <!-- .paintweb_viewport -->
 
   <div class="paintweb_statusbar">

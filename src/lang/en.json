@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-16 15:21:54 +0300 $
+  // $Date: 2009-06-17 20:46:48 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -78,38 +78,44 @@
   },
 
   "commands": {
-    "historyUndo": "Undo",
+    "clipboardPaste": "Paste clipboard",
+    "help": "Help",
     "historyRedo": "Redo",
+    "historyUndo": "Undo",
     "imageClear": "Clear image",
     "imageSave": "Save image",
-    "selectionCut": "Cut selection",
     "selectionCopy": "Copy selection",
-    "clipboardPaste": "Paste clipboard",
-    "help": "Help"
+    "selectionCrop": "Crop selection",
+    "selectionCut": "Cut selection",
+    "selectionDelete": "Delete selection",
+    "selectionFill": "Fill the selection"
   },
 
   "inputs": {
     "line": {
-      "lineWidth": "Line width:",
-      "miterLimit": "Miter limit:",
       "lineCap": "Line cap",
       "lineCap_butt": "Butt",
-      "lineCap_square": "Square",
       "lineCap_round": "Round",
+      "lineCap_square": "Square",
       "lineJoin": "Line join",
+      "lineJoin_bevel": "Bevel",
       "lineJoin_miter": "Miter",
       "lineJoin_round": "Round",
-      "lineJoin_bevel": "Bevel"
+      "lineWidth": "Line width:",
+      "miterLimit": "Miter limit:"
     },
     "shadow": {
       "enable": "Enable shadows",
+      "enableTitle": "If checked, a shadow will render after each drawing operation you do.",
       "shadowBlur": "Blur:",
       "shadowOffsetX": "Distance X:",
       "shadowOffsetY": "Distance Y:"
     },
     "selection": {
       "transform": "Image manipulation",
-      "transparent": "Transparent selection"
+      "transformTitle": "If checked, the selected pixels will also be dragged/resized when you make changes to the selection. If unchecked, only the selection marquee will be dragged/resized - pixels will remain unaffected by any such changes.",
+      "transparent": "Transparent selection",
+      "transparentTitle": "If checked, the background will remain transparent. If unchecked, the background will be filled with the current fill color.",
     },
     "shapeType": "Shape type",
     "shapeType_both": "Both",

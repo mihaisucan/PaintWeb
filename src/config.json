@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-16 23:52:30 +0300 $
+  // $Date: 2009-06-17 15:34:12 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -330,9 +330,21 @@
      * Selection marquee border width.
      *
      * @type Number
-     * @default 2
+     * @default 3
      */
-    "borderWidth": 2
+    "borderWidth": 3,
+
+    /**
+     * Keyboard shortcuts for several selection-related commands.
+     * @type Object
+     */
+    "keys": {
+      "selectionCrop": "Control K",
+      "selectionDelete": "Delete",
+      "selectionDrop": "Escape",
+      "selectionFill": "Alt Backspace",
+      "transformToggle": "Enter"
+    }
   },
 
   /**

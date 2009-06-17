@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-16 21:53:18 +0300 $
+ * $Date: 2009-06-17 22:57:25 +0300 $
  */
 
 /* OLPC XO DPI resolution detection */
@@ -56,24 +56,24 @@
 
 .paintweb_placeholder label { cursor: pointer }
 
-.paintweb_placeholder input[type=text], .paintweb_placeholder input[type=password], .paintweb_placeholder input[type=number] {
-  border: 1px solid #000;
-}
+.paintweb_placeholder input[type=text], .paintweb_placeholder input[type=password], .paintweb_placeholder input[type=number] { border: 1px solid #000 }
 
-.paintweb_placeholder a:focus { outline: 1px solid #000 }
+.paintweb_placeholder a:focus { outline: 1px solid #888 }
 
 .paintweb_appTitle { display: none }
 
 .paintweb_viewport {
   background: #999;
   border: 1px solid #000;
+  height: 400px;
   overflow: auto;
-  height: 400px
+  position: relative
 }
 
 .paintweb_canvasContainer {
   background: #fff;
   border: 1px solid #000;
+  overflow: hidden;
   position: relative
 }
 
@@ -98,8 +98,6 @@
   width: 5px
 }
 
-.paintweb_selectionBuffer { display: none }
-
 /* If we use display:none Opera will not properly determine the image 
  * width/height. */
 .paintweb_insertimgElement {
@@ -118,6 +116,13 @@
 .paintweb_mousekeysPointer.paintweb_mouseDown {
   background: #0ff;
   border: 1px solid #000
+}
+
+.paintweb_selectionMarquee {
+  border: 3px dashed #333;
+  outline: 1px dashed #fff;
+  opacity: 0.7;
+  position: absolute
 }
 
 .paintweb_tabPanel {
@@ -213,9 +218,9 @@
   white-space: nowrap
 }
 
-.paintweb_tool:hover, .paintweb_tool:focus, .paintweb_command:hover, .paintweb_command:focus, .paintweb_icon:hover, .paintweb_icon:focus {
-  background: #fff;
-}
+.paintweb_tool:hover, .paintweb_tool:focus,
+.paintweb_command:hover, .paintweb_command:focus,
+.paintweb_icon:hover, .paintweb_icon:focus { background: #fff }
 
 .paintweb_tool a:hover, .paintweb_tool a:focus, .paintweb_command a:hover, .paintweb_command a:focus, .paintweb_icon a:hover, .paintweb_icon a:focus {
   color: #000;
@@ -478,10 +483,46 @@
   width: 9em !important
 }
 
-.paintweb_selectionMarquee {
-  position: absolute;
-  border: 2px dashed #000;
+.paintweb_main_selection { margin: 5px }
+
+.paintweb_main_selection .paintweb_command {
+  float: left;
+  margin: 0;
+  padding: 0
 }
+
+.paintweb_main_selection .paintweb_cmd_selectionCopy,
+.paintweb_main_selection .paintweb_cmd_clipboardPaste { border-left: 0 }
+
+.paintweb_cmd_selectionCrop {
+  border-top: 0;
+  clear: left
+}
+
+.paintweb_cmd_selectionDelete, .paintweb_cmd_selectionFill {
+  border-left: 0;
+  border-top: 0
+}
+
+.paintweb_opt_selectionTransparent, .paintweb_opt_selectionTransform {
+  background: #f2f2f2;
+  border: 1px solid #d6d6d6;
+  left: 110px;
+  line-height: 31px;
+  line-height: 31px;
+  margin: 0;
+  padding: 0 5px;
+  position: absolute;
+  top: 0;
+  vertical-align: middle;
+  width: 15em
+}
+
+.paintweb_opt_selectionTransform {
+  border-top: 0;
+  top: 33px
+}
+
 
 /* Icons */
 
@@ -494,6 +535,12 @@
 .paintweb_cmd_selectionCopy a { background-image: url('icons/selectionCopy.png') }
 
 .paintweb_cmd_clipboardPaste a { background-image: url('icons/clipboardPaste.png') }
+
+.paintweb_cmd_selectionCrop a { background-image: url('icons/selectionCrop.png') }
+
+.paintweb_cmd_selectionDelete a { background-image: url('icons/selectionDelete.png') }
+
+.paintweb_cmd_selectionFill a { background-image: url('icons/selectionFill.png') }
 
 .paintweb_cmd_imageSave a { background-image: url('icons/imageSave.png') }
 
