@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-17 20:46:48 +0300 $
+  // $Date: 2009-06-18 21:42:27 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -14,6 +14,7 @@
   "extensionRegisterFailed": "Error: failed to register extension '%id%'!",
   "errorToolActivate": "Error: the tool you want could not be properly activated!",
   "errorInitGUI": "Error: the interface failed to initialize!",
+  "failedSelectionCopy": "Error: failed to copy the selected pixels into memory.",
   "noMainTabPanel": "Error: the interface layout has no tabbed panel with ID = main.",
   "guiMarkupImportFailed": "Error: the interface markup code could not be imported into the main document.",
   "guiMarkupParseFailed": "Error: the interface markup code could not be properly parsed.",
@@ -116,6 +117,16 @@
       "transformTitle": "If checked, the selected pixels will also be dragged/resized when you make changes to the selection. If unchecked, only the selection marquee will be dragged/resized - pixels will remain unaffected by any such changes.",
       "transparent": "Transparent selection",
       "transparentTitle": "If checked, the background will remain transparent. If unchecked, the background will be filled with the current fill color.",
+    },
+    "text": {
+      "bold": "Bold",
+      "italic": "Italic",
+      "fontFamily": "Font family",
+      "fontSize": "Font size",
+      "textAlign": "Text alignment",
+      "textAlign_left": "Left",
+      "textAlign_center": "Center",
+      "textAlign_right": "Right",
     },
     "shapeType": "Shape type",
     "shapeType_both": "Both",

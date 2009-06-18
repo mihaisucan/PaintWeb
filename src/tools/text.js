@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-03 18:31:01 +0300 $
+ * $Date: 2009-06-18 21:50:44 +0300 $
  */
 
 /**
@@ -34,18 +34,13 @@
  */
 pwlib.tools.text = function (app) {
   var _self         = this,
-      clearInterval = window.clearInterval,
-      config        = app.config,
-      container     = app.elems.container,
+      clearInterval = app.win.clearInterval,
+      config        = app.config.text,
       context       = app.buffer.context,
-      elems         = app.elems,
+      gui           = app.gui,
       image         = app.image,
-      inputs        = app.inputs,
-      layerUpdate   = app.layerUpdate,
       mouse         = app.mouse,
-      setInterval   = window.setInterval,
-      statusShow    = app.gui.statusShow,
-      toolActivate  = app.toolActivate;
+      setInterval   = app.win.setInterval;
 
   /**
    * The interval ID used for invoking the drawing operation every few 
@@ -73,6 +68,9 @@ pwlib.tools.text = function (app) {
    */
   var needsRedraw = false;
 
+  var textString = null,
+      ev_configChangeId = null;
+
   /**
    * Tool preactivation code. This method is invoked when the user attempts to 
    * activate the text tool.
@@ -81,9 +79,13 @@ pwlib.tools.text = function (app) {
    * if not.
    */
   this.preActivate = function () {
-    if (!context.fillText || !context.strokeText) {
+    if (!gui.inputs.textString) {
+      return false;
+
+    } else if (!context.fillText || !context.strokeText) {
       alert(app.lang.errorTextUnsupported);
       return false;
+
     } else {
       return true;
     }
@@ -99,17 +101,14 @@ pwlib.tools.text = function (app) {
     mouse.x = Math.round(image.width  / 2);
     mouse.y = Math.round(image.height / 2);
 
-    // Show the text options.
-    elems.textOptions.className = '';
-
-    setup('add');
+    textString = gui.inputs.textString;
+    textString.addEventListener('input', ev_configChange, false);
+    ev_configChangeId = app.events.add('configChange', ev_configChange);
 
     if (!timer) {
-      timer = setInterval(_self.draw, config.toolDrawDelay);
+      timer = setInterval(_self.draw, app.config.toolDrawDelay);
     }
     needsRedraw = true;
-
-    return true;
   };
 
   /**
@@ -123,45 +122,53 @@ pwlib.tools.text = function (app) {
     }
     needsRedraw = false;
 
-    setup('remove');
+    if (ev_configChangeId) {
+      app.events.remove('configChange', ev_configChangeId);
+    }
+
+    textString.removeEventListener('input', ev_configChange, false);
 
     context.clearRect(0, 0, image.width, image.height);
-
-    // Minimize the text options.
-    elems.textOptions.className = 'minimized';
 
     return true;
   };
 
   /**
-   * Setup the <code>draw()</code> event handler for several inputs. This allows 
-   * the text rendering to be updated automatically when some value changes.
+   * The <code>configChange</code> application event handler. This is also the 
+   * <code>input</code> event handler for the text string input element. This 
+   * method updates the Canvas text-related properties as needed, and re-renders 
+   * the text.
    *
-   * @private
-   * @param {String} act The action to perform: 'add' or 'remove' the event 
-   * listeners.
+   * @param {Event|pwlib.appEvent.configChange} ev The application/DOM event 
+   * object.
    */
-  function setup (act) {
-    var ev, i, listeners = ['textString', 'textFont', 'textSize', 'lineWidth'];
+  function ev_configChange (ev) {
+    if (ev.type === 'input') {
+      needsRedraw = true;
 
-    for (i in listeners) {
-      i = listeners[i];
-      i = inputs[i];
-      if (!i) {
-        continue;
-      }
+    } else if (ev.type !== 'configChange' || ev.group !== 'text') {
+      return;
+    }
 
-      if (i.tagName.toLowerCase() == 'select' || i.type == 'checkbox') {
-        ev = 'change';
-      } else {
-        ev = 'input';
-      }
+    var font = '';
 
-      if (act == 'add') {
-        i.addEventListener(ev,    _self.draw, false);
-      } else {
-        i.removeEventListener(ev, _self.draw, false);
-      }
+    switch (ev.config) {
+      case 'bold':
+      case 'italic':
+      case 'fontSize':
+      case 'fontFamily':
+        if (config.bold) {
+          font += 'bold ';
+        }
+        if (config.italic) {
+          font += 'italic ';
+        }
+        font += config.fontSize + 'px ' + config.fontFamily;
+        context.font = font;
+
+      case 'textAlign':
+      case 'textBaseline':
+        needsRedraw = true;
     }
   };
 
@@ -175,23 +182,21 @@ pwlib.tools.text = function (app) {
   /**
    * Perform the drawing operation.
    *
-   * @param {Boolean} [force] Force redrawing.
-   *
    * @see PaintWeb.config.toolDrawDelay
    */
-  this.draw = function (force) {
-    if (!needsRedraw && !force) {
+  this.draw = function () {
+    if (!needsRedraw) {
       return;
     }
 
     context.clearRect(0, 0, image.width, image.height);
 
     if (config.shapeType != 'stroke') {
-      context.fillText(inputs.textString.value, mouse.x, mouse.y);
+      context.fillText(textString.value, mouse.x, mouse.y);
     }
 
     if (config.shapeType != 'fill') {
-      context.strokeText(inputs.textString.value, mouse.x, mouse.y);
+      context.strokeText(textString.value, mouse.x, mouse.y);
     }
 
     needsRedraw = false;
@@ -211,10 +216,10 @@ pwlib.tools.text = function (app) {
     }
 
     _self.draw();
-    layerUpdate();
+    app.layerUpdate();
 
     if (prevTool) {
-      toolActivate(prevTool, ev);
+      app.toolActivate(prevTool, ev);
     }
 
     if (ev.stopPropagation) {
@@ -236,7 +241,7 @@ pwlib.tools.text = function (app) {
     }
 
     mouse.buttonDown = false;
-    toolActivate(prevTool, ev);
+    app.toolActivate(prevTool, ev);
 
     return true;
   };

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-17 21:10:38 +0300 $
+ * $Date: 2009-06-18 21:28:58 +0300 $
  */
 
 /**
@@ -416,7 +416,7 @@ pwlib.gui['default'] = function (app) {
         continue;
       }
       tag = elem.tagName.toLowerCase();
-      isInput = tag === 'input' || tag === 'select';
+      isInput = tag === 'input' || tag === 'select' || tag === 'textarea';
 
       // Store references to commands.
       cmd = elem.getAttribute('data-pwCommand');
@@ -721,7 +721,7 @@ pwlib.gui['default'] = function (app) {
    * @private
    */
   this.canvasResizeStart = function () {
-    this.resizeHandle.style.display = 'none';
+    this.resizeHandle.style.visibility = 'hidden';
 
     // ugly...
     this.timeout_ = setTimeout(function () {
@@ -739,10 +739,10 @@ pwlib.gui['default'] = function (app) {
    * @param {pwlib.appEvent.guiResizeEnd} ev The application event object.
    */
   this.canvasResizeEnd = function (ev) {
-    this.resizeHandle.style.display = '';
+    this.resizeHandle.style.visibility = '';
 
-    app.imageCrop(0, 0, ev.width / app.image.canvasScale,
-        ev.height / app.image.canvasScale);
+    app.imageCrop(0, 0, MathRound(ev.width / app.image.canvasScale),
+        MathRound(ev.height / app.image.canvasScale));
 
     if (this.timeout_) {
       clearTimeout(this.timeout_);
@@ -928,58 +928,6 @@ pwlib.gui['default'] = function (app) {
     return true; 
   };
 
-  // This is the event handler for most of the icon-based options. It used for 
-  // shapeType, lineJoin, lineCap and textAlign
-  this.opt_icon = function (ev) {
-    if (!this.id) {
-      return false;
-    }
-
-    var pelem = this.parentNode;
-    if (!pelem._prop) {
-      return false;
-    }
-
-    var old_val = '', val = this.id.replace(pelem._prop + '-', '');
-    if (pelem._prop == 'shapeType') {
-      old_val = _self.config.shapeType;
-      _self.config.shapeType = val;
-    } else {
-      old_val = _self.buffer.context[pelem._prop];
-      _self.buffer.context[pelem._prop] = val;
-    }
-
-    var elem = _self.doc.getElementById(pelem._prop + '-' + old_val);
-    if (elem) {
-      elem.className = '';
-    }
-
-    this.className = 'active';
-
-    if (_self.tool && _self.tool._id == 'text' && 'draw' in _self.tool) {
-      _self.tool.draw(ev);
-    }
-
-    return true;
-  };
-
-  // The event handler for the text Bold/Italic icons.
-  this.opt_textStyle = function (ev) {
-    if (!this._prop) {
-      return false;
-    }
-
-    if (this.className == 'active') {
-      _self[this._prop] = false;
-      this.className  = '';
-    } else {
-      _self[this._prop] = true;
-      this.className  = 'active';
-    }
-
-    return _self.update_textProps(ev);
-  };
-
   // This is event handler for changes to the text font input. If the user wants 
   // to pick another font, then he/she can type the new font name to easily add 
   // it to the list of available fonts.
@@ -1019,50 +967,6 @@ pwlib.gui['default'] = function (app) {
 
     return _self.update_textProps(ev);
   };
-
-  // This event handler simply builds the font CSS property for use with the Text API.
-  this.update_textProps = function (ev) {
-    if (!_self.layer.context.fillText || !_self.inputs.textFont || 
-        !_self.inputs.textSize) {
-      return false;
-    }
-
-    // If this is the textSize input, then call _self.ev_input_nr(ev) to check the input value (the number).
-    // Don't do anything if the value is invalid, or if it was not really updated.
-    if (ev.target && ev.target.id == _self.inputs.textSize.id && !_self.ev_input_nr(ev)) {
-      return false;
-    }
-
-    var my_font   = _self.inputs.textFont.value,
-        my_size   = _self.inputs.textSize.value,
-        my_bold   = _self.textBold,
-        my_italic = _self.textItalic,
-        prop      = '';
-
-    if (my_bold) {
-      prop += 'bold ';
-    }
-    if (my_italic) {
-      prop += 'italic ';
-    }
-    if (my_size) {
-      prop += my_size + 'px ';
-    }
-    if (my_font) {
-      prop += my_font;
-    }
-
-    _self.layer.context.font = _self.buffer.context.font = prop;
-
-    if (_self.tool && _self.tool._id == 'text' && 'draw' in _self.tool) {
-      _self.tool.draw(ev);
-    }
-
-    return true;
-  };
-
-  // What follows are the event handlers for several buttons used in the 
-  // application.
 
   /**
    * The "Help" command. This method displays the "Help" panel.
@@ -1669,9 +1573,9 @@ pwlib.gui['default'] = function (app) {
 
       elemEnabled = elem.className.indexOf(classDisabled) === -1;
 
-      if (ev.state === ev.STATE_NONE && elemEnabled) {
+      if (!ev.data && elemEnabled) {
         elem.className += classDisabled;
-      } else if (ev.state === ev.STATE_SELECTED && !elemEnabled) {
+      } else if (ev.data && !elemEnabled) {
         elem.className = elem.className.replace(classDisabled, '');
       }
     }
@@ -1863,13 +1767,13 @@ function guiFloatingPanel (gui, elem) {
  * the element users will be able to resize using the <var>resizeHandle</var> 
  * element.
  */
-// TODO: FIXME: make this work when scrolling of the viewport changes.
 function guiResizer (gui, resizeHandle, container) {
   var _self          = this,
       cStyle         = container.style,
       doc            = gui.app.doc,
       guiResizeEnd   = appEvent.guiResizeEnd,
-      guiResizeStart = appEvent.guiResizeStart;
+      guiResizeStart = appEvent.guiResizeStart,
+      win            = gui.app.win;
 
   /**
    * Custom application events interface.
@@ -1879,16 +1783,23 @@ function guiResizer (gui, resizeHandle, container) {
 
   /**
    * The resize handle DOM element.
-   * @type Element
+   * @type HTMLElement
    */
   this.resizeHandle = resizeHandle;
 
   /**
    * The container DOM element. This is the element that's resized by the user 
    * when he/she drags the resize handle.
-   * @type Element
+   * @type HTMLElement
    */
   this.container = container;
+
+  /**
+   * The viewport element. This element is the first parent element which has 
+   * the style.overflow set to "auto" or "scroll".
+   * @type HTMLElement
+   */
+  this.viewport = null;
 
   /**
    * Tells if the user resizing the container now.
@@ -1902,6 +1813,9 @@ function guiResizer (gui, resizeHandle, container) {
   // The initial container dimensions.
   var cWidth = 0, cHeight = 0;
 
+  // The initial viewport scroll position.
+  var vScrollLeft = 0, vScrollTop = 0;
+
   /**
    * Initialize the resize functionality.
    * @private
@@ -1909,6 +1823,20 @@ function guiResizer (gui, resizeHandle, container) {
   function init () {
     _self.events = new pwlib.appEvents(_self);
     resizeHandle.addEventListener('mousedown', ev_mousedown, false);
+
+    // Find the viewport parent element.
+    var cs, pNode = _self.container.parentNode,
+        found = null;
+    while (!found && pNode) {
+      cs = win.getComputedStyle(pNode, null);
+      if (cs && (cs.overflow === 'scroll' || cs.overflow === 'auto')) {
+        found = pNode;
+      } else {
+        pNode = pNode.parentNode;
+      }
+    }
+
+    _self.viewport = found;
   };
 
   /**
@@ -1933,6 +1861,11 @@ function guiResizer (gui, resizeHandle, container) {
       return;
     }
 
+    if (_self.viewport) {
+      vScrollLeft = _self.viewport.scrollLeft;
+      vScrollTop  = _self.viewport.scrollTop;
+    }
+
     _self.resizing = true;
     doc.addEventListener('mousemove', ev_mousemove, false);
     doc.addEventListener('mouseup',   ev_mouseup,   false);
@@ -1954,8 +1887,20 @@ function guiResizer (gui, resizeHandle, container) {
    * @param {Event} ev The DOM Event object.
    */
   function ev_mousemove (ev) {
-    cStyle.width  = (cWidth  + ev.clientX - mx) + 'px';
-    cStyle.height = (cHeight + ev.clientY - my) + 'px';
+    var w = cWidth  + ev.clientX - mx,
+        h = cHeight + ev.clientY - my;
+
+    if (_self.viewport) {
+      if (_self.viewport.scrollLeft !== vScrollLeft) {
+        w += _self.viewport.scrollLeft - vScrollLeft;
+      }
+      if (_self.viewport.scrollTop !== vScrollTop) {
+        h += _self.viewport.scrollTop - vScrollTop;
+      }
+    }
+
+    cStyle.width  = w + 'px';
+    cStyle.height = h + 'px';
   };
 
   /**
@@ -1967,12 +1912,8 @@ function guiResizer (gui, resizeHandle, container) {
    * @param {Event} ev The DOM Event object.
    */
   function ev_mouseup (ev) {
-    var w = cWidth  + ev.clientX - mx,
-        h = cHeight + ev.clientY - my,
-        cancel = _self.events.dispatch(new guiResizeEnd(mx, my, w, h));
-
-    cStyle.width  = w + 'px';
-    cStyle.height = h + 'px';
+    var cancel = _self.events.dispatch(new guiResizeEnd(ev.clientX, ev.clientY, 
+          parseInt(cStyle.width), parseInt(cStyle.height)));
 
     if (cancel) {
       return;
@@ -2031,8 +1972,6 @@ function guiTabPanel (gui, panel) {
    * @type Element
    */
   this.container = panel;
-
-  /**
 
   /**
    * Holds the ID of the currently active tab.

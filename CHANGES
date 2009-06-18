@@ -1,3 +1,24 @@
+2009-06-18:
+===========
+
+- New "selectAll" command. Updated the selection tool accordingly.
+- New keyboard shortcut: Control A, for "selectAll".
+- Fixed multiple bugs related to the use of get/putImageData. I did some 
+"stress" testing with images in excess of 5000 x 5000 pixels in Opera, Firefox 
+and Safari on a Windows machine, Intel Core 2 Duo E6700, 8 GB RAM, 64 bits, etc.  
+The results were quite interesting: the fastest was Firefox, albeit it is very 
+slow when performing get/putImageData. It quickly throws "out of memory" 
+exceptions. The bug fixes I did are for the main code and for the selection 
+tool.
+- Made numerous fixes for the selection tool - there were some cases which were 
+spitting out exceptions, yay.
+- Fixed image cropping issues + canvas rescaling, using the resize handle.
+- Started to update the text tool for the new GUI. The layout is almost ready.  
+The text tool code is almost done as well. The text tab CSS styling will come 
+tomorrow.
+- New configuration options for the text tool.
+- New English strings.
+
 2009-06-17:
 ===========
 

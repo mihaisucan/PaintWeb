@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-17 23:28:50 +0300 $
+ * $Date: 2009-06-18 22:22:15 +0300 $
  */
 
 /**
@@ -52,7 +52,7 @@ function PaintWeb (win, doc) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090617;
+  this.build = 20090618;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -645,6 +645,7 @@ function PaintWeb (win, doc) {
   this.initCommands = function () {
     if (this.commandRegister('historyUndo',    this.historyUndo) &&
         this.commandRegister('historyRedo',    this.historyRedo) &&
+        this.commandRegister('selectAll',      this.selectAll) &&
         this.commandRegister('selectionCut',   this.selectionCut) &&
         this.commandRegister('selectionCopy',  this.selectionCopy) &&
         this.commandRegister('clipboardPaste', this.clipboardPaste) &&
@@ -848,7 +849,7 @@ function PaintWeb (win, doc) {
     kbListener_ = new pwlib.dom.KeyboardEventListener(window,
         {keydown:  this.ev_keyboard,
          keypress: this.ev_keyboard,
-         keyup: this.ev_keyboard});
+         keyup:    this.ev_keyboard});
 
     this.updateCanvasScaling();
     this.win.addEventListener('resize', this.updateCanvasScaling, false);
@@ -1159,6 +1160,8 @@ function PaintWeb (win, doc) {
       switch (ev.target.nodeName.toLowerCase()) {
         case 'input':
         case 'select':
+        case 'textarea':
+        case 'button':
           return;
       }
     }
@@ -1402,8 +1405,14 @@ function PaintWeb (win, doc) {
         layerCanvas   = this.layer.canvas,
         layerContext  = this.layer.context;
 
-    if (!cropWidth || !cropHeight || isNaN(cropWidth) || isNaN(cropHeight) || 
-        cropX >= image.width || cropY >= image.height) {
+    cropX      = parseInt(cropX);
+    cropY      = parseInt(cropY);
+    cropWidth  = parseInt(cropWidth);
+    cropHeight = parseInt(cropHeight);
+
+    if (!cropWidth || !cropHeight || isNaN(cropX) || isNaN(cropY) || 
+        isNaN(cropWidth) || isNaN(cropHeight) || cropX >= image.width || cropY 
+        >= image.height) {
       return false;
     }
 
@@ -1447,9 +1456,16 @@ function PaintWeb (win, doc) {
     }
 
     // The image is cleared once the dimensions change. We need to restore the image.
-    var idata = false;
+    var idata = null;
+
     if (layerContext.getImageData) {
-      idata = layerContext.getImageData(cropX, cropY, dataWidth, dataHeight);
+      // TODO: handle "out of memory" errors.
+      try {
+        idata = layerContext.getImageData(cropX, cropY, dataWidth, dataHeight);
+      } catch (err) {
+        // do not continue if we can't store the image in memory.
+        return false;
+      }
     }
 
     layerCanvas.width  = cropWidth;
@@ -1462,9 +1478,11 @@ function PaintWeb (win, doc) {
     this.stateRestore(layerContext, state);
     state = this.stateSave(bufferContext);
 
-    idata = false;
+    idata = null;
     if (bufferContext.getImageData) {
-      idata = bufferContext.getImageData(cropX, cropY, dataWidth, dataHeight);
+      try {
+        idata = bufferContext.getImageData(cropX, cropY, dataWidth, dataHeight);
+      } catch (err) { }
     }
 
     bufferCanvas.width  = cropWidth;
@@ -1622,8 +1640,13 @@ function PaintWeb (win, doc) {
       history.states.splice(prevPos, history.states.length);
     }
 
-    history.states.push(layerContext.getImageData(0, 0, this.image.width, 
-          this.image.height));
+    // TODO: in case of "out of memory" errors... I should show up some error.
+    try {
+      history.states.push(layerContext.getImageData(0, 0, this.image.width, 
+            this.image.height));
+    } catch (err) {
+      return false;
+    }
 
     // If we have too many history ImageDatas, remove the oldest ones
     if ('historyLimit' in this.config &&
@@ -1683,8 +1706,8 @@ function PaintWeb (win, doc) {
 
     // Each image in the history can have a different size. As such, the script 
     // must take this into consideration.
-    var w = Math.min(this.image.width,  himg.width),
-        h = Math.min(this.image.height, himg.height);
+    var w = MathMin(this.image.width,  himg.width),
+        h = MathMin(this.image.height, himg.height);
 
     layerContext.clearRect(0, 0, this.image.width, this.image.height);
 
@@ -2156,6 +2179,23 @@ function PaintWeb (win, doc) {
   };
 
   /**
+   * Select all the pixels. This activates the selection tool, and selects the 
+   * entire image.
+   *
+   * @param {Event} [ev] The DOM Event object which generated the request.
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   *
+   * @see {pwlib.tools.selection.selectAll} The command implementation.
+   */
+  this.selectAll = function (ev) {
+    if (_self.toolActivate('selection', ev)) {
+      return _self.tool.selectAll(ev);
+    } else {
+      return false;
+    }
+  };
+
+  /**
    * Cut the available selection. This only works when the selection tool is 
    * active and when some selection is available.
    *
@@ -2251,6 +2291,13 @@ function PaintWeb (win, doc) {
           ev.value = parseInt(ev.value);
         case 'lineJoin':
         case 'lineCap':
+          _self.buffer.context[ev.config] = ev.value;
+      }
+
+    } else if (ev.group === 'text') {
+      switch (ev.config) {
+        case 'textAlign':
+        case 'textBaseline':
           _self.buffer.context[ev.config] = ev.value;
       }
     }

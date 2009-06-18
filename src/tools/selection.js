@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-17 23:24:07 +0300 $
+ * $Date: 2009-06-18 22:02:42 +0300 $
  */
 
 /**
@@ -292,8 +292,8 @@ pwlib.tools.selection = function (app) {
       return false;
     }
 
-    sel.canvas.width  = image.width;
-    sel.canvas.height = image.height;
+    sel.canvas.width  = 5;
+    sel.canvas.height = 5;
 
     sel.context = sel.canvas.getContext('2d');
     if (!sel.context) {
@@ -716,9 +716,8 @@ pwlib.tools.selection = function (app) {
       }
 
       // Parameters:
-      // source image, src x, src y, src width, src height, dest x, dest y, dest w, dest h
-      bufferContext.drawImage(sel.canvas, 0, 0, sel.widthOriginal, 
-          sel.heightOriginal, x, y, sel.width, sel.height);
+      // source image, dest x, dest y, dest width, dest height
+      bufferContext.drawImage(sel.canvas, x, y, sel.width, sel.height);
     }
 
     marqueeStyle.top  = (y * image.canvasScale) + 'px';
@@ -839,9 +838,8 @@ pwlib.tools.selection = function (app) {
       }
 
       // Parameters:
-      // source image, src x, src y, src width, src height, dest x, dest y, dest w, dest h
-      bufferContext.drawImage(sel.canvas, 0, 0, sel.widthOriginal, 
-          sel.heightOriginal, x, y, w, h);
+      // source image, dest x, dest y, dest width, dest height
+      bufferContext.drawImage(sel.canvas, x, y, w, h);
     }
 
     marqueeStyle.top    = (y * image.canvasScale) + 'px';
@@ -949,16 +947,14 @@ pwlib.tools.selection = function (app) {
       selectionBufferInit();
     }
 
-    bufferContext.clearRect(0, 0, image.width, image.height);
+    bufferContext.clearRect(sel.x, sel.y, sel.width, sel.height);
 
     if (!ev.value) {
       bufferContext.fillRect(sel.x, sel.y, sel.width, sel.height);
     }
 
     // Draw the updated selection
-    bufferContext.drawImage(sel.canvas, 0, 0,
-        sel.widthOriginal, sel.heightOriginal,
-        sel.x, sel.y, sel.width, sel.height);
+    bufferContext.drawImage(sel.canvas, sel.x, sel.y, sel.width, sel.height);
   };
 
   /**
@@ -1001,13 +997,14 @@ pwlib.tools.selection = function (app) {
       bufferContext.fillRect(x, y, w, h);
     }
 
-    // Copy the currently selected ImageData into the buffer canvas
+    // Parameters:
+    // source image, src x, src y, src w, src h, dest x, dest y, dest w, dest h
     bufferContext.drawImage(layerCanvas, x, y, w, h, x, y, w, h);
 
-    sel.context.clearRect(0, 0, image.width, image.height);
+    sel.canvas.width  = sel.widthOriginal;
+    sel.canvas.height = sel.heightOriginal;
 
-    // Also put the selected ImageData into the selection buffer.
-    // Parameters: source image, src x, src y, src width, src height, dest x, dest y, dest w, dest h
+    // Also put the selected pixels into the selection buffer.
     sel.context.drawImage(layerCanvas, x, y, w, h, dx, dy, w, h);
 
     // Clear the selected pixels from the image
@@ -1030,12 +1027,12 @@ pwlib.tools.selection = function (app) {
       layerContext.fillRect(sel.x, sel.y, sel.width, sel.height);
     }
 
-    layerContext.drawImage(sel.canvas, 0, 0, sel.widthOriginal, 
-        sel.heightOriginal, sel.x, sel.y, sel.width, sel.height);
+    layerContext.drawImage(sel.canvas, sel.x, sel.y, sel.width, sel.height);
+    bufferContext.clearRect(sel.x, sel.y, sel.width, sel.height);
 
-    bufferContext.clearRect(0, 0, image.width, image.height);
-
-    sel.layerCleared = false;
+    sel.layerCleared  = false;
+    sel.canvas.width  = 5;
+    sel.canvas.height = 5;
 
     app.historyAdd();
   };
@@ -1065,6 +1062,45 @@ pwlib.tools.selection = function (app) {
   };
 
   /**
+   * Select all the entire image.
+   *
+   * <p>This method dispatches the {@link pwlib.appEvent.selectionChange} 
+   * application event.
+   *
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   */
+  this.selectAll = function () {
+    if (_self.state !== _self.STATE_NONE && _self.state !== 
+        _self.STATE_SELECTED) {
+      return false;
+    }
+
+    if (_self.state === _self.STATE_SELECTED) {
+      selectionMergeStrict();
+    } else {
+      _self.state = _self.STATE_SELECTED;
+      marqueeStyle.display = '';
+    }
+
+    sel.x      = 0;
+    sel.y      = 0;
+    sel.width  = image.width;
+    sel.height = image.height;
+
+    marqueeStyle.top     = '0px';
+    marqueeStyle.left    = '0px';
+    marqueeStyle.width   = (sel.width*image.canvasScale  - borderDouble) + 'px';
+    marqueeStyle.height  = (sel.height*image.canvasScale - borderDouble) + 'px';
+
+    mouseAreaUpdate();
+
+    app.events.dispatch(new appEvent.selectionChange(_self.state, sel.x, sel.y, 
+          sel.width, sel.height));
+
+    return true;
+  };
+
+  /**
    * Cut the selected pixels. The associated ImageData is stored in 
    * <var>app.clipboard</var.
    *
@@ -1078,15 +1114,18 @@ pwlib.tools.selection = function (app) {
       return false;
     }
 
-    bufferContext.clearRect(0, 0, image.width, image.height);
-    sel.context.clearRect(0, 0, image.width, image.height);
+    if (sel.layerCleared) {
+      bufferContext.clearRect(sel.x, sel.y, sel.width, sel.height);
 
-    if (!sel.layerCleared) {
+      sel.canvas.width  = 5;
+      sel.canvas.height = 5;
+      sel.layerCleared = false;
+
+    } else {
       layerContext.clearRect(sel.x, sel.y, sel.width, sel.height);
       app.historyAdd();
     }
 
-    sel.layerCleared = false;
     _self.state = _self.STATE_NONE;
     marqueeHide();
 
@@ -1128,11 +1167,21 @@ pwlib.tools.selection = function (app) {
         h = image.height - sel.y;
       }
 
-      app.clipboard = layerContext.getImageData(sel.x, sel.y, w, h);
+      try {
+        app.clipboard = layerContext.getImageData(sel.x, sel.y, w, h);
+      } catch (err) {
+        alert(lang.failedSelectionCopy);
+        return false;
+      }
 
     } else {
-      app.clipboard = sel.context.getImageData(0, 0, sel.widthOriginal, 
-          sel.heightOriginal);
+      try {
+        app.clipboard = sel.context.getImageData(0, 0, sel.widthOriginal, 
+            sel.heightOriginal);
+      } catch (err) {
+        alert(lang.failedSelectionCopy);
+        return false;
+      }
     }
 
     app.events.dispatch(new appEvent.clipboardUpdate(app.clipboard));
@@ -1172,34 +1221,32 @@ pwlib.tools.selection = function (app) {
         w = app.clipboard.width,
         h = app.clipboard.height;
 
-    marqueeStyle.top     = (y * image.canvasScale) + 'px';
-    marqueeStyle.left    = (x * image.canvasScale) + 'px';
-    marqueeStyle.width   = (w * image.canvasScale - borderDouble) + 'px';
-    marqueeStyle.height  = (h * image.canvasScale - borderDouble) + 'px';
-    marqueeStyle.display = '';
+    sel.canvas.width  = w;
+    sel.canvas.height = h;
+    sel.context.putImageData(app.clipboard, 0, 0);
 
     if (_self.state === _self.STATE_SELECTED) {
-      bufferContext.clearRect(0, 0, image.width, image.height);
+      bufferContext.clearRect(sel.x, sel.y, sel.width, sel.height);
+    } else {
+      _self.state = _self.STATE_SELECTED;
     }
 
     if (!config.transparent) {
       bufferContext.fillRect(x, y, w, h);
     }
-
-    bufferContext.putImageData(app.clipboard, x, y);
-
-    sel.context.clearRect(0, 0, image.width, image.height);
-    sel.context.putImageData(app.clipboard, 0, 0);
+    bufferContext.drawImage(sel.canvas, x, y, w, h);
 
     sel.widthOriginal  = sel.width  = w;
     sel.heightOriginal = sel.height = h;
     sel.x = x;
     sel.y = y;
     sel.layerCleared = true;
-    _self.state = _self.STATE_SELECTED;
 
-    app.events.dispatch(new appEvent.selectionChange(_self.state, sel.x, sel.y, 
-          sel.width, sel.height));
+    marqueeStyle.top     = (y * image.canvasScale) + 'px';
+    marqueeStyle.left    = (x * image.canvasScale) + 'px';
+    marqueeStyle.width   = (w * image.canvasScale - borderDouble) + 'px';
+    marqueeStyle.height  = (h * image.canvasScale - borderDouble) + 'px';
+    marqueeStyle.display = '';
 
     if (!config.transform) {
       config.transform = true;
@@ -1208,6 +1255,9 @@ pwlib.tools.selection = function (app) {
     }
 
     mouseAreaUpdate();
+
+    app.events.dispatch(new appEvent.selectionChange(_self.state, sel.x, sel.y, 
+          sel.width, sel.height));
 
     gui.statusShow('selectionAvailable');
 
@@ -1236,7 +1286,9 @@ pwlib.tools.selection = function (app) {
 
     } else {
       bufferContext.clearRect(sel.x, sel.y, sel.width, sel.height);
-      sel.layerCleared = false;
+      sel.layerCleared  = false;
+      sel.canvas.width  = 5;
+      sel.canvas.height = 5;
 
       if (config.transform) {
         config.transform = false;
@@ -1244,6 +1296,8 @@ pwlib.tools.selection = function (app) {
               'selection', config));
       }
     }
+
+    return true;
   };
 
   /**
@@ -1260,8 +1314,10 @@ pwlib.tools.selection = function (app) {
     }
 
     if (sel.layerCleared) {
-      bufferContext.clearRect(0, 0, image.width, image.height);
-      sel.layerCleared = false;
+      bufferContext.clearRect(sel.x, sel.y, sel.width, sel.height);
+      sel.canvas.width  = 5;
+      sel.canvas.height = 5;
+      sel.layerCleared  = false;
     }
 
     _self.state = _self.STATE_NONE;
@@ -1287,7 +1343,7 @@ pwlib.tools.selection = function (app) {
 
     if (sel.layerCleared) {
       sel.context.fillStyle = bufferContext.fillStyle;
-      sel.context.fillRect(0,  0, sel.widthOriginal, sel.heightOriginal);
+      sel.context.fillRect(0, 0, sel.widthOriginal, sel.heightOriginal);
       bufferContext.fillRect(sel.x, sel.y, sel.width, sel.height);
 
     } else {

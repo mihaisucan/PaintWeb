@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-17 15:34:12 +0300 $
+  // $Date: 2009-06-18 21:42:43 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -348,6 +348,41 @@
   },
 
   /**
+   * Text tool options.
+   * @type Object
+   */
+  "text": {
+    "bold": false,
+    "italic": false,
+
+    /**
+     * The default list of font families available in font family drop-down.
+     * @type Array
+     */
+    "fontFamilies": ["sans-serif", "serif", "cursive", "fantasy", "monospace"],
+
+    /**
+     * The font family used for rendering the text.
+     * @type String
+     * @default "sans-serif"
+     */
+    "fontFamily": "sans-serif",
+
+    "fontSize": 12,
+
+    /**
+     * Horizontal text alignment. Possible values: "left", "center", "right".
+     *
+     * <p>Note that the Canvas Text API also defines the "start" and "end" 
+     * values, which are not "supported" by PaintWeb.
+     *
+     * @type String
+     * @default "left"
+     */
+    "textAlign": "left"
+  },
+
+  /**
    * @namespace Color Mixer extension configuration.
    */
   "colormixer": {
@@ -550,6 +585,7 @@
     "Control N": { "command": "imageClear" },
     "Control S": { "command": "imageSave" },
 
+    "Control A":    { "command": "selectAll" },
     "Control X":    { "command": "selectionCut" },
     "Shift Delete": { "command": "selectionCut" },
     "Control C":    { "command": "selectionCopy" },

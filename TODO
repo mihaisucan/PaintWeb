@@ -1,6 +1,6 @@
 $Author: Mihai Şucan $
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-06-17 20:03:20 +0300 $
+$Date: 2009-06-18 13:36:58 +0300 $
 
 Until the end of GSOC:
 
@@ -25,6 +25,8 @@ resize handle.
 which shows the image dimensions, where the user can crop and resize the image.
 - fully implement the notion of background color.
 - flip and rotate image.
+- maybe selection rotate.
+- tab reordering and grouping.
 
 Further down the road:
 
