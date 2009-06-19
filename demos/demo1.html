@@ -10,7 +10,7 @@
     --></style>
 
     <!-- $URL: http://code.google.com/p/paintweb $
-         $Date: 2009-06-12 13:26:44 +0300 $ -->
+         $Date: 2009-06-19 12:34:19 +0300 $ -->
   </head>
   <body>
     <p>Welcome to PaintWeb!</p>
@@ -31,11 +31,14 @@
 (function () {
   // Function called when the user clicks the "Edit image" button.
   function pwStart () {
+    document.body.insertBefore(loadp, btn.parentNode);
     pw.init(pwInit);
   };
 
   // Function called when the PaintWeb application fires the "initApp" event.
   function pwInit (ev) {
+    document.body.removeChild(loadp);
+
     if (ev.state === PaintWeb.INIT_ERROR) {
       alert('Demo: PaintWeb initialization failed.');
       return;
@@ -55,6 +58,7 @@
   var img    = document.getElementById('editableImage'),
       btn    = document.getElementById('buttonEditImage'),
       target = document.getElementById('PaintWebTarget'),
+      loadp  = document.createElement('p'),
 
       // Create a PaintWeb instance.
       pw = new PaintWeb();
@@ -62,6 +66,7 @@
   pw.config.guiPlaceholder = target;
   pw.config.imagePreload   = img;
   pw.config.baseFolder     = '../src/';
+  loadp.appendChild(document.createTextNode('Loading, please wait...'));
 
   btn.addEventListener('click', pwStart, false);
 })();

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-18 22:22:15 +0300 $
+ * $Date: 2009-06-19 22:29:04 +0300 $
  */
 
 /**
@@ -52,7 +52,7 @@ function PaintWeb (win, doc) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090618;
+  this.build = 20090619;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -75,7 +75,9 @@ function PaintWeb (win, doc) {
     "noCanvasSupport": "Error: Your browser does not support Canvas.",
     "guiPlaceholderWrong": "Error: The config.guiPlaceholder property must " +
       "reference a DOM element!",
-    "initHandlerMustBeFunction": "The first argument must be a function."
+    "initHandlerMustBeFunction": "The first argument must be a function.",
+    "failedConfigLoad": "Error: Failed loading the configuration file.",
+    "failedLangLoad": "Error: Failed loading the language file."
   };
 
   /**
@@ -582,7 +584,12 @@ function PaintWeb (win, doc) {
      *   3 INTERACTIVE Downloading, responseText holds the partial data.
      *   4 COMPLETED Finished with all operations.
      */
-    if (!xhr || xhr.readyState !== 4 || xhr.status !== 200 || !xhr.responseText) {
+    if (!xhr || xhr.readyState !== 4) {
+      return;
+    }
+
+    if ((xhr.status !== 304 && xhr.status !== 200) || !xhr.responseText) {
+      _self.initError(lang.failedConfigLoad);
       return;
     }
 
@@ -621,18 +628,23 @@ function PaintWeb (win, doc) {
    * for loading the language file.
    */
   this.langReady = function (xhr) {
-    if (!xhr || xhr.readyState !== 4 || xhr.status !== 200 || !xhr.responseText) {
+    if (!xhr || xhr.readyState !== 4) {
+      return;
+    }
+
+    if ((xhr.status !== 304 && xhr.status !== 200) || !xhr.responseText) {
+      _self.initError(lang.failedLangLoad);
       return;
     }
 
     pwlib.extend(_self.lang, pwlib.jsonParse(xhr.responseText));
 
-    if (!_self.initCanvas()) {
+    if (_self.initCanvas() && _self.initContext()) {
+      // Start GUI load now.
+      _self.guiLoad();
+    } else {
       _self.initError(lang.errorInitCanvas);
     }
-
-    // Start GUI load now.
-    _self.guiLoad();
   };
 
   /**
@@ -723,7 +735,12 @@ function PaintWeb (win, doc) {
    * request for loading the interface markup file.
    */
   this.guiMarkupReady = function (xhr) {
-    if (!xhr || xhr.readyState !== 4 || xhr.status !== 200 || !xhr.responseXML) {
+    if (!xhr || xhr.readyState !== 4) {
+      return;
+    }
+
+    if ((xhr.status !== 304 && xhr.status !== 200) || !xhr.responseXML) {
+      _self.initError(lang.failedMarkupLoad);
       return;
     }
 
@@ -743,9 +760,6 @@ function PaintWeb (win, doc) {
    *
    * <p>All the Canvas event listeners are also attached to the buffer Canvas 
    * element.
-   *
-   * <p>Shadows support is determined. The {@link PaintWeb.shadowSupported} 
-   * value is updated accordingly.
    *
    * @private
    * @returns {Boolean} True if the initialization was successful, or false if 
@@ -812,13 +826,65 @@ function PaintWeb (win, doc) {
       bufferCanvas.addEventListener(events[i], this.ev_canvas, false);
     }
 
+    return true;
+  };
+
+  /**
+   * Initialize the Canvas buffer context. This method updates the context 
+   * properties to reflect the values defined in the PaintWeb configuration 
+   * file.
+   * 
+   * <p>Shadows support is also determined. The {@link PaintWeb.shadowSupported} 
+   * value is updated accordingly.
+   *
+   * @private
+   * @returns {Boolean} True if the initialization was successful, or false if 
+   * not.
+   */
+  this.initContext = function () {
+    var bufferContext = this.buffer.context;
+
     // Opera does not render shadows, at the moment.
-    if (!pwlib.browser.opera && 'shadowColor' in bufferContext && 
-        'shadowOffsetX' in bufferContext && 'shadowOffsetY' in bufferContext && 
-        'shadowBlur' in bufferContext) {
+    if (!pwlib.browser.opera && bufferContext.shadowColor && 'shadowOffsetX' in 
+        bufferContext && 'shadowOffsetY' in bufferContext && 'shadowBlur' in 
+        bufferContext) {
       this.shadowSupported = true;
     } else {
       this.shadowSupported = false;
+    }
+
+    var cfg = this.config,
+        props = {
+          fillStyle:    cfg.fillStyle,
+          font:         cfg.text.fontSize + 'px ' + cfg.text.fontFamily,
+          lineCap:      cfg.line.lineCap,
+          lineJoin:     cfg.line.lineJoin,
+          lineWidth:    cfg.line.lineWidth,
+          miterLimit:   cfg.line.miterLimit,
+          strokeStyle:  cfg.strokeStyle,
+          textAlign:    cfg.text.textAlign,
+          textBaseline: cfg.text.textBaseline
+        };
+
+    if (cfg.text.bold) {
+      props.font = 'bold ' + props.font;
+    }
+
+    if (cfg.text.italic) {
+      props.font = 'italic ' + props.font;
+    }
+
+    for (var prop in props) {
+      bufferContext[prop] = props[prop];
+    }
+
+    // shadows are only for the layer context.
+    if (cfg.shadow.enable && this.shadowSupported) {
+      var layerContext = this.layer.context;
+      layerContext.shadowColor   = cfg.shadow.shadowColor;
+      layerContext.shadowBlur    = cfg.shadow.shadowBlur;
+      layerContext.shadowOffsetX = cfg.shadow.shadowOffsetX;
+      layerContext.shadowOffsetY = cfg.shadow.shadowOffsetY;
     }
 
     return true;
@@ -1159,6 +1225,10 @@ function PaintWeb (win, doc) {
     if (ev.target && ev.target.nodeName) {
       switch (ev.target.nodeName.toLowerCase()) {
         case 'input':
+          if (ev.type === 'keypress' && (ev.key_ === 'Up' || ev.key_ === 'Down') 
+              && ev.target.getAttribute('type') === 'number') {
+            _self.ev_numberInput(ev);
+          }
         case 'select':
         case 'textarea':
         case 'button':
@@ -1244,6 +1314,77 @@ function PaintWeb (win, doc) {
 
     if (ev.type === 'keypress') {
       ev.preventDefault();
+    }
+  };
+
+  /**
+   * This is the <code>keypress</code> event handler for inputs of type=number.  
+   * This function only handles cases when the key is <kbd>Up</kbd> or 
+   * <kbd>Down</kbd>. For the <kbd>Up</kbd> key the input value is increased, 
+   * and for the <kbd>Down</kbd> the value is decreased.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   * @see PaintWeb.ev_keyboard
+   */
+  this.ev_numberInput = function (ev) {
+    var target = ev.target;
+
+    // Process the value.
+    var val,
+        max  = parseFloat(target.getAttribute('max')),
+        min  = parseFloat(target.getAttribute('min')),
+        step = parseFloat(target.getAttribute('step'));
+
+    if (target.value === '' || target.value === null) {
+      val = !isNaN(min) ? min : 0;
+    } else {
+      val = target.value.replace(/[,.]+/g, '.').replace(/[^0-9.\-]/g, '');
+      val = parseFloat(val);
+    }
+
+    // If target is not a number, then set the old value, or the minimum value. If all fails, set 0.
+    if (isNaN(val)) {
+      val = min || 0;
+    }
+
+    if (isNaN(step)) {
+      step = 1;
+    }
+
+    if (ev.shiftKey) {
+      step *= 2;
+    }
+
+    if (ev.key_ === 'Down') {
+      step *= -1;
+    }
+
+    val += step;
+
+    if (!isNaN(max) && val > max) {
+      val = max;
+    } else if (!isNaN(min) && val < min) {
+      val = min;
+    }
+
+    if (val == target.value) {
+      return;
+    }
+
+    target.value = val;
+
+    // Dispatch the 'change' and 'input' events to make sure that any associated 
+    // event handlers pick up the changes.
+    if (doc.createEvent && target.dispatchEvent) {
+      var ev_change = doc.createEvent('HTMLEvents'),
+          ev_input  = doc.createEvent('HTMLEvents');
+
+      ev_input.initEvent ('input',  true, true);
+      ev_change.initEvent('change', true, true);
+
+      target.dispatchEvent(ev_input);
+      target.dispatchEvent(ev_change);
     }
   };
 

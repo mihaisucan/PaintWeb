@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-06-17 19:16:31 +0300 $
+ * $Date: 2009-06-19 22:12:34 +0300 $
  */
 
 /**
@@ -2011,6 +2011,13 @@ pwlib.dom.KeyboardEventListener = function (elem_, handlers_) {
    * a <code>keypress</code> event, or false if not.
    */
   function firesKeyPress (ev) {
+    // Gecko does not fire keypress for the Up/Down arrows when the target is an 
+    // input element.
+    if ((key_ === 'Up' || key_ === 'Down') && pwlib.browser.gecko && ev.target 
+        && ev.target.tagName.toLowerCase() === 'input') {
+      return false;
+    }
+
     if (!pwlib.browser.msie && !pwlib.browser.webkit) {
       return true;
     }

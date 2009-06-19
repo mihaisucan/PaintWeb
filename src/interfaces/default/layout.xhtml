@@ -1,5 +1,5 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
-  <!--- $Date: 2009-06-18 21:42:54 +0300 $ -->
+  <!--- $Date: 2009-06-19 22:19:33 +0300 $ -->
   <h1 class="paintweb_appTitle">PaintWeb</h1>
 
   <!-- All elements with data-pwTabPanel become interactive tabbed panels which 
@@ -152,6 +152,17 @@
 
     <!-- .paintweb_main_text -->
     <div data-pwTab="text" data-pwTabHide="true">
+      <p class="paintweb_opt_fontFamily">
+        <label for="fontFamily">Font family:</label>
+        <select id="fontFamily" data-pwConfig="text.fontFamily"></select>
+      </p>
+
+      <p class="paintweb_opt_fontSize">
+        <label for="fontSize">Font size:</label>
+        <input id="fontSize" data-pwConfig="text.fontSize" type="number" min="6" 
+        value="12" />
+      </p>
+
       <div data-pwConfigToggle="text.bold">Bold</div>
       <div data-pwConfigToggle="text.italic">Italic</div>
 
@@ -164,19 +175,8 @@
       </div>
 
       <p class="paintweb_opt_textString">
-        <label>String <textarea id="textString" rows="4" cols="6">Hello 
+        <label>String <textarea id="textString" rows="2" cols="4">Hello 
             world!</textarea></label>
-      </p>
-
-      <p class="paintweb_opt_fontFamily"><label>Font family
-        <select data-pwConfig="text.fontFamily"></select></label>
-      </p>
-
-      <p class="paintweb_opt_fontSize">
-        <label>Font size
-          <input data-pwConfig="text.fontSize" type="number" min="1" max="72" 
-          value="12" />
-        </label>
       </p>
     </div>
 

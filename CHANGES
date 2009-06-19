@@ -1,3 +1,24 @@
+2009-06-19:
+===========
+
+- demo1 now shows "loading, please wait..." when PaintWeb is loading.
+- Fix for the PaintWeb library: keypress is not fired by Gecko in input 
+elements, for the Up/Down arrows.
+- Better shadows support detection - it determines properly that Firefox 3.0 
+does not implement shadows.
+- Better error handling for the initialization. In case of file not found, or 
+such, the application will now display an error (failed to load ...), instead of 
+failing silently.
+- Buffer context initialization, which reads the configuration file and updates 
+the context accordingly. This fixes previous inconsistencies.
+- Users can press the Up/Down arrows in all inputs of type=number to 
+increase/decrease the numeric value.
+- Completed the GUI work needed for the Text tool tab.
+- Completed the work on the Text tool itself. Just need to try workarounds for 
+Opera and Firefox 3.0 compatibility.
+- New configuration options for shadows and text.
+- New English strings.
+
 2009-06-18:
 ===========
 

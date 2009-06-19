@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-18 21:28:58 +0300 $
+ * $Date: 2009-06-19 21:52:16 +0300 $
  */
 
 /**
@@ -164,7 +164,8 @@ pwlib.gui['default'] = function (app) {
     },
     text: {
       lineTab: true,
-      lineTabLabel: lang.tabs.textBorder,
+      lineTabLabel: lang.tabs.main.textBorder,
+      shapeType: true,
       lineWidth: true,
       lineWidthLabel: lang.inputs.borderWidth
     }
@@ -201,7 +202,8 @@ pwlib.gui['default'] = function (app) {
 
     if (!this.initCanvas() ||
         !this.initImageZoom() ||
-        !this.initSelection() ||
+        !this.initSelectionTool() ||
+        !this.initTextTool() ||
         !this.initKeyboardShortcuts()) {
       return false;
     }
@@ -332,6 +334,9 @@ pwlib.gui['default'] = function (app) {
    * <p>Elements which have the ID attribute will have the attribute renamed to 
    * <code>data-pwId</code>.
    *
+   * <p>Input elements which have the ID attribute will have their attribute 
+   * updated to be unique for the current PaintWeb instance.
+   *
    * @private
    *
    * @param {Document} srcDoc The source DOM document to import the nodes from.
@@ -341,22 +346,35 @@ pwlib.gui['default'] = function (app) {
    */
   this.initImportDoc = function (srcDoc) {
     // I could use some XPath here, but for the sake of compatibility I don't.
-
     var destElem = config.guiPlaceholder,
         elem = null,
         elType = Node.ELEMENT_NODE,
         nodes = srcDoc.getElementsByTagName('*');
 
     // Change all the id attributes to be data-pwId attributes.
+    // Input elements have their ID updated to be unique for the current 
+    // PaintWeb instance.
     for (var i = 0; i < nodes.length; i++) {
       elem = nodes[i];
       if (elem.nodeType !== elType) {
         continue;
       }
+      tag = elem.tagName.toLowerCase();
+      isInput = tag === 'input' || tag === 'select' || tag === 'textarea';
 
       if (elem.id) {
         elem.setAttribute('data-pwId', elem.id);
-        elem.removeAttribute('id');
+
+        if (isInput) {
+          elem.id = this.idPrefix + elem.id;
+        } else {
+          elem.removeAttribute('id');
+        }
+      }
+
+      // label elements have their "for" attribute updated as well.
+      if (tag === 'label' && elem.htmlFor) {
+        elem.htmlFor = this.idPrefix + elem.htmlFor;
       }
     }
 
@@ -364,7 +382,7 @@ pwlib.gui['default'] = function (app) {
     n = docChildren.length;
 
     // Import all the nodes.
-    for (i = 0; i < n; i++) {
+    for (var i = 0; i < n; i++) {
       destElem.appendChild(doc.importNode(docChildren[i], true));
     }
 
@@ -398,7 +416,14 @@ pwlib.gui['default'] = function (app) {
    *
    * <p>Elements having the <code>data-pwConfigValue</code> attribute are added 
    * to the <var>this.inputValues</var> object. These can only be child nodes of 
-   * elements which have the <code>data-pwConfig</code> attribute.
+   * elements which have the <code>data-pwConfig</code> attribute. Each such 
+   * element is considered an icon. Anchor elements are appended to ensure 
+   * keyboard accessibility.
+   *
+   * <p>Elements having the <code>data-pwConfigToggle</code> attribute are added 
+   * to the <var>this.inputs</var> object. These become interactive GUI 
+   * components which toggle the boolean value of the configuration property 
+   * they are associated to.
    *
    * @returns {Boolean} True if the parsing was successful, or false if not.
    */
@@ -446,7 +471,16 @@ pwlib.gui['default'] = function (app) {
 
       cfgAttr = elem.getAttribute('data-pwConfig');
       if (cfgAttr) {
-        this.initConfigInput(elem, cfgAttr, isInput);
+        if (isInput) {
+          this.initConfigInput(elem, cfgAttr);
+        } else {
+          this.initConfigIcons(elem, cfgAttr);
+        }
+      }
+
+      cfgAttr = elem.getAttribute('data-pwConfigToggle');
+      if (cfgAttr) {
+        this.initConfigToggle(elem, cfgAttr);
       }
 
       id = elem.getAttribute('data-pwId');
@@ -466,7 +500,7 @@ pwlib.gui['default'] = function (app) {
   };
 
   /**
-   * Initialize an element associated to a configuration property.
+   * Initialize an input element associated to a configuration property.
    *
    * @private
    *
@@ -475,21 +509,17 @@ pwlib.gui['default'] = function (app) {
    *
    * @param {String} cfgAttr The configuration attribute. This tells the 
    * configuration group and property to which the DOM element is attached to.
-   *
-   * @param {Boolean} isInput Tells if the element is considered an input or an 
-   * element with several sub-values.
    */
-  this.initConfigInput = function (input, cfgAttr, isInput) {
-    var cfgNoDots = cfgAttr.replace('.', '_'),
-        cfgArray = cfgAttr.split('.'),
-        cfgProp = cfgArray.pop(),
-        n = cfgArray.length,
-        cfgGroup = cfgArray.join('.'),
+  this.initConfigInput = function (input, cfgAttr) {
+    var cfgNoDots   = cfgAttr.replace('.', '_'),
+        cfgArray    = cfgAttr.split('.'),
+        cfgProp     = cfgArray.pop(),
+        cfgGroup    = cfgArray.join('.'),
         cfgGroupRef = config,
-        langGroup = lang.inputs,
-        labelElem;
+        langGroup   = lang.inputs,
+        labelElem   = input.parentNode;
 
-    for (var i = 0; i < n; i++) {
+    for (var i = 0, n = cfgArray.length; i < n; i++) {
       cfgGroupRef = cfgGroupRef[cfgArray[i]];
       langGroup = langGroup[cfgArray[i]];
     }
@@ -502,29 +532,65 @@ pwlib.gui['default'] = function (app) {
 
     this.inputs[cfgNoDots] = input;
 
-    if (isInput) {
-      labelElem = input.parentNode;
-
-      if (input.type === 'checkbox') {
-        labelElem.removeChild(labelElem.lastChild);
-        labelElem.appendChild(doc.createTextNode(langGroup[cfgProp]));
-        input.checked = cfgGroupRef[cfgProp];
-      } else {
-        labelElem.removeChild(labelElem.firstChild);
-        labelElem.insertBefore(doc.createTextNode(langGroup[cfgProp]), input);
-        input.value = cfgGroupRef[cfgProp];
-      }
-
-      input.addEventListener('change', this.configInputChange, false);
-      return;
+    if (labelElem.tagName.toLowerCase() !== 'label') {
+      labelElem = labelElem.getElementsByTagName('label')[0];
     }
 
-    labelElem = input.getElementsByTagName('p')[0];
+    if (input.type === 'checkbox' || labelElem.htmlFor) {
+      labelElem.removeChild(labelElem.lastChild);
+      labelElem.appendChild(doc.createTextNode(langGroup[cfgProp]));
+    } else {
+      labelElem.removeChild(labelElem.firstChild);
+      labelElem.insertBefore(doc.createTextNode(langGroup[cfgProp]), input);
+    }
+
+    if (input.type === 'checkbox') {
+      input.checked = cfgGroupRef[cfgProp];
+    } else {
+      input.value = cfgGroupRef[cfgProp];
+    }
+
+    input.addEventListener('change', this.configInputChange, false);
+  };
+
+  /**
+   * Initialize an HTML element associated to a configuration property, and all 
+   * of its own sub-elements associated to configuration values. Each element 
+   * that has the <var>data-pwConfigValue</var> attribute is considered an icon.
+   *
+   * @private
+   *
+   * @param {Element} elem The DOM element which is associated to the 
+   * configuration property.
+   *
+   * @param {String} cfgAttr The configuration attribute. This tells the 
+   * configuration group and property to which the DOM element is attached to.
+   */
+  this.initConfigIcons = function (input, cfgAttr) {
+    var cfgNoDots   = cfgAttr.replace('.', '_'),
+        cfgArray    = cfgAttr.split('.'),
+        cfgProp     = cfgArray.pop(),
+        cfgGroup    = cfgArray.join('.'),
+        cfgGroupRef = config,
+        langGroup   = lang.inputs;
+
+    for (var i = 0, n = cfgArray.length; i < n; i++) {
+      cfgGroupRef = cfgGroupRef[cfgArray[i]];
+      langGroup = langGroup[cfgArray[i]];
+    }
+
+    input._pwConfigProperty = cfgProp;
+    input._pwConfigGroup = cfgGroup;
+    input._pwConfigGroupRef = cfgGroupRef;
+    input.title = langGroup[cfgProp + 'Title'] || langGroup[cfgProp];
+    input.className += ' ' + this.classPrefix + 'cfg_' + cfgNoDots;
+
+    this.inputs[cfgNoDots] = input;
+
+    var labelElem = input.getElementsByTagName('p')[0];
     labelElem.removeChild(labelElem.firstChild);
     labelElem.appendChild(doc.createTextNode(langGroup[cfgProp]));
 
-    // If this is not an input we consider it has child elements with 
-    // data-pwConfigValue attributes.
     var elem, anchor, val,
         className = ' ' + this.classPrefix + 'configActive';
         nodes = input.getElementsByTagName('*'),
@@ -547,7 +613,7 @@ pwlib.gui['default'] = function (app) {
       anchor.appendChild(doc.createTextNode(anchor.title));
 
       elem.className += ' ' + this.classPrefix + cfgProp + '_' + val 
-        + ' paintweb_icon';
+        + ' ' + this.classPrefix + 'icon';
       elem._pwConfigParent = input;
 
       if (cfgGroupRef[cfgProp] == val) {
@@ -563,6 +629,55 @@ pwlib.gui['default'] = function (app) {
 
       this.inputValues[cfgGroup + '_' + cfgProp + '_' + val] = elem;
     }
+  };
+
+  /**
+   * Initialize an HTML element associated to a boolean configuration property.
+   *
+   * @private
+   *
+   * @param {Element} elem The DOM element which is associated to the 
+   * configuration property.
+   *
+   * @param {String} cfgAttr The configuration attribute. This tells the 
+   * configuration group and property to which the DOM element is attached to.
+   */
+  this.initConfigToggle = function (input, cfgAttr) {
+    var cfgNoDots   = cfgAttr.replace('.', '_'),
+        cfgArray    = cfgAttr.split('.'),
+        cfgProp     = cfgArray.pop(),
+        cfgGroup    = cfgArray.join('.'),
+        cfgGroupRef = config,
+        langGroup   = lang.inputs;
+
+    for (var i = 0, n = cfgArray.length; i < n; i++) {
+      cfgGroupRef = cfgGroupRef[cfgArray[i]];
+      langGroup = langGroup[cfgArray[i]];
+    }
+
+    input._pwConfigProperty = cfgProp;
+    input._pwConfigGroup = cfgGroup;
+    input._pwConfigGroupRef = cfgGroupRef;
+    input.className += ' ' + this.classPrefix + 'cfg_' + cfgNoDots 
+      + ' ' + this.classPrefix + 'icon';
+
+    if (cfgGroupRef[cfgProp]) {
+      input.className += ' ' + this.classPrefix + 'configActive';
+    }
+
+    var anchor = doc.createElement('a');
+    anchor.href = '#';
+    anchor.title = langGroup[cfgProp + 'Title'] || langGroup[cfgProp];
+    anchor.appendChild(doc.createTextNode(langGroup[cfgProp]));
+
+    anchor.addEventListener('click',     this.configToggleClick, false);
+    anchor.addEventListener('mouseover', this.item_mouseover,    false);
+    anchor.addEventListener('mouseout',  this.item_mouseout,     false);
+
+    input.removeChild(input.firstChild);
+    input.appendChild(anchor);
+
+    this.inputs[cfgNoDots] = input;
   };
 
   /**
@@ -586,7 +701,6 @@ pwlib.gui['default'] = function (app) {
     input.setAttribute('max',  config.imageZoomMax  * 100);
     input.setAttribute('min',  config.imageZoomMin  * 100);
 
-    //elem.addEventListener('keypress', this.ev_input_nr, false);
     input.addEventListener('change', function () {
       app.imageZoomTo(parseInt(this.value) / 100);
     }, false);
@@ -610,13 +724,13 @@ pwlib.gui['default'] = function (app) {
   };
 
   /**
-   * Initialize GUI elements associated to the selection tool.
+   * Initialize GUI elements associated to selection tool options and commands.
    *
    * @private
    * @returns {Boolean} True if the initialization was successful, or false if 
    * not.
    */
-  this.initSelection = function () {
+  this.initSelectionTool = function () {
     var classDisabled = ' ' + this.classPrefix + 'disabled',
         cut   = this.commands.selectionCut,
         copy  = this.commands.selectionCopy,
@@ -664,6 +778,44 @@ pwlib.gui['default'] = function (app) {
     selCrop.className   += classDisabled;
     selFill.className   += classDisabled;
     selDelete.className += classDisabled;
+
+    return true;
+  };
+
+  /**
+   * Initialize GUI elements associated to text tool options.
+   *
+   * @private
+   * @returns {Boolean} True if the initialization was successful, or false if 
+   * not.
+   */
+  this.initTextTool = function () {
+    if ('textString' in this.inputs) {
+      this.inputs.textString.value = lang.inputs.text.textString_value;
+    }
+
+    if (!('text_fontFamily' in this.inputs) || !('text' in config) || 
+        !('fontFamilies' in config.text)) {
+      return true;
+    }
+
+    var option, input = this.inputs.text_fontFamily;
+    for (var i = 0, n = config.text.fontFamilies.length; i < n; i++) {
+      option = doc.createElement('option');
+      option.value = config.text.fontFamilies[i];
+      option.appendChild(doc.createTextNode(option.value));
+      input.appendChild(option);
+
+      if (option.value === config.text.fontFamily) {
+        input.selectedIndex = i;
+        input.value = option.value;
+      }
+    }
+
+    option = doc.createElement('option');
+    option.value = '+';
+    option.appendChild(doc.createTextNode(lang.inputs.text.fontFamily_add));
+    input.appendChild(option);
 
     return true;
   };
@@ -817,155 +969,6 @@ pwlib.gui['default'] = function (app) {
     if (msg) {
       elem.appendChild(doc.createTextNode(msg));
     }
-  };
-
-  // This is the event handler for changes in inputs of type=number. The 
-  // function is associated with the following events: keypress, input and/or 
-  // change.
-  // This function is also called by other event handlers which are specific to 
-  // various inputs. The return value (true/false) is used to check if the event 
-  // target value has been updated or not, while making sure the value is 
-  // a valid number.
-  // FIXME
-  this.ev_input_nr = function (ev) {
-    if (!ev || !ev.target) {
-      return false;
-    }
-
-    // FIXME: update this as needed.
-    return true;
-
-    // Do not do anything if this is a synthetic DOM event.
-    if (ev.type != 'keypress' && ev._invoked) {
-      return true;
-    }
-
-    // Do not continue if this is a keypress event and the pressed key is not Up/Down.
-    if (ev.type == 'keypress' && (!_self.ev_keypress_prepare(ev) || (ev._key != 'up' && ev._key != 'down'))) {
-      return false;
-    }
-
-    // Do not continue if this is not a keypress event and the "new" value is the same as the old value.
-    var target = ev.target;
-    if (ev.type != 'keypress' && target.value == target._old_value) {
-      return false;
-    }
-
-    // Process the value.
-    var val = target.value.replace(/[,.]+/g, '.').replace(/[^0-9.\-]/g, ''),
-      max = parseFloat(target.getAttribute('max')),
-      min = parseFloat(target.getAttribute('min'));
-
-    val = parseFloat(val);
-
-    if (target.value == '') {
-      val = min || 0;
-    }
-
-    // If target is not a number, then set the old value, or the minimum value. If all fails, set 0.
-    if (isNaN(val)) {
-      val = parseFloat(target._old_value);
-      if (isNaN(val)) {
-        val = min || 0;
-      }
-    }
-
-    if (ev.type == 'keypress') {
-      var step = parseFloat(target.getAttribute('step'));
-      if (isNaN(step)) {
-        step = 1;
-      }
-
-      if (ev.shiftKey) {
-        step *= 2;
-      }
-
-      if (ev._key == 'down') {
-        step *= -1;
-      }
-
-      val += step;
-    }
-
-    if (!isNaN(max) && val > max) {
-      val = max;
-    } else if (!isNaN(min) && val < min) {
-      val = min;
-    }
-
-    if (val != target.value) {
-      target.value = val;
-    }
-
-    // The input value was not updated by the user, so return false.
-    if (val == target._old_value) {
-      return false;
-    }
-
-    // This is used by this event handler only. To the rest of the event handlers target.value and target._old_value are most of the time the same.
-    target._old_value = val;
-
-    // If this is the keypress event, then dispatch the input and change events, so that the target-specific event handlers can execute.
-    if (ev.type == 'keypress' && _self.doc.createEvent && target.dispatchEvent) {
-      if (ev.preventDefault) {
-        ev.preventDefault();
-      }
-
-      var ev_change = _self.doc.createEvent('HTMLEvents'),
-        ev_input  = _self.doc.createEvent('HTMLEvents');
-
-      ev_input.initEvent ('input',  true, true);
-      ev_change.initEvent('change', true, true);
-
-      // Let the receiving event handlers determine if this is a "fake"/synthetic event.
-      ev_change._invoked = ev_input._invoked = true;
-
-      target.dispatchEvent(ev_input);
-      target.dispatchEvent(ev_change);
-    }
-
-    // The input value was updated by the user.
-    return true; 
-  };
-
-  // This is event handler for changes to the text font input. If the user wants 
-  // to pick another font, then he/she can type the new font name to easily add 
-  // it to the list of available fonts.
-  this.opt_textFont = function (ev) {
-    if (this.value != '+') {
-      return _self.update_textProps(ev);
-    }
-
-    var new_font = prompt(_self.lang.promptTextFont);
-    if (!new_font) {
-      this.selectedIndex = 0;
-      this.value = this.options[0].value;
-      return _self.update_textProps(ev);
-    }
-
-    new_font = new_font.replace(/^\s+/, '').replace(/\s+$/, '');
-
-    // Check if the font name is already in the list.
-    var opt, i, new_font2 = new_font.toLowerCase(),
-        n = this.options.length;
-
-    for (i = 0; i < n; i++) {
-      opt = this.options[i];
-      if (opt.value.toLowerCase() == new_font2) {
-        this.selectedIndex = i;
-        this.value = opt.value;
-        return _self.update_textProps(ev);
-      }
-    }
-
-    opt = _self.doc.createElement('option');
-    opt.value = new_font;
-    opt.appendChild(_self.doc.createTextNode(new_font));
-    this.insertBefore(opt, this.options[n-1]);
-    this.selectedIndex = n-1;
-    this.value = new_font;
-
-    return _self.update_textProps(ev);
   };
 
   /**
@@ -1430,7 +1433,7 @@ pwlib.gui['default'] = function (app) {
     }
 
     var tag = input.tagName.toLowerCase(),
-        isInput = tag === 'select' || tag === 'input';
+        isInput = tag === 'select' || tag === 'input' || tag === 'textarea';
 
     if (isInput) {
       if (input.type === 'checkbox' && input.checked !== ev.value) {
@@ -1443,16 +1446,28 @@ pwlib.gui['default'] = function (app) {
       return;
     }
 
-    var className = ' ' + _self.className + 'configActive',
+    var classActive = ' ' + _self.className + 'configActive';
+
+    if (input.hasAttribute('data-pwConfigToggle')) {
+      var inputActive = input.className.indexOf(classActive) !== -1;
+
+      if (ev.value && !inputActive) {
+        input.className += classActive;
+      } else if (!ev.value && inputActive) {
+        input.className = input.className.replace(classActive, '');
+      }
+    }
+
+    var classActive = ' ' + _self.className + 'configActive',
         prevValElem = _self.inputValues[cfg + '_' + ev.previousValue],
         valElem = _self.inputValues[cfg + '_' + ev.value];
 
-    if (prevValElem && prevValElem.className.indexOf(className) !== -1) {
-      prevValElem.className = prevValElem.className.replace(className, '');
+    if (prevValElem && prevValElem.className.indexOf(classActive) !== -1) {
+      prevValElem.className = prevValElem.className.replace(classActive, '');
     }
 
-    if (valElem && valElem.className.indexOf(className) === -1) {
-      valElem.className += className;
+    if (valElem && valElem.className.indexOf(classActive) === -1) {
+      valElem.className += classActive;
     }
   };
 
@@ -1534,6 +1549,37 @@ pwlib.gui['default'] = function (app) {
 
     app.events.dispatch(new appEvent.configChange(val, prevVal, prop, group, 
           groupRef));
+  };
+
+  /**
+   * The <code>click</code> event handler for DOM elements associated to boolean 
+   * configuration properties. These elements only toggle the true/false value 
+   * of the configuration property.
+   *
+   * <p>This method dispatches the {@link pwlib.appEvent.configChange} event.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
+  this.configToggleClick = function (ev) {
+    var className = ' ' + _self.classPrefix + 'configActive',
+        pNode = this.parentNode,
+        groupRef = pNode._pwConfigGroupRef,
+        group = pNode._pwConfigGroup,
+        prop = pNode._pwConfigProperty,
+        elemActive = pNode.className.indexOf(className) !== -1;
+
+    ev.preventDefault();
+
+    groupRef[prop] = !groupRef[prop];
+
+    if (groupRef[prop] && !elemActive) {
+      pNode.className += className;
+    } else if (!groupRef[prop] && elemActive) {
+      pNode.className = pNode.className.replace(className, '');
+    }
+
+    app.events.dispatch(new appEvent.configChange(groupRef[prop], 
+          !groupRef[prop], prop, group, groupRef));
   };
 
   /**

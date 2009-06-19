@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-18 21:42:43 +0300 $
+  // $Date: 2009-06-19 21:08:18 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -273,6 +273,14 @@
    */
   "shadow": {
     /**
+     * Tells if a shadow should render or not.
+     *
+     * @type Boolean
+     * @default false
+     */
+    "enable": false,
+
+    /**
      * Shadow color
      *
      * @type String
@@ -368,7 +376,7 @@
      */
     "fontFamily": "sans-serif",
 
-    "fontSize": 12,
+    "fontSize": 36,
 
     /**
      * Horizontal text alignment. Possible values: "left", "center", "right".
@@ -379,7 +387,16 @@
      * @type String
      * @default "left"
      */
-    "textAlign": "left"
+    "textAlign": "left",
+
+    /**
+     * Vertical text alignment. Possible values: "top", "hanging", "middle", 
+     * "alphabetic", "ideographic", or "bottom".
+     *
+     * @type String
+     * @default "alphabetic"
+     */
+    "textBaseline": "top"
   },
 
   /**

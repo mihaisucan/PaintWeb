@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-18 13:38:33 +0300 $
+ * $Date: 2009-06-19 20:45:09 +0300 $
  */
 
 /* OLPC XO DPI resolution detection */
@@ -300,12 +300,16 @@
 .paintweb_imageZoom { width: 4em }
 
 .paintweb_main_line,
-.paintweb_main_line_rectangle,
-.paintweb_main_line_ellipse,
-.paintweb_main_line_polygon,
 .paintweb_main_line_bcurve,
+.paintweb_main_line_ellipse,
+.paintweb_main_line_eraser,
 .paintweb_main_line_pencil,
-.paintweb_main_line_eraser { margin: 5px }
+.paintweb_main_line_polygon,
+.paintweb_main_line_rectangle,
+.paintweb_main_line_text,
+.paintweb_main_selection,
+.paintweb_main_shadow,
+.paintweb_main_text { margin: 5px }
 
 .paintweb_opt_lineWidth, .paintweb_opt_miterLimit {
   background: #f2f2f2;
@@ -408,8 +412,10 @@
 
 .paintweb_main_line_polygon .paintweb_cfg_shapeType { left: 28.2em }
 
+.paintweb_main_line_text .paintweb_opt_lineWidth,
 .paintweb_main_line_ellipse .paintweb_opt_lineWidth { width: 15em }
 
+.paintweb_main_line_text .paintweb_cfg_shapeType,
 .paintweb_main_line_ellipse .paintweb_cfg_shapeType {
   border-top: 0;
   left: 0;
@@ -419,8 +425,10 @@
   width: 6em
 }
 
+.paintweb_main_line_text .paintweb_cfg_shapeType p,
 .paintweb_main_line_ellipse .paintweb_cfg_shapeType p { padding: 0 }
 
+.paintweb_main_line_text .paintweb_icon,
 .paintweb_main_line_ellipse .paintweb_icon {
   border-left: 1px solid #d6d6d6;
   border-right: 0;
@@ -430,13 +438,15 @@
   top: 0
 }
 
+.paintweb_main_line_text .paintweb_shapeType_stroke,
 .paintweb_main_line_ellipse .paintweb_shapeType_stroke { right: 0 }
 
+.paintweb_main_line_text .paintweb_shapeType_fill,
 .paintweb_main_line_ellipse .paintweb_shapeType_fill { right: 32px }
 
+.paintweb_main_line_text .paintweb_shapeType_both,
 .paintweb_main_line_ellipse .paintweb_shapeType_both { right: 64px }
 
-.paintweb_main_shadow { margin: 5px }
 
 .paintweb_main_shadow p {
   background: #f2f2f2;
@@ -483,8 +493,6 @@
   width: 9em !important
 }
 
-.paintweb_main_selection { margin: 5px }
-
 .paintweb_main_selection .paintweb_command {
   float: left;
   margin: 0;
@@ -509,7 +517,6 @@
   border: 1px solid #d6d6d6;
   left: 110px;
   line-height: 31px;
-  line-height: 31px;
   margin: 0;
   padding: 0 5px;
   position: absolute;
@@ -521,6 +528,72 @@
 .paintweb_opt_selectionTransform {
   border-top: 0;
   top: 33px
+}
+
+.paintweb_opt_fontFamily label, .paintweb_opt_fontSize label { display: none }
+
+.paintweb_opt_fontFamily, .paintweb_opt_fontSize {
+  float: left;
+  background: #f2f2f2;
+  border: 1px solid #d6d6d6;
+  border-bottom: 0;
+  line-height: 31px;
+  margin: 0;
+  padding: 0 5px;
+  vertical-align: middle;
+}
+
+.paintweb_opt_fontFamily, .paintweb_cfg_text_fontFamily { width: 117px }
+
+.paintweb_opt_fontSize {
+  background-image: url('icons/text-size.png');
+  background-repeat: no-repeat;
+  width: 57px;
+  padding-left: 33px;
+  border-left: 0;
+}
+
+
+.paintweb_cfg_text_fontSize { width: 53px }
+
+.paintweb_opt_textString {
+  background: #f2f2f2;
+  border: 1px solid #d6d6d6;
+  height: 55px;
+  left: 224px;
+  margin: 0;
+  padding: 4px 5px;
+  position: absolute;
+  top: 0
+}
+
+.paintweb_textString {
+  display: block;
+  height: 32px;
+  width: 160px
+}
+
+.paintweb_main_text .paintweb_icon {
+  border-left: 0;
+  float: left
+}
+
+.paintweb_cfg_text_bold {
+  clear: left;
+  border-left: 1px solid #d6d6d6
+}
+
+.paintweb_cfg_text_textAlign p {
+  border: 1px solid #d6d6d6;
+  border-left: 0;
+  float: left;
+  height: 0;
+  margin: 0;
+  overflow: hidden;
+  padding: 31px 0 0 0;
+  text-indent: 65px;
+  white-space: nowrap;
+  width: 64px
 }
 
 
@@ -597,6 +670,15 @@
 
 .paintweb_shapeType_stroke a { background-image: url('icons/shapeType-stroke.png') }
 
+.paintweb_cfg_text_bold a { background-image: url('icons/text-bold.png') }
+
+.paintweb_cfg_text_italic a { background-image: url('icons/text-italic.png') }
+
+.paintweb_textAlign_left a { background-image: url('icons/text-align-left.png') }
+
+.paintweb_textAlign_center a { background-image: url('icons/text-align-center.png') }
+
+.paintweb_textAlign_right a { background-image: url('icons/text-align-right.png') }
 
 /*
 

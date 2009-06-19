@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-18 21:50:44 +0300 $
+ * $Date: 2009-06-19 21:05:23 +0300 $
  */
 
 /**
@@ -37,8 +37,10 @@ pwlib.tools.text = function (app) {
       clearInterval = app.win.clearInterval,
       config        = app.config.text,
       context       = app.buffer.context,
+      doc           = app.doc,
       gui           = app.gui,
       image         = app.image,
+      lang          = app.lang,
       mouse         = app.mouse,
       setInterval   = app.win.setInterval;
 
@@ -68,22 +70,24 @@ pwlib.tools.text = function (app) {
    */
   var needsRedraw = false;
 
-  var textString = null,
+  var input_textString = null,
+      input_fontFamily = null,
       ev_configChangeId = null;
 
   /**
-   * Tool preactivation code. This method is invoked when the user attempts to 
-   * activate the text tool.
+   * Tool preactivation code. This method check if the browser has support for 
+   * rendering text in Canvas.
    *
    * @returns {Boolean} True if the tool can be activated successfully, or false 
    * if not.
    */
   this.preActivate = function () {
-    if (!gui.inputs.textString) {
+    if (!gui.inputs.textString || !gui.inputs.text_fontFamily || 
+        !gui.elems.viewport) {
       return false;
 
     } else if (!context.fillText || !context.strokeText) {
-      alert(app.lang.errorTextUnsupported);
+      alert(lang.errorTextUnsupported);
       return false;
 
     } else {
@@ -92,17 +96,21 @@ pwlib.tools.text = function (app) {
   };
 
   /**
-   * The tool activation code. This runs after the text tool is constructed, and 
-   * after the previous tool has been deactivated.
+   * The tool activation code. This sets up a few variables, starts the drawing 
+   * timer and adds event listeners as needed.
    */
   this.activate = function () {
-    // Reset mouse coordinates in the center of the image, for the purpose of 
-    // placing the text there.
-    mouse.x = Math.round(image.width  / 2);
-    mouse.y = Math.round(image.height / 2);
+    // Reset the mouse coordinates to the scroll top/left corner such that the 
+    // text is rendered there.
+    mouse.x = Math.round(gui.elems.viewport.scrollLeft / image.canvasScale),
+    mouse.y = Math.round(gui.elems.viewport.scrollTop  / image.canvasScale),
 
-    textString = gui.inputs.textString;
-    textString.addEventListener('input', ev_configChange, false);
+    input_fontFamily = gui.inputs.text_fontFamily;
+    input_textString = gui.inputs.textString;
+
+    input_textString.addEventListener('input', ev_configChange, false);
+    input_textString.addEventListener('change', ev_configChange, false);
+
     ev_configChangeId = app.events.add('configChange', ev_configChange);
 
     if (!timer) {
@@ -126,7 +134,8 @@ pwlib.tools.text = function (app) {
       app.events.remove('configChange', ev_configChangeId);
     }
 
-    textString.removeEventListener('input', ev_configChange, false);
+    input_textString.removeEventListener('input', ev_configChange, false);
+    input_textString.removeEventListener('change', ev_configChange, false);
 
     context.clearRect(0, 0, image.width, image.height);
 
@@ -135,28 +144,35 @@ pwlib.tools.text = function (app) {
 
   /**
    * The <code>configChange</code> application event handler. This is also the 
-   * <code>input</code> event handler for the text string input element. This 
-   * method updates the Canvas text-related properties as needed, and re-renders 
-   * the text.
+   * <code>input</code> and <code>change</code> event handler for the text 
+   * string input element.  This method updates the Canvas text-related 
+   * properties as needed, and re-renders the text.
    *
    * @param {Event|pwlib.appEvent.configChange} ev The application/DOM event 
    * object.
    */
   function ev_configChange (ev) {
-    if (ev.type === 'input') {
+    if (ev.type === 'input' || ev.type === 'change' ||
+        (!ev.group && ev.config === 'shapeType') ||
+        (ev.group === 'line' && ev.config === 'lineWidth')) {
       needsRedraw = true;
+      return;
+    }
 
-    } else if (ev.type !== 'configChange' || ev.group !== 'text') {
+    if (ev.type !== 'configChange' && ev.group !== 'text') {
       return;
     }
 
     var font = '';
 
     switch (ev.config) {
+      case 'fontFamily':
+        if (ev.value === '+') {
+          fontFamilyAdd(ev);
+        }
       case 'bold':
       case 'italic':
       case 'fontSize':
-      case 'fontFamily':
         if (config.bold) {
           font += 'bold ';
         }
@@ -170,6 +186,47 @@ pwlib.tools.text = function (app) {
       case 'textBaseline':
         needsRedraw = true;
     }
+  };
+
+  /**
+   * Add a new font family into the font family drop down. This function is 
+   * invoked by the <code>ev_configChange()</code> function when the user 
+   * attempts to add a new font family.
+   *
+   * @private
+   *
+   * @param {pwlib.appEvent.configChange} ev The application event object.
+   */
+  function fontFamilyAdd (ev) {
+    var new_font = prompt(lang.promptTextFont) || '';
+    new_font = new_font.replace(/^\s+/, '').replace(/\s+$/, '') || 
+      ev.previousValue;
+
+    // Check if the font name is already in the list.
+    var opt, new_font2 = new_font.toLowerCase(),
+        n = input_fontFamily.options.length;
+
+    for (var i = 0; i < n; i++) {
+      opt = input_fontFamily.options[i];
+      if (opt.value.toLowerCase() == new_font2) {
+        config.fontFamily = opt.value;
+        input_fontFamily.selectedIndex = i;
+        input_fontFamily.value = config.fontFamily;
+        ev.value = config.fontFamily;
+
+        return;
+      }
+    }
+
+    // Add the new font.
+    opt = doc.createElement('option');
+    opt.value = new_font;
+    opt.appendChild(doc.createTextNode(new_font));
+    input_fontFamily.insertBefore(opt, input_fontFamily.options[n-1]);
+    input_fontFamily.selectedIndex = n-1;
+    input_fontFamily.value = new_font;
+    ev.value = new_font;
+    config.fontFamily = new_font;
   };
 
   /**
@@ -191,12 +248,12 @@ pwlib.tools.text = function (app) {
 
     context.clearRect(0, 0, image.width, image.height);
 
-    if (config.shapeType != 'stroke') {
-      context.fillText(textString.value, mouse.x, mouse.y);
+    if (app.config.shapeType != 'stroke') {
+      context.fillText(input_textString.value, mouse.x, mouse.y);
     }
 
-    if (config.shapeType != 'fill') {
-      context.strokeText(textString.value, mouse.x, mouse.y);
+    if (app.config.shapeType != 'fill') {
+      context.strokeText(input_textString.value, mouse.x, mouse.y);
     }
 
     needsRedraw = false;
@@ -204,27 +261,11 @@ pwlib.tools.text = function (app) {
 
   /**
    * The <code>click</code> event handler. This method completes the drawing 
-   * operation by inserting the text into the layer canvas, and by activating 
-   * the previous tool.
-   *
-   * @param {Event} ev The DOM Event object.
+   * operation by inserting the text into the layer canvas.
    */
-  this.click = function (ev) {
-    if (timer) {
-      clearInterval(timer);
-      timer = null;
-    }
-
+  this.click = function () {
     _self.draw();
     app.layerUpdate();
-
-    if (prevTool) {
-      app.toolActivate(prevTool, ev);
-    }
-
-    if (ev.stopPropagation) {
-      ev.stopPropagation();
-    }
   };
 
   /**
