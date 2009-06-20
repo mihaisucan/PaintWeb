@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-19 21:05:23 +0300 $
+ * $Date: 2009-06-20 22:01:53 +0300 $
  */
 
 /**
@@ -25,7 +25,7 @@
  * @fileOverview Holds the text tool implementation.
  */
 
-// TODO: make this tool nicer to use and make it work in Opera.
+// TODO: make this tool nicer to use.
 
 /**
  * @class The text tool.
@@ -41,6 +41,7 @@ pwlib.tools.text = function (app) {
       gui           = app.gui,
       image         = app.image,
       lang          = app.lang,
+      MathRound     = Math.round,
       mouse         = app.mouse,
       setInterval   = app.win.setInterval;
 
@@ -70,9 +71,14 @@ pwlib.tools.text = function (app) {
    */
   var needsRedraw = false;
 
-  var input_textString = null,
+  var inputString = null,
       input_fontFamily = null,
-      ev_configChangeId = null;
+      ev_configChangeId = null,
+      ns_svg = "http://www.w3.org/2000/svg",
+      svgDoc = null,
+      svgText = null,
+      textWidth = 0,
+      textHeight = 0;
 
   /**
    * Tool preactivation code. This method check if the browser has support for 
@@ -86,13 +92,25 @@ pwlib.tools.text = function (app) {
         !gui.elems.viewport) {
       return false;
 
-    } else if (!context.fillText || !context.strokeText) {
-      alert(lang.errorTextUnsupported);
-      return false;
+    }
 
-    } else {
+    // Canvas 2D Text API
+    if (context.fillText && context.strokeText) {
       return true;
     }
+
+    // Opera can only render text via SVG Text.
+    if (pwlib.browser.opera) {
+      return true;
+    }
+
+    // Gecko 1.9.0 had its own proprietary Canvas 2D Text API.
+    if (context.mozPathText) {
+      return true;
+    }
+
+    alert(lang.errorTextUnsupported);
+    return false;
   };
 
   /**
@@ -106,12 +124,33 @@ pwlib.tools.text = function (app) {
     mouse.y = Math.round(gui.elems.viewport.scrollTop  / image.canvasScale),
 
     input_fontFamily = gui.inputs.text_fontFamily;
-    input_textString = gui.inputs.textString;
+    inputString = gui.inputs.textString;
 
-    input_textString.addEventListener('input', ev_configChange, false);
-    input_textString.addEventListener('change', ev_configChange, false);
+    if (!context.fillText && pwlib.browser.opera) {
+      ev_configChangeId = app.events.add('configChange', ev_configChange_opera);
+      inputString.addEventListener('input',  ev_configChange_opera, false);
+      inputString.addEventListener('change', ev_configChange_opera, false);
+    } else {
+      ev_configChangeId = app.events.add('configChange', ev_configChange);
+      inputString.addEventListener('input',  ev_configChange, false);
+      inputString.addEventListener('change', ev_configChange, false);
+    }
 
-    ev_configChangeId = app.events.add('configChange', ev_configChange);
+    // Render text using the Canvas 2D context text API defined by HTML 5.
+    if (context.fillText && context.strokeText) {
+      _self.draw = _self.draw_spec;
+
+    } else if (pwlib.browser.opera) {
+      // Render text using a SVG Text element which is copied into Canvas using 
+      // drawImage().
+      _self.draw = _self.draw_opera;
+      initOpera();
+
+    } else if (context.mozPathText) {
+      // Render text using proprietary API available in Gecko 1.9.0.
+      _self.draw = _self.draw_moz;
+      textWidth = context.mozMeasureText(inputString.value);
+    }
 
     if (!timer) {
       timer = setInterval(_self.draw, app.config.toolDrawDelay);
@@ -134,8 +173,16 @@ pwlib.tools.text = function (app) {
       app.events.remove('configChange', ev_configChangeId);
     }
 
-    input_textString.removeEventListener('input', ev_configChange, false);
-    input_textString.removeEventListener('change', ev_configChange, false);
+    if (!context.fillText && pwlib.browser.opera) {
+      inputString.removeEventListener('input',  ev_configChange_opera, false);
+      inputString.removeEventListener('change', ev_configChange_opera, false);
+    } else {
+      inputString.removeEventListener('input',  ev_configChange, false);
+      inputString.removeEventListener('change', ev_configChange, false);
+    }
+
+    svgText = null;
+    svgDoc = null;
 
     context.clearRect(0, 0, image.width, image.height);
 
@@ -143,10 +190,49 @@ pwlib.tools.text = function (app) {
   };
 
   /**
+   * Initialize the SVG document for Opera. This is used for rendering the text.
+   * @private
+   */
+  function initOpera () {
+    svgDoc = doc.createElementNS(ns_svg, 'svg');
+    svgDoc.setAttributeNS(ns_svg, 'version', '1.1');
+
+    svgText = doc.createElementNS(ns_svg, 'text');
+    svgText.appendChild(doc.createTextNode(inputString.value));
+    svgDoc.appendChild(svgText);
+
+    svgText.style.font = context.font;
+
+    if (app.config.shapeType !== 'stroke') {
+      svgText.style.fill = context.fillStyle;
+    } else {
+      svgText.style.fill = 'none';
+    }
+
+    if (app.config.shapeType !== 'fill') {
+      svgText.style.stroke = context.strokeStyle;
+      svgText.style.strokeWidth = context.lineWidth;
+    } else {
+      svgText.style.stroke = 'none';
+      svgText.style.strokeWidth = context.lineWidth;
+    }
+
+    textWidth  = svgText.getComputedTextLength();
+    textHeight = svgText.getBBox().height;
+
+    svgDoc.setAttributeNS(ns_svg, 'width',  textWidth);
+    svgDoc.setAttributeNS(ns_svg, 'height', textHeight + 10);
+    svgText.setAttributeNS(ns_svg, 'x', 0);
+    svgText.setAttributeNS(ns_svg, 'y', textHeight);
+  };
+
+  /**
    * The <code>configChange</code> application event handler. This is also the 
    * <code>input</code> and <code>change</code> event handler for the text 
    * string input element.  This method updates the Canvas text-related 
    * properties as needed, and re-renders the text.
+   *
+   * <p>This function is not used on Opera.
    *
    * @param {Event|pwlib.appEvent.configChange} ev The application/DOM event 
    * object.
@@ -156,6 +242,11 @@ pwlib.tools.text = function (app) {
         (!ev.group && ev.config === 'shapeType') ||
         (ev.group === 'line' && ev.config === 'lineWidth')) {
       needsRedraw = true;
+
+      // Update the text width.
+      if (!context.fillText && context.mozMeasureText) {
+        textWidth = context.mozMeasureText(inputString.value);
+      }
       return;
     }
 
@@ -182,10 +273,105 @@ pwlib.tools.text = function (app) {
         font += config.fontSize + 'px ' + config.fontFamily;
         context.font = font;
 
+        if ('mozTextStyle' in context) {
+          context.mozTextStyle = font;
+        }
+
       case 'textAlign':
       case 'textBaseline':
         needsRedraw = true;
     }
+
+    // Update the text width.
+    if (ev.config !== 'textAlign' && ev.config !== 'textBaseline' && 
+        !context.fillText && context.mozMeasureText) {
+      textWidth = context.mozMeasureText(inputString.value);
+    }
+  };
+
+  /**
+   * The <code>configChange</code> application event handler. This is also the 
+   * <code>input</code> and <code>change</code> event handler for the text 
+   * string input element.  This method updates the Canvas text-related 
+   * properties as needed, and re-renders the text.
+   *
+   * <p>This is function is specific to Opera.
+   *
+   * @param {Event|pwlib.appEvent.configChange} ev The application/DOM event 
+   * object.
+   */
+  function ev_configChange_opera (ev) {
+    if (ev.type === 'input' || ev.type === 'change') {
+      svgText.replaceChild(doc.createTextNode(this.value), svgText.firstChild);
+      needsRedraw = true;
+    }
+
+    if (!ev.group && ev.config === 'shapeType') {
+      if (ev.value !== 'stroke') {
+        svgText.style.fill = context.fillStyle;
+      } else {
+        svgText.style.fill = 'none';
+      }
+
+      if (ev.value !== 'fill') {
+        svgText.style.stroke = context.strokeStyle;
+        svgText.style.strokeWidth = context.lineWidth;
+      } else {
+        svgText.style.stroke = 'none';
+        svgText.style.strokeWidth = context.lineWidth;
+      }
+      needsRedraw = true;
+    }
+
+    if (!ev.group && ev.config === 'fillStyle') {
+      if (app.config.shapeType !== 'stroke') {
+        svgText.style.fill = ev.value;
+        needsRedraw = true;
+      }
+    }
+
+    if ((!ev.group && ev.config === 'strokeStyle') ||
+        (ev.group === 'line' && ev.config === 'lineWidth')) {
+      if (app.config.shapeType !== 'fill') {
+        svgText.style.stroke = context.strokeStyle;
+        svgText.style.strokeWidth = context.lineWidth;
+        needsRedraw = true;
+      }
+    }
+
+    if (ev.type === 'configChange' && ev.group === 'text') {
+      var font = '';
+      switch (ev.config) {
+        case 'fontFamily':
+          if (ev.value === '+') {
+            fontFamilyAdd(ev);
+          }
+        case 'bold':
+        case 'italic':
+        case 'fontSize':
+          if (config.bold) {
+            font += 'bold ';
+          }
+          if (config.italic) {
+            font += 'italic ';
+          }
+          font += config.fontSize + 'px ' + config.fontFamily;
+          context.font = font;
+          svgText.style.font = font;
+
+        case 'textAlign':
+        case 'textBaseline':
+          needsRedraw = true;
+      }
+    }
+
+    textWidth  = svgText.getComputedTextLength();
+    textHeight = svgText.getBBox().height;
+
+    svgDoc.setAttributeNS(ns_svg, 'width',  textWidth);
+    svgDoc.setAttributeNS(ns_svg, 'height', textHeight + 10);
+    svgText.setAttributeNS(ns_svg, 'x', 0);
+    svgText.setAttributeNS(ns_svg, 'y', textHeight);
   };
 
   /**
@@ -237,11 +423,11 @@ pwlib.tools.text = function (app) {
   };
 
   /**
-   * Perform the drawing operation.
+   * Perform the drawing operation using standard 2D context methods.
    *
    * @see PaintWeb.config.toolDrawDelay
    */
-  this.draw = function () {
+  this.draw_spec = function () {
     if (!needsRedraw) {
       return;
     }
@@ -249,12 +435,84 @@ pwlib.tools.text = function (app) {
     context.clearRect(0, 0, image.width, image.height);
 
     if (app.config.shapeType != 'stroke') {
-      context.fillText(input_textString.value, mouse.x, mouse.y);
+      context.fillText(inputString.value, mouse.x, mouse.y);
     }
 
     if (app.config.shapeType != 'fill') {
-      context.strokeText(input_textString.value, mouse.x, mouse.y);
+      context.strokeText(inputString.value, mouse.x, mouse.y);
     }
+
+    needsRedraw = false;
+  };
+
+  /**
+   * Perform the drawing operation in Gecko 1.9.0.
+   */
+  this.draw_moz = function () {
+    if (!needsRedraw) {
+      return;
+    }
+
+    context.clearRect(0, 0, image.width, image.height);
+
+    var x = mouse.x,
+        y = mouse.y;
+
+    if (config.textAlign === 'center') {
+      x -= MathRound(textWidth / 2);
+    } else if (config.textAlign === 'right') {
+      x -= textWidth;
+    }
+
+    if (config.textBaseline === 'top') {
+      y += config.fontSize;
+    } else if (config.textBaseline === 'middle') {
+      y += MathRound(config.fontSize / 2);
+    }
+
+    context.setTransform(1, 0, 0, 1, x, y);
+    context.beginPath();
+    context.mozPathText(inputString.value);
+
+    if (app.config.shapeType != 'stroke') {
+      context.fill();
+    }
+
+    if (app.config.shapeType != 'fill') {
+      context.stroke();
+    }
+    context.closePath();
+    context.setTransform(1, 0, 0, 1, 0, 0);
+
+    needsRedraw = false;
+  };
+
+  /**
+   * Perform the drawing operation in Opera using SVG.
+   */
+  this.draw_opera = function () {
+    if (!needsRedraw) {
+      return;
+    }
+
+    context.clearRect(0, 0, image.width, image.height);
+
+    var x = mouse.x,
+        y = mouse.y;
+
+    if (config.textAlign === 'center') {
+      x -= MathRound(textWidth / 2);
+    } else if (config.textAlign === 'right') {
+      x -= textWidth;
+    }
+
+    if (config.textBaseline === 'bottom') {
+      y -= textHeight;
+    } else if (config.textBaseline === 'middle') {
+      y -= MathRound(textHeight / 2);
+    }
+
+    context.drawImage(svgDoc, x, y);
 
     needsRedraw = false;
   };

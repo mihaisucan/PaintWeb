@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-19 22:29:04 +0300 $
+ * $Date: 2009-06-20 22:11:27 +0300 $
  */
 
 /**
@@ -52,7 +52,7 @@ function PaintWeb (win, doc) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090619;
+  this.build = 20090620;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -872,6 +872,11 @@ function PaintWeb (win, doc) {
 
     if (cfg.text.italic) {
       props.font = 'italic ' + props.font;
+    }
+
+    // Support Gecko 1.9.0
+    if (!bufferContext.fillText && 'mozTextStyle' in bufferContext) {
+      props.mozTextStyle = props.font;
     }
 
     for (var prop in props) {

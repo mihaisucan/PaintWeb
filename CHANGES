@@ -1,3 +1,11 @@
+2009-06-20:
+============
+
+- Made the Text tool work with Opera 9+ and Firefox 3.0+.
+For Opera I use SVG. Unfortunately, sometimes Opera has random SVG redraw 
+glitches which are visible when using the Text tool inside PaintWeb.
+For Firefox 3.0 (Gecko 1.9.0) I use their proprietary mozPathText() method.
+
 2009-06-19:
 ===========
 
