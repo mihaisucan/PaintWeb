@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-21 16:48:10 +0300 $
+ * $Date: 2009-06-21 20:59:08 +0300 $
  */
 
 /* OLPC XO DPI resolution detection */
@@ -598,14 +598,65 @@
 
 .paintweb_floatingPanel {
   position: absolute;
-  background: #e6e6e6;
+  background: #eee;
   border: 1px solid #a2a2a2;
+  -moz-box-shadow: rgba(0, 0, 0, 0.2) 5px 5px 10px;
+  -moz-border-radius: 0 0 15px 15px;
+  -webkit-box-shadow: rgba(0, 0, 0, 0.2) 5px 5px 10px;
+  -webkit-border-bottom-left-radius: 15px;
+  -webkit-border-bottom-right-radius: 15px;
 }
 
-.paintweb_floatingPanel {
-  position: absolute;
-  background: #e6e6e6;
+.paintweb_floatingPanel_title {
+  background: #d2cfcb url('images/floatingPanel-title.png') repeat-x;
   border-bottom: 1px solid #a2a2a2;
+  cursor: pointer;
+  margin: 0;
+  padding: 0 10px;
+  vertical-align: middle;
+  color: #555;
+  line-height: 20px;
+  font-size: 1em;
+  font-weight: bold;
+}
+
+.paintweb_floatingPanel_minimize, .paintweb_floatingPanel_restore, .paintweb_floatingPanel_close {
+  position: absolute;
+  top: 0;
+  width: 21px;
+  height: 0;
+  padding-top: 20px;
+  text-indent: 22px;
+  white-space: nowrap;
+  border-left: 1px solid #a2a2a2;
+  overflow: hidden;
+  opacity: 0.4;
+}
+
+.paintweb_floatingPanel_minimize:hover, .paintweb_floatingPanel_restore:hover, .paintweb_floatingPanel_close:hover, 
+.paintweb_floatingPanel_minimize:focus, .paintweb_floatingPanel_restore:focus, .paintweb_floatingPanel_close:focus { opacity: 1 }
+
+.paintweb_floatingPanel_minimize {
+  background: url('images/floatingPanel-minimize.png') no-repeat;
+  right: 22px;
+}
+
+.paintweb_floatingPanel_restore {
+  background: url('images/floatingPanel-restore.png') no-repeat;
+  right: 22px;
+}
+
+.paintweb_floatingPanel_close {
+  background: url('images/floatingPanel-close.png') no-repeat;
+  right: 0;
+}
+
+.paintweb_floatingPanel_minimized .paintweb_floatingPanel_content {
+  display: none;
+}
+
+.paintweb_floatingPanel_content {
+  padding: 10px;
 }
 
 .paintweb_floatingPanel_about {
@@ -614,8 +665,10 @@
   width: 400px;
 }
 
-.paintweb_floatingPanel_content {
-  padding: 5px;
+.paintweb_floatingPanel_about .paintweb_floatingPanel_content {
+  background: url('images/paintweb-logo.png') top center no-repeat;
+  padding-top: 96px;
+  margin-top: 10px;
 }
 
 

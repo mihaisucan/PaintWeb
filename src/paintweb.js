@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-20 22:11:27 +0300 $
+ * $Date: 2009-06-21 21:16:15 +0300 $
  */
 
 /**
@@ -52,7 +52,7 @@ function PaintWeb (win, doc) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090620;
+  this.build = 20090621;
 
   /**
    * Holds all the PaintWeb configuration.

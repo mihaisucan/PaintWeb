@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-21 16:35:27 +0300 $
+ * $Date: 2009-06-21 21:06:03 +0300 $
  */
 
 /**
@@ -1662,22 +1662,30 @@ function guiFloatingPanel (gui, elem) {
   var ptop, pleft;
 
   // panel states.
-  this.STATE_HIDDEN   = 0;
-  this.STATE_VISIBLE  = 1;
-  this.STATE_DRAGGING = 2;
+  this.STATE_HIDDEN    = 0;
+  this.STATE_VISIBLE   = 1;
+  this.STATE_MINIMIZED = 3;
+  this.STATE_DRAGGING  = 4;
 
   /**
-   * Tells the state of the floating panel: hidden/visible or if it's being 
-   * dragged.
+   * Tells the state of the floating panel: hidden/minimized/visible or if it's 
+   * being dragged.
    * @type Number
    */
   this.state = -1;
 
   /**
-   * Reference to the panel element.
+   * Reference to the floating panel element.
    * @type Element
    */
   this.elem = elem;
+
+  /**
+   * The viewport element. This element is the first parent element which has 
+   * the style.overflow set to "auto" or "scroll".
+   * @type HTMLElement
+   */
+  this.viewport = null;
 
   /**
    * Floating panel ID. This is the ID used in the 
@@ -1687,6 +1695,17 @@ function guiFloatingPanel (gui, elem) {
   this.id = null;
 
   /**
+   * The panel content element.
+   * @type HTMLElement
+   */
+  this.content = null;
+
+  // The initial viewport scroll position.
+  var vScrollLeft = 0, vScrollTop = 0;
+
+  var btn_close = null, btn_minimize = null;
+
+  /**
    * Initialize the floating panel.
    * @private
    */
@@ -1694,6 +1713,7 @@ function guiFloatingPanel (gui, elem) {
     _self.id = _self.elem.getAttribute('data-pwFloatingPanel');
 
     var ttl = _self.elem.getElementsByTagName('h1')[0],
+        content = _self.elem.getElementsByTagName('div')[0],
         cs = win.getComputedStyle(_self.elem, null),
         zIndex = parseInt(cs.zIndex);
 
@@ -1706,6 +1726,11 @@ function guiFloatingPanel (gui, elem) {
     _self.elem.className += ' ' + gui.classPrefix + 'floatingPanel ' +
       gui.classPrefix + 'floatingPanel_' + _self.id;
 
+    // the content
+    content.className += ' ' + gui.classPrefix + 'floatingPanel_content';
+    _self.content = content;
+
+    // setup the title element
     ttl.className += ' ' + gui.classPrefix + 'floatingPanel_title';
     ttl.replaceChild(doc.createTextNode(lang.floatingPanels[_self.id]), 
         ttl.firstChild);
@@ -1718,6 +1743,92 @@ function guiFloatingPanel (gui, elem) {
     } else {
       _self.state = _self.STATE_VISIBLE;
     }
+
+    // Find the viewport parent element.
+    var pNode = _self.elem.parentNode,
+        found = null;
+
+    while (!found && pNode) {
+      if (pNode.nodeName.toLowerCase() === 'html') {
+        found = pNode;
+        break;
+      }
+
+      cs = win.getComputedStyle(pNode, null);
+      if (cs && (cs.overflow === 'scroll' || cs.overflow === 'auto')) {
+        found = pNode;
+      } else {
+        pNode = pNode.parentNode;
+      }
+    }
+
+    _self.viewport = found;
+
+    // add the panel minimize button.
+    btn_minimize = doc.createElement('a');
+    btn_minimize.href = '#';
+    btn_minimize.title = lang.floatingPanelMinimize;
+    btn_minimize.className = gui.classPrefix + 'floatingPanel_minimize';
+    btn_minimize.addEventListener('click', ev_minimize, false);
+    btn_minimize.appendChild(doc.createTextNode(btn_minimize.title));
+
+    _self.elem.insertBefore(btn_minimize, content);
+
+    // add the panel close button.
+    btn_close = doc.createElement('a');
+    btn_close.href = '#';
+    btn_close.title = lang.floatingPanelClose;
+    btn_close.className = gui.classPrefix + 'floatingPanel_close';
+    btn_close.addEventListener('click', ev_close, false);
+    btn_close.appendChild(doc.createTextNode(btn_close.title));
+
+    _self.elem.insertBefore(btn_close, content);
+  };
+
+  /**
+   * The <code>click</code> event handler for the panel Minimize button element.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
+  function ev_minimize (ev) {
+    ev.preventDefault();
+
+    var classMinimized = ' ' + gui.classPrefix + 'floatingPanel_minimized';
+
+    if (_self.state === _self.STATE_MINIMIZED) {
+      _self.state = _self.STATE_VISIBLE;
+
+      this.title = lang.floatingPanelMinimize;
+      this.className = gui.classPrefix + 'floatingPanel_minimize';
+      this.replaceChild(doc.createTextNode(this.title), this.firstChild);
+
+      if (_self.elem.className.indexOf(classMinimized) !== -1) {
+        _self.elem.className = _self.elem.className.replace(classMinimized, '');
+      }
+
+    } else if (_self.state === _self.STATE_VISIBLE) {
+      _self.state = _self.STATE_MINIMIZED;
+
+      this.title = lang.floatingPanelRestore;
+      this.className = gui.classPrefix + 'floatingPanel_restore';
+      this.replaceChild(doc.createTextNode(this.title), this.firstChild);
+
+      if (_self.elem.className.indexOf(classMinimized) === -1) {
+        _self.elem.className += classMinimized;
+      }
+    }
+  };
+
+  /**
+   * The <code>click</code> event handler for the panel Close button element.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
+  function ev_close (ev) {
+    ev.preventDefault();
+    _self.hide();
   };
 
   /**
@@ -1738,6 +1849,11 @@ function guiFloatingPanel (gui, elem) {
     ptop  = parseInt(cs.top);
     pleft = parseInt(cs.left);
 
+    if (_self.viewport) {
+      vScrollLeft = _self.viewport.scrollLeft;
+      vScrollTop  = _self.viewport.scrollTop;
+    }
+
     _self.bringOnTop();
 
     doc.addEventListener('mousemove', ev_mousemove, false);
@@ -1756,8 +1872,20 @@ function guiFloatingPanel (gui, elem) {
    * @param {Event} ev The DOM Event object.
    */
   function ev_mousemove (ev) {
-    elemStyle.left = (pleft + ev.clientX - mx) + 'px';
-    elemStyle.top  = (ptop  + ev.clientY - my) + 'px';
+    var x = pleft + ev.clientX - mx,
+        y = ptop  + ev.clientY - my;
+
+    if (_self.viewport) {
+      if (_self.viewport.scrollLeft !== vScrollLeft) {
+        x += _self.viewport.scrollLeft - vScrollLeft;
+      }
+      if (_self.viewport.scrollTop !== vScrollTop) {
+        y += _self.viewport.scrollTop - vScrollTop;
+      }
+    }
+
+    elemStyle.left = x + 'px';
+    elemStyle.top  = y + 'px';
   };
 
   /**
@@ -1767,7 +1895,12 @@ function guiFloatingPanel (gui, elem) {
    * @param {Event} ev The DOM Event object.
    */
   function ev_mouseup (ev) {
-    _self.state = _self.STATE_VISIBLE;
+    if (_self.elem.className.indexOf(' ' + gui.classPrefix 
+          + 'floatingPanel_minimized') !== -1) {
+      _self.state = _self.STATE_MINIMIZED;
+    } else {
+      _self.state = _self.STATE_VISIBLE;
+    }
 
     doc.removeEventListener('mousemove', ev_mousemove, false);
     doc.removeEventListener('mouseup',   ev_mouseup,   false);
@@ -1796,18 +1929,28 @@ function guiFloatingPanel (gui, elem) {
   this.show = function () {
     elemStyle.display = 'block';
     _self.state = _self.STATE_VISIBLE;
+
+    var classMinimized = ' ' + gui.classPrefix + 'floatingPanel_minimized';
+
+    if (_self.elem.className.indexOf(classMinimized) !== -1) {
+      _self.elem.className = _self.elem.className.replace(classMinimized, '');
+
+      btn_minimize.className = gui.classPrefix + 'floatingPanel_minimize';
+      btn_minimize.title = lang.floatingPanelMinimize;
+      btn_minimize.replaceChild(doc.createTextNode(btn_minimize.title), 
+          btn_minimize.firstChild);
+    }
   };
 
   /**
    * Toggle the panel visibility.
    */
   this.toggle = function () {
-    if (elemStyle.display === 'block') {
-      elemStyle.display = 'none';
-      _self.state = _self.STATE_HIDDEN;
+    if (_self.state === _self.STATE_VISIBLE || _self.state === 
+        _self.STATE_MINIMIZED) {
+      _self.hide();
     } else {
-      elemStyle.display = 'block';
-      _self.state = _self.STATE_VISIBLE;
+      _self.show();
     }
   };
 
@@ -1890,6 +2033,11 @@ function guiResizer (gui, resizeHandle, container) {
     var cs, pNode = _self.container.parentNode,
         found = null;
     while (!found && pNode) {
+      if (pNode.nodeName.toLowerCase() === 'html') {
+        found = pNode;
+        break;
+      }
+
       cs = win.getComputedStyle(pNode, null);
       if (cs && (cs.overflow === 'scroll' || cs.overflow === 'auto')) {
         found = pNode;

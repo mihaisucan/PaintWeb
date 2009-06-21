@@ -1,5 +1,13 @@
+2009-06-21:
+===========
+
+- Made improvements to the GUI floating panel component.
+- Completed the "About PaintWeb" floating panel.
+- Added a PaintWeb logo.
+- Updated/new English strings.
+
 2009-06-20:
-============
+===========
 
 - Made the Text tool work with Opera 9+ and Firefox 3.0+.
 For Opera I use SVG. Unfortunately, sometimes Opera has random SVG redraw 

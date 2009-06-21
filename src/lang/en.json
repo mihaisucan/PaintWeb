@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-21 16:30:32 +0300 $
+  // $Date: 2009-06-21 21:06:51 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -66,6 +66,9 @@
     }
   },
 
+  "floatingPanelMinimize": "Minimize",
+  "floatingPanelRestore": "Restore",
+  "floatingPanelClose": "Close",
   "floatingPanels": {
     "about": "About PaintWeb",
     "colormixer": "Color mixer"
@@ -87,8 +90,8 @@
   },
 
   "commands": {
+    "about": "About",
     "clipboardPaste": "Paste clipboard",
-    "help": "Help",
     "historyRedo": "Redo",
     "historyUndo": "Undo",
     "imageClear": "Clear image",
