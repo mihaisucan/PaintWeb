@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-19 20:22:18 +0300 $
+  // $Date: 2009-06-21 16:30:32 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -64,6 +64,11 @@
       "text": "Text",
       "textBorder": "Border"
     }
+  },
+
+  "floatingPanels": {
+    "about": "About PaintWeb",
+    "colormixer": "Color mixer"
   },
 
   "tools": {

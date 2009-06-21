@@ -1,5 +1,5 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
-  <!--- $Date: 2009-06-19 22:19:33 +0300 $ -->
+  <!--- $Date: 2009-06-21 16:38:55 +0300 $ -->
   <h1 class="paintweb_appTitle">PaintWeb</h1>
 
   <!-- All elements with data-pwTabPanel become interactive tabbed panels which 
@@ -210,7 +210,7 @@
       </p>
     </div>
 
-    <p data-pwCommand="help">Help</p>
+    <p data-pwCommand="about">About</p>
 
     <div id="colors_fill_stroke" style="display: none">
       <p>
@@ -384,49 +384,26 @@
     </form> <!-- #coloreditor-inputs -->
   </div> <!-- #coloreditor -->
 
-  <div data-pwFloatingPanel="help" data-pwPanelHide="true">
-    <h1>Help</h1>
+  <div data-pwFloatingPanel="about" data-pwPanelHide="true">
+    <h1>About</h1>
 
-    <h2>PaintWeb</h2>
-    <p id="version">Version: </p>
-    <p>Authors: <a href="http://www.robodesign.ro">Marius and Mihai Şucan 
-      (ROBO Design)</a></p>
-    <p>Project site: <a 
-      href="http://code.google.com/p/paintweb">code.google.com/p/paintweb</a></p>
-    <p>Code license: <a href="http://www.gnu.org/licenses/gpl-3.0.html" 
-      title="GNU General Public License, version 3">GPLv3</a></p>
+    <div class="paintweb_floatingPanel_content">
+      <p id="version">Version: </p>
+      <p>Authors: <a href="http://www.robodesign.ro">Marius and Mihai Şucan 
+        (ROBO Design)</a></p>
 
-    <p>The project is currently undergoing heavy development. It is being 
-    integrated into <a href="http://www.moodle.org">Moodle</a>.</p>
+      <p>Project site: <a 
+        href="http://code.google.com/p/paintweb">code.google.com/p/paintweb</a></p>
 
-    <h2>Details</h2>
-    <p>This Web application uses the <a 
-      href="http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas.html">Canvas 
-      <abbr title="Application Programmable Interface">API</abbr></a> defined 
-    by the HTML 5 specification. You have the canvas and the tools, with their 
-    properties. You can resize the canvas using the bottom right corner 
-    handler.</p>
-    <p><strong>Clear image</strong> (<kbd>Ctrl-N</kbd>). Click the button 
-    holding the <kbd>Shift</kbd> key down, or press <kbd>Ctrl-Shift-N</kbd>, 
-    if you want to manually define the resolution of the image.</p>
-    <p><strong>Save image</strong> (<kbd>Ctrl-S</kbd>) will open a new 
-    tab/window with the image saved using the <abbr title="Portable Network 
-      Graphics">PNG</abbr> format. Right-click the image and save it to your 
-    disk using the Web browser.</p>
-    <p><strong>Insert image</strong> does only allow <em>data:</em> and 
-    <em>http://</em> addresses. Due to security restrictions defined in the 
-    specification, you cannot insert images from third-party hosts.</p>
-    <p>The <strong>Text</strong> tool and the <strong>Shadow 
-      properties</strong> only work in Firefox 3.1+, since both features were 
-    recently implemented.</p>
-    <p>Safari and Opera 9.2 (or older) do not implement the 
-    <code>get/putImageData</code> methods. As such, they get no support for 
-    history (Undo/Redo), no color picker, no <abbr title="Commission 
-      Internationale de l'Éclairage">CIE</abbr> L*a*b* color visualisation, 
-    and no support for non-transparent selection backgrounds.</p>
-    <p>Opera 9.2 does not have support for globalCompositeOperation 'lighter', 
-    which makes the <abbr title="Red, Green, Blue">RGB</abbr> color 
-    visualisation to fail.</p>
+      <p>Code license: <a href="http://www.gnu.org/licenses/gpl-3.0.html" 
+        title="GNU General Public License, version 3">GPLv3</a></p>
+
+      <p>The project is currently undergoing heavy development for the purpose of 
+      integrating it into <a href="http://www.moodle.org">Moodle</a>.</p>
+
+      <p>For user and developer documentation please check out the <a 
+        href="http://code.google.com/p/paintweb">project site</a>.</p>
+    </div>
   </div>
 
   <!-- vim:set spell spl=en fo=tcroqwanl1 tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix: -->

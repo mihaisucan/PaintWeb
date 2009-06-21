@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-19 21:52:16 +0300 $
+ * $Date: 2009-06-21 16:35:27 +0300 $
  */
 
 /**
@@ -232,8 +232,8 @@ pwlib.gui['default'] = function (app) {
       return false;
     }
     resizeHandle.title = lang.guiCanvasResizer;
-    resizeHandle.removeChild(resizeHandle.firstChild);
-    resizeHandle.appendChild(doc.createTextNode(lang.guiCanvasResizer));
+    resizeHandle.replaceChild(doc.createTextNode(lang.guiCanvasResizer), 
+        resizeHandle.firstChild);
     resizeHandle.addEventListener('mouseover', this.item_mouseover, false);
     resizeHandle.addEventListener('mouseout',  this.item_mouseout,  false);
 
@@ -255,9 +255,8 @@ pwlib.gui['default'] = function (app) {
     // Update the image dimensions in the GUI.
     var imageSize = this.elems.imageSize;
     if (imageSize) {
-      imageSize.removeChild(imageSize.firstChild);
-      imageSize.appendChild(doc.createTextNode(app.image.width + 'x' 
-            + app.image.height));
+      imageSize.replaceChild(doc.createTextNode(app.image.width + 'x' 
+            + app.image.height), imageSize.firstChild);
     }
 
     // Add application-wide event listeners.
@@ -279,7 +278,7 @@ pwlib.gui['default'] = function (app) {
       app.events.add('historyUpdate', this.historyUpdate);
     }
 
-    app.commandRegister('help', this.commandHelp);
+    app.commandRegister('about', this.commandAbout);
 
     return true;
   };
@@ -537,11 +536,11 @@ pwlib.gui['default'] = function (app) {
     }
 
     if (input.type === 'checkbox' || labelElem.htmlFor) {
-      labelElem.removeChild(labelElem.lastChild);
-      labelElem.appendChild(doc.createTextNode(langGroup[cfgProp]));
+      labelElem.replaceChild(doc.createTextNode(langGroup[cfgProp]), 
+          labelElem.lastChild);
     } else {
-      labelElem.removeChild(labelElem.firstChild);
-      labelElem.insertBefore(doc.createTextNode(langGroup[cfgProp]), input);
+      labelElem.replaceChild(doc.createTextNode(langGroup[cfgProp]), 
+          labelElem.firstChild);
     }
 
     if (input.type === 'checkbox') {
@@ -588,8 +587,8 @@ pwlib.gui['default'] = function (app) {
     this.inputs[cfgNoDots] = input;
 
     var labelElem = input.getElementsByTagName('p')[0];
-    labelElem.removeChild(labelElem.firstChild);
-    labelElem.appendChild(doc.createTextNode(langGroup[cfgProp]));
+    labelElem.replaceChild(doc.createTextNode(langGroup[cfgProp]), 
+        labelElem.firstChild);
 
     var elem, anchor, val,
         className = ' ' + this.classPrefix + 'configActive';
@@ -624,8 +623,7 @@ pwlib.gui['default'] = function (app) {
       anchor.addEventListener('mouseover', this.item_mouseover,   false);
       anchor.addEventListener('mouseout',  this.item_mouseout,    false);
 
-      elem.removeChild(elem.firstChild);
-      elem.appendChild(anchor);
+      elem.replaceChild(anchor, elem.firstChild);
 
       this.inputValues[cfgGroup + '_' + cfgProp + '_' + val] = elem;
     }
@@ -674,8 +672,7 @@ pwlib.gui['default'] = function (app) {
     anchor.addEventListener('mouseover', this.item_mouseover,    false);
     anchor.addEventListener('mouseout',  this.item_mouseout,     false);
 
-    input.removeChild(input.firstChild);
-    input.appendChild(anchor);
+    input.replaceChild(anchor, input.firstChild);
 
     this.inputs[cfgNoDots] = input;
   };
@@ -709,8 +706,8 @@ pwlib.gui['default'] = function (app) {
 
     var label = input.parentNode;
     if (label.tagName.toLowerCase() === 'label') {
-      label.removeChild(label.firstChild);
-      label.insertBefore(doc.createTextNode(lang.imageZoomLabel), input);
+      label.replaceChild(doc.createTextNode(lang.imageZoomLabel), 
+          label.firstChild);
     }
 
     var elem = this.elems.statusZoom;
@@ -767,8 +764,7 @@ pwlib.gui['default'] = function (app) {
       elem.className += classDisabled + ' ' + this.classPrefix + 'command' 
         + ' ' + this.classPrefix + 'cmd_' + cmd;
       elem.setAttribute('data-pwCommand', cmd);
-      elem.removeChild(elem.firstChild);
-      elem.appendChild(anchor);
+      elem.replaceChild(anchor, elem.firstChild);
     }
 
     var selCrop   = this.commands.selectionCrop,
@@ -972,29 +968,11 @@ pwlib.gui['default'] = function (app) {
   };
 
   /**
-   * The "Help" command. This method displays the "Help" panel.
+   * The "About" command. This method displays the "About" panel.
    */
-  this.commandHelp = function () {
-    var elem = _self.elems.help.style,
-        btn  = _self.elems.btn_help;
-
-    if (!elem || !btn) {
-      return false;
-    }
-
-    if (elem.display == 'none') {
-      elem.display = 'block';
-      btn.className = 'active';
-      if (_self.boxes && _self.boxes.zIndex) {
-        _self.boxes.zIndex += 200;
-        elem.zIndex = _self.boxes.zIndex;
-      }
-    } else {
-      elem.display = 'none';
-      btn.className = '';
-    }
-
-    return true;
+  this.commandAbout = function () {
+    _self.floatingPanels.about.toggle();
+    _self.floatingPanels.about.bringOnTop();
   };
 
   /**
@@ -1071,8 +1049,7 @@ pwlib.gui['default'] = function (app) {
     // Change the label of the lineWidth input element.
     if (tabConfig.lineWidthLabel) {
       lineWidthLabel = lineWidth.parentNode;
-      lineWidthLabel.removeChild(lineWidthLabel.firstChild);
-      lineWidthLabel.insertBefore(doc.createTextNode(tabConfig.lineWidthLabel), 
+      lineWidthLabel.replaceChild(doc.createTextNode(tabConfig.lineWidthLabel), 
           lineWidthLabel.firstChild);
 
     }
@@ -1113,8 +1090,8 @@ pwlib.gui['default'] = function (app) {
     if (tabConfig.lineTab && 'line' in tabPanel.tabs) {
       tabAnchor = lineTab.button.firstChild;
       tabAnchor.title = tabConfig.lineTabLabel || lang.tabs.main[ev.id];
-      tabAnchor.removeChild(tabAnchor.firstChild);
-      tabAnchor.appendChild(doc.createTextNode(tabAnchor.title));
+      tabAnchor.replaceChild(doc.createTextNode(tabAnchor.title), 
+          tabAnchor.firstChild);
 
       if (ev.id !== 'line') {
         lineTab.container.className = lineTab.container.className.
@@ -1172,8 +1149,7 @@ pwlib.gui['default'] = function (app) {
     anchor.href = '#';
     anchor.appendChild(doc.createTextNode(anchor.title));
 
-    elem.removeChild(elem.firstChild);
-    elem.appendChild(anchor);
+    elem.replaceChild(anchor, elem.firstChild);
 
     anchor.addEventListener('click',     _self.toolClick,      false);
     anchor.addEventListener('mouseover', _self.item_mouseover, false);
@@ -1342,8 +1318,8 @@ pwlib.gui['default'] = function (app) {
   this.imageSizeChange = function (ev) {
     var imageSize  = _self.elems.imageSize;
     if (imageSize) {
-      imageSize.removeChild(imageSize.firstChild);
-      imageSize.appendChild(doc.createTextNode(ev.width + 'x' + ev.height));
+      imageSize.replaceChild(doc.createTextNode(ev.width + 'x' + ev.height), 
+          imageSize.firstChild);
     }
   };
 
@@ -1675,6 +1651,8 @@ function guiFloatingPanel (gui, elem) {
       win         = gui.app.win,
       doc         = gui.app.doc,
       panels      = gui.floatingPanels,
+      elemStyle   = elem.style,
+      lang        = gui.app.lang,
       zIndex_step = 200;
 
   // These hold the mouse starting location during the drag operation.
@@ -1683,11 +1661,17 @@ function guiFloatingPanel (gui, elem) {
   // These hold the panel starting location during the drag operation.
   var ptop, pleft;
 
+  // panel states.
+  this.STATE_HIDDEN   = 0;
+  this.STATE_VISIBLE  = 1;
+  this.STATE_DRAGGING = 2;
+
   /**
-   * Tells if the floating panel is being dragged by the user.
-   * @type Boolean
+   * Tells the state of the floating panel: hidden/visible or if it's being 
+   * dragged.
+   * @type Number
    */
-  this.dragging = false;
+  this.state = -1;
 
   /**
    * Reference to the panel element.
@@ -1696,29 +1680,43 @@ function guiFloatingPanel (gui, elem) {
   this.elem = elem;
 
   /**
+   * Floating panel ID. This is the ID used in the 
+   * <var>data-pwFloatingPanel</var> element attribute.
+   * @type String
+   */
+  this.id = null;
+
+  /**
    * Initialize the floating panel.
    * @private
    */
   function init () {
+    _self.id = _self.elem.getAttribute('data-pwFloatingPanel');
+
     var ttl = _self.elem.getElementsByTagName('h1')[0],
         cs = win.getComputedStyle(_self.elem, null),
         zIndex = parseInt(cs.zIndex);
 
-    // Set the position in the .style for quicker usage by the mousedown handler.
-    // If this is not done during initialization, it would need to be done in the mousedown handler.
-    _self.elem.style.top    = cs.top;
-    _self.elem.style.left   = cs.left;
-    _self.elem.style.zIndex = cs.zIndex;
+    elemStyle.zIndex = cs.zIndex;
 
     if (zIndex > panels.zIndex_) {
       panels.zIndex_ = zIndex;
     }
+
+    _self.elem.className += ' ' + gui.classPrefix + 'floatingPanel ' +
+      gui.classPrefix + 'floatingPanel_' + _self.id;
+
+    ttl.className += ' ' + gui.classPrefix + 'floatingPanel_title';
+    ttl.replaceChild(doc.createTextNode(lang.floatingPanels[_self.id]), 
+        ttl.firstChild);
 
     ttl.addEventListener('mousedown', ev_mousedown, false);
 
     // allow auto-hide for the panel
     if (_self.elem.getAttribute('data-pwPanelHide') === 'true') {
       _self.hide();
+    } else {
+      _self.state = _self.STATE_VISIBLE;
     }
   };
 
@@ -1730,12 +1728,15 @@ function guiFloatingPanel (gui, elem) {
    * @param {Event} ev The DOM Event object.
    */
   function ev_mousedown (ev) {
-    _self.dragging = true;
+    _self.state = _self.STATE_DRAGGING;
 
     mx = ev.clientX;
     my = ev.clientY;
-    ptop  = parseInt(elem.style.top);
-    pleft = parseInt(elem.style.left);
+
+    var cs = win.getComputedStyle(_self.elem, null);
+
+    ptop  = parseInt(cs.top);
+    pleft = parseInt(cs.left);
 
     _self.bringOnTop();
 
@@ -1755,8 +1756,8 @@ function guiFloatingPanel (gui, elem) {
    * @param {Event} ev The DOM Event object.
    */
   function ev_mousemove (ev) {
-    elem.style.left = (pleft + ev.clientX - mx) + 'px';
-    elem.style.top  = (ptop  + ev.clientY - my) + 'px';
+    elemStyle.left = (pleft + ev.clientX - mx) + 'px';
+    elemStyle.top  = (ptop  + ev.clientY - my) + 'px';
   };
 
   /**
@@ -1766,7 +1767,7 @@ function guiFloatingPanel (gui, elem) {
    * @param {Event} ev The DOM Event object.
    */
   function ev_mouseup (ev) {
-    _self.dragging = false;
+    _self.state = _self.STATE_VISIBLE;
 
     doc.removeEventListener('mousemove', ev_mousemove, false);
     doc.removeEventListener('mouseup',   ev_mouseup,   false);
@@ -1778,21 +1779,36 @@ function guiFloatingPanel (gui, elem) {
    */
   this.bringOnTop = function () {
     panels.zIndex_ += zIndex_step;
-    elem.style.zIndex = panels.zIndex_;
+    elemStyle.zIndex = panels.zIndex_;
   };
 
   /**
    * Hide the panel.
    */
   this.hide = function () {
-    elem.style.display = 'none';
+    elemStyle.display = 'none';
+    _self.state = _self.STATE_HIDDEN;
   };
 
   /**
-   * Hide the panel.
+   * Show the panel.
    */
   this.show = function () {
-    elem.style.display = 'block';
+    elemStyle.display = 'block';
+    _self.state = _self.STATE_VISIBLE;
+  };
+
+  /**
+   * Toggle the panel visibility.
+   */
+  this.toggle = function () {
+    if (elemStyle.display === 'block') {
+      elemStyle.display = 'none';
+      _self.state = _self.STATE_HIDDEN;
+    } else {
+      elemStyle.display = 'block';
+      _self.state = _self.STATE_VISIBLE;
+    }
   };
 
   init();
