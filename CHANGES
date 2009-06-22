@@ -1,3 +1,12 @@
+2009-06-22:
+===========
+
+- Fixed the "Insert image" tool.
+- Disabled the Text tool in Opera, due to heavy redraw issues, memory leaks, and 
+security violations. Eh. Bugs reported to Opera.
+- Modest beginnings of the new color input GUI component.
+- New English strings.
+
 2009-06-21:
 ===========
 

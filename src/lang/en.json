@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-21 21:06:51 +0300 $
+  // $Date: 2009-06-22 22:25:38 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -28,7 +28,7 @@
   "errorTextUnsupported": "Error: your browser does not implement the Canvas Text API! The text tool cannot be used.",
   "errorInsertimg": "The image could not be inserted. Maybe the address does not point to an image.",
   "errorInsertimgHost": "The URL you provided points to a different host. The image cannot be added for security reasons.",
-  "errorInsertimgLoaded": "The image did not load yet, or the URL you provided does not point to an image.",
+  "errorInsertimgNotLoaded": "The image did not load yet, or the URL you provided does not point to an image.",
   "promptInsertimg": "Type the address of the image you want to insert:",
   "promptImageDimensions": "Please input the new image dimensions you want.",
   "promptTextFont": "Type the name of the font you want:",
@@ -121,7 +121,8 @@
       "enableTitle": "If checked, a shadow will render after each drawing operation you do.",
       "shadowBlur": "Blur:",
       "shadowOffsetX": "Distance X:",
-      "shadowOffsetY": "Distance Y:"
+      "shadowOffsetY": "Distance Y:",
+      "shadowColor": "Shadow color:"
     },
     "selection": {
       "transform": "Image manipulation",
@@ -147,7 +148,9 @@
     "shapeType_stroke": "Stroke",
     "pencilSize": "Pencil size:",
     "eraserSize": "Eraser size:",
-    "borderWidth": "Border width:"
+    "borderWidth": "Border width:",
+    "fillStyle": "Fill color",
+    "strokeStyle": "Stroke color"
   },
 
   "status": {

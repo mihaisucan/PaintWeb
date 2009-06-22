@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-03 18:29:55 +0300 $
+ * $Date: 2009-06-22 13:53:50 +0300 $
  */
 
 /**
@@ -35,19 +35,17 @@
 pwlib.tools.insertimg = function (app) {
   var _self         = this,
       canvasImage   = app.image,
-      clearInterval = window.clearInterval,
+      clearInterval = app.win.clearInterval,
       config        = app.config,
       container     = app.elems.container,
       context       = app.buffer.context,
+      gui           = app.gui,
       lang          = app.lang,
-      layerUpdate   = app.layerUpdate,
       MathAbs       = Math.abs,
       MathMin       = Math.min,
       MathRound     = Math.round,
       mouse         = app.mouse,
-      setInterval   = window.setInterval,
-      statusShow    = app.gui.statusShow,
-      toolActivate  = app.toolActivate;
+      setInterval   = app.win.setInterval;
 
   /**
    * Holds the previous tool ID.
@@ -144,10 +142,14 @@ pwlib.tools.insertimg = function (app) {
    * tool activation is cancelled.
    */
   this.preActivate = function () {
+    if (!gui.elems.viewport) {
+      return false;
+    }
+
     _self.url = prompt(lang.promptInsertimg, _self.url);
 
-    if (!_self.url || _self.url.toLowerCase() == 'http://' ||
-        _self.url.substr(0, 7).toLowerCase() != 'http://') {
+    if (!_self.url || _self.url.toLowerCase() === 'http://' ||
+        _self.url.substr(0, 7).toLowerCase() !== 'http://') {
       return false;
     }
 
@@ -213,8 +215,8 @@ pwlib.tools.insertimg = function (app) {
     }
 
     // The default position for the inserted image is the top left corner of the visible area, taking into consideration the zoom level.
-    var x = MathRound(container.scrollLeft / canvasImage.canvasScale),
-        y = MathRound(container.scrollTop  / canvasImage.canvasScale);
+    var x = MathRound(gui.elems.viewport.scrollLeft / canvasImage.canvasScale),
+        y = MathRound(gui.elems.viewport.scrollTop  / canvasImage.canvasScale);
 
     context.clearRect(0, 0, canvasImage.width, canvasImage.height);
 
@@ -232,7 +234,7 @@ pwlib.tools.insertimg = function (app) {
       timer = setInterval(_self.draw, config.toolDrawDelay);
     }
 
-    statusShow('insertimgLoaded');
+    gui.statusShow('insertimgLoaded');
   };
 
   /**
@@ -256,7 +258,7 @@ pwlib.tools.insertimg = function (app) {
     imageRatio = imageElement.width / imageElement.height;
     shiftKey = ev.shiftKey;
 
-    statusShow('insertimgResize');
+    gui.statusShow('insertimgResize');
 
     if (ev.stopPropagation) {
       ev.stopPropagation();
@@ -344,10 +346,10 @@ pwlib.tools.insertimg = function (app) {
       timer = null;
     }
 
-    layerUpdate();
+    app.layerUpdate();
 
     if (prevTool) {
-      toolActivate(prevTool, ev);
+      app.toolActivate(prevTool, ev);
     }
 
     if (ev.stopPropagation) {
@@ -374,7 +376,7 @@ pwlib.tools.insertimg = function (app) {
     }
 
     mouse.buttonDown = false;
-    toolActivate(prevTool, ev);
+    app.toolActivate(prevTool, ev);
 
     return true;
   };

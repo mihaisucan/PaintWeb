@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-21 21:06:03 +0300 $
+ * $Date: 2009-06-22 22:17:47 +0300 $
  */
 
 /**
@@ -55,17 +55,25 @@ pwlib.gui['default'] = function (app) {
   this.elems = {};
 
   /**
-   * Holds references to DOM elements which hold inputs for the PaintWeb 
-   * configuration.
+   * Holds references to input elements associated to the PaintWeb configuration 
+   * properties.
    * @type Object
    */
   this.inputs = {};
 
   /**
-   * Holds references to DOM elements which holds input configuration values.
+   * Holds references to DOM elements associated to configuration values.
    * @type Object
    */
   this.inputValues = {};
+
+  /**
+   * Holds references to DOM elements associated to color configuration 
+   * properties.
+   *
+   * @type Object
+   */
+  this.colorInputs = {};
 
   /**
    * Holds references to DOM elements associated to each tool registered in the 
@@ -430,7 +438,7 @@ pwlib.gui['default'] = function (app) {
     var nodes = config.guiPlaceholder.getElementsByTagName('*'),
         elType = Node.ELEMENT_NODE,
         elem, tag, isInput, tool, tabPanel, floatingPanel, cmd, id, cfgAttr, 
-        cfgGroup, cfgProp;
+        cfgGroup, cfgProp, colorInput;
 
     // Store references to important elements and parse PaintWeb-specific 
     // attributes.
@@ -480,6 +488,11 @@ pwlib.gui['default'] = function (app) {
       cfgAttr = elem.getAttribute('data-pwConfigToggle');
       if (cfgAttr) {
         this.initConfigToggle(elem, cfgAttr);
+      }
+
+      if (elem.hasAttribute('data-pwColorInput')) {
+        colorInput = new guiColorInput(this, elem);
+        this.colorInputs[colorInput.id] = colorInput;
       }
 
       id = elem.getAttribute('data-pwId');
@@ -1683,7 +1696,7 @@ function guiFloatingPanel (gui, elem) {
   /**
    * The viewport element. This element is the first parent element which has 
    * the style.overflow set to "auto" or "scroll".
-   * @type HTMLElement
+   * @type Element
    */
   this.viewport = null;
 
@@ -1696,7 +1709,7 @@ function guiFloatingPanel (gui, elem) {
 
   /**
    * The panel content element.
-   * @type HTMLElement
+   * @type Element
    */
   this.content = null;
 
@@ -1988,21 +2001,21 @@ function guiResizer (gui, resizeHandle, container) {
 
   /**
    * The resize handle DOM element.
-   * @type HTMLElement
+   * @type Element
    */
   this.resizeHandle = resizeHandle;
 
   /**
    * The container DOM element. This is the element that's resized by the user 
    * when he/she drags the resize handle.
-   * @type HTMLElement
+   * @type Element
    */
   this.container = container;
 
   /**
    * The viewport element. This element is the first parent element which has 
    * the style.overflow set to "auto" or "scroll".
-   * @type HTMLElement
+   * @type Element
    */
   this.viewport = null;
 
@@ -2426,6 +2439,52 @@ appEvent.guiTabActivate = function (tabId, prevTabId) {
   this.prevTabId = prevTabId;
 
   appEvent.call(this, 'guiTabActivate', true);
+};
+
+/**
+ * @class The color input GUI component.
+ *
+ * @private
+ *
+ * @param {pwlib.gui} gui Reference to the PaintWeb GUI object.
+ *
+ * @param {Element} input Reference to the DOM input element. This can be 
+ * a span, a div, or any other tag.
+ */
+function guiColorInput (gui, input) {
+  var _self = this,
+      doc   = gui.app.doc,
+      lang  = gui.app.lang;
+
+  /**
+   * Color input ID. The ID is the same as the data-pwColorInput attribute value 
+   * of the DOM input element .
+   *
+   * @type String.
+   */
+  this.id = null;
+
+  /**
+   * The color input element DOM reference.
+   *
+   * @type Element
+   */
+  this.input = input;
+
+  /**
+   * Initialize the color input functionality.
+   * @private
+   */
+  function init () {
+    _self.id = _self.input.getAttribute('data-pwColorInput');
+
+    _self.input.className += ' ' + gui.classPrefix + 'colorInput' 
+      + ' ' + gui.classPrefix + _self.id;
+
+  };
+
+
+  init();
 };
 
 })();

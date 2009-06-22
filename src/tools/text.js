@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-20 22:01:53 +0300 $
+ * $Date: 2009-06-22 22:31:49 +0300 $
  */
 
 /**
@@ -100,9 +100,16 @@ pwlib.tools.text = function (app) {
     }
 
     // Opera can only render text via SVG Text.
-    if (pwlib.browser.opera) {
+    // Note: support for Opera has been disabled.
+    // There are severe SVG redraw issues when updating the SVG text element.
+    // Besides, there are important memory leaks.
+    // Ultimately, there's a deal breaker: security violation. The SVG document 
+    // which is rendered inside Canvas is considered "external" 
+    // - get/putImageData() and toDataURL() stop working after drawImage(svg) is 
+    // invoked. Eh.
+    /*if (pwlib.browser.opera) {
       return true;
-    }
+    }*/
 
     // Gecko 1.9.0 had its own proprietary Canvas 2D Text API.
     if (context.mozPathText) {

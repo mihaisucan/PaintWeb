@@ -1,5 +1,5 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
-  <!--- $Date: 2009-06-21 20:23:54 +0300 $ -->
+  <!--- $Date: 2009-06-22 17:34:20 +0300 $ -->
   <h1 class="paintweb_appTitle">PaintWeb</h1>
 
   <!-- All elements with data-pwTabPanel become interactive tabbed panels which 
@@ -64,6 +64,17 @@
 
         <li data-pwTool="eraser">Eraser</li>
       </ul>
+
+      <div class="paintweb_strokeFillStyles">
+        <p>
+          <span class="paintweb_opt_strokeStyle">Stroke</span>
+          <span data-pwColorInput="strokeStyle" title="Stroke color">&#160;</span>
+        </p>
+        <p>
+          <span class="paintweb_opt_fillStyle">Fill</span>
+          <span data-pwColorInput="fillStyle" title="Fill color">&#160;</span>
+        </p>
+      </div>
     </div>
 
     <!-- Note that all tool/command elements will have an anchor elements as the 
@@ -186,9 +197,10 @@
         data-pwConfig="shadow.enable" type="checkbox" value="1" /> Draw 
         shadows</label></p>
 
-      <p class="paintweb_opt_shadowColor">Color <span><span 
-          data-pwColorInput="shadowColor" title="Shadow 
-          color">&#160;</span></span></p>
+      <p class="paintweb_opt_shadowColor">
+        <span>Color</span> <span data-pwColorInput="shadow.shadowColor" 
+          title="Shadow color">&#160;</span>
+      </p>
 
       <p class="paintweb_opt_shadowOffsetX">
         <label>Offset X
@@ -211,19 +223,6 @@
     </div>
 
     <p data-pwCommand="about">About</p>
-
-    <div id="colors_fill_stroke" style="display: none">
-      <p>
-        <span id="opt-strokeStyle">Stroke</span>
-        <span class="colorpreview" id="in-strokeStyle" title="Stroke 
-          color">&#160;</span>
-      </p>
-      <p>
-        <span id="opt-fillStyle">Fill</span>
-        <span class="colorpreview" id="in-fillStyle" title="Fill 
-          color">&#160;</span>
-      </p>
-    </div>
 
   </div> <!-- .paintweb_tabPanel_main -->
 

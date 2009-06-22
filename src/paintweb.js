@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-21 21:16:15 +0300 $
+ * $Date: 2009-06-22 22:26:52 +0300 $
  */
 
 /**
@@ -52,7 +52,7 @@ function PaintWeb (win, doc) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090621;
+  this.build = 20090622;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -2444,6 +2444,13 @@ function PaintWeb (win, doc) {
       switch (ev.config) {
         case 'textAlign':
         case 'textBaseline':
+          _self.buffer.context[ev.config] = ev.value;
+      }
+
+    } else if (!ev.group) {
+      switch (ev.config) {
+        case 'fillStyle':
+        case 'strokeStyle':
           _self.buffer.context[ev.config] = ev.value;
       }
     }
