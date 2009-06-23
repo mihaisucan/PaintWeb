@@ -1,5 +1,5 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
-  <!--- $Date: 2009-06-22 17:34:20 +0300 $ -->
+  <!--- $Date: 2009-06-23 19:25:18 +0300 $ -->
   <h1 class="paintweb_appTitle">PaintWeb</h1>
 
   <!-- All elements with data-pwTabPanel become interactive tabbed panels which 
@@ -66,13 +66,11 @@
       </ul>
 
       <div class="paintweb_strokeFillStyles">
-        <p>
-          <span class="paintweb_opt_strokeStyle">Stroke</span>
-          <span data-pwColorInput="strokeStyle" title="Stroke color">&#160;</span>
+        <p class="paintweb_opt_fillStyle">Fill <span 
+          data-pwColorInput="fillStyle">&#160;</span>
         </p>
-        <p>
-          <span class="paintweb_opt_fillStyle">Fill</span>
-          <span data-pwColorInput="fillStyle" title="Fill color">&#160;</span>
+        <p class="paintweb_opt_strokeStyle">Stroke <span 
+          data-pwColorInput="strokeStyle">&#160;</span>
         </p>
       </div>
     </div>
@@ -197,9 +195,8 @@
         data-pwConfig="shadow.enable" type="checkbox" value="1" /> Draw 
         shadows</label></p>
 
-      <p class="paintweb_opt_shadowColor">
-        <span>Color</span> <span data-pwColorInput="shadow.shadowColor" 
-          title="Shadow color">&#160;</span>
+      <p class="paintweb_opt_shadowColor">Color <span 
+        data-pwColorInput="shadow.shadowColor">&#160;</span>
       </p>
 
       <p class="paintweb_opt_shadowOffsetX">
@@ -258,45 +255,45 @@
     <!-- Wrap your content in a single div. This element will have the 
     .paintweb_floatingPanel_content class name. -->
     <div>
-      <ol id="coloreditor-preview">
-        <li id="coloreditor-activec"><span>Active</span></li>
-        <li id="coloreditor-oldc"><span>Old</span></li>
+      <ol id="colormixer-preview" style="display:none">
+        <li id="colormixer-activec"><span>Active</span></li>
+        <li id="colormixer-oldc"><span>Old</span></li>
       </ol>
 
-      <ol id="coloreditor-actions">
+      <ol id="colormixer-actions" style="display:none">
         <li id="btn-ce-close">Close</li>
         <li id="btn-ce-cancel">Cancel</li>
         <li id="btn-ce-savec">Save color</li>
       </ol>
 
-      <ol class="coloreditor-tabs">
-        <li id="btn-cmixer"    title="Color space visualisation">Mixer</li>
-        <li id="btn-cpalettes" title="Predefined color palettes">Palettes</li>
+      <div data-pwTabPanel="colorvis" data-pwTabDefault="mixer">
+        <div data-pwTab="mixer">
+          <canvas id="colormixer-canvas" width="200" height="170">Your browser 
+          does not support Canvas.</canvas>
+          <div id="colormixer-controls"><span 
+              id="colormixer-chart_pos"></span><span 
+              id="colormixer-slider_pos"></span></div>
+        </div>
+
+        <div data-pwTab="cpalettes">
+          <select id="in-cpalette"></select>
+          <ol id="out-cpalette"></ol>
+        </div>
+      </div>
+
+      <ol class="paintweb_colormixer_hexalpha" style="display:none">
+        <li><label>HEX
+          <input name="in-ckey-hex" value="#RRGGBB" type="text" maxlength="7" 
+          pattern="#[a-f0-9]{6}" /></label>
+        </li>
+        <li><label>Alpha
+          <input name="in-ckey-alpha" value="100" type="number" min="0" 
+          max="100" step="1" /></label>
+        </li>
       </ol>
 
-      <div id="coloreditor-cmixer">
-        <canvas id="coloreditor-canvas" width="200" height="170">Your browser 
-        does not support Canvas.</canvas>
-        <div id="coloreditor-controls"><span 
-            id="coloreditor-chart_pos"></span><span 
-            id="coloreditor-slider_pos"></span></div>
-      </div>
-
-      <div id="coloreditor-cpalettes">
-        <select id="in-cpalette"></select>
-        <ol id="out-cpalette"></ol>
-      </div>
-
-      <form id="coloreditor-inputs">
-        <ol class="coloreditor-tabs">
-          <li id="btn-rgb"  title="sRGB: Standard Red, Green and Blue">RGB</li>
-          <li id="btn-hsv"  title="Hue, Saturation and Value">HSV</li>
-          <li id="btn-lab"  title="CIE Lab: Standard observer 2° D65">Lab</li>
-          <li id="btn-cmyk" title="Cyan, Magenta, Yellow and Key 
-          (Black)">CMYK</li>
-        </ol>
-
-        <ol id="coloreditor-rgb" class="ce-inputs">
+      <form data-pwTabPanel="colormixer_inputs" data-pwTabDefault="rgb">
+        <ol data-pwTab="rgb">
           <li>
             <input name="in-ckey" value="red" type="radio" />
             <label>Red
@@ -315,9 +312,9 @@
             <input name="in-ckey-blue" value="0" type="number" min="0" max="255" 
             step="1" /></label>
           </li>
-        </ol> <!-- #coloreditor-rgb -->
+        </ol>
 
-        <ol id="coloreditor-hsv" class="ce-inputs">
+        <ol data-pwTab="hsv">
           <li>
             <input name="in-ckey" value="hue" type="radio" />
             <label>Hue
@@ -336,9 +333,9 @@
             <input name="in-ckey-val" value="0" type="number" min="0" max="255" 
             step="1" /></label>
           </li>
-        </ol> <!-- #coloreditor-hsv -->
+        </ol>
 
-        <ol id="coloreditor-lab" class="ce-inputs">
+        <ol data-pwTab="lab">
           <li>
             <input name="in-ckey" value="cie_l" type="radio" />
             <label>Lightness
@@ -357,9 +354,9 @@
             <input name="in-ckey-cie_b" value="0" type="number" min="-109" 
             max="95" step="1" /></label>
           </li>
-        </ol> <!-- #coloreditor-lab -->
+        </ol>
 
-        <ol id="coloreditor-cmyk" class="ce-inputs">
+        <ol data-pwTab="cmyk">
           <li>
             <label>Cyan
             <input name="in-ckey-cyan" value="0" type="number" min="0" max="100" 
@@ -380,19 +377,8 @@
             <input name="in-ckey-black" value="0" type="number" min="0" max="100" 
             step="1" /></label>
           </li>
-        </ol> <!-- #coloreditor-cmyk -->
-
-        <ol id="coloreditor-hexalpha">
-          <li><label>HEX
-            <input name="in-ckey-hex" value="#RRGGBB" type="text" maxlength="7" 
-            pattern="#[a-f0-9]{6}" /></label>
-          </li>
-          <li><label>Alpha
-            <input name="in-ckey-alpha" value="100" type="number" min="0" 
-            max="100" step="1" /></label>
-          </li>
         </ol>
-      </form> <!-- #coloreditor-inputs -->
+      </form> <!-- .paintweb_colormixer_inputs -->
     </div> <!-- content wrap -->
   </div> <!-- the colormixer floating panel -->
 

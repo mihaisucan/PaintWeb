@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-22 22:17:47 +0300 $
+ * $Date: 2009-06-23 19:05:46 +0300 $
  */
 
 /**
@@ -490,7 +490,8 @@ pwlib.gui['default'] = function (app) {
         this.initConfigToggle(elem, cfgAttr);
       }
 
-      if (elem.hasAttribute('data-pwColorInput')) {
+      // elem.hasAttribute() fails in webkit (tested with chrome and safari 4)
+      if (elem.getAttribute('data-pwColorInput')) {
         colorInput = new guiColorInput(this, elem);
         this.colorInputs[colorInput.id] = colorInput;
       }
@@ -2231,7 +2232,6 @@ function guiTabPanel (gui, panel) {
         type = Node.ELEMENT_NODE,
         elem = null,
         tabId = null,
-        tabTitle = null,
         anchor = null;
 
     tabButtons.className = gui.classPrefix + 'tabsList';
@@ -2261,9 +2261,9 @@ function guiTabPanel (gui, panel) {
       anchor.addEventListener('click', ev_tabClick, false);
 
       if (_self.id in lang.tabs) {
-        tabTitle = lang.tabs[_self.id][tabId];
-        anchor.title = tabTitle;
-        anchor.appendChild(doc.createTextNode(tabTitle));
+        anchor.title = lang.tabs[_self.id][tabId + 'Title'] || 
+          lang.tabs[_self.id][tabId];
+        anchor.appendChild(doc.createTextNode(lang.tabs[_self.id][tabId]));
       }
 
       if ((tabDefault && tabId === tabDefault) ||
@@ -2452,9 +2452,12 @@ appEvent.guiTabActivate = function (tabId, prevTabId) {
  * a span, a div, or any other tag.
  */
 function guiColorInput (gui, input) {
-  var _self = this,
-      doc   = gui.app.doc,
-      lang  = gui.app.lang;
+  var _self           = this,
+      colorMixer      = null,
+      colorMixerPanel = null,
+      config          = gui.app.config,
+      doc             = gui.app.doc,
+      lang            = gui.app.lang;
 
   /**
    * Color input ID. The ID is the same as the data-pwColorInput attribute value 
@@ -2472,17 +2475,93 @@ function guiColorInput (gui, input) {
   this.input = input;
 
   /**
+   * The configuration property to which this color input is attached to.
+   * @type String
+   */
+  this.configProperty = null;
+
+  /**
+   * The configuration group to which this color input is attached to.
+   * @type String
+   */
+  this.configGroup = null;
+
+  /**
+   * Reference to the configuration object which holds the color input value.
+   * @type String
+   */
+  this.configGroupRef = null;
+
+  /**
    * Initialize the color input functionality.
    * @private
    */
   function init () {
-    _self.id = _self.input.getAttribute('data-pwColorInput');
+    var cfgAttr     = _self.input.getAttribute('data-pwColorInput'),
+        cfgNoDots   = cfgAttr.replace('.', '_'),
+        cfgArray    = cfgAttr.split('.'),
+        cfgProp     = cfgArray.pop(),
+        cfgGroup    = cfgArray.join('.'),
+        cfgGroupRef = config,
+        langGroup   = lang.inputs,
+        labelElem   = _self.input.parentNode;
+
+    for (var i = 0, n = cfgArray.length; i < n; i++) {
+      cfgGroupRef = cfgGroupRef[cfgArray[i]];
+      langGroup = langGroup[cfgArray[i]];
+    }
+
+    _self.configProperty = cfgProp;
+    _self.configGroup = cfgGroup;
+    _self.configGroupRef = cfgGroupRef;
+
+    _self.id = cfgNoDots;
 
     _self.input.className += ' ' + gui.classPrefix + 'colorInput' 
       + ' ' + gui.classPrefix + _self.id;
 
+    labelElem.replaceChild(doc.createTextNode(langGroup[cfgProp]), 
+        labelElem.firstChild);
+
+    var anchor = doc.createElement('a');
+    anchor.href = '#';
+    anchor.title = langGroup[cfgProp + 'Title'] || langGroup[cfgProp];
+    anchor.appendChild(doc.createTextNode(lang.inputs.colorInputAnchorContent));
+    anchor.addEventListener('click', ev_input_click, false);
+
+    _self.input.replaceChild(anchor, _self.input.firstChild);
   };
 
+  /**
+   * The <code>click</code> event handler for the color input element. This 
+   * function shows/hides the Color Mixer panel.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
+  function ev_input_click (ev) {
+    ev.preventDefault();
+
+    if (!colorMixerPanel) {
+      colorMixerPanel = gui.floatingPanels.colormixer;
+    }
+
+    colorMixerPanel.toggle();
+
+    var classActive = ' ' + gui.classPrefix + 'colorInputActive',
+        pNode = this.parentNode,
+        elemActive = pNode.className.indexOf(classActive) !== -1;
+
+    if (colorMixerPanel.state === colorMixerPanel.STATE_VISIBLE) {
+      if (!elemActive) {
+        pNode.className += classActive;
+      }
+    } else {
+      if (elemActive) {
+        pNode.className = pNode.className.replace(classActive, '');
+      }
+    }
+  };
 
   init();
 };

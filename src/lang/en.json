@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-22 22:25:38 +0300 $
+  // $Date: 2009-06-23 19:11:10 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -63,7 +63,23 @@
       "shadow": "Shadow",
       "text": "Text",
       "textBorder": "Border"
-    }
+    },
+    "colormixer_inputs": {
+      "rgb": "RGB",
+      "rgbTitle": "sRGB: Standard Red, Green and Blue",
+      "hsv": "HSV",
+      "hsvTitle": "Hue, Saturation and Value",
+      "lab": "Lab",
+      "labTitle": "CIE Lab: Standard observer 2° D65",
+      "cmyk": "CMYK",
+      "cmykTitle": "Cyan, Magenta, Yellow and Key (Black)"
+    },
+    "colorvis": {
+      "mixer": "Mixer",
+      "mixerTitle": "Color space visualisation",
+      "cpalettes": "Palettes",
+      "cpalettesTitle": "Predefined color palettes"
+    },
   },
 
   "floatingPanelMinimize": "Minimize",
@@ -122,7 +138,8 @@
       "shadowBlur": "Blur:",
       "shadowOffsetX": "Distance X:",
       "shadowOffsetY": "Distance Y:",
-      "shadowColor": "Shadow color:"
+      "shadowColor": "Color: ",
+      "shadowColorTitle": "Shadow color"
     },
     "selection": {
       "transform": "Image manipulation",
@@ -149,8 +166,11 @@
     "pencilSize": "Pencil size:",
     "eraserSize": "Eraser size:",
     "borderWidth": "Border width:",
-    "fillStyle": "Fill color",
-    "strokeStyle": "Stroke color"
+    "fillStyle": "Fill ",
+    "fillStyleTitle": "Fill color",
+    "strokeStyle": "Stroke ",
+    "strokeStyleTitle": "Stroke color",
+    "colorInputAnchorContent": "Click to pick color"
   },
 
   "status": {

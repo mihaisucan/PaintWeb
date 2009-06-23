@@ -1,3 +1,11 @@
+2009-06-23:
+===========
+
+- Continued work on the color input GUI component.
+- The Color Mixer shows up now when the user clicks the color inputs. Bad 
+styling, at the moment.
+- New English strings.
+
 2009-06-22:
 ===========
 

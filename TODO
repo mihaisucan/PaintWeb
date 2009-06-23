@@ -1,6 +1,6 @@
 $Author: Mihai Şucan $
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-06-22 22:27:48 +0300 $
+$Date: 2009-06-23 18:56:50 +0300 $
 
 Until the end of GSOC:
 
@@ -13,6 +13,10 @@ file.
 
 After GSOC TODO:
 
+- report browser bugs:
+  - shadows are not applied in chrome when using drawImage()
+  - elem.hasAttribute('data-whatever') fails to return true when it should do 
+  so.
 - write more tutorials/articles about paintweb.
 - new tools: bucket, pencil v2 (avec pression).
 - toolRegister creates instances of tool objects automatically.
