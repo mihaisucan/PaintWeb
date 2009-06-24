@@ -1,5 +1,5 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
-  <!--- $Date: 2009-06-23 19:25:18 +0300 $ -->
+  <!--- $Date: 2009-06-24 22:53:05 +0300 $ -->
   <h1 class="paintweb_appTitle">PaintWeb</h1>
 
   <!-- All elements with data-pwTabPanel become interactive tabbed panels which 
@@ -255,103 +255,103 @@
     <!-- Wrap your content in a single div. This element will have the 
     .paintweb_floatingPanel_content class name. -->
     <div>
-      <ol id="colormixer-preview" style="display:none">
-        <li id="colormixer-activec"><span>Active</span></li>
-        <li id="colormixer-oldc"><span>Old</span></li>
+      <ol class="paintweb_colormixer_preview" style="display:none">
+        <li id="colormixer_activecolor"><span>Active</span></li>
+        <li id="colormixer_oldcolor"><span>Old</span></li>
       </ol>
 
-      <ol id="colormixer-actions" style="display:none">
+      <ol class="paintweb_colormixer_actions" style="display:none">
         <li id="btn-ce-close">Close</li>
         <li id="btn-ce-cancel">Cancel</li>
         <li id="btn-ce-savec">Save color</li>
       </ol>
 
-      <div data-pwTabPanel="colorvis" data-pwTabDefault="mixer">
+      <div data-pwTabPanel="colormixer_selector" data-pwTabDefault="mixer">
         <div data-pwTab="mixer">
-          <canvas id="colormixer-canvas" width="200" height="170">Your browser 
+          <canvas id="colormixer_canvas" width="200" height="170">Your browser 
           does not support Canvas.</canvas>
-          <div id="colormixer-controls"><span 
-              id="colormixer-chart_pos"></span><span 
-              id="colormixer-slider_pos"></span></div>
+          <div id="colormixer_controls"><span 
+              id="colormixer_chart_pos"></span><span 
+              id="colormixer_slider_pos"></span></div>
         </div>
 
         <div data-pwTab="cpalettes">
-          <select id="in-cpalette"></select>
-          <ol id="out-cpalette"></ol>
+          <select id="colormixer_cpalette"></select>
+          <ol id="colormixer_cpalette_out"></ol>
         </div>
       </div>
 
       <ol class="paintweb_colormixer_hexalpha" style="display:none">
         <li><label>HEX
-          <input name="in-ckey-hex" value="#RRGGBB" type="text" maxlength="7" 
+          <input id="ckey_hex" value="#RRGGBB" type="text" maxlength="7" 
           pattern="#[a-f0-9]{6}" /></label>
         </li>
         <li><label>Alpha
-          <input name="in-ckey-alpha" value="100" type="number" min="0" 
-          max="100" step="1" /></label>
+          <input id="ckey_alpha" value="100" type="number" min="0" max="100" 
+          step="1" /></label>
         </li>
       </ol>
 
       <form data-pwTabPanel="colormixer_inputs" data-pwTabDefault="rgb">
         <ol data-pwTab="rgb">
           <li>
-            <input name="in-ckey" value="red" type="radio" />
+            <input name="ckey" value="red" type="radio" />
             <label>Red
-            <input name="in-ckey-red" value="0" type="number" min="0" max="255" 
+            <input name="ckey_red" value="0" type="number" min="0" max="255" 
             step="1" /></label>
           </li>
           <li>
-            <input name="in-ckey" value="green" type="radio" />
+            <input name="ckey" value="green" type="radio" />
             <label>Green
-            <input name="in-ckey-green" value="0" type="number" min="0" max="255" 
+            <input name="ckey_green" value="0" type="number" min="0" max="255" 
             step="1" /></label>
           </li>
           <li>
-            <input name="in-ckey" value="blue" type="radio" />
+            <input name="ckey" value="blue" type="radio" />
             <label>Blue
-            <input name="in-ckey-blue" value="0" type="number" min="0" max="255" 
+            <input name="ckey_blue" value="0" type="number" min="0" max="255" 
             step="1" /></label>
           </li>
         </ol>
 
         <ol data-pwTab="hsv">
           <li>
-            <input name="in-ckey" value="hue" type="radio" />
+            <input name="ckey" value="hue" type="radio" />
             <label>Hue
-            <input name="in-ckey-hue" value="0" type="number" min="0" max="360" 
+            <input name="ckey_hue" value="0" type="number" min="0" max="360" 
             step="1" /></label>
           </li>
           <li>
-            <input name="in-ckey" value="sat" type="radio" />
+            <input name="ckey" value="sat" type="radio" />
             <label>Saturation
-            <input name="in-ckey-sat" value="0" type="number" min="0" max="255" 
+            <input name="ckey_sat" value="0" type="number" min="0" max="255" 
             step="1" /></label>
           </li>
           <li>
-            <input name="in-ckey" value="val" type="radio" />
+            <input name="ckey" value="val" type="radio" />
             <label>Value
-            <input name="in-ckey-val" value="0" type="number" min="0" max="255" 
+            <input name="ckey_val" value="0" type="number" min="0" max="255" 
             step="1" /></label>
           </li>
         </ol>
 
         <ol data-pwTab="lab">
           <li>
-            <input name="in-ckey" value="cie_l" type="radio" />
+            <input name="ckey" value="cie_l" type="radio" />
             <label>Lightness
-            <input name="in-ckey-cie_l" value="0" type="number" min="0"    
+            <input name="ckey_cie_l" value="0" type="number" min="0"    
             max="100" step="1" /></label>
           </li>
           <li>
-            <input name="in-ckey" value="cie_a" type="radio" />
+            <input name="ckey" value="cie_a" type="radio" />
             <label>a*
-            <input name="in-ckey-cie_a" value="0" type="number" min="-85"  
+            <input name="ckey_cie_a" value="0" type="number" min="-85"  
             max="94" step="1" /></label>
           </li>
           <li>
-            <input name="in-ckey" value="cie_b" type="radio" />
+            <input name="ckey" value="cie_b" type="radio" />
             <label>b*
-            <input name="in-ckey-cie_b" value="0" type="number" min="-109" 
+            <input name="ckey_cie_b" value="0" type="number" min="-109" 
             max="95" step="1" /></label>
           </li>
         </ol>
@@ -359,22 +359,22 @@
         <ol data-pwTab="cmyk">
           <li>
             <label>Cyan
-            <input name="in-ckey-cyan" value="0" type="number" min="0" max="100" 
+            <input name="ckey_cyan" value="0" type="number" min="0" max="100" 
             step="1" /></label>
           </li>
           <li>
             <label>Magenta
-            <input name="in-ckey-magenta" value="0" type="number" min="0" 
+            <input name="ckey_magenta" value="0" type="number" min="0" 
             max="100" step="1" /></label>
           </li>
           <li>
             <label>Yellow
-            <input name="in-ckey-yellow" value="0" type="number" min="0" max="100" 
+            <input name="ckey_yellow" value="0" type="number" min="0" max="100" 
             step="1" /></label>
           </li>
           <li>
             <label>Key (Black)
-            <input name="in-ckey-black" value="0" type="number" min="0" max="100" 
+            <input name="ckey_black" value="0" type="number" min="0" max="100" 
             step="1" /></label>
           </li>
         </ol>

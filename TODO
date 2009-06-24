@@ -1,6 +1,6 @@
 $Author: Mihai Şucan $
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-06-23 18:56:50 +0300 $
+$Date: 2009-06-24 16:12:23 +0300 $
 
 Until the end of GSOC:
 
@@ -15,6 +15,7 @@ After GSOC TODO:
 
 - report browser bugs:
   - shadows are not applied in chrome when using drawImage()
+  - when strokeText() is used shadows do not render (webkit, needs recheck)
   - elem.hasAttribute('data-whatever') fails to return true when it should do 
   so.
 - write more tutorials/articles about paintweb.
@@ -29,6 +30,8 @@ resize handle.
 which shows the image dimensions, where the user can crop and resize the image.
 - fully implement the notion of background color.
 - flip and rotate image.
+- some issues when middle/right clicking instead of simple left click on the 
+canvas, with some drawing tools.
 - maybe selection rotate.
 - maybe use .scale() and .translate() for selection manipulation.
 - more per-tool settings. For example, do not share the lineWidth option between 

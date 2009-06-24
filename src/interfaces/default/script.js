@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-23 19:05:46 +0300 $
+ * $Date: 2009-06-24 20:45:47 +0300 $
  */
 
 /**
@@ -1657,15 +1657,15 @@ pwlib.gui['default'] = function (app) {
  *
  * @param {pwlib.gui} gui Reference to the PaintWeb GUI object.
  *
- * @param {Element} elem Reference to the DOM element you want to transform into 
- * a floating panel.
+ * @param {Element} container Reference to the DOM element you want to transform 
+ * into a floating panel.
  */
-function guiFloatingPanel (gui, elem) {
+function guiFloatingPanel (gui, container) {
   var _self       = this,
       win         = gui.app.win,
       doc         = gui.app.doc,
       panels      = gui.floatingPanels,
-      elemStyle   = elem.style,
+      cStyle   = container.style,
       lang        = gui.app.lang,
       zIndex_step = 200;
 
@@ -1692,7 +1692,7 @@ function guiFloatingPanel (gui, elem) {
    * Reference to the floating panel element.
    * @type Element
    */
-  this.elem = elem;
+  this.container = container;
 
   /**
    * The viewport element. This element is the first parent element which has 
@@ -1724,20 +1724,20 @@ function guiFloatingPanel (gui, elem) {
    * @private
    */
   function init () {
-    _self.id = _self.elem.getAttribute('data-pwFloatingPanel');
+    _self.id = _self.container.getAttribute('data-pwFloatingPanel');
 
-    var ttl = _self.elem.getElementsByTagName('h1')[0],
-        content = _self.elem.getElementsByTagName('div')[0],
-        cs = win.getComputedStyle(_self.elem, null),
+    var ttl = _self.container.getElementsByTagName('h1')[0],
+        content = _self.container.getElementsByTagName('div')[0],
+        cs = win.getComputedStyle(_self.container, null),
         zIndex = parseInt(cs.zIndex);
 
-    elemStyle.zIndex = cs.zIndex;
+    cStyle.zIndex = cs.zIndex;
 
     if (zIndex > panels.zIndex_) {
       panels.zIndex_ = zIndex;
     }
 
-    _self.elem.className += ' ' + gui.classPrefix + 'floatingPanel ' +
+    _self.container.className += ' ' + gui.classPrefix + 'floatingPanel ' +
       gui.classPrefix + 'floatingPanel_' + _self.id;
 
     // the content
@@ -1752,14 +1752,14 @@ function guiFloatingPanel (gui, elem) {
     ttl.addEventListener('mousedown', ev_mousedown, false);
 
     // allow auto-hide for the panel
-    if (_self.elem.getAttribute('data-pwPanelHide') === 'true') {
+    if (_self.container.getAttribute('data-pwPanelHide') === 'true') {
       _self.hide();
     } else {
       _self.state = _self.STATE_VISIBLE;
     }
 
     // Find the viewport parent element.
-    var pNode = _self.elem.parentNode,
+    var pNode = _self.container.parentNode,
         found = null;
 
     while (!found && pNode) {
@@ -1786,7 +1786,7 @@ function guiFloatingPanel (gui, elem) {
     btn_minimize.addEventListener('click', ev_minimize, false);
     btn_minimize.appendChild(doc.createTextNode(btn_minimize.title));
 
-    _self.elem.insertBefore(btn_minimize, content);
+    _self.container.insertBefore(btn_minimize, content);
 
     // add the panel close button.
     btn_close = doc.createElement('a');
@@ -1796,7 +1796,15 @@ function guiFloatingPanel (gui, elem) {
     btn_close.addEventListener('click', ev_close, false);
     btn_close.appendChild(doc.createTextNode(btn_close.title));
 
-    _self.elem.insertBefore(btn_close, content);
+    _self.container.insertBefore(btn_close, content);
+
+    // setup the panel resize handle.
+    if (_self.container.getAttribute('data-pwPanelResizable') === 'true') {
+      var resizeHandle = doc.createElement('div');
+      resizeHandle.className = gui.classPrefix + 'floatingPanel_resizer';
+      _self.container.appendChild(resizeHandle);
+      _self.resizer = new guiResizer(gui, resizeHandle, _self.container);
+    }
   };
 
   /**
@@ -1817,8 +1825,9 @@ function guiFloatingPanel (gui, elem) {
       this.className = gui.classPrefix + 'floatingPanel_minimize';
       this.replaceChild(doc.createTextNode(this.title), this.firstChild);
 
-      if (_self.elem.className.indexOf(classMinimized) !== -1) {
-        _self.elem.className = _self.elem.className.replace(classMinimized, '');
+      if (_self.container.className.indexOf(classMinimized) !== -1) {
+        _self.container.className 
+          = _self.container.className.replace(classMinimized, '');
       }
 
     } else if (_self.state === _self.STATE_VISIBLE) {
@@ -1828,8 +1837,8 @@ function guiFloatingPanel (gui, elem) {
       this.className = gui.classPrefix + 'floatingPanel_restore';
       this.replaceChild(doc.createTextNode(this.title), this.firstChild);
 
-      if (_self.elem.className.indexOf(classMinimized) === -1) {
-        _self.elem.className += classMinimized;
+      if (_self.container.className.indexOf(classMinimized) === -1) {
+        _self.container.className += classMinimized;
       }
     }
   };
@@ -1858,7 +1867,7 @@ function guiFloatingPanel (gui, elem) {
     mx = ev.clientX;
     my = ev.clientY;
 
-    var cs = win.getComputedStyle(_self.elem, null);
+    var cs = win.getComputedStyle(_self.container, null);
 
     ptop  = parseInt(cs.top);
     pleft = parseInt(cs.left);
@@ -1898,8 +1907,8 @@ function guiFloatingPanel (gui, elem) {
       }
     }
 
-    elemStyle.left = x + 'px';
-    elemStyle.top  = y + 'px';
+    cStyle.left = x + 'px';
+    cStyle.top  = y + 'px';
   };
 
   /**
@@ -1909,7 +1918,7 @@ function guiFloatingPanel (gui, elem) {
    * @param {Event} ev The DOM Event object.
    */
   function ev_mouseup (ev) {
-    if (_self.elem.className.indexOf(' ' + gui.classPrefix 
+    if (_self.container.className.indexOf(' ' + gui.classPrefix 
           + 'floatingPanel_minimized') !== -1) {
       _self.state = _self.STATE_MINIMIZED;
     } else {
@@ -1926,14 +1935,14 @@ function guiFloatingPanel (gui, elem) {
    */
   this.bringOnTop = function () {
     panels.zIndex_ += zIndex_step;
-    elemStyle.zIndex = panels.zIndex_;
+    cStyle.zIndex = panels.zIndex_;
   };
 
   /**
    * Hide the panel.
    */
   this.hide = function () {
-    elemStyle.display = 'none';
+    cStyle.display = 'none';
     _self.state = _self.STATE_HIDDEN;
   };
 
@@ -1941,13 +1950,14 @@ function guiFloatingPanel (gui, elem) {
    * Show the panel.
    */
   this.show = function () {
-    elemStyle.display = 'block';
+    cStyle.display = 'block';
     _self.state = _self.STATE_VISIBLE;
 
     var classMinimized = ' ' + gui.classPrefix + 'floatingPanel_minimized';
 
-    if (_self.elem.className.indexOf(classMinimized) !== -1) {
-      _self.elem.className = _self.elem.className.replace(classMinimized, '');
+    if (_self.container.className.indexOf(classMinimized) !== -1) {
+      _self.container.className 
+        = _self.container.className.replace(classMinimized, '');
 
       btn_minimize.className = gui.classPrefix + 'floatingPanel_minimize';
       btn_minimize.title = lang.floatingPanelMinimize;
@@ -2075,8 +2085,10 @@ function guiResizer (gui, resizeHandle, container) {
   function ev_mousedown (ev) {
     mx = ev.clientX;
     my = ev.clientY;
-    cWidth  = parseInt(cStyle.width);
-    cHeight = parseInt(cStyle.height);
+
+    var cs = win.getComputedStyle(_self.container, null);
+    cWidth  = parseInt(cs.width);
+    cHeight = parseInt(cs.height);
 
     var cancel = _self.events.dispatch(new guiResizeStart(mx, my, cWidth, 
           cHeight));

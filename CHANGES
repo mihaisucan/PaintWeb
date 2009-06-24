@@ -1,3 +1,14 @@
+2009-06-24:
+===========
+
+- Fixed a selection tool bug: when the selection was too small the mouseup event 
+handler did not properly set the state to none.
+- Further work on the Color Mixer panel styling.
+- Made the Color Mixer resizable (and any other floating panel).
+- Lots of work on the Color Mixer extension. Initialization of the extension 
+*almost* works now. The extension not enabled yet, due to the remaining errors 
+to be fixed.
+
 2009-06-23:
 ===========
 

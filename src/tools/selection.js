@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-18 22:02:42 +0300 $
+ * $Date: 2009-06-24 13:08:16 +0300 $
  */
 
 /**
@@ -266,11 +266,13 @@ pwlib.tools.selection = function (app) {
   /**
    * The last selection rectangle that was drawn. This is used by the selection 
    * drawing functions.
+   *
    * @private
+   * @type Object
    */
   // We avoid retrieving the mouse coordinates during the mouseup event, due to 
   // the Opera bug DSK-232264.
-  var lastSel = {};
+  var lastSel = null;
 
   /**
    * The tool preactivation code. This function prepares the selection canvas 
@@ -414,6 +416,7 @@ pwlib.tools.selection = function (app) {
 
     shiftKey = ev.shiftKey;
     ctrlKey = ev.ctrlKey;
+    lastSel = null;
 
     // No selection is available, then start drawing a selection.
     if (_self.state === _self.STATE_NONE) {
@@ -562,6 +565,14 @@ pwlib.tools.selection = function (app) {
       app.events.dispatch(new appEvent.selectionChange(_self.state));
 
       return true;
+
+    } else if (!lastSel) {
+      _self.state = _self.STATE_NONE;
+      marqueeHide();
+      gui.statusShow('selectionActive');
+      app.events.dispatch(new appEvent.selectionChange(_self.state));
+
+      return true;
     }
 
     sel.x = lastSel.x;
@@ -678,6 +689,7 @@ pwlib.tools.selection = function (app) {
         mh = h * image.canvasScale - borderDouble;
 
     if (mw < 1 || mh < 1) {
+      lastSel = null;
       return;
     }
 
@@ -779,10 +791,12 @@ pwlib.tools.selection = function (app) {
         w -= diffx;
         break;
       default:
+        lastSel = null;
         return;
     }
 
     if (!w || !h) {
+      lastSel = null;
       return;
     }
 
@@ -826,6 +840,7 @@ pwlib.tools.selection = function (app) {
         mh   = h * image.canvasScale - borderDouble;
 
     if (mw < 1 || mh < 1) {
+      lastSel = null;
       return;
     }
 

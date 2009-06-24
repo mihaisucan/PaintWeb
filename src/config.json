@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-23 22:23:21 +0300 $
+  // $Date: 2009-06-24 22:56:37 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -222,6 +222,7 @@
    * @type Array
    */
   "extensions": ["mousekeys"],
+  //"extensions": ["mousekeys", "colormixer"],
 
   /**
    * Extensions folder.

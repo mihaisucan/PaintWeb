@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-23 19:11:10 +0300 $
+  // $Date: 2009-06-24 20:41:05 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -74,7 +74,7 @@
       "cmyk": "CMYK",
       "cmykTitle": "Cyan, Magenta, Yellow and Key (Black)"
     },
-    "colorvis": {
+    "colormixer_selector": {
       "mixer": "Mixer",
       "mixerTitle": "Color space visualisation",
       "cpalettes": "Palettes",
