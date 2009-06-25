@@ -1,3 +1,13 @@
+2009-06-25:
+===========
+
+- Made the input fields update all configuration properties on each change.  
+Pressing Enter / unfocus is no longer needed.
+- Enabled the Color Mixer extension from the configuration.
+- Color Mixer initialization works now, without errors.
+- The Color Mixer panel is now almost fully functional.
+- New English strings related to the Color Mixer extension.
+
 2009-06-24:
 ===========
 

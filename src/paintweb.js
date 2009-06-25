@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-24 23:03:40 +0300 $
+ * $Date: 2009-06-25 22:36:40 +0300 $
  */
 
 /**
@@ -52,7 +52,7 @@ function PaintWeb (win, doc) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090624;
+  this.build = 20090625;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -1379,16 +1379,11 @@ function PaintWeb (win, doc) {
 
     target.value = val;
 
-    // Dispatch the 'change' and 'input' events to make sure that any associated 
-    // event handlers pick up the changes.
+    // Dispatch the 'change' events to make sure that any associated event 
+    // handlers pick up the changes.
     if (doc.createEvent && target.dispatchEvent) {
-      var ev_change = doc.createEvent('HTMLEvents'),
-          ev_input  = doc.createEvent('HTMLEvents');
-
-      ev_input.initEvent ('input',  true, true);
+      var ev_change = doc.createEvent('HTMLEvents');
       ev_change.initEvent('change', true, true);
-
-      target.dispatchEvent(ev_input);
       target.dispatchEvent(ev_change);
     }
   };

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-24 21:28:01 +0300 $
+ * $Date: 2009-06-25 22:03:28 +0300 $
  */
 
 /* OLPC XO DPI resolution detection */
@@ -663,7 +663,10 @@
 .paintweb_floatingPanel_minimized .paintweb_floatingPanel_content,
 .paintweb_floatingPanel_minimized .paintweb_floatingPanel_resizer { display: none }
 
-.paintweb_floatingPanel_content { padding: 10px }
+.paintweb_floatingPanel_content {
+  margin: 10px;
+  position: relative
+}
 
 .paintweb_floatingPanel_resizer {
   bottom: 0;
@@ -687,11 +690,10 @@
 }
 
 .paintweb_floatingPanel_colormixer {
+  height: 250px;
   left: 150px;
-  min-height: 160px;
-  min-width: 360px;
   top: 150px;
-  width: 500px
+  width: 570px
 }
 
 .paintweb_colorInput {
@@ -752,39 +754,121 @@
   width: 25px
 }
 
+.paintweb_floatingPanel_colormixer .paintweb_tabsList {
+  border: 1px solid #9e9e9e;
+  padding-bottom: 0
+}
+
+.paintweb_floatingPanel_colormixer .paintweb_tabsList a {
+  border-bottom: 0;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.paintweb_floatingPanel_colormixer .paintweb_tabActive a {
+  background: #f2f2f2 !important;
+  padding-top: 6px !important;
+}
 
 .paintweb_tabPanel_colormixer_selector {
   position: absolute;
-  width: 35%;
+  top: 0;
+}
+
+.paintweb_tabPanel_colormixer_selector .paintweb_tab {
+  background: #656565;
+  border: 1px solid #f2f2f2;
+  padding: 2px;
+  height: 170px;
+  width: 199px;
 }
 
 .paintweb_tabPanel_colormixer_inputs {
-  margin-left: 40%;
+  margin-left: 214px;
 }
 
 .paintweb_tabPanel_colormixer_inputs ol {
   list-style: none;
   padding: 0;
   margin: 0;
+  border: 1px solid #c6c6c6;
+  border-width: 0 1px;
 }
 
 .paintweb_tabPanel_colormixer_inputs ol li {
-  margin: 5px 0;
-  padding: 2px 0;
+  background: #f2f2f2;
+  border-top: 1px solid #c6c6c6;
+  margin: 0;
+  padding: 7px;
   vertical-align: middle;
 }
 
 .paintweb_tabPanel_colormixer_inputs input:not([type=radio]) {
   position: absolute;
-  right: 0;
+  right: 7px;
   width: 4em;
-  margin-top: -3px;
+  margin-top: -2px;
   text-align: right;
 }
 
 .paintweb_tabPanel_colormixer_inputs input[type=radio] {
   margin: 0;
 }
+
+.paintweb_colormixer_controls {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+}
+
+.paintweb_colormixer_chartDot {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: #000;
+  border: 1px solid #fff;
+  margin: -3px 0 0 -3px;
+  opacity: 0.5;
+}
+
+.paintweb_colormixer_slider {
+  position: absolute;
+  height: 3px;
+  background: #000;
+  border: 1px solid #fff;
+  margin: -2px 0 0 -1px;
+  opacity: 0.5;
+}
+
+.paintweb_colormixer_cpaletteInput {
+  width: 97%;
+  margin-bottom: 3px;
+}
+
+.paintweb_colormixer_cpaletteOutput {
+  height: 141px;
+  overflow: auto;
+}
+
+.paintweb_colormixer_cpaletteOutput a {
+  float: left;
+  width: 11px;
+  height: 0;
+  padding-top: 11px;
+  margin: 1px 1px 0 0;
+  text-decoration: none;
+  overflow: hidden;
+}
+
+.paintweb_colormixer_preview {
+  list-style: none;
+  margin: 0 0 0 215px;
+  padding: 0;
+  background: #f2f2f2;
+  border: 1px solid #fff;
+  width: 70px;
+}
+
 
 /* Icons */
 

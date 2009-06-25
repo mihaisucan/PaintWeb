@@ -1,5 +1,5 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
-  <!--- $Date: 2009-06-24 22:53:05 +0300 $ -->
+  <!--- $Date: 2009-06-25 20:49:48 +0300 $ -->
   <h1 class="paintweb_appTitle">PaintWeb</h1>
 
   <!-- All elements with data-pwTabPanel become interactive tabbed panels which 
@@ -246,8 +246,7 @@
   to automatically hide the panel, simply use data-pwPanelHide="true".  
   Additionally, you can make the panel resizable if you add 
   data-pwPanelResizable="true". -->
-  <div data-pwFloatingPanel="colormixer" data-pwPanelHide="true" 
-    data-pwPanelResizable="true">
+  <div data-pwFloatingPanel="colormixer" data-pwPanelHide="true">
     <!-- Make sure you have the panel title in the h1 element. This will have 
     the .paintweb_floatingPanel_title class name. -->
     <h1>Color mixer</h1>
@@ -255,29 +254,31 @@
     <!-- Wrap your content in a single div. This element will have the 
     .paintweb_floatingPanel_content class name. -->
     <div>
-      <ol class="paintweb_colormixer_preview" style="display:none">
-        <li id="colormixer_activecolor"><span>Active</span></li>
-        <li id="colormixer_oldcolor"><span>Old</span></li>
+      <ol class="paintweb_colormixer_preview">
+        <li id="colormixer_colorActive"><span>Active</span></li>
+        <li id="colormixer_colorOld"><span>Old</span></li>
       </ol>
 
       <ol class="paintweb_colormixer_actions" style="display:none">
-        <li id="btn-ce-close">Close</li>
-        <li id="btn-ce-cancel">Cancel</li>
-        <li id="btn-ce-savec">Save color</li>
+        <li id="colormixer_btn_accept">Close</li>
+        <li id="colormixer_btn_cancel">Cancel</li>
+        <li id="colormixer_btn_saveColor">Save color</li>
+        <li id="colormixer_btn_pickColor">Pick color</li>
       </ol>
 
       <div data-pwTabPanel="colormixer_selector" data-pwTabDefault="mixer">
         <div data-pwTab="mixer">
           <canvas id="colormixer_canvas" width="200" height="170">Your browser 
           does not support Canvas.</canvas>
-          <div id="colormixer_controls"><span 
-              id="colormixer_chart_pos"></span><span 
-              id="colormixer_slider_pos"></span></div>
+          <div id="colormixer_controls">
+            <span id="colormixer_chartDot"></span>
+            <span id="colormixer_slider"></span>
+          </div>
         </div>
 
         <div data-pwTab="cpalettes">
-          <select id="colormixer_cpalette"></select>
-          <ol id="colormixer_cpalette_out"></ol>
+          <select id="colormixer_cpaletteInput"></select>
+          <div id="colormixer_cpaletteOutput"></div>
         </div>
       </div>
 

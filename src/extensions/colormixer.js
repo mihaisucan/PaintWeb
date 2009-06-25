@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-24 22:55:40 +0300 $
+ * $Date: 2009-06-25 22:33:05 +0300 $
  */
 
 /**
@@ -37,15 +37,17 @@
  * @param {PaintWeb} app Reference to the main paint application object.
  */
 pwlib.extensions.colormixer = function (app) {
-  var _self  = this,
-      config = app.config.colormixer,
-      MathRound = Math.round,
-      MathPow   = Math.pow,
-      MathMin   = Math.min,
+  var _self     = this,
+      config    = app.config.colormixer,
+      doc       = app.doc,
+      gui       = app.gui,
+      lang      = app.lang.colormixer,
+      MathFloor = Math.floor,
       MathMax   = Math.max,
-      doc    = app.doc,
-      gui    = app.gui,
-      win    = app.win;
+      MathMin   = Math.min,
+      MathPow   = Math.pow,
+      MathRound = Math.round,
+      win       = app.win;
 
   /**
    * Holds references to various DOM elements.
@@ -54,25 +56,56 @@ pwlib.extensions.colormixer = function (app) {
    * @type Object
    */
   this.elems = {
-    // The color mixer element.
-    '_self'      : false,
-
     // This is where we reference the current color element, associated with the 
     // color mixer.
     // e.g. the fillStyle, strokeStyle and shadowColor elements
-    'target'     : false,
+    'target': false,
 
-    // This is the reference to the canvas controls (in the chart and in the slider)
-    'controls'   : false,
+    /**
+     * Reference to the element which holds Canvas controls (the dot on the 
+     * Canvas, and the slider).
+     * @type Element
+     */
+    'controls': null,
 
-    'chart_pos'  : false,
-    'slider_pos' : false,
+    /**
+     * Reference to the dot element that is rendered on top of the color space 
+     * visualisation.
+     * @type Element
+     */
+    'chartDot': null,
 
-    // The input <select> which tells the color palette selected by the user.
-    'in_cpalette' : false,
+    /**
+     * Reference to the slider element.
+     * @type Element
+     */
+    'slider': null,
 
-    // The container element which holds the colors of the currently selected palette.
-    'out_cpalette' : false
+    /**
+     * Reference to the input element that allows the user to pick the color 
+     * palette to be displayed.
+     * @type Element
+     */
+    'cpaletteInput': null,
+
+    /**
+     * The container element which holds the colors of the currently selected 
+     * palette.
+     * @type Element
+     */
+    'cpaletteOutput': null,
+
+    /**
+     * Reference to the element which displays the current color.
+     * @type Element
+     */
+    "colorActive": null,
+
+    /**
+     * Reference to the element which displays the old color.
+     * @type Element
+     */
+    "colorOld": null
   };
 
   /**
@@ -106,6 +139,13 @@ pwlib.extensions.colormixer = function (app) {
    * @type CanvasRenderingContext2D
    */
   this.context2d = false;
+
+  /**
+   * Extension events interface object.
+   *
+   * @type pwlib.appEvents
+   */
+  this.events = null;
 
   /**
    * Holds the current color in several formats: RGB, HEX, HSV, CIE Lab, and 
@@ -210,11 +250,19 @@ pwlib.extensions.colormixer = function (app) {
 
   // These values are automatically calculated when the color mixer is 
   // initialized.
-  this.slider_x = false;
-  this.chart_width = false;
+  this.sliderX = 0;
+  this.sliderWidth = 0;
+  this.sliderHeight = 0;
+  this.sliderSpacing = 0;
+  this.chartWidth = 0;
+  this.chartHeight = 0;
 
-  // Initialize the color mixer. This function is called by the PaintWeb main 
-  // initialization function.
+  /**
+   * Register the Color Mixer extension.
+   *
+   * @returns {Boolean} True if the extension can be registered properly, or 
+   * false if not.
+   */
   this.extensionRegister = function (ev) {
     if (!gui.elems || !gui.elems.colormixer_canvas || !gui.floatingPanels || 
         !gui.floatingPanels.colormixer || !gui.tabPanels || 
@@ -223,14 +271,11 @@ pwlib.extensions.colormixer = function (app) {
       return false;
     }
 
-    console.log('init 1');
+    _self.events = new pwlib.appEvents(_self);
 
     _self.panel = gui.floatingPanels.colormixer;
     _self.panelSelector = gui.tabPanels.colormixer_selector;
     _self.panelInputs = gui.tabPanels.colormixer_inputs;
-
-    // The color mixer element.
-    _self.elems._self = _self.panel.container;
 
     // Initialize the color mixer Canvas element.
     _self.context2d = gui.elems.colormixer_canvas.getContext('2d');
@@ -238,15 +283,13 @@ pwlib.extensions.colormixer = function (app) {
       return false;
     }
 
-    console.log('init 2');
-
     // Setup the color mixer inputs.
-    var elem, form = _self.panelInputs.container;
+    var elem, label, labelElem,
+        inputValues = config.inputValues,
+        form = _self.panelInputs.container;
     if (!form) {
       return false;
     }
-
-    console.log('init 3');
 
     for (var i in _self.inputs) {
       elem = form.elements.namedItem('ckey_' + i) || gui.inputs['ckey_' + i];
@@ -254,21 +297,30 @@ pwlib.extensions.colormixer = function (app) {
         return false;
       }
 
-      elem.addEventListener('input', _self.ev_input_change, false);
+      if (i === 'hex' || i === 'alpha') {
+        label = lang.inputs[i];
+      } else {
+        label = lang.inputs[_self.ckey_grouping[i] + '_' + i];
+      }
+
+      labelElem = elem.parentNode;
+      labelElem.replaceChild(doc.createTextNode(label), labelElem.firstChild);
+
+      elem.addEventListener('input',  _self.ev_input_change, false);
+      elem.addEventListener('change', _self.ev_input_change, false);
 
       if (i !== 'hex') {
-        elem.setAttribute('step', config.inputValues[i][2]);
+        elem.setAttribute('step', inputValues[i][2]);
 
-        elem.setAttribute('max', MathRound(config.inputValues[i][1]));
-        elem.setAttribute('min', MathRound(config.inputValues[i][0]));
-        _self.abs_max[i] = config.inputValues[i][1] - config.inputValues[i][0];
+        elem.setAttribute('max', MathRound(inputValues[i][1]));
+        elem.setAttribute('min', MathRound(inputValues[i][0]));
+        _self.abs_max[i] = inputValues[i][1] - inputValues[i][0];
       }
 
       // Store the color key, which is used by the event handler.
       elem._ckey = i;
       _self.inputs[i] = elem;
     }
-    console.log('init 4');
 
     // Setup the ckey inputs of type=radio.
     var ckey = form.ckey;
@@ -292,33 +344,28 @@ pwlib.extensions.colormixer = function (app) {
     }
 
     // Prepare the color preview elements.
-    _self.elems.color_active = gui.elems.colormixer_activecolor;
-
-    _self.elems.color_old = gui.elems.colormixer_oldcolor;
-    _self.elems.color_old.addEventListener('click', _self.ev_click_color, 
-        false);
-
+    _self.elems.colorActive = gui.elems.colormixer_colorActive;
+    _self.elems.colorOld = gui.elems.colormixer_colorOld;
+    _self.elems.colorOld.addEventListener('click', _self.ev_click_color, false);
 
     // Make sure the buttons work properly.
-    /*
-    if ( !(elem = $('btn-ce-close')) ) {
-      return false;
-    }
-    elem.addEventListener('click', ce.hide, false);
+    var anchor, btn, buttons = ['accept', 'cancel', 'saveColor', 'pickColor'];
+    for (var i = 0, n = buttons.length; i < n; i++) {
+      btn = gui.elems['colormixer_btn_' + buttons[i]];
+      if (!btn) {
+        continue;
+      }
 
-    if ( !(elem = $('btn-ce-cancel')) ) {
-      return false;
-    }
-    elem.addEventListener('click', ce.btn_cancel, false);
+      anchor = doc.createElement('a');
+      anchor.href = '#';
+      anchor.appendChild(doc.createTextNode(lang.buttons[i]));
+      anchor.addEventListener('click', _self['ev_click_' + buttons[i]], false);
 
-    if ( !(elem = $('btn-ce-savec')) ) {
-      return false;
+      btn.replaceChild(anchor, btn.firstChild);
     }
-    elem.addEventListener('click', ce.btn_save_color, false);*/
-
 
     // Prepare the canvas "controls" (the chart "dot" and the slider).
-    var id, elems = ['controls', 'chart_pos', 'slider_pos'];
+    var id, elems = ['controls', 'chartDot', 'slider'];
     for (var i = 0, n = elems.length; i < n; i++) {
       id = elems[i];
       elem = gui.elems['colormixer_' + id];
@@ -342,9 +389,9 @@ pwlib.extensions.colormixer = function (app) {
 
 
     // The color palette <select>.
-    _self.elems.in_cpalette = gui.inputs.colormixer_cpalette;
-    _self.elems.in_cpalette.addEventListener('change', _self.ev_change_cpalette, 
-        false);
+    _self.elems.cpaletteInput = gui.inputs.colormixer_cpaletteInput;
+    _self.elems.cpaletteInput.addEventListener('change', 
+        _self.ev_change_cpalette, false);
 
     // Add the list of color palettes into the <select>.
     var palette;
@@ -356,13 +403,13 @@ pwlib.extensions.colormixer = function (app) {
         elem.selected = true;
       }
 
-      elem.appendChild( doc.createTextNode(palette.title) );
-      _self.elems.in_cpalette.appendChild(elem);
+      elem.appendChild( doc.createTextNode(lang.colorPalettes[i]) );
+      _self.elems.cpaletteInput.appendChild(elem);
     }
 
     // This is the ordered list where we add each color (list item).
-    _self.elems.out_cpalette = gui.elems.colormixer_cpalette_out;
-    _self.elems.out_cpalette.addEventListener('click', _self.ev_click_color, 
+    _self.elems.cpaletteOutput = gui.elems.colormixer_cpaletteOutput;
+    _self.elems.cpaletteOutput.addEventListener('click', _self.ev_click_color, 
         false);
 
     _self.cpalette_load(config.paletteDefault);
@@ -376,7 +423,6 @@ pwlib.extensions.colormixer = function (app) {
     if (!cfg) {
       return false;
     }
-    console.log('init_lab');
 
     // Chromaticity coordinates for the RGB primaries.
     var x0_r = cfg.x_r,
@@ -445,8 +491,10 @@ pwlib.extensions.colormixer = function (app) {
     return true;
   },
 
+  this.ev_click_accept = function () { };
+
   // The cancel button which sets back the old color and closes the dialog.
-  this.btn_cancel = function (ev) {
+  this.ev_click_cancel = function (ev) {
     var ce = _me.coloreditor;
     if (!ce || !ce.elems || !ce.elems.color_old || !ce.elems.color_old._color) {
       return false;
@@ -459,7 +507,7 @@ pwlib.extensions.colormixer = function (app) {
 
   // The saved color only gets added into the '_saved' color palette list. The 
   // color is not saved permanently.
-  this.btn_save_color = function (ev) {
+  this.ev_click_saveColor = function (ev) {
     var ce = _me.coloreditor;
     if (!ce || !ce.color || !ce.color_palettes || !ce.color_palettes._saved) {
       return false;
@@ -479,6 +527,8 @@ pwlib.extensions.colormixer = function (app) {
     return true;
   };
 
+  this.ev_click_pickColor = function () { };
+
   // The event handler for changes made to the color palette <select> input.
   this.ev_change_cpalette = function (ev) {
     return _self.cpalette_load(this.value);
@@ -493,70 +543,60 @@ pwlib.extensions.colormixer = function (app) {
     var palette = config.colorPalettes[id];
 
     if (palette.file) {
-      ce.xhr = new XMLHttpRequest();
-      if (!ce.xhr) {
-        return false;
-      }
-      ce.xhr.onreadystatechange = ce.cpalette_loaded;
-      ce.xhr.open('GET', palette.file);
-      ce.xhr.send('');
+      pwlib.xhrLoad(app.config.baseFolder + '/' + palette.file, 
+          this.cpalette_loaded);
+
+      return true;
 
     } else if (palette.colors) {
-      ce.cpalette_show(palette.colors);
+      return this.cpalette_show(palette.colors);
 
     } else {
       return false;
     }
-
-    return true;
   };
 
   // This is the event handler for XMLHttpRequest.onReadyStateChange.
-  this.cpalette_loaded = function (ev) {
-    var ce = _me.coloreditor;
-
-    // 0 UNINITIALIZED open() has not been called yet. 1 LOADING send() has not been called yet. 2 LOADED send() has been called, headers and status are available. 3 INTERACTIVE Downloading, responseText holds the partial data. 4 COMPLETED Finished with all operations.
-    if(!ce || !ce.xhr || ce.xhr.readyState !== 4 || ce.xhr.status !== 200 || 
-        !ce.xhr.responseText) {
-      return false;
+  this.cpalette_loaded = function (xhr) {
+    if (!xhr || xhr.readyState !== 4) {
+      return;
     }
 
-    var json = ce.xhr.responseText;
+    if ((xhr.status !== 304 && xhr.status !== 200) || !xhr.responseText) {
+      alert(lang.failedColorPaletteLoad);
+      return;
+    }
 
     // FIXME: Security issue here.
     // The provided color palettes include mathematically-precise values (such as 1/3). JSON.parse() does not allow any kind of evaluation.
     //if (window.JSON) {
     //  json = JSON.parse(json);
     //} else {
-      json = eval('(' + json + ')');
+      json = eval('(' + xhr.responseText + ')');
     //}
 
-    ce.cpalette_show(json);
+    _self.cpalette_show(json);
 
-    json = ce.xhr = null;
-    delete json, ce.xhr;
-
-    return true;
+    xhr = null;
   };
 
   // This function takes the colors array argument which used to add each color 
   // element to the color mixer (#out-cpalette).
   this.cpalette_show = function (colors) {
-    var ce = _me.coloreditor;
-    if (!colors || !(colors instanceof Array) || !ce || !ce.elems || !ce.elems.out_cpalette || !_me.doc.createDocumentFragment) {
+    if (!colors || !(colors instanceof Array)) {
       return false;
     }
 
-    var i, color, elem,
-      frag = _me.doc.createDocumentFragment(),
-      dest = ce.elems.out_cpalette;
+    var color, li, anchor, rgbValue,
+        frag = doc.createDocumentFragment(),
+        dest = this.elems.cpaletteOutput;
 
     dest.style.display = 'none';
     while (dest.hasChildNodes()) {
       dest.removeChild(dest.firstChild);
     }
 
-    for (i in colors) {
+    for (var i = 0, n = colors.length; i < n; i++) {
       color = colors[i];
 
       // Do not allow values higher than 1.
@@ -564,13 +604,19 @@ pwlib.extensions.colormixer = function (app) {
       color[1] = MathMin(1, color[1]);
       color[2] = MathMin(1, color[2]);
 
-      elem = _me.doc.createElement('li');
-      elem._color = color;
-      elem.style.backgroundColor = 'rgb(' + MathRound(color[0] * 255) + ',' 
-          + MathRound(color[1] * 255) + ',' + MathRound(color[2] * 255) + ')';
+      rgbValue = 'rgb(' + MathRound(color[0] * 255) + ',' +
+          MathRound(color[1] * 255) + ',' +
+          MathRound(color[2] * 255) + ')';
 
-      frag.appendChild(elem);
+      anchor = doc.createElement('a');
+      anchor.href = '#';
+      anchor._color = color;
+      anchor.style.backgroundColor = rgbValue;
+      anchor.appendChild(doc.createTextNode(rgbValue));
+
+      frag.appendChild(anchor);
     }
+
     dest.appendChild(frag);
     dest.style.display = 'block';
 
@@ -583,62 +629,52 @@ pwlib.extensions.colormixer = function (app) {
   // This is the 'click' event handler for colors (in the color palette list, or 
   // the old color).
   this.ev_click_color = function (ev, cancel) {
-    var ce = _me.coloreditor;
-    if (!ce || !ce.color || !ev) {
-      return false;
-    }
-
     if (ev.target && ev.target._color) {
       var color = ev.target._color;
     } else if (ev._color) {
       var color = ev._color;
     } else {
-      return false;
+      return;
     }
 
-    ce.color.red   = color[0];
-    ce.color.green = color[1];
-    ce.color.blue  = color[2];
+    ev.preventDefault();
+
+    _self.color.red   = color[0];
+    _self.color.green = color[1];
+    _self.color.blue  = color[2];
 
     if (typeof(color[3]) !== 'undefined') {
-      ce.color.alpha = color[3];
+      _self.color.alpha = color[3];
     }
 
     if (!cancel) {
-      return ce.update_color('rgb');
+      _self.update_color('rgb');
     } else {
-      return ce.update_target();
+      _self.update_target();
     }
   };
 
   // Calculate the dimensions and coordinates for the slider and the color chart 
   // within the canvas element.
   this.update_dimensions = function () {
-    var ce = _me.coloreditor;
-    if (!ce || !ce.context2d || !ce.context2d.canvas || !ce.elems) {
-      return false;
-    }
+    var width  = _self.context2d.canvas.width,
+        height = _self.context2d.canvas.height,
+        style;
 
-    var width  = ce.context2d.canvas.width,
-      height = ce.context2d.canvas.height,
-      style;
+    _self.sliderWidth   = MathRound(width * config.sliderWidth);
+    _self.sliderHeight  = height - 1;
+    _self.sliderSpacing = MathRound(width * config.sliderSpacing);
+    _self.sliderX       = width - _self.sliderWidth - 2;
+    _self.chartWidth    = _self.sliderX - _self.sliderSpacing;
+    _self.chartHeight   = height;
 
-    ce.slider_width   = MathRound(width * ce.slider_width_);
-    ce.slider_spacing = MathRound(width * ce.slider_spacing_);
-    ce.slider_x       = width - ce.slider_width - 2;
-    ce.chart_width    = ce.slider_x - ce.slider_spacing;
-
-    style = ce.elems.controls.style;
+    style = _self.elems.controls.style;
     style.width  = width  + 'px';
     style.height = height + 'px';
 
-    style = ce.elems.tab_cmixer.style;
-    style.width  = width  + 'px';
-    style.height = height + 'px';
-
-    style = ce.elems.slider_pos.style;
-    style.width = ce.slider_width + 'px';
-    style.left  = ce.slider_x     + 'px';
+    style = _self.elems.slider.style;
+    style.width = _self.sliderWidth + 'px';
+    style.left  = _self.sliderX     + 'px';
 
     return true;
   };
@@ -654,8 +690,8 @@ pwlib.extensions.colormixer = function (app) {
     }
 
     var x = a[0] * b[0] + a[1] * b[3] + a[2] * b[6],
-      y = a[0] * b[1] + a[1] * b[4] + a[2] * b[7],
-      z = a[0] * b[2] + a[1] * b[5] + a[2] * b[8];
+        y = a[0] * b[1] + a[1] * b[4] + a[2] * b[7],
+        z = a[0] * b[2] + a[1] * b[5] + a[2] * b[8];
 
     return [x, y, z];
   };
@@ -669,8 +705,8 @@ pwlib.extensions.colormixer = function (app) {
       return false;
     }
 
-    var d = (m[0]*m[4]*m[8] + m[1]*m[5]*m[6] + m[2]*m[3]*m[7])
-        - (m[2]*m[4]*m[6] + m[5]*m[7]*m[0] + m[8]*m[1]*m[3]);
+    var d = (m[0]*m[4]*m[8] + m[1]*m[5]*m[6] + m[2]*m[3]*m[7]) -
+            (m[2]*m[4]*m[6] + m[5]*m[7]*m[0] + m[8]*m[1]*m[3]);
 
     // Matrix determinant is 0: the matrix is not invertible.
     if (d === 0) {
@@ -678,9 +714,9 @@ pwlib.extensions.colormixer = function (app) {
     }
 
     var i = [
-       m[4]*m[8] - m[5]*m[7], -m[3]*m[8] + m[5]*m[6],  m[3]*m[7] - m[4]*m[6],
-      -m[1]*m[8] + m[2]*m[7],  m[0]*m[8] - m[2]*m[6], -m[0]*m[7] + m[1]*m[6],
-       m[1]*m[5] - m[2]*m[4], -m[0]*m[5] + m[2]*m[3],  m[0]*m[4] - m[1]*m[3]
+      m[4]*m[8] - m[5]*m[7], -m[3]*m[8] + m[5]*m[6],  m[3]*m[7] - m[4]*m[6],
+      m[1]*m[8] + m[2]*m[7],  m[0]*m[8] - m[2]*m[6], -m[0]*m[7] + m[1]*m[6],
+      m[1]*m[5] - m[2]*m[4], -m[0]*m[5] + m[2]*m[3],  m[0]*m[4] - m[1]*m[3]
     ];
 
     i = [
@@ -692,59 +728,12 @@ pwlib.extensions.colormixer = function (app) {
     return i;
   };
 
-  // The click event handler for all the tab buttons.
-  this.ev_click_tab = function (ev) {
-    if (this._tab) {
-      return _me.coloreditor.show_tab(this._tab);
-    } else {
-      return false;
-    }
-  };
-
-  this.show_tab = function (tab) {
-    var ce = _me.coloreditor;
-    if (!ce || !tab) {
-      return false;
-    }
-
-    if (tab === 'cmixer' || tab === 'cpalettes') {
-      var group = 'picker';
-    } else {
-      var group = 'inputs';
-    }
-
-    var old_tab = ce['tab_' + group];
-
-    if (old_tab === tab) {
-      return true;
-
-    } else if (old_tab) {
-      var tmp = ce.elems['btn_' + old_tab];
-      tmp.className = tmp.className.replace(/\s*active/ig, '');
-      ce.elems['tab_' + old_tab].style.display = 'none';
-    }
-
-    ce.elems['btn_' + tab].className += ' active';
-    ce.elems['tab_' + tab].style.display = 'block';
-
-    ce['tab_' + group] = tab;
-
-    if (tab === 'cmixer' && ce.update_canvas_needed) {
-      ce.update_canvas();
-    }
-
-    return true;
-  };
-
   // The event handler for inputs of type=radio - the inputs which allow the 
   // user to change the active color key.
   this.ev_change_ckey_active = function (ev) {
-    if (!this.value || this.value === _me.coloreditor.ckey_active || 
-        _me.coloreditor.update_ckey_active(this.value)) {
-      return false;
+    if (this.value && this.value !== _self.ckey_active) {
+      _self.update_ckey_active(this.value);
     }
-
-    return true;
   };
 
   // The actual function which deals with the changes to the active color key.
@@ -768,15 +757,15 @@ pwlib.extensions.colormixer = function (app) {
     _self.ckey_adjoint       = adjoint;
 
     if (!only_vars) {
-      if (ce.tab_picker !== 'cmixer') {
-        ce.update_canvas_needed = true;
-        ce.show_tab('cmixer');
+      if (_self.panelSelector.tabId !== 'mixer') {
+        _self.update_canvas_needed = true;
+        _self.panelSelector.tabActivate('mixer');
       } else {
-        ce.update_canvas();
+        _self.update_canvas();
       }
 
-      if (ce.tab_inputs !== group) {
-        ce.show_tab(group);
+      if (_self.panelInputs.tabId !== group) {
+        _self.panelInputs.tabActivate(group);
       }
     }
 
@@ -896,8 +885,7 @@ pwlib.extensions.colormixer = function (app) {
 
   // This is the event handler for the changes to the color mixer inputs.
   this.ev_input_change = function (ev) {
-    var ce = _me.coloreditor;
-    if (!ce || !ce.elems.target || !this._ckey) {
+    if (!this._ckey) {
       return false;
     }
 
@@ -906,21 +894,21 @@ pwlib.extensions.colormixer = function (app) {
     // If the input is unchanged, or if the new value is invalid, the function returns false.
     // The hexadecimal input is checked with a simple regular expression.
 
-    if ((this._ckey === 'hex' && !/^\#[a-f0-9]{6}$/i.test(this.value)) || 
-        (this._ckey !== 'hex' && !_me.ev_input_nr(ev))) {
+    if ((this._ckey === 'hex' && !/^\#[a-f0-9]{6}$/i.test(this.value))) {
       return false;
     }
 
     // Update the internal color value.
     if (this._ckey === 'hex') {
-      ce.color[this._ckey] = this.value;
-    } else if (ce.ckey_grouping[this._ckey] === 'lab') {
-      ce.color[this._ckey] = parseInt(this.value);
+      _self.color[this._ckey] = this.value;
+    } else if (_self.ckey_grouping[this._ckey] === 'lab') {
+      _self.color[this._ckey] = parseInt(this.value);
     } else {
-      ce.color[this._ckey] = parseInt(this.value) / ce.value_max[this._ckey];
+      _self.color[this._ckey] = parseInt(this.value) 
+        / config.inputValues[this._ckey][1];
     }
 
-    return ce.update_color(this._ckey);
+    return _self.update_color(this._ckey);
   };
 
   // This function takes the ckey parameter which tells the updated color key.  
@@ -929,43 +917,38 @@ pwlib.extensions.colormixer = function (app) {
   // color value conversions, the inputs, the color option target, and the color 
   // mixer canvas are all updated to reflect the change.
   this.update_color = function (ckey) {
-    var ce = _me.coloreditor;
-    if (!ce) {
-      return false;
-    }
-
-    if (ckey === 'rgb' || ce.ckey_grouping[ckey] === 'rgb') {
-      ce.rgb2hsv();
-      ce.rgb2hex();
-      ce.rgb2lab();
-      ce.rgb2cmyk();
-    } else if (ckey === 'hsv' || ce.ckey_grouping[ckey] === 'hsv') {
-      ce.hsv2rgb();
-      ce.rgb2hex();
-      ce.rgb2lab();
-      ce.rgb2cmyk();
+    if (ckey === 'rgb' || _self.ckey_grouping[ckey] === 'rgb') {
+      _self.rgb2hsv();
+      _self.rgb2hex();
+      _self.rgb2lab();
+      _self.rgb2cmyk();
+    } else if (ckey === 'hsv' || _self.ckey_grouping[ckey] === 'hsv') {
+      _self.hsv2rgb();
+      _self.rgb2hex();
+      _self.rgb2lab();
+      _self.rgb2cmyk();
     } else if (ckey === 'hex') {
-      ce.hex2rgb();
-      ce.rgb2hsv();
-      ce.rgb2lab();
-      ce.rgb2cmyk();
-    } else if (ckey === 'lab' || ce.ckey_grouping[ckey] === 'lab') {
-      ce.lab2rgb();
-      ce.rgb2hsv();
-      ce.rgb2hex();
-      ce.rgb2cmyk();
-    } else if (ckey === 'cmyk' || ce.ckey_grouping[ckey] === 'cmyk') {
-      ce.cmyk2rgb();
-      ce.rgb2lab();
-      ce.rgb2hsv();
-      ce.rgb2hex();
+      _self.hex2rgb();
+      _self.rgb2hsv();
+      _self.rgb2lab();
+      _self.rgb2cmyk();
+    } else if (ckey === 'lab' || _self.ckey_grouping[ckey] === 'lab') {
+      _self.lab2rgb();
+      _self.rgb2hsv();
+      _self.rgb2hex();
+      _self.rgb2cmyk();
+    } else if (ckey === 'cmyk' || _self.ckey_grouping[ckey] === 'cmyk') {
+      _self.cmyk2rgb();
+      _self.rgb2lab();
+      _self.rgb2hsv();
+      _self.rgb2hex();
     }
 
-    ce.update_inputs();
-    ce.update_target();
+    _self.update_inputs();
+    _self.update_target();
 
     if (ckey !== 'alpha') {
-      ce.update_canvas(ckey);
+      _self.update_canvas(ckey);
     }
 
     return true;
@@ -974,6 +957,7 @@ pwlib.extensions.colormixer = function (app) {
   // This function updates the color option target. It sets the current color 
   // values.
   this.update_target = function () {
+    return true;
     var ce = _me.coloreditor;
     if (!ce || !ce.elems.target || !_me.img_temp || !ce.color) {
       return false;
@@ -1017,20 +1001,16 @@ pwlib.extensions.colormixer = function (app) {
 
   // Take the internal color values and show them in the inputs.
   this.update_inputs = function () {
-    var i, input, ce = _me.coloreditor;
-    if (!ce || !ce.inputs || !ce.color) {
-      return false;
-    }
-
-    for (i in ce.inputs) {
-      input = ce.inputs[i];
+    var input;
+    for (var i in _self.inputs) {
+      input = _self.inputs[i];
       input._old_value = input.value;
       if (input._ckey === 'hex') {
-        input.value = ce.color[i];
-      } else if (ce.ckey_grouping[input._ckey] === 'lab') {
-        input.value = MathRound(ce.color[i]);
+        input.value = _self.color[i];
+      } else if (_self.ckey_grouping[input._ckey] === 'lab') {
+        input.value = MathRound(_self.color[i]);
       } else {
-        input.value = MathRound(ce.color[i] * ce.value_max[i]);
+        input.value = MathRound(_self.color[i] * config.inputValues[i][1]);
       }
     }
 
@@ -1046,15 +1026,11 @@ pwlib.extensions.colormixer = function (app) {
   // gamuts."
   // Translation: this is just a simple RGB to CMYK conversion function.
   this.rgb2cmyk = function () {
-    var color, ce = _me.coloreditor;
-    if (!ce || !(color = ce.color)) {
-      return false;
-    }
-
-    var cyan, magenta, yellow, black,
-      red   = color.red,
-      green = color.green,
-      blue  = color.blue;
+    var color = _self.color,
+        cyan, magenta, yellow, black,
+        red   = color.red,
+        green = color.green,
+        blue  = color.blue;
 
     cyan    = 1 - red;
     magenta = 1 - green;
@@ -1080,12 +1056,8 @@ pwlib.extensions.colormixer = function (app) {
   };
 
   this.cmyk2rgb = function () {
-    var color, ce = _me.coloreditor;
-    if (!ce || !(color = ce.color)) {
-      return false;
-    }
-
-    var w = 1 - color.black;
+    var color = _self.color,
+        w = 1 - color.black;
 
     color.red   = 1 - color.cyan    * w - color.black;
     color.green = 1 - color.magenta * w - color.black;
@@ -1097,9 +1069,9 @@ pwlib.extensions.colormixer = function (app) {
   // This function takes the RGB color values and converts them to HSV.
   this.rgb2hsv = function () {
     var hue, sat, val, // HSV
-        red   = ce.color.red,
-        green = ce.color.green,
-        blue  = ce.color.blue,
+        red   = _self.color.red,
+        green = _self.color.green,
+        blue  = _self.color.blue,
         min   = MathMin(red, green, blue),
         max   = MathMax(red, green, blue),
         delta = max - min,
@@ -1125,9 +1097,9 @@ pwlib.extensions.colormixer = function (app) {
       }
     }
 
-    ce.color.hue = hue;
-    ce.color.sat = sat;
-    ce.color.val = val;
+    _self.color.hue = hue;
+    _self.color.sat = sat;
+    _self.color.val = val;
 
     return true;
   };
@@ -1145,12 +1117,8 @@ pwlib.extensions.colormixer = function (app) {
   //     function will use the values given in the array [hue, saturation, 
   //     light].
   this.hsv2rgb = function (no_update, hsv) {
-    var color, ce = _me.coloreditor;
-    if (!ce || !(color = ce.color)) {
-      return false;
-    }
-
-    var red, green, blue, hue, sat, val;
+    var color = _self.color,
+        red, green, blue, hue, sat, val;
 
     // Use custom HSV values or the current color.
     if (hsv) {
@@ -1168,10 +1136,10 @@ pwlib.extensions.colormixer = function (app) {
       red = green = blue = val;
     } else {
       var h = hue * 6;
-      var i = Math.floor(h);
+      var i = MathFloor(h);
       var t1 = val * ( 1 - sat ),
-        t2 = val * ( 1 - sat * ( h - i ) ),
-        t3 = val * ( 1 - sat * ( 1 - (h - i) ) );
+          t2 = val * ( 1 - sat * ( h - i ) ),
+          t3 = val * ( 1 - sat * ( 1 - (h - i) ) );
 
       if (i === 0 || i === 6) { //   0° Red
         red = val;  green =  t3;  blue =  t1;
@@ -1200,10 +1168,7 @@ pwlib.extensions.colormixer = function (app) {
   // This updates the hexadecimal representation of the color, based on the RGB values.
   this.rgb2hex = function () {
     var hex = '#', rgb = ['red', 'green', 'blue'], i, val,
-      color, ce = _me.coloreditor;
-    if (!ce || !(color = ce.color)) {
-      return false;
-    }
+        color = _self.color;
 
     for (i = 0; i < 3; i++) {
       val = MathRound(color[rgb[i]] * 255).toString(16);
@@ -1220,11 +1185,9 @@ pwlib.extensions.colormixer = function (app) {
 
   // This updates the RGB color values, based on the hexadecimal color representation.
   this.hex2rgb = function () {
-    var rgb = ['red', 'green', 'blue'], i, val, color, hex,
-      ce = _me.coloreditor;
-    if (!ce || !(color = ce.color) || !(hex = color.hex)) {
-      return false;
-    }
+    var rgb = ['red', 'green', 'blue'], i, val,
+        color = _self.color,
+        hex   = color.hex;
 
     hex = hex.substr(1);
     if (hex.length !== 6) {
@@ -1240,12 +1203,10 @@ pwlib.extensions.colormixer = function (app) {
   };
 
   this.rgb2lab = function () {
-    var color, ce = _me.coloreditor;
-    if (!ce || !(color = ce.color)) {
-      return false;
-    }
+    var color = _self.color,
+        lab   = _self.xyz2lab(_self.rgb2xyz([color.red, color.green, 
+              color.blue]));
 
-    var lab = ce.xyz2lab(ce.rgb2xyz([color.red, color.green, color.blue]));
     color.cie_l = lab[0];
     color.cie_a = lab[1];
     color.cie_b = lab[2];
@@ -1254,12 +1215,10 @@ pwlib.extensions.colormixer = function (app) {
   };
 
   this.lab2rgb = function () {
-    var color, ce = _me.coloreditor;
-    if (!ce || !(color = ce.color)) {
-      return false;
-    }
+    var color = _self.color,
+        rgb   = _self.xyz2rgb(_self.lab2xyz(color.cie_l, color.cie_a, 
+              color.cie_b));
 
-    var rgb = ce.xyz2rgb(ce.lab2xyz(color.cie_l, color.cie_a, color.cie_b));
     color.red   = rgb[0];
     color.green = rgb[1];
     color.blue  = rgb[2];
@@ -1270,11 +1229,11 @@ pwlib.extensions.colormixer = function (app) {
   this.xyz2lab = function (xyz) {
     var cfg = config.lab,
 
-      // 216/24389 or (6/29)^3 (both = 0.008856...)
-      e = 216/24389,
+        // 216/24389 or (6/29)^3 (both = 0.008856...)
+        e = 216/24389,
 
-      // 903.296296...
-      k = 24389/27;
+        // 903.296296...
+        k = 24389/27;
 
     xyz[0] /= cfg.w_x;
     xyz[1] /= cfg.w_y;
@@ -1299,27 +1258,26 @@ pwlib.extensions.colormixer = function (app) {
     }
 
     var cie_l = 116 *  xyz[1] - 16,
-      cie_a = 500 * (xyz[0] -  xyz[1]),
-      cie_b = 200 * (xyz[1] -  xyz[2]);
+        cie_a = 500 * (xyz[0] -  xyz[1]),
+        cie_b = 200 * (xyz[1] -  xyz[2]);
 
     return [cie_l, cie_a, cie_b];
   };
 
   this.lab2xyz = function (cie_l, cie_a, cie_b) {
-    var y = (cie_l + 16) / 116;
+    var y = (cie_l + 16) / 116,
+        x = y + cie_a / 500,
+        z = y - cie_b / 200,
 
-    var x = y + cie_a / 500,
-      z = y - cie_b / 200;
+        // 0.206896551...
+        e = 6/29,
 
-    var // 0.206896551...
-      e = 6/29,
+        // 7.787037...
+        k = 1/3 * MathPow(29/6, 2),
 
-      // 7.787037...
-      k = 1/3 * MathPow(29/6, 2),
-
-      // 0.137931...
-      t = 16/116,
-      cfg = _me.coloreditor.lab;
+        // 0.137931...
+        t = 16/116,
+        cfg = config.lab;
 
     if (x > e) {
       x = MathPow(x, 3);
@@ -1347,7 +1305,7 @@ pwlib.extensions.colormixer = function (app) {
   };
 
   this.xyz2rgb = function (xyz) {
-    var rgb = _me.coloreditor.calc_m1x3(xyz, _me.coloreditor.lab.m_i);
+    var rgb = _self.calc_m1x3(xyz, config.lab.m_i);
 
     if (rgb[0] > 0.0031308) {
       rgb[0] = 1.055 * MathPow(rgb[0], 1 / 2.4) - 0.055;
@@ -1417,33 +1375,28 @@ pwlib.extensions.colormixer = function (app) {
   // The ckey argument tells which color key has been updated. This is used to 
   // determine which canvas parts need to be updated.
   this.update_canvas = function (updated_ckey) {
-    var ce = _me.coloreditor;
-    if (!ce || !ce.draw_chart || !ce.draw_slider || !ce.ckey_active) {
-      return false;
-    }
-
-    if (ce.tab_picker !== 'cmixer') {
-      ce.update_canvas_needed = true;
+    if (_self.panelSelector.tabId !== 'mixer') {
+      _self.update_canvas_needed = true;
       return true;
     }
 
-    ce.update_canvas_needed = false;
+    _self.update_canvas_needed = false;
 
-    var slider  = ce.elems.slider_pos.style,
-      chart   = ce.elems.chart_pos.style,
-      color   = ce.color,
-      ckey    = ce.ckey_active,
-      group   = ce.ckey_active_group,
-      adjoint = ce.ckey_adjoint,
-      width   = ce.chart_width,
-      height  = ce.context2d.canvas.height,
-      mx, my, sy;
+    var slider  = _self.elems.slider.style,
+        chart   = _self.elems.chartDot.style,
+        color   = _self.color,
+        ckey    = _self.ckey_active,
+        group   = _self.ckey_active_group,
+        adjoint = _self.ckey_adjoint,
+        width   = _self.chartWidth,
+        height  = _self.chartHeight,
+        mx, my, sy;
 
     // Update the slider which shows the position of the active ckey.
     if (updated_ckey !== adjoint[0] && updated_ckey !== adjoint[1] && 
-        ce.ev_canvas_mode !== 'chart') {
+        _self.ev_canvas_mode !== 'chart') {
       if (group === 'lab') {
-        sy = (color[ckey] - ce.value_min[ckey]) / ce.abs_max[ckey];
+        sy = (color[ckey] - config.inputValues[ckey][0]) / _self.abs_max[ckey];
       } else {
         sy = color[ckey];
       }
@@ -1458,8 +1411,10 @@ pwlib.extensions.colormixer = function (app) {
     // Update the chart dot.
     if (updated_ckey !== ckey) {
       if (group === 'lab') {
-        mx = (color[adjoint[0]] - ce.value_min[adjoint[0]]) / ce.abs_max[adjoint[0]];
-        my = (color[adjoint[1]] - ce.value_min[adjoint[1]]) / ce.abs_max[adjoint[1]];
+        mx = (color[adjoint[0]] - config.inputValues[adjoint[0]][0]) 
+          / _self.abs_max[adjoint[0]];
+        my = (color[adjoint[1]] - config.inputValues[adjoint[1]][0]) 
+          / _self.abs_max[adjoint[1]];
       } else {
         mx = color[adjoint[0]];
         my = 1 - color[adjoint[1]];
@@ -1469,7 +1424,7 @@ pwlib.extensions.colormixer = function (app) {
       chart.left = MathRound(mx *  width) + 'px';
     }
 
-    if (!ce.draw_chart(updated_ckey) || !ce.draw_slider(updated_ckey)) {
+    if (!_self.draw_chart(updated_ckey) || !_self.draw_slider(updated_ckey)) {
       return false;
     } else {
       return true;
@@ -1482,39 +1437,32 @@ pwlib.extensions.colormixer = function (app) {
   // inside the color chart, then the adjoint color keys are updated based on 
   // the coordinates.
   this.ev_canvas = function (ev) {
-    var mode, ce = _me.coloreditor;
-    if (!ce || !ce.elems || !ce.elems.controls || !ce.elems.slider_pos || !ce.elems.chart_pos || !ce.context2d || !ce.chart_width || !ce.ckey_active || !ce.slider_x || !ev || !ev.target) {
-      return false;
-    }
-
-    if (ev.preventDefault) {
-      ev.preventDefault();
-    }
+    ev.preventDefault();
 
     // Initialize color picking only on mousedown.
-    if (ev.type === 'mousedown' && !ce.ev_canvas_mode) {
-      ce.ev_canvas_mode = true;
-      _me.doc.addEventListener('mouseup', ce.ev_canvas, false);
+    if (ev.type === 'mousedown' && !_self.ev_canvas_mode) {
+      _self.ev_canvas_mode = true;
+      doc.addEventListener('mouseup', _self.ev_canvas, false);
     }
 
-    if (!ce.ev_canvas_mode) {
+    if (!_self.ev_canvas_mode) {
       return false;
     }
 
     // The mouseup event stops the effect of any further mousemove events.
     if (ev.type === 'mouseup') {
-      ce.ev_canvas_mode = false;
-      _me.doc.removeEventListener('mouseup', ce.ev_canvas, false);
+      _self.ev_canvas_mode = false;
+      doc.removeEventListener('mouseup', _self.ev_canvas, false);
     }
 
     var tid = ev.target.id,
-      elems = ce.elems;
+        elems = _self.elems;
 
     // If the user is on top of the 'controls' element, determine the mouse coordinates and the 'mode' for this function: the user is either working with the slider, or he/she is working with the color chart itself.
-    if (tid === elems.controls.id) {
+    if (ev.target === elems.controls) {
       var mx, my,
-        width  = ce.context2d.canvas.width,
-        height = ce.context2d.canvas.height;
+          width  = _self.context2d.canvas.width,
+          height = _self.context2d.canvas.height;
 
       // Get the mouse position, relative to the event target.
       if (ev.layerX || ev.layerX === 0) { // Firefox
@@ -1525,61 +1473,74 @@ pwlib.extensions.colormixer = function (app) {
         my = ev.offsetY;
       }
 
-      if (mx >= 0 && mx <= ce.chart_width) {
+      if (mx >= 0 && mx <= _self.chartWidth) {
         mode = 'chart';
-      } else if (mx >= ce.slider_x && mx <= width) {
+      } else if (mx >= _self.sliderX && mx <= width) {
         mode = 'slider';
       }
     } else {
-      // The user might have clicked on the chart dot, or on the slider graphic itself.
+      // The user might have clicked on the chart dot, or on the slider graphic 
+      // itself.
       // If yes, then determine the mode based on this.
-      if (tid === elems.chart_pos.id) {
+      if (ev.target === elems.chartDot) {
         mode = 'chart';
-      } else if (tid === elems.slider_pos.id) {
+      } else if (ev.target === elems.slider) {
         mode = 'slider';
       }
     }
 
-    // Update the ev_canvas_mode value to include the mode name, if it's simply the true boolean.
-    // This ensures that the continuous mouse movements do not go from one mode to another when the user moves out from the slider to the chart (and vice-versa).
-    if (mode && ce.ev_canvas_mode === true) {
-      ce.ev_canvas_mode = mode;
+    // Update the ev_canvas_mode value to include the mode name, if it's simply 
+    // the true boolean.
+    // This ensures that the continuous mouse movements do not go from one mode 
+    // to another when the user moves out from the slider to the chart (and 
+    // vice-versa).
+    if (mode && _self.ev_canvas_mode === true) {
+      _self.ev_canvas_mode = mode;
     }
 
-    // Do not continue if the mode wasn't determined (the mouse is not on the slider, nor on the chart).
-    // Also don't continue if the mouse is not in the same place (different mode).
-    if (!mode || ce.ev_canvas_mode !== mode || tid !== elems.controls.id || 
-        !ce.inputs) {
+    // Do not continue if the mode wasn't determined (the mouse is not on the 
+    // slider, nor on the chart).
+    // Also don't continue if the mouse is not in the same place (different 
+    // mode).
+    if (!mode || _self.ev_canvas_mode !== mode || ev.target !== elems.controls) 
+    {
       return false;
     }
 
-    var color = ce.color,
-      val_x = mx / ce.chart_width,
-      val_y = my / height;
+    var color = _self.color,
+        val_x = mx / _self.chartWidth,
+        val_y = my / height;
 
     if (mode === 'slider') {
-      if (ce.ckey_active === 'hue') {
-        color[ce.ckey_active] = val_y;
-      } else if (ce.ckey_active_group === 'lab') {
-        color[ce.ckey_active] = ce.abs_max[ce.ckey_active] * val_y + ce.value_min[ce.ckey_active];
+      if (_self.ckey_active === 'hue') {
+        color[_self.ckey_active] = val_y;
+      } else if (_self.ckey_active_group === 'lab') {
+        color[_self.ckey_active] = _self.abs_max[_self.ckey_active] * val_y 
+          + config.inputValues[_self.ckey_active][0];
       } else {
-        color[ce.ckey_active] = 1 - val_y;
+        color[_self.ckey_active] = 1 - val_y;
       }
 
-      return ce.update_color(ce.ckey_active);
+      return _self.update_color(_self.ckey_active);
 
     } else if (mode === 'chart') {
-      if (ce.ckey_active_group === 'lab') {
-        val_x = ce.abs_max[ce.ckey_adjoint[0]] * val_x + ce.value_min[ce.ckey_adjoint[0]];
-        val_y = ce.abs_max[ce.ckey_adjoint[1]] * val_y + ce.value_min[ce.ckey_adjoint[1]];
+      if (val_x > 1) {
+        return false;
+      }
+
+      if (_self.ckey_active_group === 'lab') {
+        val_x = _self.abs_max[_self.ckey_adjoint[0]] * val_x 
+          + config.inputValues[_self.ckey_adjoint[0]][0];
+        val_y = _self.abs_max[_self.ckey_adjoint[1]] * val_y 
+          + config.inputValues[_self.ckey_adjoint[1]][0];
       } else {
         val_y = 1 - val_y;
       }
 
-      color[ce.ckey_adjoint[0]] = val_x;
-      color[ce.ckey_adjoint[1]] = val_y;
+      color[_self.ckey_adjoint[0]] = val_x;
+      color[_self.ckey_adjoint[1]] = val_y;
 
-      return ce.update_color(ce.ckey_active_group);
+      return _self.update_color(_self.ckey_active_group);
     }
 
     return false;
@@ -1620,35 +1581,34 @@ pwlib.extensions.colormixer = function (app) {
   // The ckey argument tells which color key has been updated. This is used to 
   // determine if the canvas color chart needs to be updated.
   this.draw_chart = function (updated_ckey) {
-    var ce = _me.coloreditor;
-    if (!ce || !ce.context2d || !ce.context2d.canvas || !ce.ckey_active || !ce.inputs || !ce.inputs[ce.ckey_active]) {
-      return false;
-    }
+    var canvas  = _self.context2d.canvas,
+        context = _self.context2d,
+        gradient, color, opacity, i;
 
-    var canvas  = ce.context2d.canvas,
-      context = ce.context2d,
-      gradient, color, opacity, i;
-
-    if (updated_ckey === ce.ckey_adjoint[0] || updated_ckey === 
-        ce.ckey_adjoint[1] || (ce.ev_canvas_mode === 'chart' && updated_ckey === 
-          ce.ckey_active_group)) {
+    if (updated_ckey === _self.ckey_adjoint[0] || updated_ckey === 
+        _self.ckey_adjoint[1] || (_self.ev_canvas_mode === 'chart' && 
+          updated_ckey === _self.ckey_active_group)) {
       return true;
     }
 
-    var w = ce.chart_width,
-      h = canvas.height;
+    var w = _self.chartWidth,
+        h = _self.chartHeight;
 
     context.clearRect(0, 0, w, h);
 
-    if (ce.ckey_active === 'sat') {
-      // In saturation mode the user has the slider which allows him/her to change the saturation (hSv) of the current color.
-      // The chart shows the hue spectrum on the X axis, while the Y axis gives the Value (hsV).
+    if (_self.ckey_active === 'sat') {
+      // In saturation mode the user has the slider which allows him/her to 
+      // change the saturation (hSv) of the current color.
+      // The chart shows the hue spectrum on the X axis, while the Y axis gives 
+      // the Value (hsV).
 
-      if (ce.color.sat > 0) {
+      if (_self.color.sat > 0) {
         // Draw the hue spectrum gradient on the X axis.
         gradient = context.createLinearGradient(0, 0, w, 0);
         for (i = 0; i <= 6; i++) {
-          color = 'rgb(' + ce.hue[i][0] + ', ' + ce.hue[i][1] + ', ' + ce.hue[i][2] + ')';
+          color = 'rgb(' + hueSpectrum[i][0] + ', ' +
+              hueSpectrum[i][1] + ', ' +
+              hueSpectrum[i][2] + ')';
           gradient.addColorStop(i * 1/6, color);
         }
         context.fillStyle = gradient;
@@ -1662,9 +1622,11 @@ pwlib.extensions.colormixer = function (app) {
         context.fillRect(0, 0, w, h);
       }
 
-      if (ce.color.sat < 1) {
-        // Draw the white to black gradient. This is used for creating the saturation effect. Lowering the saturation value makes the gradient more visible, hence the hue colors desaturate.
-        opacity = 1 - ce.color.sat;
+      if (_self.color.sat < 1) {
+        // Draw the white to black gradient. This is used for creating the 
+        // saturation effect. Lowering the saturation value makes the gradient 
+        // more visible, hence the hue colors desaturate.
+        opacity = 1 - _self.color.sat;
         gradient = context.createLinearGradient(0, 0, 0, h);
         gradient.addColorStop(0, 'rgba(255, 255, 255, ' + opacity + ')');
         gradient.addColorStop(1, 'rgba(  0,   0,   0, ' + opacity + ')');
@@ -1672,15 +1634,17 @@ pwlib.extensions.colormixer = function (app) {
         context.fillRect(0, 0, w, h);
       }
 
-    } else if (ce.ckey_active === 'val') {
+    } else if (_self.ckey_active === 'val') {
       // In value mode the user has the slider which allows him/her to change the value (hsV) of the current color.
       // The chart shows the hue spectrum on the X axis, while the Y axis gives the saturation (hSv).
 
-      if (ce.color.val > 0) {
+      if (_self.color.val > 0) {
         // Draw the hue spectrum gradient on the X axis.
         gradient = context.createLinearGradient(0, 0, w, 0);
         for (i = 0; i <= 6; i++) {
-          color = 'rgb(' + ce.hue[i][0] + ', ' + ce.hue[i][1] + ', ' + ce.hue[i][2] + ')';
+          color = 'rgb(' + hueSpectrum[i][0] + ', ' +
+            hueSpectrum[i][1] + ', ' +
+            hueSpectrum[i][2] + ')';
           gradient.addColorStop(i * 1/6, color);
         }
         context.fillStyle = gradient;
@@ -1694,21 +1658,21 @@ pwlib.extensions.colormixer = function (app) {
         context.fillRect(0, 0, w, h);
       }
 
-      if (ce.color.val < 1) {
+      if (_self.color.val < 1) {
         // Draw a solid black color on top. This is used for darkening the hue colors gradient when the user reduces the Value (hsV).
-        context.fillStyle = 'rgba(0, 0, 0, ' + (1 - ce.color.val) +')';
+        context.fillStyle = 'rgba(0, 0, 0, ' + (1 - _self.color.val) +')';
         context.fillRect(0, 0, w, h);
       }
 
-    } else if (ce.ckey_active === 'hue') {
+    } else if (_self.ckey_active === 'hue') {
       // In hue mode the user has the slider which allows him/her to change the hue (Hsv) of the current color.
       // The chart shows the current color in the background. The X axis gives the saturation (hSv), and the Y axis gives the value (hsV).
 
-      if (ce.color.sat === 1 && ce.color.val === 1) {
-        color = [ce.color.red, ce.color.green, ce.color.blue];
+      if (_self.color.sat === 1 && _self.color.val === 1) {
+        color = [_self.color.red, _self.color.green, _self.color.blue];
       } else {
         // Determine the RGB values for the current color which has the same hue, but maximum saturation and value (hSV).
-        color = ce.hsv2rgb(true, [ce.color.hue, 1, 1]);
+        color = _self.hsv2rgb(true, [_self.color.hue, 1, 1]);
       }
       for (i = 0; i < 3; i++) {
         color[i] = MathRound(color[i] * 255);
@@ -1731,19 +1695,20 @@ pwlib.extensions.colormixer = function (app) {
       context.fillStyle = gradient;
       context.fillRect(0, 0, w, h);
 
-    } else if (ce.ckey_active_group === 'rgb') {
+    } else if (_self.ckey_active_group === 'rgb') {
       // In any red/green/blue mode the background color becomes the one of the ckey_active. Say, for ckey_active=red the background color would be the current red value (green and blue are both set to 0).
       // On the X/Y axes the other two colors are shown. E.g. for red the X axis gives the green gradient, and the Y axis gives the blue gradient. The two gradients are drawn on top of the red background using a global composite operation (lighter) - to create the color addition effect.
       var color2, color3;
 
       color = {'red' : 0, 'green' : 0, 'blue' : 0};
-      color[ce.ckey_active] = MathRound(ce.color[ce.ckey_active] * 255);
+      color[_self.ckey_active] = MathRound(_self.color[_self.ckey_active] 
+          * 255);
 
       color2 = {'red' : 0, 'green' : 0, 'blue' : 0};
-      color2[ce.ckey_adjoint[1]] = 255;
+      color2[_self.ckey_adjoint[1]] = 255;
 
       color3 = {'red' : 0, 'green' : 0, 'blue' : 0};
-      color3[ce.ckey_adjoint[0]] = 255;
+      color3[_self.ckey_adjoint[0]] = 255;
 
       // The background.
       context.fillStyle = 'rgb(' + color.red + ',' + color.green + ',' + color.blue + ')';
@@ -1769,7 +1734,7 @@ pwlib.extensions.colormixer = function (app) {
 
       context.globalCompositeOperation = op;
 
-    } else if (ce.ckey_active_group === 'lab') {
+    } else if (_self.ckey_active_group === 'lab') {
       // The chart plots the CIE Lab colors. The non-active color keys give the X/Y axes. For example, if cie_l (lightness) is active, then the cie_a values give the X axis, and the Y axis is given by the values of cie_b.
       // The chart is drawn manually, pixel-by-pixel, due to the special way CIE Lab works. This is very slow in today's UAs.
 
@@ -1788,27 +1753,27 @@ pwlib.extensions.colormixer = function (app) {
       }
 
       var pix = imgd.data,
-        n = imgd.data.length - 1,
-        i = -1, p = 0, inc_x, inc_y, xyz = [], rgb = [], cie_x, cie_y;
+          n = imgd.data.length - 1,
+          i = -1, p = 0, inc_x, inc_y, xyz = [], rgb = [], cie_x, cie_y;
 
-      cie_x = ce.ckey_adjoint[0];
-      cie_y = ce.ckey_adjoint[1];
+      cie_x = _self.ckey_adjoint[0];
+      cie_y = _self.ckey_adjoint[1];
 
       color = {
-        'cie_l' : ce.color.cie_l,
-        'cie_a' : ce.color.cie_a,
-        'cie_b' : ce.color.cie_b
+        'cie_l' : _self.color.cie_l,
+        'cie_a' : _self.color.cie_a,
+        'cie_b' : _self.color.cie_b
       };
 
-      inc_x = ce.abs_max[cie_x] / w;
-      inc_y = ce.abs_max[cie_y] / h;
+      inc_x = _self.abs_max[cie_x] / w;
+      inc_y = _self.abs_max[cie_y] / h;
 
-      color[cie_x] = ce.value_min[cie_x];
-      color[cie_y] = ce.value_min[cie_y];
+      color[cie_x] = config.inputValues[cie_x][0];
+      color[cie_y] = config.inputValues[cie_y][0];
 
       while (i < n) {
-        xyz = ce.lab2xyz(color.cie_l, color.cie_a, color.cie_b);
-        rgb = ce.xyz2rgb(xyz);
+        xyz = _self.lab2xyz(color.cie_l, color.cie_a, color.cie_b);
+        rgb = _self.xyz2rgb(xyz);
 
         pix[++i] = MathRound(rgb[0]*255);
         pix[++i] = MathRound(rgb[1]*255);
@@ -1819,7 +1784,7 @@ pwlib.extensions.colormixer = function (app) {
         color[cie_x] += inc_x;
 
         if ((p % w) === 0) {
-          color[cie_x] = ce.value_min[cie_x];
+          color[cie_x] = config.inputValues[cie_x][0];
           color[cie_y] += inc_y;
         }
       }
@@ -1834,70 +1799,68 @@ pwlib.extensions.colormixer = function (app) {
   // The ckey argument tells which color key has been updated. This is used to 
   // determine if the canvas color chart needs to be updated.
   this.draw_slider = function (updated_ckey) {
-    var ce = _me.coloreditor;
-    if (!ce || !ce.context2d || !ce.context2d.canvas || !ce.ckey_active || !ce.inputs || !ce.inputs[ce.ckey_active]) {
-      return false;
-    }
-
-    if (ce.ckey_active === updated_ckey) {
+    if (_self.ckey_active === updated_ckey) {
       return true;
     }
 
-    var context = ce.context2d,
-      slider_w = ce.slider_width,
-      slider_h = ce.context2d.canvas.height - 1,
-      slider_x = ce.slider_x,
-      slider_y = 0,
-      gradient, color, opacity, i;
+    var context  = _self.context2d,
+        slider_w = _self.sliderWidth,
+        slider_h = _self.sliderHeight,
+        slider_x = _self.sliderX,
+        slider_y = 0,
+        gradient, color, opacity, i;
 
     gradient = context.createLinearGradient(slider_x, slider_y, slider_x, slider_h);
 
-    if (ce.ckey_active === 'hue') {
+    if (_self.ckey_active === 'hue') {
       // Draw the hue spectrum gradient.
       for (i = 0; i <= 6; i++) {
-        color = 'rgb(' + ce.hue[i][0] + ', ' + ce.hue[i][1] + ', ' + ce.hue[i][2] + ')';
+        color = 'rgb(' + hueSpectrum[i][0] + ', ' +
+            hueSpectrum[i][1] + ', ' +
+            hueSpectrum[i][2] + ')';
         gradient.addColorStop(i * 1/6, color);
       }
       context.fillStyle = gradient;
       context.fillRect(slider_x, slider_y, slider_w, slider_h);
 
-      if (ce.color.sat < 1) {
-        context.fillStyle = 'rgba(255, 255, 255, ' + (1 - ce.color.sat) + ')';
+      if (_self.color.sat < 1) {
+        context.fillStyle = 'rgba(255, 255, 255, ' +
+          (1 - _self.color.sat) + ')';
         context.fillRect(slider_x, slider_y, slider_w, slider_h);
       }
-      if (ce.color.val < 1) {
-        context.fillStyle = 'rgba(0, 0, 0, ' + (1 - ce.color.val) + ')';
+      if (_self.color.val < 1) {
+        context.fillStyle = 'rgba(0, 0, 0, ' + (1 - _self.color.val) + ')';
         context.fillRect(slider_x, slider_y, slider_w, slider_h);
       }
 
-    } else if (ce.ckey_active === 'sat') {
+    } else if (_self.ckey_active === 'sat') {
       // Draw the saturation gradient for the slider.
       // The start color is the current color with maximum saturation. The bottom gradient color is the same "color" without saturation.
       // The slider allows you to desaturate the current color.
 
       // Determine the RGB values for the current color which has the same hue and value (HsV), but maximum saturation (hSv).
-      if (ce.color.sat === 1) {
-        color = [ce.color.red, ce.color.green, ce.color.blue];
+      if (_self.color.sat === 1) {
+        color = [_self.color.red, _self.color.green, _self.color.blue];
       } else {
-        color = ce.hsv2rgb(true, [ce.color.hue, 1, ce.color.val]);
+        color = _self.hsv2rgb(true, [_self.color.hue, 1, _self.color.val]);
       }
 
       for (i = 0; i < 3; i++) {
         color[i] = MathRound(color[i] * 255);
       }
 
-      var gray = MathRound(ce.color.val * 255);
+      var gray = MathRound(_self.color.val * 255);
       gradient.addColorStop(0, 'rgb(' + color[0] + ', ' + color[1] + ', ' + color[2] + ')');
       gradient.addColorStop(1, 'rgb(' + gray     + ', ' + gray     + ', ' + gray     + ')');
       context.fillStyle = gradient;
       context.fillRect(slider_x, slider_y, slider_w, slider_h);
 
-    } else if (ce.ckey_active === 'val') {
+    } else if (_self.ckey_active === 'val') {
       // Determine the RGB values for the current color which has the same hue and saturation, but maximum value (hsV).
-      if (ce.color.val === 1) {
-        color = [ce.color.red, ce.color.green, ce.color.blue];
+      if (_self.color.val === 1) {
+        color = [_self.color.red, _self.color.green, _self.color.blue];
       } else {
-        color = ce.hsv2rgb(true, [ce.color.hue, ce.color.sat, 1]);
+        color = _self.hsv2rgb(true, [_self.color.hue, _self.color.sat, 1]);
       }
 
       for (i = 0; i < 3; i++) {
@@ -1909,31 +1872,31 @@ pwlib.extensions.colormixer = function (app) {
       context.fillStyle = gradient;
       context.fillRect(slider_x, slider_y, slider_w, slider_h);
 
-    } else if (ce.ckey_active_group === 'rgb') {
-      var red   = MathRound(ce.color.red   * 255),
-          green = MathRound(ce.color.green * 255),
-          blue  = MathRound(ce.color.blue  * 255);
+    } else if (_self.ckey_active_group === 'rgb') {
+      var red   = MathRound(_self.color.red   * 255),
+          green = MathRound(_self.color.green * 255),
+          blue  = MathRound(_self.color.blue  * 255);
 
       color = {
         'red'   : red,
         'green' : green,
         'blue'  : blue
       };
-      color[ce.ckey_active] = 255;
+      color[_self.ckey_active] = 255;
 
       var color2 = {
         'red'   : red,
         'green' : green,
         'blue'  : blue
       };
-      color2[ce.ckey_active] = 0;
+      color2[_self.ckey_active] = 0;
 
       gradient.addColorStop(0, 'rgb(' + color.red  + ',' + color.green  + ',' + color.blue  + ')');
       gradient.addColorStop(1, 'rgb(' + color2.red + ',' + color2.green + ',' + color2.blue + ')');
       context.fillStyle = gradient;
       context.fillRect(slider_x, slider_y, slider_w, slider_h);
 
-    } else if (ce.ckey_active_group === 'lab') {
+    } else if (_self.ckey_active_group === 'lab') {
       // The slider shows a gradient with the current color key going from the minimum to the maximum value. The gradient is calculated pixel by pixel, due to the special way CIE Lab is defined.
 
       var imgd = false;
@@ -1951,22 +1914,22 @@ pwlib.extensions.colormixer = function (app) {
       }
 
       var pix = imgd.data,
-        n = imgd.data.length - 1,
-        ckey = ce.ckey_active,
-        i = -1, inc, xyz, rgb;
+          n = imgd.data.length - 1,
+          ckey = _self.ckey_active,
+          i = -1, inc, xyz, rgb;
 
       color = {
-        'cie_l' : ce.color.cie_l,
-        'cie_a' : ce.color.cie_a,
-        'cie_b' : ce.color.cie_b
+        'cie_l' : _self.color.cie_l,
+        'cie_a' : _self.color.cie_a,
+        'cie_b' : _self.color.cie_b
       };
 
-      color[ckey] = ce.value_min[ckey];
-      inc = ce.abs_max[ckey] / slider_h;
+      color[ckey] = config.inputValues[ckey][0];
+      inc = _self.abs_max[ckey] / slider_h;
 
       while (i < n) {
-        xyz = ce.lab2xyz(color.cie_l, color.cie_a, color.cie_b);
-        rgb = ce.xyz2rgb(xyz);
+        xyz = _self.lab2xyz(color.cie_l, color.cie_a, color.cie_b);
+        rgb = _self.xyz2rgb(xyz);
         pix[++i] = MathRound(rgb[0]*255);
         pix[++i] = MathRound(rgb[1]*255);
         pix[++i] = MathRound(rgb[2]*255);

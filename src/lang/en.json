@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-24 20:41:05 +0300 $
+  // $Date: 2009-06-25 22:05:21 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -36,18 +36,6 @@
   "guiCanvasResizer": "Resize the image canvas.",
   "imageZoomTitle": "Zoom image",
   "imageZoomLabel": "Zoom:",
-
-  "colorMixerTitle": "Color mixer",
-  "colorPalettes": {
-    "_saved": "Saved colors",
-    "windows": "Windows",
-    "macos": "Mac OS",
-    "anpa": "ANPA",
-    "trumatch": "TRUMATCH colors",
-    "dic": "DIC Color Guide",
-    "pantone-solid-coated": "PANTONE solid coated",
-    "toyo94": "TOYO 94 color finder"
-  },
 
   "tabs": {
     "main": {
@@ -171,6 +159,44 @@
     "strokeStyle": "Stroke ",
     "strokeStyleTitle": "Stroke color",
     "colorInputAnchorContent": "Click to pick color"
+  },
+
+  "colormixer": {
+    "failedColorPaletteLoad": "Error: failed to load the color palette.",
+    "colorPalettes": {
+      "_saved": "Saved colors",
+      "anpa": "ANPA",
+      "dic": "DIC Color Guide",
+      "macos": "Mac OS",
+      "pantone-solid-coated": "PANTONE solid coated",
+      "toyo94": "TOYO 94 color finder",
+      "trumatch": "TRUMATCH colors",
+      "web": "Web safe",
+      "windows": "Windows"
+    },
+    "inputs": {
+      "hex": "Hex",
+      "alpha": "Alpha",
+      "hsv_hue": "Hue",
+      "hsv_sat": "Saturation",
+      "hsv_val": "Value",
+      "rgb_red": "Red",
+      "rgb_green": "Green",
+      "rgb_blue": "Blue",
+      "lab_cie_l": "Lightness",
+      "lab_cie_a": "a*",
+      "lab_cie_b": "b*",
+      "cmyk_cyan": "Cyan",
+      "cmyk_magenta": "Magenta",
+      "cmyk_yellow": "Yellow",
+      "cmyk_black": "Key / Black"
+    },
+    "buttons": {
+      "accept": "Accept",
+      "cancel": "Cancel",
+      "saveColor": "Save color",
+      "pickColor": "Pick color"
+    }
   },
 
   "status": {

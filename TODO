@@ -1,6 +1,6 @@
 $Author: Mihai Şucan $
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-06-24 16:12:23 +0300 $
+$Date: 2009-06-25 22:38:04 +0300 $
 
 Until the end of GSOC:
 
@@ -11,7 +11,7 @@ file.
 - Integrate into TinyMCE and Moodle.
 - Color theme for the OLPC XO.
 
-After GSOC TODO:
+As quick as possible, after GSOC 2009:
 
 - report browser bugs:
   - shadows are not applied in chrome when using drawImage()
@@ -36,7 +36,17 @@ canvas, with some drawing tools.
 - maybe use .scale() and .translate() for selection manipulation.
 - more per-tool settings. For example, do not share the lineWidth option between 
 tools.
+- css 3 animations for the GUI.
+- make the color mixer resizable.
+- attempt color mixer code organization / code quality improvements.
+- look into performance improvement specific to the color mixer.
+- retest overall performance and see if more things can be improved. More 
+importantly, try initialization performance improvements.
 - tab reordering and grouping.
+
+Each and every item is doable pretty "easy", but it takes a lot of time to do 
+all of the above. Some of the items might get dropped. On request, I can 
+prioritize any item from the list during GSOC.
 
 Further down the road:
 

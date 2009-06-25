@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-24 20:45:47 +0300 $
+ * $Date: 2009-06-25 21:09:09 +0300 $
  */
 
 /**
@@ -563,6 +563,7 @@ pwlib.gui['default'] = function (app) {
       input.value = cfgGroupRef[cfgProp];
     }
 
+    input.addEventListener('input',  this.configInputChange, false);
     input.addEventListener('change', this.configInputChange, false);
   };
 
@@ -712,9 +713,12 @@ pwlib.gui['default'] = function (app) {
     input.setAttribute('max',  config.imageZoomMax  * 100);
     input.setAttribute('min',  config.imageZoomMin  * 100);
 
-    input.addEventListener('change', function () {
+    var changeFn = function () {
       app.imageZoomTo(parseInt(this.value) / 100);
-    }, false);
+    };
+
+    input.addEventListener('change', changeFn, false);
+    input.addEventListener('input', changeFn, false);
 
     // Update some language strings
 
@@ -986,7 +990,6 @@ pwlib.gui['default'] = function (app) {
    */
   this.commandAbout = function () {
     _self.floatingPanels.about.toggle();
-    _self.floatingPanels.about.bringOnTop();
   };
 
   /**
@@ -1665,7 +1668,7 @@ function guiFloatingPanel (gui, container) {
       win         = gui.app.win,
       doc         = gui.app.doc,
       panels      = gui.floatingPanels,
-      cStyle   = container.style,
+      cStyle      = container.style,
       lang        = gui.app.lang,
       zIndex_step = 200;
 
@@ -1715,9 +1718,8 @@ function guiFloatingPanel (gui, container) {
   this.content = null;
 
   // The initial viewport scroll position.
-  var vScrollLeft = 0, vScrollTop = 0;
-
-  var btn_close = null, btn_minimize = null;
+  var vScrollLeft = 0, vScrollTop = 0,
+      btn_close = null, btn_minimize = null;
 
   /**
    * Initialize the floating panel.
@@ -1841,6 +1843,8 @@ function guiFloatingPanel (gui, container) {
         _self.container.className += classMinimized;
       }
     }
+
+    _self.bringOnTop();
   };
 
   /**
@@ -1964,6 +1968,8 @@ function guiFloatingPanel (gui, container) {
       btn_minimize.replaceChild(doc.createTextNode(btn_minimize.title), 
           btn_minimize.firstChild);
     }
+
+    _self.bringOnTop();
   };
 
   /**

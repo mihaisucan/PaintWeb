@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-24 22:56:37 +0300 $
+  // $Date: 2009-06-25 22:38:47 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -221,8 +221,7 @@
    * Holds the list of extensions you want to load.
    * @type Array
    */
-  "extensions": ["mousekeys"],
-  //"extensions": ["mousekeys", "colormixer"],
+  "extensions": ["mousekeys", "colormixer"],
 
   /**
    * Extensions folder.
