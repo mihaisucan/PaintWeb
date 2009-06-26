@@ -1,6 +1,6 @@
 $Author: Mihai Şucan $
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-06-25 22:38:04 +0300 $
+$Date: 2009-06-26 15:28:35 +0300 $
 
 Until the end of GSOC:
 
@@ -40,6 +40,8 @@ tools.
 - make the color mixer resizable.
 - attempt color mixer code organization / code quality improvements.
 - look into performance improvement specific to the color mixer.
+- allow mousewheel scrolling on the color mixer slider.
+- allow the user to focus the color mixer slider, to press up/down keys.
 - retest overall performance and see if more things can be improved. More 
 importantly, try initialization performance improvements.
 - tab reordering and grouping.

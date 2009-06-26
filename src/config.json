@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-25 22:38:47 +0300 $
+  // $Date: 2009-06-26 22:14:58 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -106,18 +106,18 @@
   /**
    * Default fill style.
    *
-   * @type CSS3Color
-   * @default "#00f"
+   * @type CSS3Color-rgba functional notation
+   * @default "rgba(0,0,0,1)"
    */
-  "fillStyle": "#000",
+  "fillStyle": "rgba(0,0,0,1)",
 
   /**
    * Default stroke style.
    *
-   * @type CSS3Color
-   * @default "#00f"
+   * @type CSS3Color-rgba functional notation
+   * @default "rgba(0,0,255,1)"
    */
-  "strokeStyle": "#00f",
+  "strokeStyle": "rgba(0,0,255,1)",
 
   /**
    * GUI placeholder element. This element will hold all the PaintWeb interface 
@@ -283,10 +283,10 @@
     /**
      * Shadow color
      *
-     * @type String
-     * @default "#000"
+     * @type CSS3Color-rgba() functional notation
+     * @default "rgba(0,0,0,1)"
      */
-    "shadowColor": "#000",
+    "shadowColor": "rgba(0,0,0,1)",
 
     /**
      * Shadow blur.

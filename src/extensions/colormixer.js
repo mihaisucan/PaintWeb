@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-25 22:33:05 +0300 $
+ * $Date: 2009-06-26 22:18:24 +0300 $
  */
 
 /**
@@ -28,8 +28,6 @@
 // For the implementation of this extension I used the following references:
 // - Wikipedia articles on each subject.
 // - the great brucelindbloom.com Web site - lots of information.
-
-// TODO: make this work.
 
 /**
  * @class The Color Mixer extension.
@@ -47,6 +45,7 @@ pwlib.extensions.colormixer = function (app) {
       MathMin   = Math.min,
       MathPow   = Math.pow,
       MathRound = Math.round,
+      resScale  = app.resolution.scale,
       win       = app.win;
 
   /**
@@ -56,11 +55,6 @@ pwlib.extensions.colormixer = function (app) {
    * @type Object
    */
   this.elems = {
-    // This is where we reference the current color element, associated with the 
-    // color mixer.
-    // e.g. the fillStyle, strokeStyle and shadowColor elements
-    'target': false,
-
     /**
      * Reference to the element which holds Canvas controls (the dot on the 
      * Canvas, and the slider).
@@ -141,11 +135,24 @@ pwlib.extensions.colormixer = function (app) {
   this.context2d = false;
 
   /**
-   * Extension events interface object.
+   * Target input hooks. This object must hold three methods:
    *
-   * @type pwlib.appEvents
+   * <ul>
+   *   <li><code>show()</code> which is invoked by this extension when the Color 
+   *   Mixer panel shows up on screen.
+   *
+   *   <li><code>hide()</code> which is invoked when the Color Mixer panel is 
+   *   hidden from the screen.
+   *
+   *   <li><code>update(<var>color</var>)</code> which is invoked when the user 
+   *   clicks the Accept button - this gives the target input the final color 
+   *   the user has selected.
+   * </ul>
+   *
+   * @private
+   * @type Object
    */
-  this.events = null;
+  this.targetInput = null;
 
   /**
    * Holds the current color in several formats: RGB, HEX, HSV, CIE Lab, and 
@@ -271,8 +278,6 @@ pwlib.extensions.colormixer = function (app) {
       return false;
     }
 
-    _self.events = new pwlib.appEvents(_self);
-
     _self.panel = gui.floatingPanels.colormixer;
     _self.panelSelector = gui.tabPanels.colormixer_selector;
     _self.panelInputs = gui.tabPanels.colormixer_inputs;
@@ -358,7 +363,7 @@ pwlib.extensions.colormixer = function (app) {
 
       anchor = doc.createElement('a');
       anchor.href = '#';
-      anchor.appendChild(doc.createTextNode(lang.buttons[i]));
+      anchor.appendChild(doc.createTextNode(lang.buttons[buttons[i]]));
       anchor.addEventListener('click', _self['ev_click_' + buttons[i]], false);
 
       btn.replaceChild(anchor, btn.firstChild);
@@ -379,14 +384,6 @@ pwlib.extensions.colormixer = function (app) {
 
       _self.elems[id] = elem;
     }
-    _self.elems.controls.addEventListener('dblclick', _self.ev_dblclick_canvas, 
-        false);
-
-    /*elem = ce.elems.tab_cpalettes;
-    elem.style.width  = ce.context2d.canvas.width  + 'px';
-    elem.style.height = ce.context2d.canvas.height + 'px';
-    elem.addEventListener('dblclick', ce.ev_dblclick_cpalettes, false);*/
-
 
     // The color palette <select>.
     _self.elems.cpaletteInput = gui.inputs.colormixer_cpaletteInput;
@@ -414,7 +411,12 @@ pwlib.extensions.colormixer = function (app) {
 
     _self.cpalette_load(config.paletteDefault);
 
-    return _self.update_dimensions();
+    // make sure the canvas element scale is in sync with the application.
+    app.events.add('canvasSizeChange', _self.update_dimensions);
+
+    _self.panelSelector.events.add('guiTabActivate', _self.ev_tabActivate);
+
+    return true;
   };
 
   // This function calculates lots of values used by the other CIE Lab-related functions.
@@ -489,45 +491,63 @@ pwlib.extensions.colormixer = function (app) {
     values.cie_b[1] = lab[2];
 
     return true;
-  },
+  };
 
-  this.ev_click_accept = function () { };
+  /**
+   * The <code>guiTabActivate</code> event handler for the tab panel which holds 
+   * the color mixer and the color palettes. When switching back to the color 
+   * mixer, this method updates the Canvas.
+   *
+   * @param {pwlib.appEvent.guiTabActivate} ev The application event object.
+   */
+  this.ev_tabActivate = function (ev) {
+    if (ev.tabId === 'mixer' && _self.update_canvas_needed) {
+      _self.update_canvas(null, true);
+    }
+  };
+
+  this.ev_click_accept = function (ev) {
+    ev.preventDefault();
+    if (_self.targetInput) {
+      _self.targetInput.update(_self.color);
+    }
+    _self.hide();
+  };
 
   // The cancel button which sets back the old color and closes the dialog.
   this.ev_click_cancel = function (ev) {
-    var ce = _me.coloreditor;
-    if (!ce || !ce.elems || !ce.elems.color_old || !ce.elems.color_old._color) {
-      return false;
-    }
-
-    ce.ev_click_color(ce.elems.color_old, true);
-
-    return ce.hide();
+    ev.preventDefault();
+    _self.hide();
   };
 
   // The saved color only gets added into the '_saved' color palette list. The 
   // color is not saved permanently.
   this.ev_click_saveColor = function (ev) {
-    var ce = _me.coloreditor;
-    if (!ce || !ce.color || !ce.color_palettes || !ce.color_palettes._saved) {
-      return false;
-    }
+    ev.preventDefault();
 
-    var color = [ce.color.red, ce.color.green, ce.color.blue],
-      saved = ce.color_palettes._saved;
+    var color = [_self.color.red, _self.color.green, _self.color.blue],
+        saved = config.colorPalettes._saved;
 
     saved.colors.push(color);
 
-    ce.elems.in_cpalette.value = '_saved';
-    ce.cpalette_load('_saved');
-    if (ce.tab_picker !== 'cpalettes') {
-      ce.show_tab('cpalettes');
-    }
+    _self.elems.cpaletteInput.value = '_saved';
+    _self.cpalette_load('_saved');
+    _self.panelSelector.tabActivate('cpalettes');
 
     return true;
   };
 
-  this.ev_click_pickColor = function () { };
+  /**
+   * The <code>click</code> event handler for the "Pick color" button. This 
+   * method activates the color picker tool.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
+  this.ev_click_pickColor = function (ev) {
+    ev.preventDefault();
+    app.toolActivate('cpicker', ev);
+  };
 
   // The event handler for changes made to the color palette <select> input.
   this.ev_change_cpalette = function (ev) {
@@ -567,17 +587,9 @@ pwlib.extensions.colormixer = function (app) {
       return;
     }
 
-    // FIXME: Security issue here.
-    // The provided color palettes include mathematically-precise values (such as 1/3). JSON.parse() does not allow any kind of evaluation.
-    //if (window.JSON) {
-    //  json = JSON.parse(json);
-    //} else {
-      json = eval('(' + xhr.responseText + ')');
-    //}
-
-    _self.cpalette_show(json);
-
+    var colors = JSON.parse(xhr.responseText);
     xhr = null;
+    _self.cpalette_show(colors);
   };
 
   // This function takes the colors array argument which used to add each color 
@@ -621,19 +633,15 @@ pwlib.extensions.colormixer = function (app) {
     dest.style.display = 'block';
 
     colors = frag = null;
-    delete frag, colors;
 
     return true;
   };
 
   // This is the 'click' event handler for colors (in the color palette list, or 
   // the old color).
-  this.ev_click_color = function (ev, cancel) {
-    if (ev.target && ev.target._color) {
-      var color = ev.target._color;
-    } else if (ev._color) {
-      var color = ev._color;
-    } else {
+  this.ev_click_color = function (ev) {
+    var color = ev.target._color;
+    if (!color) {
       return;
     }
 
@@ -647,18 +655,24 @@ pwlib.extensions.colormixer = function (app) {
       _self.color.alpha = color[3];
     }
 
-    if (!cancel) {
-      _self.update_color('rgb');
-    } else {
-      _self.update_target();
-    }
+    _self.update_color('rgb');
   };
 
   // Calculate the dimensions and coordinates for the slider and the color chart 
   // within the canvas element.
   this.update_dimensions = function () {
-    var width  = _self.context2d.canvas.width,
-        height = _self.context2d.canvas.height,
+    if (resScale === app.resolution.scale) {
+      return;
+    }
+
+    var prevScale = resScale;
+    resScale = app.resolution.scale;
+
+    var canvas  = _self.context2d.canvas,
+        width   = canvas.width,
+        height  = canvas.height,
+        sWidth  = width  / resScale,
+        sHeight = height / resScale,
         style;
 
     _self.sliderWidth   = MathRound(width * config.sliderWidth);
@@ -669,14 +683,20 @@ pwlib.extensions.colormixer = function (app) {
     _self.chartHeight   = height;
 
     style = _self.elems.controls.style;
-    style.width  = width  + 'px';
-    style.height = height + 'px';
+    style.width  = sWidth  + 'px';
+    style.height = sHeight + 'px';
 
     style = _self.elems.slider.style;
-    style.width = _self.sliderWidth + 'px';
-    style.left  = _self.sliderX     + 'px';
+    style.width = (_self.sliderWidth / resScale) + 'px';
+    style.left  = (_self.sliderX     / resScale) + 'px';
 
-    return true;
+    style = canvas.style;
+    style.width  = sWidth  + 'px';
+    style.height = sHeight + 'px';
+
+    if (_self.panel.state !== _self.panel.STATE_HIDDEN) {
+      _self.update_canvas();
+    }
   };
 
   // A simple function to calculate the matrix product of two given A and 
@@ -772,113 +792,43 @@ pwlib.extensions.colormixer = function (app) {
     return true;
   };
 
-  // This function enables/disables the color mixer. This is the event handler 
-  // associated with any color option available (stroke and fill colors). The 
-  // editor is given the target (the color option) picked by the user. Any 
-  // changes to the color are propagated to the target.
-  this.ev_click_color_opt = function (ev) {
-    var i, ce  = _me.coloreditor;
-    if (!ce || !ce.color || !this._value || !this._prop) {
-      return false;
+  this.show = function (target, color) {
+    if (target) {
+      if (_self.targetInput) {
+        _self.targetInput.hide();
+      }
+      _self.targetInput = target;
+      _self.targetInput.show();
     }
 
-    if (ce.elems.target && ce.elems.target.id === this.id) {
-      return ce.hide();
+    if (color) {
+      _self.color.red   = color.red;
+      _self.color.green = color.green;
+      _self.color.blue  = color.blue;
+      _self.color.alpha = color.alpha;
+
+      _self.update_color('rgb');
+
+      var styleActive = _self.elems.colorActive.style,
+          colorOld    = _self.elems.colorOld,
+          styleOld    = colorOld.style;
+
+      styleOld.backgroundColor = styleActive.backgroundColor;
+      styleOld.opacity = styleActive.opacity;
+      colorOld._color = [color.red, color.green, color.blue, color.alpha];
     }
 
-    // The color option can be disabled.
-    if (this._disabled) {
-      return false;
-    }
-
-    // Store the reference to the color option picked by the user.
-    ce.elems.target = this;
-
-    // Update the color mixer title.
-    var ttl = ce.elems._self.getElementsByTagName('h1')[0];
-    if (ttl) {
-      ttl.removeChild(ttl.firstChild);
-      ttl.appendChild(_me.doc.createTextNode( this.title || _me.getMsg('color-editor-title') ));
-    }
-
-    // Update the internal color values to be the same as those of the color option picked by the user.
-    for (i in this._value) {
-      ce.color[i] = this._value[i];
-    }
-
-    // Update the "old color" element.
-    i = ce.elems.color_old;
-    i._color = [this._value.red, this._value.green, this._value.blue, this._value.alpha];
-    i.style.backgroundColor = 'rgb(' +
-        MathRound(this._value.red   * 255) + ',' +
-        MathRound(this._value.green * 255) + ',' +
-        MathRound(this._value.blue  * 255) + ')';
-    i.style.opacity = this._value.alpha;
-
-    i = ce.elems.color_active.style;
-    i.backgroundColor = ce.elems.color_old.style.backgroundColor;
-    i.opacity = this._value.alpha;
-
-    // Convert the RGB color values to HSV, CIE Lab, CMYK, and to the hexadecimal representation, for later use.
-    ce.rgb2hsv();
-    ce.rgb2hex();
-    ce.rgb2lab();
-    ce.rgb2cmyk();
-
-    // Update the inputs to show the RGB, HSV and HEX values.
-    ce.update_inputs();
-
-    // Update the color chart and slider (the entire color mixer canvas).
-    ce.update_canvas();
-
-    // Make sure the color mixer is on top.
-    if (_me.boxes && _me.boxes.bringOnTop) {
-      ce.elems._self.style.display = 'block';
-      _me.boxes.bringOnTop(ce.elems._self.id);
-    }
-
-    return true;
-  };
-
-  // When the user double clicks the color palettes area, this event handler 
-  // toggles the double size mode on/off.
-  this.ev_dblclick_cpalettes = function (ev) {
-    var ce = _me.coloreditor;
-    if (!ce || !ce.elems || !ce.elems.tab_cpalettes) {
-      return false;
-    }
-
-    var tab    = ce.elems.tab_cpalettes;
-    var style = tab.style;
-    var width  = parseInt(style.width),
-      height = parseInt(style.height);
-
-    if (tab.className === 'double') {
-      width  /= 2;
-      height /= 2;
-      tab.className = '';
-    } else {
-      width  *= 2;
-      height *= 2;
-      tab.className = 'double';
-    }
-
-    style.width  = width  + 'px';
-    style.height = height + 'px';
-
-    if (ce.tab_picker !== 'cpalettes') {
-      return ce.show_tab('cpalettes');
-    } else {
-      return true;
-    }
+    _self.panel.show();
   };
 
   this.hide = function () {
-    var ce = _me.coloreditor;
+    if (_self.targetInput) {
+      _self.targetInput.hide();
+      _self.targetInput = null;
+    }
 
-    ce.elems._self.style.display = 'none';
-    ce.elems.target   = false;
-    ce.ev_canvas_mode = false;
+    _self.panel.hide();
+    _self.ev_canvas_mode = false;
 
     return true;
   };
@@ -896,6 +846,21 @@ pwlib.extensions.colormixer = function (app) {
 
     if ((this._ckey === 'hex' && !/^\#[a-f0-9]{6}$/i.test(this.value))) {
       return false;
+    }
+
+    if (this.getAttribute('type') === 'number') {
+      var val = parseInt(this.value),
+          min = this.getAttribute('min'),
+          max = this.getAttribute('max');
+
+      if (val < min) {
+        val = min;
+      } else if (val > max) {
+        val = max;
+      }
+      if (val != this.value) {
+        this.value = val;
+      }
     }
 
     // Update the internal color value.
@@ -944,8 +909,8 @@ pwlib.extensions.colormixer = function (app) {
       _self.rgb2hex();
     }
 
+    _self.update_preview();
     _self.update_inputs();
-    _self.update_target();
 
     if (ckey !== 'alpha') {
       _self.update_canvas(ckey);
@@ -954,49 +919,14 @@ pwlib.extensions.colormixer = function (app) {
     return true;
   };
 
-  // This function updates the color option target. It sets the current color 
-  // values.
-  this.update_target = function () {
-    return true;
-    var ce = _me.coloreditor;
-    if (!ce || !ce.elems.target || !_me.img_temp || !ce.color) {
-      return false;
-    }
-
-    var prop  = ce.elems.target._prop,
-      style = ce.elems.target.style,
-      val   = ce.elems.target._value,
-      i, rgba, elem;
-
-    if (!prop || !style || !val) {
-      return false;
-    }
-
-    for (i in val) {
-      val[i] = ce.color[i];
-    }
-
-    var red   = MathRound(val.red   * 255),
-        green = MathRound(val.green * 255),
-        blue  = MathRound(val.blue  * 255);
+  this.update_preview = function () {
+    var red   = MathRound(_self.color.red   * 255),
+        green = MathRound(_self.color.green * 255),
+        blue  = MathRound(_self.color.blue  * 255),
+        style = _self.elems.colorActive.style;
 
     style.backgroundColor = 'rgb(' + red + ',' + green + ',' + blue + ')';
-
-    // Too bad Opera does not support rgba()
-    style.opacity = val.alpha;
-
-    rgba = 'rgba(' + red + ',' + green + ',' + blue + ',' + val.alpha + ')';
-    if (prop === 'shadowColor') {
-      _me.img[prop] = rgba;
-    } else {
-      _me.img_temp[prop] = rgba;
-    }
-
-    elem = ce.elems.color_active.style;
-    elem.backgroundColor = style.backgroundColor;
-    elem.opacity = val.alpha;
-
-    return true;
+    style.opacity = _self.color.alpha;
   };
 
   // Take the internal color values and show them in the inputs.
@@ -1374,8 +1304,8 @@ pwlib.extensions.colormixer = function (app) {
   // handler.
   // The ckey argument tells which color key has been updated. This is used to 
   // determine which canvas parts need to be updated.
-  this.update_canvas = function (updated_ckey) {
-    if (_self.panelSelector.tabId !== 'mixer') {
+  this.update_canvas = function (updated_ckey, force) {
+    if (_self.panelSelector.tabId !== 'mixer' && !force) {
       _self.update_canvas_needed = true;
       return true;
     }
@@ -1388,8 +1318,8 @@ pwlib.extensions.colormixer = function (app) {
         ckey    = _self.ckey_active,
         group   = _self.ckey_active_group,
         adjoint = _self.ckey_adjoint,
-        width   = _self.chartWidth,
-        height  = _self.chartHeight,
+        width   = _self.chartWidth  / resScale,
+        height  = _self.chartHeight / resScale,
         mx, my, sy;
 
     // Update the slider which shows the position of the active ckey.
@@ -1466,11 +1396,11 @@ pwlib.extensions.colormixer = function (app) {
 
       // Get the mouse position, relative to the event target.
       if (ev.layerX || ev.layerX === 0) { // Firefox
-        mx = ev.layerX;
-        my = ev.layerY;
+        mx = ev.layerX * resScale;
+        my = ev.layerY * resScale;
       } else if (ev.offsetX || ev.offsetX === 0) { // Opera
-        mx = ev.offsetX;
-        my = ev.offsetY;
+        mx = ev.offsetX * resScale;
+        my = ev.offsetY * resScale;
       }
 
       if (mx >= 0 && mx <= _self.chartWidth) {
@@ -1544,37 +1474,6 @@ pwlib.extensions.colormixer = function (app) {
     }
 
     return false;
-  };
-
-  // When the user double clicks the canvas, this event handler toggles the 
-  // double size mode on/off.
-  this.ev_dblclick_canvas = function (ev) {
-    var ce = _me.coloreditor;
-    if (!ce || !ce.elems || !ce.elems.tab_cmixer || !ce.context2d || !ce.context2d.canvas) {
-      return false;
-    }
-
-    var tab    = ce.elems.tab_cmixer,
-      canvas = ce.context2d.canvas;
-
-    if (tab.className === 'double') {
-      canvas.width  /= 2;
-      canvas.height /= 2;
-      tab.className = '';
-    } else {
-      canvas.width  *= 2;
-      canvas.height *= 2;
-      tab.className = 'double';
-    }
-
-    ce.update_dimensions();
-
-    if (ce.tab_picker !== 'cmixer') {
-      ce.update_canvas_needed = true;
-      return ce.show_tab('cmixer');
-    } else {
-      return ce.update_canvas();
-    }
   };
 
   // Draw the canvas color chart.

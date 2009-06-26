@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-25 21:09:09 +0300 $
+ * $Date: 2009-06-26 20:39:02 +0300 $
  */
 
 /**
@@ -1954,6 +1954,10 @@ function guiFloatingPanel (gui, container) {
    * Show the panel.
    */
   this.show = function () {
+    if (_self.state === _self.STATE_VISIBLE) {
+      return;
+    }
+
     cStyle.display = 'block';
     _self.state = _self.STATE_VISIBLE;
 
@@ -2470,12 +2474,12 @@ appEvent.guiTabActivate = function (tabId, prevTabId) {
  * a span, a div, or any other tag.
  */
 function guiColorInput (gui, input) {
-  var _self           = this,
-      colorMixer      = null,
-      colorMixerPanel = null,
-      config          = gui.app.config,
-      doc             = gui.app.doc,
-      lang            = gui.app.lang;
+  var _self      = this,
+      colormixer = null,
+      config     = gui.app.config,
+      doc        = gui.app.doc,
+      MathRound  = Math.round,
+      lang       = gui.app.lang;
 
   /**
    * Color input ID. The ID is the same as the data-pwColorInput attribute value 
@@ -2511,6 +2515,13 @@ function guiColorInput (gui, input) {
   this.configGroupRef = null;
 
   /**
+   * Holds the current color displayed by the input.
+   *
+   * @type Object
+   */
+  this.color = {red: 0, green: 0, blue: 0, alpha: 0}
+
+  /**
    * Initialize the color input functionality.
    * @private
    */
@@ -2522,7 +2533,9 @@ function guiColorInput (gui, input) {
         cfgGroup    = cfgArray.join('.'),
         cfgGroupRef = config,
         langGroup   = lang.inputs,
-        labelElem   = _self.input.parentNode;
+        labelElem   = _self.input.parentNode,
+        anchor      = doc.createElement('a'),
+        color;
 
     for (var i = 0, n = cfgArray.length; i < n; i++) {
       cfgGroupRef = cfgGroupRef[cfgArray[i]];
@@ -2541,7 +2554,18 @@ function guiColorInput (gui, input) {
     labelElem.replaceChild(doc.createTextNode(langGroup[cfgProp]), 
         labelElem.firstChild);
 
-    var anchor = doc.createElement('a');
+    color = _self.configGroupRef[_self.configProperty];
+    color = color.replace(/\s+/g, '').replace(/^rgba\(/, '').replace(/\)$/, '');
+    color = color.split(',');
+    _self.color.red   = color[0] / 255;
+    _self.color.green = color[1] / 255;
+    _self.color.blue  = color[2] / 255;
+    _self.color.alpha = color[3];
+
+    anchor.style.backgroundColor = 'rgb(' + color[0] + ',' + color[1] + ',' 
+        + color[2] + ')';
+    anchor.style.opacity = color[3];
+
     anchor.href = '#';
     anchor.title = langGroup[cfgProp + 'Title'] || langGroup[cfgProp];
     anchor.appendChild(doc.createTextNode(lang.inputs.colorInputAnchorContent));
@@ -2560,25 +2584,64 @@ function guiColorInput (gui, input) {
   function ev_input_click (ev) {
     ev.preventDefault();
 
-    if (!colorMixerPanel) {
-      colorMixerPanel = gui.floatingPanels.colormixer;
+    if (!colormixer) {
+      colormixer = gui.app.extensions.colormixer;
     }
 
-    colorMixerPanel.toggle();
+    if (!colormixer.targetInput || colormixer.targetInput.id !== _self.id) {
+      colormixer.show({
+          id: _self.id,
+          show: colormixer_show,
+          hide: colormixer_hide,
+          update: colormixer_update
+        }, _self.color);
 
-    var classActive = ' ' + gui.classPrefix + 'colorInputActive',
-        pNode = this.parentNode,
-        elemActive = pNode.className.indexOf(classActive) !== -1;
-
-    if (colorMixerPanel.state === colorMixerPanel.STATE_VISIBLE) {
-      if (!elemActive) {
-        pNode.className += classActive;
-      }
     } else {
-      if (elemActive) {
-        pNode.className = pNode.className.replace(classActive, '');
-      }
+      colormixer.hide();
     }
+  };
+
+  function colormixer_show () {
+    var classActive = ' ' + gui.classPrefix + 'colorInputActive',
+        elemActive = _self.input.className.indexOf(classActive) !== -1;
+
+    if (!elemActive) {
+      _self.input.className += classActive;
+    }
+  };
+
+  function colormixer_hide () {
+    var classActive = ' ' + gui.classPrefix + 'colorInputActive',
+        elemActive = _self.input.className.indexOf(classActive) !== -1;
+
+    if (elemActive) {
+      _self.input.className = _self.input.className.replace(classActive, '');
+    }
+  };
+
+  function colormixer_update (color) {
+    var anchor  = _self.input.firstChild,
+        rgb     = MathRound(color.red   * 255) + ',' +
+                  MathRound(color.green * 255) + ',' +
+                  MathRound(color.blue  * 255),
+        prevVal = _self.configGroupRef[_self.configProperty],
+        newVal  = 'rgba(' + rgb + ',' + color.alpha + ')';
+
+    if (prevVal === newVal) {
+      return;
+    }
+
+    anchor.style.backgroundColor = 'rgb(' + rgb + ')';
+    anchor.style.opacity = color.alpha;
+    _self.configGroupRef[_self.configProperty] = newVal;
+
+    _self.color.red   = color.red;
+    _self.color.green = color.green;
+    _self.color.blue  = color.blue;
+    _self.color.alpha = color.alpha;
+
+    gui.app.events.dispatch(new appEvent.configChange(newVal, prevVal, 
+        _self.configProperty, _self.configGroup, _self.configGroupRef));
   };
 
   init();

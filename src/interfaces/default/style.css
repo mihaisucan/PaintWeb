@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-25 22:03:28 +0300 $
+ * $Date: 2009-06-26 21:23:27 +0300 $
  */
 
 /* OLPC XO DPI resolution detection */
@@ -701,6 +701,7 @@
   border: 1px solid #000;
   display: block;
   height: 20px;
+  outline: 1px solid #fff;
   width: 40px
 }
 
@@ -784,7 +785,7 @@
 }
 
 .paintweb_tabPanel_colormixer_inputs {
-  margin-left: 214px;
+  margin: 0 100px 0 214px;
 }
 
 .paintweb_tabPanel_colormixer_inputs ol {
@@ -860,6 +861,11 @@
   overflow: hidden;
 }
 
+.paintweb_colormixer_cpaletteOutput a:hover,
+.paintweb_colormixer_cpaletteOutput a:focus {
+  outline: 1px solid #fff;
+}
+
 .paintweb_colormixer_preview {
   list-style: none;
   margin: 0 0 0 215px;
@@ -867,6 +873,33 @@
   background: #f2f2f2;
   border: 1px solid #fff;
   width: 70px;
+}
+
+.paintweb_colormixer_actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 90px;
+  border: 1px solid #c6c6c6;
+  border-bottom: 0;
+}
+
+.paintweb_colormixer_actions a {
+  display: block;
+  background: #e7e1db url('images/button.png') repeat-x;
+  text-decoration: none;
+  padding: 2px 5px;
+  color: #666;
+  border-bottom: 1px solid #c6c6c6;
+}
+
+.paintweb_colormixer_actions a:hover,
+.paintweb_colormixer_actions a:focus {
+  color: #000;
+  border-color: #000;
 }
 
 

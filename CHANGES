@@ -1,3 +1,14 @@
+2009-06-26:
+===========
+
+- The color mixer is now fully functional, but it still has some bugs. For 
+example, the CIE Lab color values are wrong. Additional work on the panel 
+styling is still needed (the alpha and the hex inputs are not yet visible).
+- Fixed the color palettes: now the files are real json - no evaluation is 
+needed.
+- Made the Canvas element scale properly when different DPI is used - for the 
+OLPC XO.
+
 2009-06-25:
 ===========
 
