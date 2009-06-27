@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-26 22:18:24 +0300 $
+ * $Date: 2009-06-27 23:43:29 +0300 $
  */
 
 /**
@@ -104,6 +104,7 @@ pwlib.extensions.colormixer = function (app) {
 
   /**
    * Reference to the Color Mixer floating panel GUI component object.
+   *
    * @private
    * @type Object
    */
@@ -112,6 +113,7 @@ pwlib.extensions.colormixer = function (app) {
   /**
    * Reference to the Color Mixer tab panel GUI component object which holds the 
    * inputs.
+   *
    * @private
    * @type Object
    */
@@ -120,6 +122,7 @@ pwlib.extensions.colormixer = function (app) {
   /**
    * Reference to the Color Mixer tab panel GUI component object which holds the 
    * Canvas used for color space visualisation and the color palettes selector.
+   *
    * @private
    * @type Object
    */
@@ -188,6 +191,8 @@ pwlib.extensions.colormixer = function (app) {
 
   /**
    * Holds references to all the DOM input fields, for each color channel.
+   *
+   * @private
    * @type Object
    */
   this.inputs = {
@@ -215,6 +220,8 @@ pwlib.extensions.colormixer = function (app) {
   /**
    * The "absolute maximum" value is determined based on the min/max values.  
    * For min -100 and max 100, the abs_max is 200.
+   * @private
+   *
    */
   this.abs_max  = {};
 
@@ -349,8 +356,8 @@ pwlib.extensions.colormixer = function (app) {
     }
 
     // Prepare the color preview elements.
-    _self.elems.colorActive = gui.elems.colormixer_colorActive;
-    _self.elems.colorOld = gui.elems.colormixer_colorOld;
+    _self.elems.colorActive = gui.elems.colormixer_colorActive.firstChild;
+    _self.elems.colorOld = gui.elems.colormixer_colorOld.firstChild;
     _self.elems.colorOld.addEventListener('click', _self.ev_click_color, false);
 
     // Make sure the buttons work properly.
@@ -419,7 +426,14 @@ pwlib.extensions.colormixer = function (app) {
     return true;
   };
 
-  // This function calculates lots of values used by the other CIE Lab-related functions.
+  /**
+   * This function calculates lots of values used by the other CIE Lab-related 
+   * functions.
+   *
+   * @private
+   * @returns {Boolean} True if the initialization was successful, or false if 
+   * not.
+   */
   this.init_lab = function () {
     var cfg = config.lab;
     if (!cfg) {
@@ -453,19 +467,16 @@ pwlib.extensions.colormixer = function (app) {
         x_b = x0_b / y0_b,
         y_b = 1,
         z_b = (1 - x0_b - y0_b) / y0_b,
-
         m   = [x_r, y_r, z_r,
                x_g, y_g, z_g,
                x_b, y_b, z_b],
-        m_i = _self.calc_m3inv(m),
+        m_i = _self.calc_m3inv(m);
         s   = _self.calc_m1x3([w_x, w_y, w_z], m_i);
 
     // The 3x3 matrix used by rgb2xyz().
-    m = [
-      s[0] * m[0], s[0] * m[1], s[0] * m[2],
-      s[1] * m[3], s[1] * m[4], s[1] * m[5],
-      s[2] * m[6], s[2] * m[7], s[2] * m[8]
-    ];
+    m = [s[0] * m[0], s[0] * m[1], s[0] * m[2],
+         s[1] * m[3], s[1] * m[4], s[1] * m[5],
+         s[2] * m[6], s[2] * m[7], s[2] * m[8]];
 
     // The matrix inverse, used by xyz2rgb();
     cfg.m_i = _self.calc_m3inv(m);
@@ -498,6 +509,7 @@ pwlib.extensions.colormixer = function (app) {
    * the color mixer and the color palettes. When switching back to the color 
    * mixer, this method updates the Canvas.
    *
+   * @private
    * @param {pwlib.appEvent.guiTabActivate} ev The application event object.
    */
   this.ev_tabActivate = function (ev) {
@@ -506,6 +518,14 @@ pwlib.extensions.colormixer = function (app) {
     }
   };
 
+  /**
+   * The <code>click</code> event handler for the Accept button. This method 
+   * "sends" the new color to the target input, and hides the Color Mixer 
+   * floating panel.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
   this.ev_click_accept = function (ev) {
     ev.preventDefault();
     if (_self.targetInput) {
@@ -514,14 +534,27 @@ pwlib.extensions.colormixer = function (app) {
     _self.hide();
   };
 
-  // The cancel button which sets back the old color and closes the dialog.
+  /**
+   * The <code>click</code> event handler for the Cancel button. This method 
+   * hides the Color Mixer floating panel.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
   this.ev_click_cancel = function (ev) {
     ev.preventDefault();
     _self.hide();
   };
 
-  // The saved color only gets added into the '_saved' color palette list. The 
-  // color is not saved permanently.
+  /**
+   * The <code>click</code> event handler for the "Save color" button. This 
+   * method adds the current color into the "_saved" color palette.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
+  // TODO: provide a way to save the color palette permanently. This should use 
+  // some application event.
   this.ev_click_saveColor = function (ev) {
     ev.preventDefault();
 
@@ -549,12 +582,24 @@ pwlib.extensions.colormixer = function (app) {
     app.toolActivate('cpicker', ev);
   };
 
-  // The event handler for changes made to the color palette <select> input.
+  /**
+   * The <code>change</code> event handler for the color palette input element.  
+   * This loads the color palette the user selected.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
   this.ev_change_cpalette = function (ev) {
-    return _self.cpalette_load(this.value);
+    _self.cpalette_load(this.value);
   };
 
-  // This function loads the desired color palette.
+  /**
+   * Load a color palette. Loading is performed asynchronously.
+   *
+   * @param {String} id The color palette ID.
+   *
+   * @returns {Boolean} True if the load was successful, or false if not.
+   */
   this.cpalette_load = function (id) {
     if (!id || !(id in config.colorPalettes)) {
       return false;
@@ -576,7 +621,13 @@ pwlib.extensions.colormixer = function (app) {
     }
   };
 
-  // This is the event handler for XMLHttpRequest.onReadyStateChange.
+  /**
+   * The <code>onreadystatechange</code> event handler for the color palette 
+   * XMLHttpRequest object.
+   *
+   * @private
+   * @param {XMLHttpRequest} xhr The XMLHttpRequest object.
+   */
   this.cpalette_loaded = function (xhr) {
     if (!xhr || xhr.readyState !== 4) {
       return;
@@ -592,8 +643,16 @@ pwlib.extensions.colormixer = function (app) {
     _self.cpalette_show(colors);
   };
 
-  // This function takes the colors array argument which used to add each color 
-  // element to the color mixer (#out-cpalette).
+  /**
+   * Show a color palette. This method adds all the colors in the DOM as 
+   * individual anchor elements which users can click on.
+   *
+   * @private
+   *
+   * @param {Array} colors The array which holds each color in the palette.
+   *
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   */
   this.cpalette_show = function (colors) {
     if (!colors || !(colors instanceof Array)) {
       return false;
@@ -637,8 +696,14 @@ pwlib.extensions.colormixer = function (app) {
     return true;
   };
 
-  // This is the 'click' event handler for colors (in the color palette list, or 
-  // the old color).
+  /**
+   * The <code>click</code> event handler for colors in the color palette list.  
+   * This event handler is also used for the "old color" element. This method 
+   * updates the color mixer to use the color the user picked.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
   this.ev_click_color = function (ev) {
     var color = ev.target._color;
     if (!color) {
@@ -658,8 +723,15 @@ pwlib.extensions.colormixer = function (app) {
     _self.update_color('rgb');
   };
 
-  // Calculate the dimensions and coordinates for the slider and the color chart 
-  // within the canvas element.
+  /**
+   * Recalculate the dimensions and coordinates for the slider and for the color 
+   * space visualisation within the Canvas element.
+   *
+   * <p>This method is an event handler for the {@link 
+   * pwlib.appEvent.canvasSizeChange} application event.
+   *
+   * @private
+   */
   this.update_dimensions = function () {
     if (resScale === app.resolution.scale) {
       return;
@@ -699,11 +771,21 @@ pwlib.extensions.colormixer = function (app) {
     }
   };
 
-  // A simple function to calculate the matrix product of two given A and 
-  // B matrices. A must be one row and 3 columns. B must be 3 rows and 
-  // 3 columns.
-  // Both arguments must be arrays in the form of [a00, a01, a02, ... a10, a11, 
-  // a12, ...].
+  /**
+   * Calculate the product of two matrices.
+   *
+   * <p>Matrices are one-dimensional arrays of the form <code>[a0, a1, a2, ..., 
+   * b0, b1, b2, ...]</code> where each element from the matrix is given in 
+   * order, from the left to the right, row by row from the top to the bottom.
+   *
+   * @param {Array} a The first matrix must be one row and three columns.
+   * @param {Array} b The second matrix must be three rows and three columns.
+   *
+   * @returns {Array} The matrix product, one row and three columns.
+   */
+  // Note: for obvious reasons, this method is not a full-fledged matrix product 
+  // calculator. It's as simple as possible - fitting only the very specific 
+  // needs of the color mixer.
   this.calc_m1x3 = function (a, b) {
     if (!(a instanceof Array) || !(b instanceof Array)) {
       return false;
@@ -716,10 +798,24 @@ pwlib.extensions.colormixer = function (app) {
     return [x, y, z];
   };
 
-  // Another simple function which calculates the matrix inverse, for a matrix 
-  // of 3 rows and 3 columns.
-  // The argument must be an array in the form of [a00, a01, a02, ... a10, a11, 
-  // a12, ...].
+  /**
+   * Calculate the matrix inverse.
+   *
+   * <p>Matrices are one-dimensional arrays of the form <code>[a0, a1, a2, ..., 
+   * b0, b1, b2, ...]</code> where each element from the matrix is given in 
+   * order, from the left to the right, row by row from the top to the bottom.
+   *
+   * @private
+   *
+   * @param {Array} m The square matrix which must have three rows and three 
+   * columns.
+   *
+   * @returns {false|Array} The computed matrix inverse, or false if the matrix 
+   * determinant was 0 - the given matrix is not invertible.
+   */
+  // Note: for obvious reasons, this method is not a full-fledged matrix inverse 
+  // calculator. It's as simple as possible - fitting only the very specific 
+  // needs of the color mixer.
   this.calc_m3inv = function (m) {
     if (!(m instanceof Array)) {
       return false;
@@ -734,29 +830,42 @@ pwlib.extensions.colormixer = function (app) {
     }
 
     var i = [
-      m[4]*m[8] - m[5]*m[7], -m[3]*m[8] + m[5]*m[6],  m[3]*m[7] - m[4]*m[6],
-      m[1]*m[8] + m[2]*m[7],  m[0]*m[8] - m[2]*m[6], -m[0]*m[7] + m[1]*m[6],
-      m[1]*m[5] - m[2]*m[4], -m[0]*m[5] + m[2]*m[3],  m[0]*m[4] - m[1]*m[3]
+       m[4]*m[8] - m[5]*m[7], -m[3]*m[8] + m[5]*m[6],  m[3]*m[7] - m[4]*m[6],
+      -m[1]*m[8] + m[2]*m[7],  m[0]*m[8] - m[2]*m[6], -m[0]*m[7] + m[1]*m[6],
+       m[1]*m[5] - m[2]*m[4], -m[0]*m[5] + m[2]*m[3],  m[0]*m[4] - m[1]*m[3]
     ];
 
-    i = [
-      1/d * i[0], 1/d * i[3], 1/d * i[6],
-      1/d * i[1], 1/d * i[4], 1/d * i[7],
-      1/d * i[2], 1/d * i[5], 1/d * i[8]
-    ];
+    i = [1/d * i[0], 1/d * i[3], 1/d * i[6],
+         1/d * i[1], 1/d * i[4], 1/d * i[7],
+         1/d * i[2], 1/d * i[5], 1/d * i[8]];
 
     return i;
   };
 
-  // The event handler for inputs of type=radio - the inputs which allow the 
-  // user to change the active color key.
-  this.ev_change_ckey_active = function (ev) {
+  /**
+   * The <code>change</code> event handler for the Color Mixer inputs of 
+   * type=radio. This method allows users to change the active color key - used 
+   * for the color space visualisation.
+   * @private
+   */
+  this.ev_change_ckey_active = function () {
     if (this.value && this.value !== _self.ckey_active) {
       _self.update_ckey_active(this.value);
     }
   };
 
-  // The actual function which deals with the changes to the active color key.
+  /**
+   * Update the active color key. This method updates the Canvas accordingly.
+   *
+   * @private
+   *
+   * @param {String} ckey The color key you want to be active.
+   * @param {Boolean} [only_vars] Tells if you want only the variables to be 
+   * updated - no Canvas updates. This is true only during the Color Mixer 
+   * initialization.
+   *
+   * @return {Boolean} True if the operation was successful, or false if not.
+   */
   this.update_ckey_active = function (ckey, only_vars) {
     if (!_self.inputs[ckey]) {
       return false;
@@ -792,6 +901,22 @@ pwlib.extensions.colormixer = function (app) {
     return true;
   };
 
+  /**
+   * Show the Color Mixer.
+   *
+   * @param {Object} target The target input object which must have several 
+   * functions references. These are hooks for when the Color Mixer is shown, 
+   * hidden, or when the color is updated.
+   *
+   * @param {Object} color The color you want to set before the Color Mixer is 
+   * shown. The object must have four properties: <var>red</var>, 
+   * <var>green</var>, <var>blue</var> and <var>alpha</var>. All the values must 
+   * be between 0 and 1. This color becomes the "active color" and the "old 
+   * color".
+   *
+   * @see this.targetInput for more information about the <var>target</var> 
+   * object.
+   */
   this.show = function (target, color) {
     if (target) {
       if (_self.targetInput) {
@@ -821,6 +946,9 @@ pwlib.extensions.colormixer = function (app) {
     _self.panel.show();
   };
 
+  /**
+   * Hide the Color Mixer floating panel.
+   */
   this.hide = function () {
     if (_self.targetInput) {
       _self.targetInput.hide();
@@ -829,23 +957,25 @@ pwlib.extensions.colormixer = function (app) {
 
     _self.panel.hide();
     _self.ev_canvas_mode = false;
-
-    return true;
   };
 
-  // This is the event handler for the changes to the color mixer inputs.
-  this.ev_input_change = function (ev) {
+  /**
+   * The <code>input</code> and <code>change</code> event handler for all the 
+   * Color Mixer inputs.
+   * @private
+   */
+  this.ev_input_change = function () {
     if (!this._ckey) {
-      return false;
+      return;
     }
 
     // Validate and restrict the possible values.
-    // The non-HEX fields are checked by the generic ev_input_nr function (input type=number).
-    // If the input is unchanged, or if the new value is invalid, the function returns false.
+    // If the input is unchanged, or if the new value is invalid, the function 
+    // stops.
     // The hexadecimal input is checked with a simple regular expression.
 
     if ((this._ckey === 'hex' && !/^\#[a-f0-9]{6}$/i.test(this.value))) {
-      return false;
+      return;
     }
 
     if (this.getAttribute('type') === 'number') {
@@ -853,11 +983,16 @@ pwlib.extensions.colormixer = function (app) {
           min = this.getAttribute('min'),
           max = this.getAttribute('max');
 
+      if (isNaN(val)) {
+        val = min;
+      }
+
       if (val < min) {
         val = min;
       } else if (val > max) {
         val = max;
       }
+
       if (val != this.value) {
         this.value = val;
       }
@@ -873,40 +1008,56 @@ pwlib.extensions.colormixer = function (app) {
         / config.inputValues[this._ckey][1];
     }
 
-    return _self.update_color(this._ckey);
+    _self.update_color(this._ckey);
   };
 
-  // This function takes the ckey parameter which tells the updated color key.  
-  // Based on which color key is updated, the other color values are also 
-  // updated (e.g. RGB conversion to HSV, CIE Lab, CMYK and HEX). After the 
-  // color value conversions, the inputs, the color option target, and the color 
-  // mixer canvas are all updated to reflect the change.
+  /**
+   * Update the current color. Once a color value is updated, this method is 
+   * called to keep the rest of the color mixer in sync: for example, when a RGB 
+   * value is updated, it needs to be converted to HSV, CMYK and all of the 
+   * other formats. Additionally, this method updates the color preview, the 
+   * controls on the Canvas and the input values.
+   *
+   * @private
+   * @param {String} ckey The color key that was updated.
+   */
   this.update_color = function (ckey) {
-    if (ckey === 'rgb' || _self.ckey_grouping[ckey] === 'rgb') {
-      _self.rgb2hsv();
-      _self.rgb2hex();
-      _self.rgb2lab();
-      _self.rgb2cmyk();
-    } else if (ckey === 'hsv' || _self.ckey_grouping[ckey] === 'hsv') {
-      _self.hsv2rgb();
-      _self.rgb2hex();
-      _self.rgb2lab();
-      _self.rgb2cmyk();
-    } else if (ckey === 'hex') {
-      _self.hex2rgb();
-      _self.rgb2hsv();
-      _self.rgb2lab();
-      _self.rgb2cmyk();
-    } else if (ckey === 'lab' || _self.ckey_grouping[ckey] === 'lab') {
-      _self.lab2rgb();
-      _self.rgb2hsv();
-      _self.rgb2hex();
-      _self.rgb2cmyk();
-    } else if (ckey === 'cmyk' || _self.ckey_grouping[ckey] === 'cmyk') {
-      _self.cmyk2rgb();
-      _self.rgb2lab();
-      _self.rgb2hsv();
-      _self.rgb2hex();
+    var group = _self.ckey_grouping[ckey] || ckey;
+
+    switch (group) {
+      case 'rgb':
+        _self.rgb2hsv();
+        _self.rgb2hex();
+        _self.rgb2lab();
+        _self.rgb2cmyk();
+        break;
+
+      case 'hsv':
+        _self.hsv2rgb();
+        _self.rgb2hex();
+        _self.rgb2lab();
+        _self.rgb2cmyk();
+        break;
+
+      case 'hex':
+        _self.hex2rgb();
+        _self.rgb2hsv();
+        _self.rgb2lab();
+        _self.rgb2cmyk();
+        break;
+
+      case 'lab':
+        _self.lab2rgb();
+        _self.rgb2hsv();
+        _self.rgb2hex();
+        _self.rgb2cmyk();
+        break;
+
+      case 'cmyk':
+        _self.cmyk2rgb();
+        _self.rgb2lab();
+        _self.rgb2hsv();
+        _self.rgb2hex();
     }
 
     _self.update_preview();
@@ -915,10 +1066,12 @@ pwlib.extensions.colormixer = function (app) {
     if (ckey !== 'alpha') {
       _self.update_canvas(ckey);
     }
-
-    return true;
   };
 
+  /**
+   * Update the color preview.
+   * @private
+   */
   this.update_preview = function () {
     var red   = MathRound(_self.color.red   * 255),
         green = MathRound(_self.color.green * 255),
@@ -929,7 +1082,11 @@ pwlib.extensions.colormixer = function (app) {
     style.opacity = _self.color.alpha;
   };
 
-  // Take the internal color values and show them in the inputs.
+  /**
+   * Update the color inputs. This method takes the internal color values and 
+   * shows them in the DOM input elements.
+   * @private
+   */
   this.update_inputs = function () {
     var input;
     for (var i in _self.inputs) {
@@ -943,10 +1100,13 @@ pwlib.extensions.colormixer = function (app) {
         input.value = MathRound(_self.color[i] * config.inputValues[i][1]);
       }
     }
-
-    return true;
   };
 
+  /**
+   * Convert RGB to CMYK. This uses the current color RGB values and updates the 
+   * CMYK values accordingly.
+   * @private
+   */
   // Quote from Wikipedia:
   // "Since RGB and CMYK spaces are both device-dependent spaces, there is no 
   // simple or general conversion formula that converts between them.  
@@ -981,10 +1141,12 @@ pwlib.extensions.colormixer = function (app) {
     color.magenta = magenta;
     color.yellow  = yellow;
     color.black   = black;
-
-    return true;
   };
 
+  /**
+   * Convert CMYK to RGB (internally).
+   * @private
+   */
   this.cmyk2rgb = function () {
     var color = _self.color,
         w = 1 - color.black;
@@ -992,11 +1154,12 @@ pwlib.extensions.colormixer = function (app) {
     color.red   = 1 - color.cyan    * w - color.black;
     color.green = 1 - color.magenta * w - color.black;
     color.blue  = 1 - color.yellow  * w - color.black;
-
-    return true;
   };
 
-  // This function takes the RGB color values and converts them to HSV.
+  /**
+   * Convert RGB to HSV (internally).
+   * @private
+   */
   this.rgb2hsv = function () {
     var hue, sat, val, // HSV
         red   = _self.color.red,
@@ -1030,22 +1193,24 @@ pwlib.extensions.colormixer = function (app) {
     _self.color.hue = hue;
     _self.color.sat = sat;
     _self.color.val = val;
-
-    return true;
   };
 
-  // This function takes the internal HSV color values and converts them to RGB.  
-  // The return value is either false (when there's any problem), or an array of 
-  // three values [red, green, value] - this is the result of the HSV to RGB 
-  // conversion.
-  // Arguments:
-  //   - no_update (boolean)
-  //     Tells the function to NOT update the internal RGB color values 
-  //     (ce.color). This is enabled by default.
-  //   - hsv (array)
-  //     Instead of using the internal HSV color values (from ce.color), the 
-  //     function will use the values given in the array [hue, saturation, 
-  //     light].
+  /**
+   * Convert HSV to RGB.
+   *
+   * @private
+   *
+   * @param {Boolean} [no_update] Tells the function to not update the internal 
+   * RGB color values.
+   * @param {Array} [hsv] The array holding the HSV values you want to convert 
+   * to RGB. This array must have three elements ordered as: <var>hue</var>, 
+   * <var>saturation</var> and <var>value</var> - all between 0 and 1. If you do 
+   * not provide the array, then the internal HSV color values are used.
+   *
+   * @returns {Array} The RGB values converted from HSV. The array has three 
+   * elements ordered as: <var>red</var>, <var>green</var> and <var>blue</var> 
+   * - all with values between 0 and 1.
+   */
   this.hsv2rgb = function (no_update, hsv) {
     var color = _self.color,
         red, green, blue, hue, sat, val;
@@ -1095,7 +1260,10 @@ pwlib.extensions.colormixer = function (app) {
     return [red, green, blue];
   };
 
-  // This updates the hexadecimal representation of the color, based on the RGB values.
+  /**
+   * Convert RGB to hexadecimal representation (internally).
+   * @private
+   */
   this.rgb2hex = function () {
     var hex = '#', rgb = ['red', 'green', 'blue'], i, val,
         color = _self.color;
@@ -1109,11 +1277,12 @@ pwlib.extensions.colormixer = function (app) {
     }
 
     color.hex = hex;
-
-    return true;
   };
 
-  // This updates the RGB color values, based on the hexadecimal color representation.
+  /**
+   * Convert the hexadecimal representation of color to RGB values (internally).
+   * @private
+   */
   this.hex2rgb = function () {
     var rgb = ['red', 'green', 'blue'], i, val,
         color = _self.color,
@@ -1121,17 +1290,19 @@ pwlib.extensions.colormixer = function (app) {
 
     hex = hex.substr(1);
     if (hex.length !== 6) {
-      return false;
+      return;
     }
 
     for (i = 0; i < 3; i++) {
       val = hex.substr(i*2, 2);
       color[rgb[i]] = parseInt(val, 16)/255;
     }
-
-    return true;
   };
 
+  /**
+   * Convert RGB to CIE Lab (internally).
+   * @private
+   */
   this.rgb2lab = function () {
     var color = _self.color,
         lab   = _self.xyz2lab(_self.rgb2xyz([color.red, color.green, 
@@ -1140,10 +1311,12 @@ pwlib.extensions.colormixer = function (app) {
     color.cie_l = lab[0];
     color.cie_a = lab[1];
     color.cie_b = lab[2];
-
-    return true;
   };
 
+  /**
+   * Convert CIE Lab values to RGB values (internally).
+   * @private
+   */
   this.lab2rgb = function () {
     var color = _self.color,
         rgb   = _self.xyz2rgb(_self.lab2xyz(color.cie_l, color.cie_a, 
@@ -1152,10 +1325,19 @@ pwlib.extensions.colormixer = function (app) {
     color.red   = rgb[0];
     color.green = rgb[1];
     color.blue  = rgb[2];
-
-    return true;
   };
 
+  /**
+   * Convert XYZ color values into CIE Lab values.
+   *
+   * @private
+   *
+   * @param {Array} xyz The array holding the XYZ color values in order: 
+   * <var>X</var>, <var>Y</var> and <var>Z</var>.
+   *
+   * @returns {Array} An array holding the CIE Lab values in order: 
+   * <var>L</var>, <var>a</var> and <var>b</var>.
+   */
   this.xyz2lab = function (xyz) {
     var cfg = config.lab,
 
@@ -1194,6 +1376,18 @@ pwlib.extensions.colormixer = function (app) {
     return [cie_l, cie_a, cie_b];
   };
 
+  /**
+   * Convert CIE Lab values to XYZ color values.
+   *
+   * @private
+   *
+   * @param {Number} cie_l The color lightness value.
+   * @param {Number} cie_a The a* color opponent.
+   * @param {Number} cie_b The b* color opponent.
+   *
+   * @returns {Array} An array holding the XYZ color values in order: 
+   * <var>X</var>, <var>Y</var> and <var>Z</var>.
+   */
   this.lab2xyz = function (cie_l, cie_a, cie_b) {
     var y = (cie_l + 16) / 116,
         x = y + cie_a / 500,
@@ -1234,6 +1428,17 @@ pwlib.extensions.colormixer = function (app) {
     return [x, y, z];
   };
 
+  /**
+   * Convert XYZ color values to RGB.
+   *
+   * @private
+   *
+   * @param {Array} xyz The array holding the XYZ color values in order: 
+   * <var>X</var>, <var>Y</var> and <var>Z</var>
+   *
+   * @returns {Array} An array holding the RGB values in order: <var>red</var>, 
+   * <var>green</var> and <var>blue</var>.
+   */
   this.xyz2rgb = function (xyz) {
     var rgb = _self.calc_m1x3(xyz, config.lab.m_i);
 
@@ -1276,6 +1481,17 @@ pwlib.extensions.colormixer = function (app) {
     return rgb;
   };
 
+  /**
+   * Convert RGB values to XYZ color values.
+   *
+   * @private
+   *
+   * @param {Array} rgb The array holding the RGB values in order: 
+   * <var>red</var>, <var>green</var> and <var>blue</var>.
+   *
+   * @returns {Array} An array holding the XYZ color values in order: 
+   * <var>X</var>, <var>Y</var> and <var>Z</var>.
+   */
   this.rgb2xyz = function (rgb) {
     if (rgb[0] > 0.04045) {
       rgb[0] = MathPow(( rgb[0] + 0.055 ) / 1.055, 2.4);
@@ -1298,12 +1514,19 @@ pwlib.extensions.colormixer = function (app) {
     return _self.calc_m1x3(rgb, config.lab.m);
   };
 
-  // This function updates/redraws the entire color editor canvas. This is done 
-  // by calling two methods: draw_chart() and draw_slider(). Additionally, this 
-  // function updates the coordinates of the chart dot and of the slider 
-  // handler.
-  // The ckey argument tells which color key has been updated. This is used to 
-  // determine which canvas parts need to be updated.
+  /**
+   * Update the color space visualisation. This method updates the color chart 
+   * and/or the color slider, and the associated controls, each as needed when 
+   * a color key is updated.
+   *
+   * @private
+   *
+   * @param {String} updated_ckey The color key that was updated.
+   * @param {Boolean} [force=false] Tells the function to force an update. The 
+   * Canvas is not updated when the color mixer panel is not visible.
+   *
+   * @returns {Boolean} If the operation was successful, or false if not.
+   */
   this.update_canvas = function (updated_ckey, force) {
     if (_self.panelSelector.tabId !== 'mixer' && !force) {
       _self.update_canvas_needed = true;
@@ -1361,11 +1584,15 @@ pwlib.extensions.colormixer = function (app) {
     }
   };
 
-  // This is the handler for mouse events sent to the #controls element, which 
-  // is positioned on top of the canvas. This function updates the current color 
-  // key value based on the mouse coordinates on the slider. If the mouse is 
-  // inside the color chart, then the adjoint color keys are updated based on 
-  // the coordinates.
+  /**
+   * The mouse events handler for the Canvas controls. This method determines 
+   * the region the user is using, and it also updates the color values for the 
+   * active color key. The Canvas and all the inputs in the color mixer are 
+   * updated as needed.
+   *
+   * @private
+   * @param {Event} ev The DOM Event object.
+   */
   this.ev_canvas = function (ev) {
     ev.preventDefault();
 
@@ -1476,9 +1703,14 @@ pwlib.extensions.colormixer = function (app) {
     return false;
   };
 
-  // Draw the canvas color chart.
-  // The ckey argument tells which color key has been updated. This is used to 
-  // determine if the canvas color chart needs to be updated.
+  /**
+   * Draw the color space visualisation.
+   *
+   * @private
+   *
+   * @param {String} updated_ckey The color key that was updated. This is used 
+   * to determine if the Canvas needs to be updated or not.
+   */
   this.draw_chart = function (updated_ckey) {
     var canvas  = _self.context2d.canvas,
         context = _self.context2d,
@@ -1694,9 +1926,14 @@ pwlib.extensions.colormixer = function (app) {
     return true;
   };
 
-  // Draw the canvas color slider.
-  // The ckey argument tells which color key has been updated. This is used to 
-  // determine if the canvas color chart needs to be updated.
+  /**
+   * Draw the color slider on the Canvas element.
+   *
+   * @private
+   *
+   * @param {String} updated_ckey The color key that was updated. This is used 
+   * to determine if the Canvas needs to be updated or not.
+   */
   this.draw_slider = function (updated_ckey) {
     if (_self.ckey_active === updated_ckey) {
       return true;

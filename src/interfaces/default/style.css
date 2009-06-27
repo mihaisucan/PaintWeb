@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-26 21:23:27 +0300 $
+ * $Date: 2009-06-27 23:47:50 +0300 $
  */
 
 /* OLPC XO DPI resolution detection */
@@ -179,7 +179,7 @@
 }
 
 /* .clearfix */
-.paintweb_statusbar:after, .paintweb_tools:after, .paintweb_tabsList:after {
+.paintweb_statusbar:after, .paintweb_tools:after, .paintweb_tabsList:after, .paintweb_colormixer_hexalpha:after {
   content: ".";
   display: block;
   visibility: hidden;
@@ -690,7 +690,7 @@
 }
 
 .paintweb_floatingPanel_colormixer {
-  height: 250px;
+  height: 275px;
   left: 150px;
   top: 150px;
   width: 570px
@@ -701,7 +701,10 @@
   border: 1px solid #000;
   display: block;
   height: 20px;
-  outline: 1px solid #fff;
+  /*
+   * Opera has problems rendering outlines...
+   * outline: 1px solid #fff;
+   */
   width: 40px
 }
 
@@ -771,21 +774,30 @@
   padding-top: 6px !important;
 }
 
+.paintweb_floatingPanel_colormixer .paintweb_floatingPanel_content {
+  height: 229px;
+}
+
 .paintweb_tabPanel_colormixer_selector {
   position: absolute;
-  top: 0;
+  bottom: 0;
+  left: 0;
 }
 
 .paintweb_tabPanel_colormixer_selector .paintweb_tab {
   background: #656565;
   border: 1px solid #f2f2f2;
   padding: 2px;
-  height: 170px;
+  height: 195px;
   width: 199px;
 }
 
 .paintweb_tabPanel_colormixer_inputs {
-  margin: 0 100px 0 214px;
+  position: absolute;
+  bottom: 0;
+  left: 214px;
+  width: 236px;
+  margin: 0;
 }
 
 .paintweb_tabPanel_colormixer_inputs ol {
@@ -847,7 +859,7 @@
 }
 
 .paintweb_colormixer_cpaletteOutput {
-  height: 141px;
+  height: 166px;
   overflow: auto;
 }
 
@@ -868,11 +880,38 @@
 
 .paintweb_colormixer_preview {
   list-style: none;
-  margin: 0 0 0 215px;
-  padding: 0;
+  margin: 0;
+  padding: 0 0 1.6em 0;
   background: #f2f2f2;
-  border: 1px solid #fff;
-  width: 70px;
+  border: 1px solid #c6c6c6;
+  position: absolute;
+  top: 0;
+  left: 215px;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.paintweb_colormixer_preview li {
+  background: url('images/checkers.png');
+  float: left;
+  height: 40px;
+  border: 1px solid #000;
+}
+
+.paintweb_colormixer_preview span {
+  width: 40px;
+  height: 40px;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.paintweb_colormixer_colorOld {
+  border-left: 0 !important;
+  text-align: right;
+}
+
+.paintweb_colormixer_colorOld span {
+  cursor: pointer;
 }
 
 .paintweb_colormixer_actions {
@@ -896,10 +935,37 @@
   border-bottom: 1px solid #c6c6c6;
 }
 
-.paintweb_colormixer_actions a:hover,
-.paintweb_colormixer_actions a:focus {
+.paintweb_colormixer_actions a:hover, .paintweb_colormixer_actions a:focus {
   color: #000;
   border-color: #000;
+}
+
+.paintweb_colormixer_hexalpha {
+  position: absolute;
+  top: 0;
+  right: 100px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: #f2f2f2;
+  border: 1px solid #c6c6c6;
+}
+
+.paintweb_colormixer_hexalpha li {
+  float: left;
+  margin: 5px;
+}
+
+.paintweb_colormixer_hexalpha input {
+  display: block;
+}
+
+.paintweb_ckey_alpha {
+  width: 4em;
+}
+
+.paintweb_ckey_hex {
+  width: 5em;
 }
 
 
@@ -985,322 +1051,6 @@
 .paintweb_textAlign_center a { background-image: url('icons/text-align-center.png') }
 
 .paintweb_textAlign_right a { background-image: url('icons/text-align-right.png') }
-
-/* The color editor * /
-
-#coloreditor {
-  background: url("images/color-editor-bgr.png") no-repeat;
-  width: 548px;
-  height: 223px;
-  position: absolute;
-  top: 200px;
-  left: 200px;
-  z-index: 10000;
-  font-size: 0.9em;
-}
-
-#coloreditor-inputs {
-  position: absolute;
-  left: 220px;
-  bottom: 26px;
-  width: 310px;
-  margin: 0;
-  padding-bottom: 5px;
-  background: url("images/color-editor-input-tabs.png");
-  border: 1px solid #000;
-}
-
-#coloreditor-inputs ol {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.ce-inputs label {
-  display: block;
-  text-shadow: 1px 1px 3px #fff, -1px -1px 3px #fff;
-}
-
-.ce-inputs li {
-  background: url("images/color-editor-field.png");
-  width: 10em;
-  margin: 4px 0;
-  padding: 3px 25px;
-}
-
-.ce-inputs input:not([type=radio]) {
-  position: absolute;
-  left: 11em;
-  width: 4em;
-  margin-top: -3px;
-  height: 15px;
-  background: #fff url("images/field-bgr.png") no-repeat;
-  text-align: right;
-}
-
-.ce-inputs input[type=radio] {
-  position: absolute;
-  margin-top: 0;
-  left: 0;
-}
-
-#coloreditor-hexalpha {
-  background: url("images/label-bgr.png");
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 0 5px !important;
-  color: #fff;
-  border: 1px solid #000;
-  border-width: 0 0 1px 1px;
-}
-
-#coloreditor-hexalpha li {
-  margin: 3px 0;
-  text-shadow: 1px 1px 3px #000, -1px -1px 3px #000;
-}
-
-#coloreditor-hexalpha input {
-  display: block;
-  width: 5em;
-  height: 15px;
-  background: #fff url("images/field-bgr.png") no-repeat;
-}
-
-#in-cpalette {
-  width: 96%;
-  margin-bottom: 3px;
-}
-
-#out-cpalette {
-  list-style: none; 
-  margin: 0;
-  padding: 0;
-  width: 96%;
-  height: 137px;
-  overflow: auto;
-}
-
-#coloreditor-cpalettes.double #out-cpalette {
-  width: 100%;
-  height: 314px;
-}
-
-#coloreditor-cpalettes.double #in-cpalette {
-  width: 100%;
-}
-
-#out-cpalette li {
-  float: left;
-  width: 11px;
-  height: 11px;
-  border: 1px solid #000;
-  border-width: 1px 1px 0 0;
-  cursor: pointer;
-}
-
-#coloreditor-canvas, #coloreditor-controls {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-}
-
-#coloreditor-cmixer, #coloreditor-cpalettes {
-  background: url("images/color-editor-canvas-bgr.png") no-repeat;
-  position: absolute;
-  top: 22px;
-  left: 10px;
-  padding: 5px 0 1px 5px;
-}
-
-#coloreditor-cpalettes {
-  width: 200px;
-  height: 170px;
-  padding: 5px 0 1px 4px;
-}
-
-#coloreditor-cmixer.double, #coloreditor-cpalettes.double {
-  background: #000;
-  padding: 10px;
-  border: 5px solid #ccc;
-  z-index: 91871;
-}
-
-#coloreditor-cmixer.double #coloreditor-canvas, #coloreditor-cmixer.double #coloreditor-controls {
-  top: 10px;
-  left: 10px;
-}
-
-#coloreditor-cpalettes.double li {
-  width: 14px;
-  height: 14px;
-}
-
-#coloreditor-chart_pos {
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  background: #000;
-  border: 1px solid #fff;
-  margin: -3px 0 0 -3px;
-  opacity: 0.5;
-}
-
-#coloreditor-slider_pos {
-  position: absolute;
-  height: 3px;
-  background: #000;
-  border: 1px solid #fff;
-  margin: -2px 0 0 -1px;
-  opacity: 0.5;
-}
-
-#coloreditor > .coloreditor-tabs {
-  left: 10px;
-  bottom: 12px;
-}
-
-#coloreditor-inputs > .coloreditor-tabs {
-  width: 100%;
-  left: 0;
-  bottom: -16px;
-}
-
-.coloreditor-tabs {
-  position: absolute;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.coloreditor-tabs li {
-  display: inline-block;
-  height: 16px;
-  line-height: 16px;
-  background: url("images/color-editor-tab-repeat.png") repeat-x;
-  cursor: pointer;
-}
-
-.coloreditor-tabs li:before {
-  content: " ";
-  font-size: 1px;
-  background: url("images/color-editor-tab.png") no-repeat;
-  display: inline-block;
-  width: 12px;
-  height: 16px;
-  vertical-align: bottom;
-}
-
-.coloreditor-tabs li:after {
-  content: " ";
-  font-size: 1px;
-  background: url("images/color-editor-tab.png") top right no-repeat;
-  display: inline-block;
-  width: 12px;
-  height: 16px;
-  vertical-align: bottom;
-}
-
-.coloreditor-tabs li:hover, .coloreditor-tabs li:focus {
-  background-position: 0 -19px;
-}
-
-.coloreditor-tabs li:hover:before, .coloreditor-tabs li:focus:before {
-  background-position: 0 -19px;
-}
-
-.coloreditor-tabs li:hover:after, .coloreditor-tabs li:focus:after {
-  background-position: right -19px;
-}
-
-.coloreditor-tabs .active {
-  background-position: 0 -38px;
-  color: #ddd;
-}
-
-.coloreditor-tabs .active:before {
-  background-position: 0 -38px;
-}
-
-.coloreditor-tabs .active:after {
-  background-position: right -38px;
-}
-
-.coloreditor-tabs .active:hover {
-  background-position: 0 -57px;
-}
-
-.coloreditor-tabs .active:hover:before, .coloreditor-tabs .active:focus:before {
-  background-position: 0 -57px;
-}
-
-.coloreditor-tabs .active:hover:after, .coloreditor-tabs .active:focus:before {
-  background-position: right -57px;
-}
-
-#coloreditor-preview {
-  background: url("images/color-editor-preview.png") no-repeat;
-  position: absolute;
-  top: 22px;
-  left: 217px;
-  width: 74px;
-  height: 53px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-#coloreditor-activec {
-  position: absolute;
-  top: 2px;
-  left: 5px;
-  width: 32px;
-  height: 32px;
-}
-
-#coloreditor-oldc {
-  position: absolute;
-  top: 2px;
-  right: 4px;
-  width: 32px;
-  height: 32px;
-  text-align: right;
-  cursor: pointer;
-}
-
-#coloreditor-preview span {
-  position: absolute;
-  left: 2px;
-  bottom: -1.4em;
-  font-size: 0.9em;
-  width: 28px;
-  text-shadow: 1px 1px 3px #fff, -1px -1px 3px #fff;
-}
-
-#coloreditor-actions {
-  position: absolute;
-  top: 22px;
-  right: 15px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-#coloreditor-actions li {
-  background: url("images/color-editor-button.png") repeat-x;
-  width: 74px;
-  height: 20px;
-  line-height: 20px;
-  vertical-align: middle;
-  text-align: center;
-  text-shadow: 1px 1px 3px #fff, -1px -1px 3px #fff;
-  cursor: pointer;
-}
-
-#coloreditor-actions li:hover, #coloreditor-actions li:focus {
-  background-position: left -20px;
-}
-
 
 /* vim:set fo=wan1croql tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix: */
 

@@ -1,5 +1,5 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
-  <!--- $Date: 2009-06-26 15:17:13 +0300 $ -->
+  <!--- $Date: 2009-06-27 18:05:05 +0300 $ -->
   <h1 class="paintweb_appTitle">PaintWeb</h1>
 
   <!-- All elements with data-pwTabPanel become interactive tabbed panels which 
@@ -255,8 +255,8 @@
     .paintweb_floatingPanel_content class name. -->
     <div>
       <ol class="paintweb_colormixer_preview">
-        <li id="colormixer_colorActive"><span>Active</span></li>
-        <li id="colormixer_colorOld"><span>Old</span></li>
+        <li id="colormixer_colorActive"><span>&#160;</span> Active</li>
+        <li id="colormixer_colorOld"><span>&#160;</span> Old</li>
       </ol>
 
       <ol class="paintweb_colormixer_actions">
@@ -268,7 +268,7 @@
 
       <div data-pwTabPanel="colormixer_selector" data-pwTabDefault="mixer">
         <div data-pwTab="mixer">
-          <canvas id="colormixer_canvas" width="200" height="170">Your browser 
+          <canvas id="colormixer_canvas" width="200" height="195">Your browser 
           does not support Canvas.</canvas>
           <div id="colormixer_controls">
             <span id="colormixer_chartDot"></span>
@@ -282,7 +282,7 @@
         </div>
       </div>
 
-      <ol class="paintweb_colormixer_hexalpha" style="display:none">
+      <ol class="paintweb_colormixer_hexalpha">
         <li><label>HEX
           <input id="ckey_hex" value="#RRGGBB" type="text" maxlength="7" 
           pattern="#[a-f0-9]{6}" /></label>

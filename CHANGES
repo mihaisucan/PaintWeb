@@ -1,3 +1,12 @@
+2009-06-27:
+===========
+
+- The color mixer is now complete. Fixed the bugs, completed the styling, and 
+added jsdoc comments.
+- Fixed the CIE Lab color calculations.
+- Fixed some Opera rendering issues: outlines + redraw problems with the color 
+mixer Canvas.
+
 2009-06-26:
 ===========
 
