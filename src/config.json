@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-26 22:14:58 +0300 $
+  // $Date: 2009-06-29 22:13:33 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -518,21 +518,6 @@
       },
       "web" : {
         "file" : "colors/web.json"
-      },
-      "anpa" : {
-        "file" : "colors/anpa.json"
-      },
-      "trumatch" : {
-        "file" : "colors/trumatch.json"
-      },
-      "dic" : {
-        "file" : "colors/dic.json"
-      },
-      "pantone-solid-coated" : {
-        "file" : "colors/pantone-solid-coated.json"
-      },
-      "toyo94" : {
-        "file" : "colors/toyo94.json"
       }
     },
 

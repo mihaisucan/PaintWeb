@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-06-25 22:05:21 +0300 $
+  // $Date: 2009-06-29 22:49:48 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -23,7 +23,7 @@
   "guiMarkupParseFailed": "Error: the interface markup code could not be properly parsed.",
   "missingCanvasResizer": "Error: the interface markup does not have the Canvas resize handle.",
   "missingCanvasContainer": "Error: the interface markup does not have the Canvas container.",
-  "errorCpickerUnsupported": "Error: your browser does not support get/putImageData! The color picker tool cannot be used.",
+  "errorCpickerUnsupported": "Error: your browser does not implement the get/putImageData method! The color picker cannot be used.",
   "errorClipboardUnsupported": "Error: your browser does not support get/putImageData! Clipboard operations like cut/copy/paste cannot be used.",
   "errorTextUnsupported": "Error: your browser does not implement the Canvas Text API! The text tool cannot be used.",
   "errorInsertimg": "The image could not be inserted. Maybe the address does not point to an image.",
@@ -90,7 +90,8 @@
     "polygon": "Polygon",
     "rectangle": "Rectangle",
     "selection": "Rectangle selection",
-    "text": "Text"
+    "text": "Text",
+    "textUnsupported": "The text tool is not supported by your browser."
   },
 
   "commands": {
@@ -200,9 +201,10 @@
   },
 
   "status": {
-    "cpickerFillStyle": "Click to pick the fill color.",
-    "cpickerNormal": "Click to change the fill color, and Shift+Click to change the stroke color.",
-    "cpickerStrokeStyle": "Click to pick the stroke color.",
+    "cpickerNormal": "Click to change the fill color, or Shift+Click to change the stroke color.",
+    "cpicker_fillStyle": "Click to pick the fill color.",
+    "cpicker_strokeStyle": "Click to pick the stroke color.",
+    "cpicker_shadow_shadowColor": "Click to pick the shadow color.",
     "bcurveActive": "Click to start drawing the curve. You need four points: start, end and two control points.",
     "bcurveControlPoint1": "Click to draw the first control point.",
     "bcurveControlPoint2": "Click to draw the second control point. This will also end the drawing operation.",

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-26 20:39:02 +0300 $
+ * $Date: 2009-06-29 23:03:56 +0300 $
  */
 
 /**
@@ -1031,7 +1031,10 @@ pwlib.gui['default'] = function (app) {
         lineWidthLabel = null;
 
     tabActive.className += ' ' + _self.classPrefix + 'toolActive';
-    _self.statusShow(ev.id + 'Active');
+
+    if ((ev.id + 'Active') in lang.status) {
+      _self.statusShow(ev.id + 'Active');
+    }
 
     // show/hide the shapeType input config.
     if (shapeType) {
@@ -1175,6 +1178,18 @@ pwlib.gui['default'] = function (app) {
     if (!(ev.id in _self.tools)) {
       _self.tools[ev.id] = elem;
       _self.elems.tools.appendChild(elem);
+    }
+
+    // Disable the text tool icon if the Canvas Text API is not supported.
+    if (ev.id === 'text' && !app.layer.context.fillText && 
+        !app.layer.context.mozPathText && elem) {
+      elem.className += ' ' + _self.classPrefix + 'disabled';
+      anchor.title = lang.tools.textUnsupported;
+
+      anchor.removeEventListener('click', _self.toolClick, false);
+      anchor.addEventListener('click', function (ev) {
+        ev.preventDefault();
+      }, false);
     }
   };
 
@@ -1418,10 +1433,30 @@ pwlib.gui['default'] = function (app) {
    * @param {pwlib.appEvent.configChange} ev The application event object.
    */
   this.configChangeHandler = function (ev) {
-    var cfg = ev.group.replace('.', '_') + '_' + ev.config,
-        input = _self.inputs[cfg];
+    var cfg = '', input;
+    if (ev.group) {
+      cfg = ev.group.replace('.', '_') + '_';
+    }
+    cfg += ev.config;
+    input = _self.inputs[cfg];
 
-    if (!input || ev.previousValue === ev.value) {
+    // Handle changes for color inputs.
+    if (!input && (input = _self.colorInputs[cfg])) {
+      var color = ev.value.replace(/\s+/g, '').
+                    replace(/^rgba\(/, '').replace(/\)$/, '');
+
+      color = color.split(',');
+      input.updateColor({
+        red:   color[0] / 255,
+        green: color[1] / 255,
+        blue:  color[2] / 255,
+        alpha: color[3]
+      });
+
+      return;
+    }
+
+    if (!input) {
       return;
     }
 
@@ -1692,6 +1727,13 @@ function guiFloatingPanel (gui, container) {
   this.state = -1;
 
   /**
+   * Floating panel ID. This is the ID used in the 
+   * <var>data-pwFloatingPanel</var> element attribute.
+   * @type String
+   */
+  this.id = null;
+
+  /**
    * Reference to the floating panel element.
    * @type Element
    */
@@ -1705,11 +1747,10 @@ function guiFloatingPanel (gui, container) {
   this.viewport = null;
 
   /**
-   * Floating panel ID. This is the ID used in the 
-   * <var>data-pwFloatingPanel</var> element attribute.
-   * @type String
+   * Custom application events interface.
+   * @type pwlib.appEvents
    */
-  this.id = null;
+  this.events = null;
 
   /**
    * The panel content element.
@@ -1726,6 +1767,8 @@ function guiFloatingPanel (gui, container) {
    * @private
    */
   function init () {
+    _self.events = new pwlib.appEvents(_self);
+
     _self.id = _self.container.getAttribute('data-pwFloatingPanel');
 
     var ttl = _self.container.getElementsByTagName('h1')[0],
@@ -1812,6 +1855,9 @@ function guiFloatingPanel (gui, container) {
   /**
    * The <code>click</code> event handler for the panel Minimize button element.
    *
+   * <p>This method dispatches the {@link 
+   * pwlib.appEvent.guiFloatingPanelStateChange} application event.
+   *
    * @private
    * @param {Event} ev The DOM Event object.
    */
@@ -1844,11 +1890,17 @@ function guiFloatingPanel (gui, container) {
       }
     }
 
+    _self.events.dispatch(new appEvent.guiFloatingPanelStateChange(_self.state));
+
     _self.bringOnTop();
   };
 
   /**
-   * The <code>click</code> event handler for the panel Close button element.
+   * The <code>click</code> event handler for the panel Close button element.  
+   * This hides the floating panel.
+   *
+   * <p>This method dispatches the {@link 
+   * pwlib.appEvent.guiFloatingPanelStateChange} application event.
    *
    * @private
    * @param {Event} ev The DOM Event object.
@@ -1861,6 +1913,9 @@ function guiFloatingPanel (gui, container) {
   /**
    * The <code>mousedown</code> event handler. This is invoked when you start 
    * dragging the floating panel.
+   *
+   * <p>This method dispatches the {@link 
+   * pwlib.appEvent.guiFloatingPanelStateChange} application event.
    *
    * @private
    * @param {Event} ev The DOM Event object.
@@ -1885,6 +1940,8 @@ function guiFloatingPanel (gui, container) {
 
     doc.addEventListener('mousemove', ev_mousemove, false);
     doc.addEventListener('mouseup',   ev_mouseup,   false);
+
+    _self.events.dispatch(new appEvent.guiFloatingPanelStateChange(_self.state));
 
     if (ev.preventDefault) {
       ev.preventDefault();
@@ -1918,6 +1975,9 @@ function guiFloatingPanel (gui, container) {
   /**
    * The <code>mouseup</code> event handler. This ends the panel drag operation.
    *
+   * <p>This method dispatches the {@link 
+   * pwlib.appEvent.guiFloatingPanelStateChange} application event.
+   *
    * @private
    * @param {Event} ev The DOM Event object.
    */
@@ -1931,6 +1991,8 @@ function guiFloatingPanel (gui, container) {
 
     doc.removeEventListener('mousemove', ev_mousemove, false);
     doc.removeEventListener('mouseup',   ev_mouseup,   false);
+
+    _self.events.dispatch(new appEvent.guiFloatingPanelStateChange(_self.state));
   };
 
   /**
@@ -1944,14 +2006,21 @@ function guiFloatingPanel (gui, container) {
 
   /**
    * Hide the panel.
+   *
+   * <p>This method dispatches the {@link 
+   * pwlib.appEvent.guiFloatingPanelStateChange} application event.
    */
   this.hide = function () {
     cStyle.display = 'none';
     _self.state = _self.STATE_HIDDEN;
+    _self.events.dispatch(new appEvent.guiFloatingPanelStateChange(_self.state));
   };
 
   /**
    * Show the panel.
+   *
+   * <p>This method dispatches the {@link 
+   * pwlib.appEvent.guiFloatingPanelStateChange} application event.
    */
   this.show = function () {
     if (_self.state === _self.STATE_VISIBLE) {
@@ -1973,11 +2042,16 @@ function guiFloatingPanel (gui, container) {
           btn_minimize.firstChild);
     }
 
+    _self.events.dispatch(new appEvent.guiFloatingPanelStateChange(_self.state));
+
     _self.bringOnTop();
   };
 
   /**
    * Toggle the panel visibility.
+   *
+   * <p>This method dispatches the {@link 
+   * pwlib.appEvent.guiFloatingPanelStateChange} application event.
    */
   this.toggle = function () {
     if (_self.state === _self.STATE_VISIBLE || _self.state === 
@@ -1989,6 +2063,26 @@ function guiFloatingPanel (gui, container) {
   };
 
   init();
+};
+
+/**
+ * @class The state change event for the floating panel. This event is fired 
+ * when the floating panel changes its state. This event is not cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {Number} state The floating panel state.
+ */
+appEvent.guiFloatingPanelStateChange = function (state) {
+  // panel states.
+  this.STATE_HIDDEN    = 0;
+  this.STATE_VISIBLE   = 1;
+  this.STATE_MINIMIZED = 3;
+  this.STATE_DRAGGING  = 4;
+
+  this.state = state;
+
+  appEvent.call(this, 'guiFloatingPanelStateChange');
 };
 
 /**
@@ -2171,6 +2265,44 @@ function guiResizer (gui, resizeHandle, container) {
   };
 
   init();
+};
+
+/**
+ * @class The GUI element resize start event. This event is cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {Number} x The mouse location on the x-axis.
+ * @param {Number} y The mouse location on the y-axis.
+ * @param {Number} width The element width.
+ * @param {Number} height The element height.
+ */
+appEvent.guiResizeStart = function (x, y, width, height) {
+  this.x = x;
+  this.y = y;
+  this.width = width;
+  this.height = height;
+
+  appEvent.call(this, 'guiResizeStart', true);
+};
+
+/**
+ * @class The GUI element resize end event. This event is cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {Number} x The mouse location on the x-axis.
+ * @param {Number} y The mouse location on the y-axis.
+ * @param {Number} width The element width.
+ * @param {Number} height The element height.
+ */
+appEvent.guiResizeEnd = function (x, y, width, height) {
+  this.x = x;
+  this.y = y;
+  this.width = width;
+  this.height = height;
+
+  appEvent.call(this, 'guiResizeEnd', true);
 };
 
 /**
@@ -2411,44 +2543,6 @@ function guiTabPanel (gui, panel) {
 };
 
 /**
- * @class The GUI element resize start event. This event is cancelable.
- *
- * @augments pwlib.appEvent
- *
- * @param {Number} x The mouse location on the x-axis.
- * @param {Number} y The mouse location on the y-axis.
- * @param {Number} width The element width.
- * @param {Number} height The element height.
- */
-appEvent.guiResizeStart = function (x, y, width, height) {
-  this.x = x;
-  this.y = y;
-  this.width = width;
-  this.height = height;
-
-  appEvent.call(this, 'guiResizeStart', true);
-};
-
-/**
- * @class The GUI element resize end event. This event is cancelable.
- *
- * @augments pwlib.appEvent
- *
- * @param {Number} x The mouse location on the x-axis.
- * @param {Number} y The mouse location on the y-axis.
- * @param {Number} width The element width.
- * @param {Number} height The element height.
- */
-appEvent.guiResizeEnd = function (x, y, width, height) {
-  this.x = x;
-  this.y = y;
-  this.width = width;
-  this.height = height;
-
-  appEvent.call(this, 'guiResizeEnd', true);
-};
-
-/**
  * @class The GUI tab activation event. This event is cancelable.
  *
  * @augments pwlib.appEvent
@@ -2519,7 +2613,7 @@ function guiColorInput (gui, input) {
    *
    * @type Object
    */
-  this.color = {red: 0, green: 0, blue: 0, alpha: 0}
+  this.color = {red: 0, green: 0, blue: 0, alpha: 0};
 
   /**
    * Initialize the color input functionality.
@@ -2591,9 +2685,11 @@ function guiColorInput (gui, input) {
     if (!colormixer.targetInput || colormixer.targetInput.id !== _self.id) {
       colormixer.show({
           id: _self.id,
+          configProperty: _self.configProperty,
+          configGroup: _self.configGroup,
+          configGroupRef: _self.configGroupRef,
           show: colormixer_show,
-          hide: colormixer_hide,
-          update: colormixer_update
+          hide: colormixer_hide
         }, _self.color);
 
     } else {
@@ -2601,6 +2697,11 @@ function guiColorInput (gui, input) {
     }
   };
 
+  /**
+   * The color mixer <code>show</code> event handler. This function is invoked 
+   * when the color mixer is shown.
+   * @private
+   */
   function colormixer_show () {
     var classActive = ' ' + gui.classPrefix + 'colorInputActive',
         elemActive = _self.input.className.indexOf(classActive) !== -1;
@@ -2610,6 +2711,11 @@ function guiColorInput (gui, input) {
     }
   };
 
+  /**
+   * The color mixer <code>hide</code> event handler. This function is invoked 
+   * when the color mixer is hidden.
+   * @private
+   */
   function colormixer_hide () {
     var classActive = ' ' + gui.classPrefix + 'colorInputActive',
         elemActive = _self.input.className.indexOf(classActive) !== -1;
@@ -2619,29 +2725,28 @@ function guiColorInput (gui, input) {
     }
   };
 
-  function colormixer_update (color) {
-    var anchor  = _self.input.firstChild,
-        rgb     = MathRound(color.red   * 255) + ',' +
-                  MathRound(color.green * 255) + ',' +
-                  MathRound(color.blue  * 255),
-        prevVal = _self.configGroupRef[_self.configProperty],
-        newVal  = 'rgba(' + rgb + ',' + color.alpha + ')';
+  /**
+   * Update color. This method allows the change of the color values associated 
+   * to the current color input.
+   *
+   * <p>This method is used by the color picker tool and by the global GUI 
+   * <code>configChange</code> application event handler.
+   *
+   * @param {Object} color The new color values. The object must have four 
+   * properties: <var>red</var>, <var>green</var>, <var>blue</var> and 
+   * <var>alpha</var>. All values must be between 0 and 1.
+   */
+  this.updateColor = function (color) {
+    var anchor = _self.input.firstChild.style;
 
-    if (prevVal === newVal) {
-      return;
-    }
-
-    anchor.style.backgroundColor = 'rgb(' + rgb + ')';
-    anchor.style.opacity = color.alpha;
-    _self.configGroupRef[_self.configProperty] = newVal;
-
+    anchor.opacity         = color.alpha;
+    anchor.backgroundColor = 'rgb(' + MathRound(color.red   * 255) + ',' +
+                                      MathRound(color.green * 255) + ',' +
+                                      MathRound(color.blue  * 255) + ')';
     _self.color.red   = color.red;
     _self.color.green = color.green;
     _self.color.blue  = color.blue;
     _self.color.alpha = color.alpha;
-
-    gui.app.events.dispatch(new appEvent.configChange(newVal, prevVal, 
-        _self.configProperty, _self.configGroup, _self.configGroupRef));
   };
 
   init();

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-27 23:44:32 +0300 $
+ * $Date: 2009-06-29 22:54:39 +0300 $
  */
 
 /**
@@ -52,7 +52,7 @@ function PaintWeb (win, doc) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090627;
+  this.build = 20090629;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -2400,23 +2400,28 @@ function PaintWeb (win, doc) {
       var context = _self.layer.context,
           cfg = ev.groupRef;
 
-      switch (ev.config) {
-        case 'enable':
-          if (ev.value) {
-            // Enable shadows
-            context.shadowColor   = cfg.shadowColor;
-            context.shadowOffsetX = cfg.shadowOffsetX;
-            context.shadowOffsetY = cfg.shadowOffsetY;
-            context.shadowBlur    = cfg.shadowBlur;
-          } else {
-            // Disable shadows
-            context.shadowColor   = 'rgba(0,0,0,0)';
-            context.shadowOffsetX = 0;
-            context.shadowOffsetY = 0;
-            context.shadowBlur    = 0;
-          }
-          break;
+      // Enable/disable shadows
+      if (ev.config === 'enable') {
+        if (ev.value) {
+          context.shadowColor   = cfg.shadowColor;
+          context.shadowOffsetX = cfg.shadowOffsetX;
+          context.shadowOffsetY = cfg.shadowOffsetY;
+          context.shadowBlur    = cfg.shadowBlur;
+        } else {
+          context.shadowColor   = 'rgba(0,0,0,0)';
+          context.shadowOffsetX = 0;
+          context.shadowOffsetY = 0;
+          context.shadowBlur    = 0;
+        }
+        return;
+      }
 
+      // Do not update any context properties if shadows are not enabled.
+      if (!cfg.enable) {
+        return;
+      }
+
+      switch (ev.config) {
         case 'shadowBlur':
         case 'shadowOffsetX':
         case 'shadowOffsetY':

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-27 23:43:29 +0300 $
+ * $Date: 2009-06-29 23:07:03 +0300 $
  */
 
 /**
@@ -138,7 +138,7 @@ pwlib.extensions.colormixer = function (app) {
   this.context2d = false;
 
   /**
-   * Target input hooks. This object must hold three methods:
+   * Target input hooks. This object must hold two methods:
    *
    * <ul>
    *   <li><code>show()</code> which is invoked by this extension when the Color 
@@ -146,11 +146,11 @@ pwlib.extensions.colormixer = function (app) {
    *
    *   <li><code>hide()</code> which is invoked when the Color Mixer panel is 
    *   hidden from the screen.
-   *
-   *   <li><code>update(<var>color</var>)</code> which is invoked when the user 
-   *   clicks the Accept button - this gives the target input the final color 
-   *   the user has selected.
    * </ul>
+   *
+   * <p>The object must also hold information about the associated configuration 
+   * property: <var>configProperty</var>, <var>configGroup</var> and 
+   * <var>configGroupRef</var>.
    *
    * @private
    * @type Object
@@ -418,10 +418,15 @@ pwlib.extensions.colormixer = function (app) {
 
     _self.cpalette_load(config.paletteDefault);
 
-    // make sure the canvas element scale is in sync with the application.
+    // Make sure the Canvas element scale is in sync with the application.
     app.events.add('canvasSizeChange', _self.update_dimensions);
 
     _self.panelSelector.events.add('guiTabActivate', _self.ev_tabActivate);
+
+    // Make sure the Color Mixer is properly closed when the floating panel is 
+    // closed.
+    _self.panel.events.add('guiFloatingPanelStateChange', 
+        _self.ev_panel_stateChange);
 
     return true;
   };
@@ -520,18 +525,32 @@ pwlib.extensions.colormixer = function (app) {
 
   /**
    * The <code>click</code> event handler for the Accept button. This method 
-   * "sends" the new color to the target input, and hides the Color Mixer 
-   * floating panel.
+   * dispatches the {@link pwlib.appEvent.configChange} application event for 
+   * the configuration property associated to the target input, and hides the 
+   * Color Mixer floating panel.
    *
    * @private
    * @param {Event} ev The DOM Event object.
    */
   this.ev_click_accept = function (ev) {
     ev.preventDefault();
-    if (_self.targetInput) {
-      _self.targetInput.update(_self.color);
-    }
+
+    var configProperty = _self.targetInput.configProperty,
+        configGroup    = _self.targetInput.configGroup,
+        configGroupRef = _self.targetInput.configGroupRef,
+        prevVal = configGroupRef[configProperty],
+        newVal  = 'rgba(' + MathRound(_self.color.red   * 255) + ',' +
+                            MathRound(_self.color.green * 255) + ',' +
+                            MathRound(_self.color.blue  * 255) + ',' +
+                            _self.color.alpha + ')';
+
     _self.hide();
+
+    if (prevVal !== newVal) {
+      configGroupRef[configProperty] = newVal;
+      app.events.dispatch(new pwlib.appEvent.configChange(newVal, prevVal, 
+          configProperty, configGroup, configGroupRef));
+    }
   };
 
   /**
@@ -789,13 +808,13 @@ pwlib.extensions.colormixer = function (app) {
   this.calc_m1x3 = function (a, b) {
     if (!(a instanceof Array) || !(b instanceof Array)) {
       return false;
+    } else {
+      return [
+        a[0] * b[0] + a[1] * b[3] + a[2] * b[6], // x
+        a[0] * b[1] + a[1] * b[4] + a[2] * b[7], // y
+        a[0] * b[2] + a[1] * b[5] + a[2] * b[8]  // z
+      ];
     }
-
-    var x = a[0] * b[0] + a[1] * b[3] + a[2] * b[6],
-        y = a[0] * b[1] + a[1] * b[4] + a[2] * b[7],
-        z = a[0] * b[2] + a[1] * b[5] + a[2] * b[8];
-
-    return [x, y, z];
   };
 
   /**
@@ -904,9 +923,7 @@ pwlib.extensions.colormixer = function (app) {
   /**
    * Show the Color Mixer.
    *
-   * @param {Object} target The target input object which must have several 
-   * functions references. These are hooks for when the Color Mixer is shown, 
-   * hidden, or when the color is updated.
+   * @param {Object} target The target input object.
    *
    * @param {Object} color The color you want to set before the Color Mixer is 
    * shown. The object must have four properties: <var>red</var>, 
@@ -918,10 +935,15 @@ pwlib.extensions.colormixer = function (app) {
    * object.
    */
   this.show = function (target, color) {
+      var styleActive = _self.elems.colorActive.style,
+          colorOld    = _self.elems.colorOld,
+          styleOld    = colorOld.style;
+
     if (target) {
       if (_self.targetInput) {
         _self.targetInput.hide();
       }
+
       _self.targetInput = target;
       _self.targetInput.show();
     }
@@ -934,10 +956,6 @@ pwlib.extensions.colormixer = function (app) {
 
       _self.update_color('rgb');
 
-      var styleActive = _self.elems.colorActive.style,
-          colorOld    = _self.elems.colorOld,
-          styleOld    = colorOld.style;
-
       styleOld.backgroundColor = styleActive.backgroundColor;
       styleOld.opacity = styleActive.opacity;
       colorOld._color = [color.red, color.green, color.blue, color.alpha];
@@ -947,16 +965,29 @@ pwlib.extensions.colormixer = function (app) {
   };
 
   /**
-   * Hide the Color Mixer floating panel.
+   * Hide the Color Mixer floating panel. This method invokes the 
+   * <code>hide()</code> method provided by the target input.
    */
   this.hide = function () {
-    if (_self.targetInput) {
-      _self.targetInput.hide();
-      _self.targetInput = null;
-    }
-
     _self.panel.hide();
     _self.ev_canvas_mode = false;
+  };
+
+  /**
+   * The <code>guiFloatingPanelStateChange</code> event handler for the Color 
+   * Mixer panel. This method ensures the Color Mixer is properly closed.
+   *
+   * @param {pwlib.appEvent.guiFloatingPanelStateChange} ev The application 
+   * event object.
+   */
+  this.ev_panel_stateChange = function (ev) {
+    if (ev.state === ev.STATE_HIDDEN) {
+      if (_self.targetInput) {
+        _self.targetInput.hide();
+        _self.targetInput = null;
+      }
+      _self.ev_canvas_mode = false;
+    }
   };
 
   /**

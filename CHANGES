@@ -1,3 +1,26 @@
+2009-06-29:
+===========
+
+- The color picker tool is now fixed and working well.
+- Updated the guiColorInput: some code adjustments for the color picker and 
+jsdoc comments.
+- Updated the Color Mixer: some code adjustments for the color picker, and 
+I also fixed a bug. When closing the floating panel using the X, the Color Mixer 
+did not detect the change - it does now.
+- New application event for the guiFloatingPanel: the 
+guiFloatingPanelStateChange event. Huh, long name.
+- Fixed a bug in the main code: the user was able to change the shadow settings 
+and see all the updates to the shadow rendering, without actually enabling 
+shadows. Now all changes to the shadow properties while shadows are not 
+explicitly enabled, are only stored in the config object, not in the layer 
+context.
+- Removed the Pantone, TruMatch, DIC, ANPA and Toyo color palettes due to 
+licensing issues. It has been reported these require special licensing. Thanks!
+- Now the Text tool is displayed as disabled in Opera and other browsers which 
+lack support for the Canvas Text API.
+- Fixed a minor glitch in the styling of the Selection tab.
+- New English strings.
+
 2009-06-27:
 ===========
 

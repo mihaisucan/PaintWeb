@@ -17,16 +17,13 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-03 18:28:56 +0300 $
+ * $Date: 2009-06-29 23:07:57 +0300 $
  */
 
 /**
  * @author <a lang="ro" href="http://www.robodesign.ro/mihai">Mihai Şucan</a>
  * @fileOverview Holds the color picker implementation.
  */
-
-// FIXME: waiting for the Color Editor extension and for the new GUI.
-
 
 /**
  * @class The color picker tool.
@@ -35,168 +32,282 @@
  */
 pwlib.tools.cpicker = function (app) {
   var _self        = this,
-      context      = app.buffer.context,
-      mouse        = app.mouse,
-      image        = app.image,
+      colormixer   = app.extensions.colormixer,
+      context      = app.layer.context,
+      gui          = app.gui,
       lang         = app.lang,
-      layerUpdate  = app.layerUpdate,
-      statusShow   = app.gui.statusShow,
-      toolActivate = app.toolActivate;
+      MathRound    = Math.round,
+      mouse        = app.mouse;
 
-  // There are problems with Safari (tested 20080324 svn trunk, webkitgtk) and Opera Merlin (Opera versions older than 9.5).
-  // Safari makes the get/putImageData methods visible, even if they seem unimplemented.
-  if (!context.getImageData) {
-    alert(lang.errorCpickerUnsupported);
-    _self._cancel = true; // FIXME
-    return false;
-  }
+  /**
+   * Holds the ID of the previously active tool. Once the user completes the 
+   * color picking operation, the previous tool is activated.
+   *
+   * @private
+   * @type String
+   */
+  var prevTool = null;
 
-  _self.prev_tool = false;
-  _self.target = false;
+  /**
+   * Holds a reference to the target color input. This is a GUI color input 
+   * component.
+   *
+   * @private
+   * @type String
+   */
+  var targetInput = null;
 
-  // FIXME
-  if (app.tool && app.tool._id) {
-    _self.prev_tool = app.tool._id;
-  }
+  /**
+   * Holds the previous color values - before the user started picking 
+   * a different color.
+   *
+   * @private
+   * @type Object
+   */
+  var prevColor = null;
 
-  // FIXME
-  var ce = app.coloreditor;
+  /**
+   * Tells if the color mixer is active for the current target input.
+   *
+   * @private
+   * @type Boolean
+   */
+  var colormixerActive = false;
 
-  // The color picker "dialog" is active
-  // FIXME
-  if (ce.elems.target) {
-    _self.target = ce.elems.target;
-    _me.status_texts['cpicker-active'] = _me.status_texts['cpicker-' + _self.target._prop];
-  } else {
-    _me.status_texts['cpicker-active'] = _me.status_texts['cpicker-normal'];
-  }
+  /**
+   * Tells if the current color values are accepted by the user. This value is 
+   * used by the tool deactivation code.
+   *
+   * @private
+   * @type Boolean
+   */
+  var colorAccepted = false;
 
+  /**
+   * The <code>preActivate</code> event handler. This method checks if the 
+   * browser implements the <code>getImageData()</code> context method. If not, 
+   * the color picker tool cannot be used.
+   */
+  this.preActivate = function () {
+    // The latest versions of all browsers which implement Canvas, also 
+    // implement the getImageData() method. This was only a problem with some 
+    // old versions (eg. Opera 9.2).
+    if (!context.getImageData) {
+      alert(lang.errorCpickerUnsupported);
+      return false;
+    }
+
+    if (app.tool && app.tool._id) {
+      prevTool = app.tool._id;
+    }
+
+    return true;
+  };
+
+  /**
+   * The <code>activate</code> event handler. This method determines the current 
+   * target input in the Color Mixer, if any. Canvas shadow rendering is 
+   * disallowed.
+   */
+  this.activate = function () {
+    // When the color mixer panel is active, the color picker uses the same 
+    // target input.
+    if (colormixer && colormixer.targetInput) {
+      targetInput = gui.colorInputs[colormixer.targetInput.id];
+    }
+
+    if (targetInput) {
+      gui.statusShow('cpicker_' + targetInput.id);
+    } else {
+      gui.statusShow('cpickerNormal');
+    }
+
+    app.shadowDisallow();
+  };
+
+  /**
+   * The <code>deactivate</code> event handler. This method allows shadow 
+   * rendering again, and resets the color input values if the user did not 
+   * accept the new color.
+   */
+  this.deactivate = function () {
+    if (!colorAccepted && targetInput && prevColor) {
+      updateColor(null, true);
+    }
+
+    app.shadowAllow();
+  };
+
+  /**
+   * The <code>mousedown</code> event handler. This method starts the color 
+   * picking operation.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.mousedown = function (ev) {
-    if (!_self.target) {
+    // We check again, because the user might have opened/closed the color 
+    // mixer.
+    if (colormixer && colormixer.targetInput) {
+      targetInput = gui.colorInputs[colormixer.targetInput.id];
+    }
+
+    if (targetInput) {
+      colormixerActive = true;
+      gui.statusShow('cpicker_' + targetInput.id);
+    } else {
+      colormixerActive = false;
+      gui.statusShow('cpickerNormal');
+
       // The context menu (right-click). This is unsupported by Opera.
       // Also allow Shift+Click for changing the stroke color (making it easier for Opera users).
-      // FIXME
-      if (ev.button == 2 || ev.shiftKey) {
-        _self.target = _me.inputs.strokeStyle;
+      if (ev.button === 2 || ev.shiftKey) {
+        targetInput = gui.colorInputs.strokeStyle;
       } else {
-        _self.target = _me.inputs.fillStyle;
+        targetInput = gui.colorInputs.fillStyle;
       }
-      _self.store_pcolor();
     }
 
-    _self.mouseout = _self.mousemove = _self.update_color;
+    updatePrevColor();
 
-    return _self.update_color(ev);
+    _self.mousemove = updateColor;
+    updateColor(ev);
+
+    return true;
   };
 
+  /**
+   * Perform color update. This function updates the target input or the Color 
+   * Mixer to hold the color value under the mouse - it actually performs the 
+   * color picking operation.
+   *
+   * <p>This function is also the <code>mousemove</code> event handler for this 
+   * tool.
+   *
+   * @param {Event} ev The DOM Event object.
+   * @param {Boolean} [usePrevColor=false] Tells the function to use the 
+   * previous color values we have stored. This is used when the user cancels 
+   * the color picking operation.
+   */
+  function updateColor (ev, usePrevColor) {
+    if (!targetInput) {
+      return;
+    }
+
+    var p = usePrevColor ? prevColor :
+              context.getImageData(mouse.x, mouse.y, 1, 1),
+        color = {
+          red:    p.data[0] / 255,
+          green:  p.data[1] / 255,
+          blue:   p.data[2] / 255,
+          alpha: (p.data[3] / 255).toFixed(3)
+        };
+
+    if (colormixerActive) {
+      colormixer.color.red   = color.red;
+      colormixer.color.green = color.green;
+      colormixer.color.blue  = color.blue;
+      colormixer.color.alpha = color.alpha;
+      colormixer.update_color('rgb');
+
+    } else {
+      targetInput.updateColor(color);
+    }
+  };
+
+  /**
+   * The <code>mouseup</code> event handler. This method completes the color 
+   * picking operation, and activates the previous tool.
+   *
+   * <p>The {@link pwlib.appEvent.configChange} application event is also 
+   * dispatched for the configuration property associated to the target input.
+   *
+   * @param {Event} ev The DOM Event object.
+   */
   this.mouseup = function (ev) {
-    if (!_self.target) {
+    if (!targetInput) {
       return false;
     }
 
-    _self.update_color(ev);
+    delete _self.mousemove;
+    updateColor(ev);
+    colorAccepted = true;
 
-    // Hide the current color picker and update the canvas coordinates once the user picks the color.
-    // FIXME
-    if (_me.elems.colorpicker_target) {
-      _me.colorpicker_hide(ev);
-    } else {
-      delete _self.mousemove, _self.mouseup, _self.mouseout;
+    if (!colormixerActive) {
+      var color = targetInput.color,
+          configProperty = targetInput.configProperty,
+          configGroup    = targetInput.configGroup,
+          configGroupRef = targetInput.configGroupRef,
+          prevVal = configGroupRef[configProperty],
+          newVal  = 'rgba(' + MathRound(color.red   * 255) + ',' +
+                              MathRound(color.green * 255) + ',' +
+                              MathRound(color.blue  * 255) + ',' +
+                              color.alpha + ')';
+
+      if (prevVal !== newVal) {
+        configGroupRef[configProperty] = newVal;
+        app.events.dispatch(new pwlib.appEvent.configChange(newVal, prevVal, 
+            configProperty, configGroup, configGroupRef));
+      }
     }
 
-    if (_self.prev_tool) {
-      toolActivate(_self.prev_tool, ev);
+    if (prevTool) {
+      app.toolActivate(prevTool, ev);
     }
 
     return true;
   };
 
-  // Escape returns to the previous tool.
+  /**
+   * The <code>keydown</code> event handler. This method allows the user to 
+   * press the <kbd>Escape</kbd> key to cancel the color picking operation. By 
+   * doing so, the original color values are restored.
+   *
+   * @param {Event} ev The DOM Event object.
+   * @returns {Boolean} True if the keyboard shortcut was recognized, or false 
+   * if not.
+   */
   this.keydown = function (ev) {
-    if (!_self.prev_tool || ev.kid_ != 'Escape') {
+    if (!prevTool || ev.kid_ !== 'Escape') {
       return false;
     }
 
-    toolActivate(_self.prev_tool, ev);
-    return true;
-  };
-
-  // Unfortunately, the contextmenu event is unsupported by Opera
-  _self.contextmenu = function (ev) {
-    // This is already done by ev_canvas()
-    ev.preventDefault();
-  };
-
-  _self.update_color = function (ev) {
-    if (!ev || !_self.target || !_self.target._prop) {
-      return false;
-    }
-
-    if (ev.type != 'mouseout') {
-      var p = _me.img.getImageData(ev.x_, ev.y_, 1, 1);
-    } else if (ev.type == 'mouseout' && _self.prev_color) {
-      var p = _self.prev_color;
-    } else {
-      return false;
-    }
-
-    var op = p.data[3]/255;
-    op = op.toFixed(3);
-
-    if (ev.type == 'mouseup') {
-      context[_self.target._prop] = 'rgba(' + p.data[0] + ',' + p.data[1] + ',' + p.data[2] + ',' + op + ')';
-      _self.target._value = {
-        'red'   : p.data[0] / 255,
-        'green' : p.data[1] / 255,
-        'blue'  : p.data[2] / 255,
-        'alpha' : op
-      };
-    }
-
-    _self.target.style.backgroundColor = 'rgb(' + p.data[0] + ',' + p.data[1] + ',' + p.data[2] + ')';
-    _self.target.style.opacity = op;
-
-    // If the color picker is visible, then update the field values as well.
-    if (ce.elems.target) {
-      ce.color.red   = p.data[0] / 255;
-      ce.color.green = p.data[1] / 255;
-      ce.color.blue  = p.data[2] / 255;
-      ce.color.alpha = op;
-      ce.update_color('rgb');
-    }
+    mouse.buttonDown = false;
+    app.toolActivate(prevTool, ev);
 
     return true;
   };
 
-  // This function stores the initial color.
-  _self.store_pcolor = function () {
-    if (!_self.target || !_self.target._value) {
-      return false;
-    }
+  /**
+   * The <code>contextmenu</code> event handler. This method only cancels the 
+   * context menu.
+   */
+  // Unfortunately, the contextmenu event is unsupported by Opera.
+  _self.contextmenu = function () {
+    return true;
+  };
 
-    var color = _self.target._value;
+  /**
+   * Store the color values from the target color input, before this tool 
+   * changes the colors. The previous color values are used when the user 
+   * decides to cancel the color picking operation.
+   * @private
+   */
+  function updatePrevColor () {
+    // If the color mixer panel is visible, then we store the color values from 
+    // the color mixer, instead of those from the color input object.
+    var color = colormixerActive ? colormixer.color : targetInput.color;
 
-    _self.prev_color = {'width' : 1,
-      'height' : 1,
-      'data' : [
-        Math.round(color.red   * 255),
-        Math.round(color.green * 255),
-        Math.round(color.blue  * 255),
+    prevColor = {
+      width: 1,
+      height: 1,
+      data: [
+        MathRound(color.red   * 255),
+        MathRound(color.green * 255),
+        MathRound(color.blue  * 255),
         color.alpha * 255
       ]
     };
-
-    return true;
   };
-
-  // If the target is available, it means that the color selector is already visible. As such, color picking can start automatically.
-  if (_self.target) {
-    _self.mouseout = _self.mousemove = _self.update_color;
-    _self.store_pcolor();
-  }
-
-  // TODO: check this...
-  return true;
 };
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
