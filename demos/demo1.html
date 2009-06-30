@@ -10,7 +10,7 @@
     --></style>
 
     <!-- $URL: http://code.google.com/p/paintweb $
-         $Date: 2009-06-23 22:39:53 +0300 $ -->
+         $Date: 2009-06-30 18:57:29 +0300 $ -->
   </head>
   <body>
     <p>Welcome to PaintWeb!</p>
@@ -79,7 +79,8 @@
 
   pw.config.guiPlaceholder = target;
   pw.config.imagePreload   = img;
-  pw.config.baseFolder     = '../src/';
+  pw.config.baseFolder     = '../build/';
+  pw.config.configFile     = 'config-example.json';
   loadp.appendChild(document.createTextNode('Loading, please wait...'));
 
   btn.addEventListener('click', pwStart, false);

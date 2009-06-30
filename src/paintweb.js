@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-29 22:54:39 +0300 $
+ * $Date: 2009-06-30 18:59:22 +0300 $
  */
 
 /**
@@ -52,7 +52,7 @@ function PaintWeb (win, doc) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090629;
+  this.build = 20090630;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -60,7 +60,6 @@ function PaintWeb (win, doc) {
    */
   this.config = {
     baseFolder: '',
-    configFile: 'config.json',
     showErrors: true
   };
 
@@ -76,6 +75,8 @@ function PaintWeb (win, doc) {
     "guiPlaceholderWrong": "Error: The config.guiPlaceholder property must " +
       "reference a DOM element!",
     "initHandlerMustBeFunction": "The first argument must be a function.",
+    "noConfigFile": "Error: You must point to a configuration file by " +
+      "setting the config.configFile property!",
     "failedConfigLoad": "Error: Failed loading the configuration file.",
     "failedLangLoad": "Error: Failed loading the language file."
   };
@@ -453,6 +454,11 @@ function PaintWeb (win, doc) {
       return false;
     }
 
+    if (!this.config.configFile) {
+      this.initError(lang.noConfigFile);
+      return false;
+    }
+
     if (typeof this.config.guiPlaceholder !== 'object' || 
         this.config.guiPlaceholder.nodeType !== Node.ELEMENT_NODE) {
       this.initError(lang.guiPlaceholderWrong);
@@ -554,6 +560,8 @@ function PaintWeb (win, doc) {
   /**
    * Asynchronously load the configuration file. This method issues an 
    * XMLHttpRequest to load the JSON file.
+   *
+   * @private
    *
    * @see PaintWeb.config.configFile The configuration file.
    * @see pwlib#xhrLoad The library function being used for creating the 

@@ -1,3 +1,13 @@
+2009-06-30:
+===========
+
+- Initial commit of the PaintWeb packager: a Makefile + some PHP scripts.
+- Some cleanup (removed the old images).
+- Now PaintWeb requires the configuration file to be set manually when 
+integrated into other Web applications.
+- Renamed the config.json file to config-example.json.
+- Updated demo1.html to point to the build and the configuration file.
+
 2009-06-29:
 ===========
 

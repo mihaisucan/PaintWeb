@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-06-19 22:12:34 +0300 $
+ * $Date: 2009-06-30 21:09:35 +0300 $
  */
 
 /**
@@ -16,6 +16,12 @@
  * application.
  */
 var pwlib = {};
+
+/**
+ * @namespace Holds pre-packaged files.
+ * @type Object
+ */
+pwlib.fileCache = {};
 
 /**
  * @namespace Holds the implementation of each drawing tool.

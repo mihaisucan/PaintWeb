@@ -1,0 +1,60 @@
+#!/bin/bash
+#
+# Copyright (C) 2008, 2009 Mihai Şucan
+# 
+# This file is part of PaintWeb.
+# 
+# PaintWeb is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# PaintWeb is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
+# 
+# $URL: http://code.google.com/p/paintweb $
+# $Date: 2009-06-30 22:58:59 +0300 $
+
+# This script allows quicker access to the YUICompressor tool.
+# Make sure you get the latest YUICompressor from 
+# http://developer.yahoo.com/yui/compressor/
+
+shopt -s nullglob
+
+MY_PWD="$PWD"
+
+# Update this value to point to your yuicompressor folder.
+YUIC_FOLDER="${HOME}/bin/yuicompressor-latest"
+
+if [[ ! -d "$YUIC_FOLDER" ]]
+then
+	echo "The yuicompressor folder does not exist: $YUIC_FOLDER"
+	exit 1
+fi
+
+if [[ ! -d "${YUIC_FOLDER}/build" ]]
+then
+	echo "The yuicompressor/build folder does not exist: ${YUIC_FOLDER}/build"
+	exit 1
+fi
+
+cd "${YUIC_FOLDER}/build"
+YUIC_BIN=(*.jar)
+
+if [[ -z "$YUIC_BIN" || ! -f "$YUIC_BIN" ]]
+then
+	echo "The yuicompressor.jar file was not found!"
+	exit 1
+fi
+
+cd "$MY_PWD"
+
+java -jar "${YUIC_FOLDER}/build/${YUIC_BIN}" $@
+
+# vim:set spell spl=en fo=wan1croql tw=80 ts=2 sw=2 sts=0 sta noet ai cin fenc=utf-8 ff=unix:
+

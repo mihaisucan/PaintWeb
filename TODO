@@ -1,6 +1,6 @@
 $Author: Mihai Şucan $
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-06-27 19:58:19 +0300 $
+$Date: 2009-06-30 13:07:49 +0300 $
 
 Until the end of GSOC:
 
@@ -14,13 +14,18 @@ file.
 As quick as possible, after GSOC 2009:
 
 - report browser bugs:
-  - shadows are not applied in chrome when using drawImage()
-  - when strokeText() is used shadows do not render (webkit, needs recheck)
+  - shadows are not applied in Chrome when using drawImage(). Tested with google 
+  Chrome 2 on Windows and Chromium 3 on Linux.
+  - when strokeText() is used shadows do not render (Webkit, needs recheck).
   - elem.hasAttribute('data-whatever') fails to return true when it should do 
-  so. 
-  - outlines are drawn irrespective of z-index in opera.
+  so. The problem affects Webkit.
+  - outlines are drawn irrespective of z-index in Opera 9.6 and Opera 10.
   - serious redraw issues with the color mixer when the colormixer_selector tab 
-  panel has some width set.
+  panel has some width set. The problem affects Opera 9.6 and Opera 10.
+  - globalCompositeOperation + gradients renders mildly different in Google 
+  Chrome 2 on Windows, compared to the other browsers. To see this, test the RGB 
+  color space visualisation in the color mixer. I cannot reproduce the issue 
+  with Google Chrome 3 on Linux.
 
 - write more tutorials/articles about paintweb.
 - new tools: bucket, pencil v2 (avec pression).
@@ -55,6 +60,9 @@ importantly, try initialization performance improvements.
 - allow mousewheel scroll to increase/decrease the numeric value in an input of 
 type=number.
 - allow permanent color save in the color mixer.
+- add a checkbox into the color mixer which allows the user to enable realtime 
+color changes, such that, without clicking accept, the user can test the new 
+color using some drawing tool.
 - tab reordering and grouping.
 
 Each and every item is doable pretty "easy", but it takes a lot of time to do 
@@ -68,7 +76,12 @@ Further down the road:
 * hybrid drawing: vectorial + bitmap drawing;
 * layers;
 * non-destructive filters;
-* color gradients and fill patterns.
+* color gradients and fill patterns;
+* macros: look into the possibility of implementing a scripting API compatible 
+  with that of Photoshop. Photoshop can run JavaScript. PaintWeb can run 
+  JavaScript: just provide the same API. Obviously, PaintWeb could implement 
+  only a subset, but it would be very good if this kind of work would be 
+  successful.
 
 That should be all for now. Huh, lots of work to do.
 
