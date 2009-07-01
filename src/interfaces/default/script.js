@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-29 23:03:56 +0300 $
+ * $Date: 2009-07-01 22:50:15 +0300 $
  */
 
 /**
@@ -25,11 +25,9 @@
  * @fileOverview The default PaintWeb interface code.
  */
 
-(function () {
-var pwlib = window.pwlib,
-    appEvent = pwlib.appEvent;
-
 /**
+ * @name pwlib.gui.default
+ *
  * @class The default PaintWeb interface.
  *
  * @param {PaintWeb} app Reference to the main paint application object.
@@ -72,6 +70,7 @@ pwlib.gui['default'] = function (app) {
    * properties.
    *
    * @type Object
+   * @see pwlib.guiColorInput
    */
   this.colorInputs = {};
 
@@ -94,13 +93,17 @@ pwlib.gui['default'] = function (app) {
 
   /**
    * Holds references to floating panels GUI components.
+   *
    * @type Object
+   * @see pwlib.guiFloatingPanel
    */
   this.floatingPanels = {zIndex_: 0};
 
   /**
    * Holds references to tab panel GUI components.
+   *
    * @type Object
+   * @see pwlib.guiTabPanel
    */
   this.tabPanels = {};
 
@@ -108,12 +111,14 @@ pwlib.gui['default'] = function (app) {
    * Holds an instance of the guiResizer object attached to the Canvas.
    *
    * @private
-   * @type guiResizer
+   * @type pwlib.guiResizer
    */
   this.canvasResizer = null;
 
   /**
    * Holds tab configuration information for most drawing tools.
+   *
+   * @private
    * @type Object
    */
   this.toolTabConfig = {
@@ -182,26 +187,32 @@ pwlib.gui['default'] = function (app) {
   /**
    * Initialize the PaintWeb interface.
    *
-   * @param {Document} markupDoc The interface markup loaded and parsed as DOM 
-   * Document object.
+   * @param {Document|String} markup The interface markup loaded and parsed as 
+   * DOM Document object. Optionally, the value can be a string holding the 
+   * interface markup (this is used when PaintWeb is packaged).
    *
    * @returns {Boolean} True if the initialization was successful, or false if 
    * not.
    */
-  this.init = function (markupDoc) {
+  this.init = function (markup) {
     // Make sure the user nicely waits for PaintWeb to load, without seeing 
     // much.
-    var placeholder = config.guiPlaceholder;
-    placeholder.style.visibility = 'hidden';
-    placeholder.style.position = 'absolute';
-    placeholder.style.height = '1px';
-    placeholder.style.overflow = 'hidden';
+    var placeholder = config.guiPlaceholder,
+        placeholderStyle = placeholder.style;
+
+    placeholderStyle.display = 'none';
+    placeholderStyle.height = '1px';
+    placeholderStyle.overflow = 'hidden';
+    placeholderStyle.position = 'absolute';
+    placeholderStyle.visibility = 'hidden';
+
     placeholder.className += ' ' + this.classPrefix + 'placeholder';
 
-    if (!this.initImportDoc(markupDoc)) {
+    if (!this.initImportDoc(markup)) {
       app.initError(lang.guiMarkupImportFailed);
       return false;
     }
+    markup = null;
 
     if (!this.initParseMarkup()) {
       app.initError(lang.guiMarkupParseFailed);
@@ -217,7 +228,7 @@ pwlib.gui['default'] = function (app) {
     }
 
     // Setup the main tabbed panel.
-    var tab = null, panel = this.tabPanels.main;
+    var panel = this.tabPanels.main;
     if (!panel) {
       app.initError(lang.noMainTabPanel);
       return false;
@@ -245,7 +256,7 @@ pwlib.gui['default'] = function (app) {
     resizeHandle.addEventListener('mouseover', this.item_mouseover, false);
     resizeHandle.addEventListener('mouseout',  this.item_mouseout,  false);
 
-    this.canvasResizer = new guiResizer(this, resizeHandle, 
+    this.canvasResizer = new pwlib.guiResizer(this, resizeHandle, 
         this.elems.canvasContainer);
 
     this.canvasResizer.events.add('guiResizeStart', this.canvasResizeStart);
@@ -346,22 +357,35 @@ pwlib.gui['default'] = function (app) {
    *
    * @private
    *
-   * @param {Document} srcDoc The source DOM document to import the nodes from.
+   * @param {Document|String} markup The source DOM document to import the nodes 
+   * from. Optionally, this parameter can be a string which holds the interface 
+   * markup.
    *
    * @returns {Boolean} True if the initialization was successful, or false if 
    * not.
    */
-  this.initImportDoc = function (srcDoc) {
+  this.initImportDoc = function (markup) {
     // I could use some XPath here, but for the sake of compatibility I don't.
     var destElem = config.guiPlaceholder,
-        elem = null,
         elType = Node.ELEMENT_NODE,
-        nodes = srcDoc.getElementsByTagName('*');
+        elem, root, nodes, n, tag, isInput;
+
+    if (typeof markup === 'string') {
+      elem = doc.createElement('div');
+      elem.innerHTML = markup;
+      root = elem.firstChild;
+    } else {
+      root = markup.documentElement;
+    }
+    markup = null;
+
+    nodes = root.getElementsByTagName('*');
+    n = nodes.length;
 
     // Change all the id attributes to be data-pwId attributes.
     // Input elements have their ID updated to be unique for the current 
     // PaintWeb instance.
-    for (var i = 0; i < nodes.length; i++) {
+    for (var i = 0; i < n; i++) {
       elem = nodes[i];
       if (elem.nodeType !== elType) {
         continue;
@@ -385,12 +409,10 @@ pwlib.gui['default'] = function (app) {
       }
     }
 
-    var docChildren = srcDoc.documentElement.childNodes;
-    n = docChildren.length;
-
     // Import all the nodes.
+    n = root.childNodes.length;
     for (var i = 0; i < n; i++) {
-      destElem.appendChild(doc.importNode(docChildren[i], true));
+      destElem.appendChild(doc.importNode(root.childNodes[i], true));
     }
 
     return true;
@@ -411,11 +433,11 @@ pwlib.gui['default'] = function (app) {
    *
    * <p>Elements having the <code>data-pwTabPanel</code> attribute are added to 
    * the <var>this.tabPanels</var> object. These become interactive GUI 
-   * components (see {@link guiTabPanel}).
+   * components (see {@link pwlib.guiTabPanel}).
    *
    * <p>Elements having the <code>data-pwFloatingPanel</code> attribute are 
    * added to the <var>this.floatingPanels</var> object. These become 
-   * interactive GUI components (see {@link guiFloatingPanel}).
+   * interactive GUI components (see {@link pwlib.guiFloatingPanel}).
    *
    * <p>Elements having the <code>data-pwConfig</code> attribute are added to 
    * the <var>this.inputs</var> object. These become interactive GUI components 
@@ -432,13 +454,18 @@ pwlib.gui['default'] = function (app) {
    * components which toggle the boolean value of the configuration property 
    * they are associated to.
    *
+   * <p>Elements having the <code>data-pwColorInput</code> attribute are added 
+   * to the <var>this.colorInputs</var> object. These become color picker inputs 
+   * which are associated to the configuration property given as the attribute 
+   * value. (see {@link pwlib.guiColorInput})
+   *
    * @returns {Boolean} True if the parsing was successful, or false if not.
    */
   this.initParseMarkup = function () {
     var nodes = config.guiPlaceholder.getElementsByTagName('*'),
         elType = Node.ELEMENT_NODE,
         elem, tag, isInput, tool, tabPanel, floatingPanel, cmd, id, cfgAttr, 
-        cfgGroup, cfgProp, colorInput;
+        colorInput;
 
     // Store references to important elements and parse PaintWeb-specific 
     // attributes.
@@ -467,13 +494,14 @@ pwlib.gui['default'] = function (app) {
       // Create tab panels.
       tabPanel = elem.getAttribute('data-pwTabPanel');
       if (tabPanel) {
-        this.tabPanels[tabPanel] = new guiTabPanel(this, elem);
+        this.tabPanels[tabPanel] = new pwlib.guiTabPanel(this, elem);
       }
 
       // Create floating panels.
       floatingPanel = elem.getAttribute('data-pwFloatingPanel');
       if (floatingPanel) {
-        this.floatingPanels[floatingPanel] = new guiFloatingPanel(this, elem);
+        this.floatingPanels[floatingPanel] = new pwlib.guiFloatingPanel(this, 
+            elem);
       }
 
       cfgAttr = elem.getAttribute('data-pwConfig');
@@ -492,7 +520,7 @@ pwlib.gui['default'] = function (app) {
 
       // elem.hasAttribute() fails in webkit (tested with chrome and safari 4)
       if (elem.getAttribute('data-pwColorInput')) {
-        colorInput = new guiColorInput(this, elem);
+        colorInput = new pwlib.guiColorInput(this, elem);
         this.colorInputs[colorInput.id] = colorInput;
       }
 
@@ -875,10 +903,12 @@ pwlib.gui['default'] = function (app) {
 
     // Make PaintWeb visible.
     var placeholder = this.config.guiPlaceholder.style;
-    placeholder.visibility = '';
-    placeholder.position = '';
+
+    // We do not reset the display property. We leave this for the stylesheet.
     placeholder.height = '';
-    placeholder.overflow = 'visible';
+    placeholder.overflow = '';
+    placeholder.position = '';
+    placeholder.visibility = '';
   };
 
   /**
@@ -891,7 +921,7 @@ pwlib.gui['default'] = function (app) {
 
     // ugly...
     this.timeout_ = setTimeout(function () {
-      _self.statusShow('guiCanvasResizerActive', true)
+      _self.statusShow('guiCanvasResizerActive', true);
       clearTimeout(_self.canvasResizer.timeout_);
       delete _self.canvasResizer.timeout_;
     }, 400);
@@ -1205,7 +1235,7 @@ pwlib.gui['default'] = function (app) {
   this.toolUnregister = function (ev) {
     if (ev.id in _self.tools) {
       _self.elems.tools.removeChild(_self.tools[ev.id]);
-      delete _self.tools[id];
+      delete _self.tools[ev.id];
     } else {
       return;
     }
@@ -1698,13 +1728,14 @@ pwlib.gui['default'] = function (app) {
  * @param {Element} container Reference to the DOM element you want to transform 
  * into a floating panel.
  */
-function guiFloatingPanel (gui, container) {
+pwlib.guiFloatingPanel = function (gui, container) {
   var _self       = this,
-      win         = gui.app.win,
-      doc         = gui.app.doc,
-      panels      = gui.floatingPanels,
+      appEvent    = pwlib.appEvent,
       cStyle      = container.style,
+      doc         = gui.app.doc,
       lang        = gui.app.lang,
+      panels      = gui.floatingPanels,
+      win         = gui.app.win,
       zIndex_step = 200;
 
   // These hold the mouse starting location during the drag operation.
@@ -1848,7 +1879,7 @@ function guiFloatingPanel (gui, container) {
       var resizeHandle = doc.createElement('div');
       resizeHandle.className = gui.classPrefix + 'floatingPanel_resizer';
       _self.container.appendChild(resizeHandle);
-      _self.resizer = new guiResizer(gui, resizeHandle, _self.container);
+      _self.resizer = new pwlib.guiResizer(gui, resizeHandle, _self.container);
     }
   };
 
@@ -2073,7 +2104,7 @@ function guiFloatingPanel (gui, container) {
  *
  * @param {Number} state The floating panel state.
  */
-appEvent.guiFloatingPanelStateChange = function (state) {
+pwlib.appEvent.guiFloatingPanelStateChange = function (state) {
   // panel states.
   this.STATE_HIDDEN    = 0;
   this.STATE_VISIBLE   = 1;
@@ -2082,7 +2113,7 @@ appEvent.guiFloatingPanelStateChange = function (state) {
 
   this.state = state;
 
-  appEvent.call(this, 'guiFloatingPanelStateChange');
+  pwlib.appEvent.call(this, 'guiFloatingPanelStateChange');
 };
 
 /**
@@ -2100,12 +2131,12 @@ appEvent.guiFloatingPanelStateChange = function (state) {
  * the element users will be able to resize using the <var>resizeHandle</var> 
  * element.
  */
-function guiResizer (gui, resizeHandle, container) {
+pwlib.guiResizer = function (gui, resizeHandle, container) {
   var _self          = this,
       cStyle         = container.style,
       doc            = gui.app.doc,
-      guiResizeEnd   = appEvent.guiResizeEnd,
-      guiResizeStart = appEvent.guiResizeStart,
+      guiResizeEnd   = pwlib.appEvent.guiResizeEnd,
+      guiResizeStart = pwlib.appEvent.guiResizeStart,
       win            = gui.app.win;
 
   /**
@@ -2277,13 +2308,13 @@ function guiResizer (gui, resizeHandle, container) {
  * @param {Number} width The element width.
  * @param {Number} height The element height.
  */
-appEvent.guiResizeStart = function (x, y, width, height) {
+pwlib.appEvent.guiResizeStart = function (x, y, width, height) {
   this.x = x;
   this.y = y;
   this.width = width;
   this.height = height;
 
-  appEvent.call(this, 'guiResizeStart', true);
+  pwlib.appEvent.call(this, 'guiResizeStart', true);
 };
 
 /**
@@ -2296,13 +2327,13 @@ appEvent.guiResizeStart = function (x, y, width, height) {
  * @param {Number} width The element width.
  * @param {Number} height The element height.
  */
-appEvent.guiResizeEnd = function (x, y, width, height) {
+pwlib.appEvent.guiResizeEnd = function (x, y, width, height) {
   this.x = x;
   this.y = y;
   this.width = width;
   this.height = height;
 
-  appEvent.call(this, 'guiResizeEnd', true);
+  pwlib.appEvent.call(this, 'guiResizeEnd', true);
 };
 
 /**
@@ -2314,10 +2345,11 @@ appEvent.guiResizeEnd = function (x, y, width, height) {
  *
  * @param {Element} panel Reference to the panel DOM element.
  */
-function guiTabPanel (gui, panel) {
-  var _self = this,
-      doc   = gui.app.doc,
-      lang  = gui.app.lang;
+pwlib.guiTabPanel = function (gui, panel) {
+  var _self    = this,
+      appEvent = pwlib.appEvent,
+      doc      = gui.app.doc,
+      lang     = gui.app.lang;
 
   /**
    * Custom application events interface.
@@ -2382,7 +2414,6 @@ function guiTabPanel (gui, panel) {
         tabButton = null,
         tabDefault = _self.container.getAttribute('data-pwTabDefault') || null,
         childNodes = _self.container.childNodes,
-        n = childNodes.length,
         type = Node.ELEMENT_NODE,
         elem = null,
         tabId = null,
@@ -2550,11 +2581,11 @@ function guiTabPanel (gui, panel) {
  * @param {String} tabId The ID of the tab being activated.
  * @param {String} prevTabId The ID of the previously active tab.
  */
-appEvent.guiTabActivate = function (tabId, prevTabId) {
+pwlib.appEvent.guiTabActivate = function (tabId, prevTabId) {
   this.tabId = tabId;
   this.prevTabId = prevTabId;
 
-  appEvent.call(this, 'guiTabActivate', true);
+  pwlib.appEvent.call(this, 'guiTabActivate', true);
 };
 
 /**
@@ -2567,7 +2598,7 @@ appEvent.guiTabActivate = function (tabId, prevTabId) {
  * @param {Element} input Reference to the DOM input element. This can be 
  * a span, a div, or any other tag.
  */
-function guiColorInput (gui, input) {
+pwlib.guiColorInput = function (gui, input) {
   var _self      = this,
       colormixer = null,
       config     = gui.app.config,
@@ -2751,8 +2782,6 @@ function guiColorInput (gui, input) {
 
   init();
 };
-
-})();
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
 

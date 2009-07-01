@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-06-30 21:09:35 +0300 $
+ * $Date: 2009-07-01 18:35:31 +0300 $
  */
 
 /**
@@ -98,9 +98,7 @@ pwlib.gui = {};
  * properties which will be added to the destination object.
  */
 pwlib.extend = function () {
-  var i = 0,
-      len = arguments.length,
-      name, src, sval, dval;
+  var name, src, sval, dval;
 
   if (typeof arguments[0] === 'boolean') {
     force = arguments[0];
@@ -447,21 +445,6 @@ pwlib.appEvent.imageSave = function (dataURL, width, height) {
   this.height = height;
 
   pwlib.appEvent.call(this, 'imageSave', true);
-};
-
-/**
- * @class The fill and stroke swap event. This event is cancelable.
- *
- * @augments pwlib.appEvent
- *
- * @param {String} fillStyle The new fillStyle.
- * @param {String} strokeStyle The new strokeStyle.
- */
-pwlib.appEvent.swapFillStroke = function (fillStyle, strokeStyle) {
-  this.fillStyle   = fillStyle;
-  this.strokeStyle = strokeStyle;
-
-  pwlib.appEvent.call(this, 'swapFillStroke', true);
 };
 
 /**

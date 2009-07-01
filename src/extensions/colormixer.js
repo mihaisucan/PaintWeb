@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-29 23:07:03 +0300 $
+ * $Date: 2009-07-01 22:31:25 +0300 $
  */
 
 /**
@@ -45,8 +45,7 @@ pwlib.extensions.colormixer = function (app) {
       MathMin   = Math.min,
       MathPow   = Math.pow,
       MathRound = Math.round,
-      resScale  = app.resolution.scale,
-      win       = app.win;
+      resScale  = app.resolution.scale;
 
   /**
    * Holds references to various DOM elements.
@@ -106,7 +105,7 @@ pwlib.extensions.colormixer = function (app) {
    * Reference to the Color Mixer floating panel GUI component object.
    *
    * @private
-   * @type Object
+   * @type pwlib.guiFloatingPanel
    */
   this.panel = null;
 
@@ -115,7 +114,7 @@ pwlib.extensions.colormixer = function (app) {
    * inputs.
    *
    * @private
-   * @type Object
+   * @type pwlib.guiTabPanel
    */
   this.panelInputs = null;
 
@@ -124,7 +123,7 @@ pwlib.extensions.colormixer = function (app) {
    * Canvas used for color space visualisation and the color palettes selector.
    *
    * @private
-   * @type Object
+   * @type pwlib.guiTabPanel
    */
   this.panelSelector = null;
 
@@ -152,7 +151,6 @@ pwlib.extensions.colormixer = function (app) {
    * property: <var>configProperty</var>, <var>configGroup</var> and 
    * <var>configGroupRef</var>.
    *
-   * @private
    * @type Object
    */
   this.targetInput = null;
@@ -475,7 +473,7 @@ pwlib.extensions.colormixer = function (app) {
         m   = [x_r, y_r, z_r,
                x_g, y_g, z_g,
                x_b, y_b, z_b],
-        m_i = _self.calc_m3inv(m);
+        m_i = _self.calc_m3inv(m),
         s   = _self.calc_m1x3([w_x, w_y, w_z], m_i);
 
     // The 3x3 matrix used by rgb2xyz().
@@ -677,7 +675,7 @@ pwlib.extensions.colormixer = function (app) {
       return false;
     }
 
-    var color, li, anchor, rgbValue,
+    var color, anchor, rgbValue,
         frag = doc.createDocumentFragment(),
         dest = this.elems.cpaletteOutput;
 
@@ -756,7 +754,6 @@ pwlib.extensions.colormixer = function (app) {
       return;
     }
 
-    var prevScale = resScale;
     resScale = app.resolution.scale;
 
     var canvas  = _self.context2d.canvas,
@@ -1049,7 +1046,8 @@ pwlib.extensions.colormixer = function (app) {
    * other formats. Additionally, this method updates the color preview, the 
    * controls on the Canvas and the input values.
    *
-   * @private
+   * <p>You need to call this function whenever you update the color manually.
+   *
    * @param {String} ckey The color key that was updated.
    */
   this.update_color = function (ckey) {
@@ -1643,8 +1641,7 @@ pwlib.extensions.colormixer = function (app) {
       doc.removeEventListener('mouseup', _self.ev_canvas, false);
     }
 
-    var tid = ev.target.id,
-        elems = _self.elems;
+    var elems = _self.elems;
 
     // If the user is on top of the 'controls' element, determine the mouse coordinates and the 'mode' for this function: the user is either working with the slider, or he/she is working with the color chart itself.
     if (ev.target === elems.controls) {
@@ -1743,8 +1740,7 @@ pwlib.extensions.colormixer = function (app) {
    * to determine if the Canvas needs to be updated or not.
    */
   this.draw_chart = function (updated_ckey) {
-    var canvas  = _self.context2d.canvas,
-        context = _self.context2d,
+    var context = _self.context2d,
         gradient, color, opacity, i;
 
     if (updated_ckey === _self.ckey_adjoint[0] || updated_ckey === 
@@ -1975,7 +1971,7 @@ pwlib.extensions.colormixer = function (app) {
         slider_h = _self.sliderHeight,
         slider_x = _self.sliderX,
         slider_y = 0,
-        gradient, color, opacity, i;
+        gradient, color, i;
 
     gradient = context.createLinearGradient(slider_x, slider_y, slider_x, slider_h);
 

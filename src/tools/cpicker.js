@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-29 23:07:57 +0300 $
+ * $Date: 2009-07-01 22:52:35 +0300 $
  */
 
 /**
@@ -282,7 +282,7 @@ pwlib.tools.cpicker = function (app) {
    * context menu.
    */
   // Unfortunately, the contextmenu event is unsupported by Opera.
-  _self.contextmenu = function () {
+  this.contextmenu = function () {
     return true;
   };
 

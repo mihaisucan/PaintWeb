@@ -17,41 +17,14 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-29 13:12:37 +0300 $
+ * $Date: 2009-07-01 17:20:47 +0300 $
  */
-
-/* OLPC XO DPI resolution detection */
-
-@media screen and (resolution: 96dpi) {
-  #paintweb_resInfo { width: 96px }
-}
-
-@media screen and (resolution: 134dpi) {
-  #paintweb_resInfo { width: 134px }
-}
-
-@media screen and (resolution: 200dpi) {
-  #paintweb_resInfo { width: 200px }
-}
-
-@media screen and (resolution: 300dpi) {
-  #paintweb_resInfo { width: 300px }
-}
-
-#paintweb_resInfo {
-  display: block;
-  height: 100%;
-  left: -3000px;
-  position: fixed;
-  top: 0;
-  visibility: hidden;
-  z-index: -32
-}
 
 .paintweb_placeholder {
   background: #fff;
   color: #000;
-  font: 12px sans-serif
+  font: 12px sans-serif;
+  display: block !important
 }
 
 .paintweb_placeholder label { cursor: pointer }

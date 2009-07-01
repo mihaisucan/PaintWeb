@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-11 20:25:36 +0300 $
+ * $Date: 2009-07-01 18:44:56 +0300 $
  */
 
 /**
@@ -40,8 +40,7 @@ pwlib.tools.ellipse = function (app) {
       MathMax       = Math.max,
       MathMin       = Math.min,
       mouse         = app.mouse,
-      setInterval   = app.win.setInterval,
-      snapXY        = app.toolSnapXY;
+      setInterval   = app.win.setInterval;
 
   /**
    * The interval ID used for invoking the drawing operation every few 

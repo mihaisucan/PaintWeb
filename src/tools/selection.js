@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-24 13:08:16 +0300 $
+ * $Date: 2009-07-01 18:50:18 +0300 $
  */
 
 /**
@@ -33,7 +33,6 @@
 pwlib.tools.selection = function (app) {
   var _self         = this,
       appEvent      = pwlib.appEvent,
-      bufferCanvas  = app.buffer.canvas,
       bufferContext = app.buffer.context,
       clearInterval = app.win.clearInterval,
       config        = app.config.selection,

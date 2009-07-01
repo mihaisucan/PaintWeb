@@ -1,3 +1,21 @@
+2009-07-01:
+===========
+
+- Fixed the "swap fill / stroke colors" command. It now works - you can press 
+X to swap the two colors.
+- General fixes for undefined/unused variables across multiple JS files.
+- Packaging scripts for generating the jsdoc API reference.
+- Made demo1.html use the packaged PaintWeb script. I also added a timer, so 
+I can check how long it takes to load PaintWeb.
+- Minor fixes for the CSS images inliner script: don't try to inline external 
+images, and include the "base64" string in the data URI.
+- Fixed PaintWeb so that it loads successfully when running as a packaged build.  
+Mainly I made it properly read the interface markup, and I made sure the screen 
+resolution is detected even if the interface stylesheet is not yet loaded.  
+Typically PaintWeb completes initialization before the style loads and that 
+caused problems.
+- Made minor code adjustments for jsdoc-toolkit.
+
 2009-06-30:
 ===========
 

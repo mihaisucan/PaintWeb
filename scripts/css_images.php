@@ -19,7 +19,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-30 22:48:01 +0300 $
+ * $Date: 2009-07-01 19:00:43 +0300 $
  */
 
 // This file takes a CSS file as input, and outputs the same file with all the 
@@ -38,6 +38,13 @@ chdir(dirname($file));
 
 function replace_callback ($matches) {
   $image = $matches[3];
+
+  // If the URL points to some external image, or if the file is not found then 
+  // we make no change to the code.
+  if (substr($image, 0, 7) === 'http://' || !file_exists($image)) {
+    return $matches[1] . ':' . $matches[2] . "url('" . $image . "')";
+  }
+
   $base64 = base64_encode(file_get_contents($image));
 
   $ext = strtolower(pathinfo($image, PATHINFO_EXTENSION));
@@ -53,7 +60,7 @@ function replace_callback ($matches) {
     $type = 'image/gif';
   }
 
-  $uri = 'data:' . $type . ',' . $base64;
+  $uri = 'data:' . $type . ';base64,' . $base64;
   $output = $matches[1] . ':' . $matches[2] . "url('" . $uri . "')";
 
   return $output;

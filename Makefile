@@ -18,7 +18,7 @@
 # along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
 # 
 # $URL: http://code.google.com/p/paintweb $
-# $Date: 2009-06-30 23:00:23 +0300 $
+# $Date: 2009-07-01 21:02:26 +0300 $
 
 
 #### Config:start #####################################################
@@ -39,14 +39,17 @@ BIN_JSON=scripts/json_encode.php
 # The XHTML minifier script
 BIN_XHTML=scripts/xhtml_minify.php
 
+# The compressor used for CSS files
+BIN_CSS=scripts/yuicompressor
+
 # The CSS images inliner script
 BIN_CSS_IMAGES=scripts/css_images.php
 
 # The compressor used for JavaScript files
 BIN_JS=scripts/yuicompressor
 
-# The compressor used for CSS files
-BIN_CSS=scripts/yuicompressor
+# The jsdoc script
+BIN_JSDOC=scripts/jsdoc
 
 # Folders
 FOLDER_BUILD=build
@@ -57,6 +60,7 @@ FOLDER_EXTENSIONS=extensions
 FOLDER_INTERFACES=interfaces
 FOLDER_LANG=lang
 FOLDER_COLORS=colors
+FOLDER_DOCS_API=docs/api-ref
 
 # Changes below this line are not recommended
 #### Config:end #######################################################
@@ -114,7 +118,7 @@ $(FOLDER_BUILD)/$(FILE_PAINTWEB): $(FILE_PAINTWEB_DEPS)
 	mkdir -p $(FOLDER_BUILD)
 	cat $(FILE_PAINTWEB_CAT) > $(@:.js=.src.js)
 	# Add the interface layout.
-	echo "$(JSVAR_fileCache)'$(INTERFACE_LAYOUT)']=" >> $(@:.js=.src.js)
+	echo "$(JSVAR_fileCache)'$(INTERFACE_LAYOUT)'] = " >> $(@:.js=.src.js)
 	$(BIN_XHTML) < $(FOLDER_SRC)/$(INTERFACE_LAYOUT) | $(BIN_JSON) >> $(@:.js=.src.js)
 	echo ";" >> $(@:.js=.src.js)
 	# Add the final script: PaintWeb itself
@@ -148,9 +152,9 @@ $(FOLDER_BUILD)/$(FILE_CONFIG): $(FOLDER_SRC)/$(FILE_CONFIG)
 	cp $^ $@
 
 
-.PHONY : clean
-clean:
-	rm $(FILE_PAINTWEB:.js=.src.js)
+.PHONY : docs
+docs:
+	$(BIN_JSDOC) $(FOLDER_SRC) $(FOLDER_DOCS_API)
 
 
 # vim:set spell spl=en fo=wan1croql tw=80 ts=2 sw=2 sts=0 sta noet ai cin fenc=utf-8 ff=unix:

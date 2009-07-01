@@ -10,7 +10,7 @@
     --></style>
 
     <!-- $URL: http://code.google.com/p/paintweb $
-         $Date: 2009-06-30 18:57:29 +0300 $ -->
+         $Date: 2009-07-01 19:23:47 +0300 $ -->
   </head>
   <body>
     <p>Welcome to PaintWeb!</p>
@@ -39,18 +39,22 @@
     <![endif]-->
 
     <script type="text/javascript" src="../src/includes/debug.js"></script>
-    <script type="text/javascript" src="../src/paintweb.js"></script>
+    <script type="text/javascript" src="../build/paintweb.js"></script>
 
     <script type="text/javascript"><!--
 (function () {
   // Function called when the user clicks the "Edit image" button.
   function pwStart () {
     document.body.insertBefore(loadp, btn.parentNode);
+
+    timeStart = (new Date()).getTime();
     pw.init(pwInit);
   };
 
   // Function called when the PaintWeb application fires the "initApp" event.
   function pwInit (ev) {
+    var initTime = (new Date()).getTime() - timeStart;
+
     document.body.removeChild(loadp);
 
     if (ev.state === PaintWeb.INIT_ERROR) {
@@ -58,7 +62,9 @@
       return;
 
     } else if (ev.state === PaintWeb.INIT_DONE && window.console && console.log) {
-      console.log('Demo: Yay, PaintWeb loaded! ' + pw.toString());
+      console.log('Demo: Yay, PaintWeb loaded in ' + initTime + ' ms! ' +
+        pw.toString());
+
     } else {
       alert('Demo: Unrecognized PaintWeb initialization state ' + ev.state);
 
@@ -73,6 +79,7 @@
       btn    = document.getElementById('buttonEditImage'),
       target = document.getElementById('PaintWebTarget'),
       loadp  = document.createElement('p'),
+      timeStart = null,
 
       // Create a PaintWeb instance.
       pw = new PaintWeb();

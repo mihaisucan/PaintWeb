@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-15 16:11:13 +0300 $
+ * $Date: 2009-07-01 18:46:31 +0300 $
  */
 
 /**
@@ -38,8 +38,7 @@ pwlib.tools.eraser = function (app) {
       image         = app.image,
       layerContext  = app.layer.context,
       mouse         = app.mouse,
-      setInterval   = app.win.setInterval,
-      configChange  = pwlib.appEvent.configChange;
+      setInterval   = app.win.setInterval;
 
   /**
    * The interval ID used for running the pencil drawing operation every few 
@@ -82,9 +81,6 @@ pwlib.tools.eraser = function (app) {
   /**
    * The tool deactivation event handler. This function clears timers, clears 
    * the canvas and allows shadows to be rendered again.
-   *
-   * <p>This function dispatches the {@link pwlib.appEvent.configChange} event 
-   * if the {@link PaintWeb.config.shadow.enable} property is changed.
    */
   this.deactivate = function () {
     if (timer) {

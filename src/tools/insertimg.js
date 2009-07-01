@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-22 13:53:50 +0300 $
+ * $Date: 2009-07-01 18:48:01 +0300 $
  */
 
 /**
@@ -37,7 +37,6 @@ pwlib.tools.insertimg = function (app) {
       canvasImage   = app.image,
       clearInterval = app.win.clearInterval,
       config        = app.config,
-      container     = app.elems.container,
       context       = app.buffer.context,
       gui           = app.gui,
       lang          = app.lang,

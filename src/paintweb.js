@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-30 18:59:22 +0300 $
+ * $Date: 2009-07-01 23:12:41 +0300 $
  */
 
 /**
@@ -25,9 +25,8 @@
  * @fileOverview The main PaintWeb application code.
  */
 
-(function () {
 /**
- * The PaintWeb application object.
+ * @class The PaintWeb application object.
  *
  * @param {Window} [win=window] The window object to use.
  * @param {Document} [doc=document] The document object to use.
@@ -52,7 +51,7 @@ function PaintWeb (win, doc) {
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090630;
+  this.build = 20090701;
 
   /**
    * Holds all the PaintWeb configuration.
@@ -234,6 +233,29 @@ function PaintWeb (win, doc) {
      * @default 'paintweb_resInfo'
      */
     elemId: 'paintweb_resInfo',
+
+    /**
+     * The styling necessary for the DOM element.
+     *
+     * @private
+     * @type String
+     */
+    cssText: '@media screen and (resolution:96dpi){' +
+             '#paintweb_resInfo{width:96px}}' +
+             '@media screen and (resolution:134dpi){' +
+             '#paintweb_resInfo{width:134px}}' +
+             '@media screen and (resolution:200dpi){' +
+             '#paintweb_resInfo{width:200px}}' +
+             '@media screen and (resolution:300dpi){' +
+             '#paintweb_resInfo{width:300px}}' +
+             '#paintweb_resInfo{' +
+             'display:block;' +
+             'height:100%;' +
+             'left:-3000px;' +
+             'position:fixed;' +
+             'top:0;' +
+             'visibility:hidden;' +
+             'z-index:-32}',
 
     /**
      * Optimal DPI for the canvas elements.
@@ -699,10 +721,11 @@ function PaintWeb (win, doc) {
         style  = base + cfg.guiStyle,
         script = base + cfg.guiScript;
 
+    this.styleLoad(style, null);
+
     if (gui in pwlib.gui) {
       this.guiScriptReady();
     } else {
-      this.styleLoad(style, null);
       this.scriptLoad(script, this.guiScriptReady);
     }
   };
@@ -723,12 +746,22 @@ function PaintWeb (win, doc) {
   this.guiScriptReady = function () {
     var cfg    = _self.config,
         gui    = _self.config.gui,
-        base   = cfg.baseFolder + cfg.interfacesFolder + '/' + gui + '/',
+        base   = cfg.interfacesFolder + '/' + gui + '/',
         markup = base + cfg.guiMarkup;
 
     _self.gui = new pwlib.gui[gui](_self);
 
-    pwlib.xhrLoad(markup, _self.guiMarkupReady);
+    // Check if the interface markup is cached already.
+    if (markup in pwlib.fileCache) {
+      if (_self.gui.init(pwlib.fileCache[markup])) {
+        _self.initTools();
+      } else {
+        _self.initError(lang.errorInitGUI);
+      }
+
+    } else {
+      pwlib.xhrLoad(cfg.baseFolder + markup, _self.guiMarkupReady);
+    }
   };
 
   /**
@@ -788,6 +821,11 @@ function PaintWeb (win, doc) {
         imagePreload    = cfg.imagePreload;
 
     if (!resInfo) {
+      var style = doc.createElement('style');
+      style.type = 'text/css';
+      style.appendChild(doc.createTextNode(res.cssText));
+      _self.elems.head.appendChild(style);
+
       resInfo = doc.createElement('div');
       resInfo.id = res.elemId;
       doc.body.appendChild(resInfo);
@@ -1855,10 +1893,10 @@ function PaintWeb (win, doc) {
 
     // Each image in the history can have a different size. As such, the script 
     // must take this into consideration.
-    var w = MathMin(this.image.width,  himg.width),
-        h = MathMin(this.image.height, himg.height);
+    var w = MathMin(image.width,  himg.width),
+        h = MathMin(image.height, himg.height);
 
-    layerContext.clearRect(0, 0, this.image.width, this.image.height);
+    layerContext.clearRect(0, 0, image.width, image.height);
 
     try {
       // Firefox 3 does not clip the image, if needed.
@@ -2271,7 +2309,7 @@ function PaintWeb (win, doc) {
    *
    * @returns {Boolean} True if the operation was successful, or false if not.
    */
-  this.imageSave = function (ev) {
+  this.imageSave = function () {
     var canvas = _self.layer.canvas;
 
     if (!canvas.toDataURL) {
@@ -2306,25 +2344,25 @@ function PaintWeb (win, doc) {
    * Swap the fill and stroke styles. This is just like in Photoshop, if the 
    * user presses X, the fill/stroke colors are swapped.
    *
-   * <p>This method dispatches the {@link pwlib.appEvent.swapFillStroke} event.
-   *
-   * @returns {Boolean} True if the colors were swapped, or false if not.
+   * <p>This method dispatches the {@link pwlib.appEvent.configChange} event 
+   * twice for each color (strokeStyle and fillStyle).
    */
   this.swapFillStroke = function () {
-    var bufferContext = _self.buffer.context,
-        fillStyle     = bufferContext.fillStyle,
-        strokeStyle   = bufferContext.strokeStyle;
+    var fillStyle     = _self.config.fillStyle,
+        strokeStyle   = _self.config.strokeStyle;
 
-    var cancel = _self.events.dispatch(new appEvent.swapFillStroke(strokeStyle, 
-          fillStyle));
+    _self.config.fillStyle   = strokeStyle;
+    _self.config.strokeStyle = fillStyle;
 
-    if (cancel) {
-      return false;
-    } else {
-      img.fillStyle   = strokeStyle;
-      img.strokeStyle = fillStyle;
-      return true;
-    }
+    var ev = new appEvent.configChange(strokeStyle, fillStyle, 'fillStyle', '', 
+        _self.config);
+
+    _self.events.dispatch(ev);
+
+    ev = new appEvent.configChange(fillStyle, strokeStyle, 'strokeStyle', '', 
+        _self.config);
+
+    _self.events.dispatch(ev);
   };
 
   /**
@@ -2495,10 +2533,6 @@ PaintWeb.INIT_DONE = 2;
  * @constant
  */
 PaintWeb.INIT_ERROR = -1;
-
-window.PaintWeb = PaintWeb;
-
-})();
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
 
