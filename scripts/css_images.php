@@ -1,4 +1,3 @@
-#!/usr/bin/php
 <?php
 /*
  * Copyright (C) 2008, 2009 Mihai Şucan
@@ -19,7 +18,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-01 19:00:43 +0300 $
+ * $Date: 2009-07-02 20:49:00 +0300 $
  */
 
 // This file takes a CSS file as input, and outputs the same file with all the 

@@ -3,6 +3,7 @@
 
 - Further work on packaging and jsdoc API reference. Everything should be 
 working fine now.
+- jsdoc comment fixes across several files.
 
 2009-07-01:
 ===========

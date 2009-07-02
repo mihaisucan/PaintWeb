@@ -18,7 +18,7 @@
 # along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
 # 
 # $URL: http://code.google.com/p/paintweb $
-# $Date: 2009-07-02 19:54:11 +0300 $
+# $Date: 2009-07-02 22:20:55 +0300 $
 
 
 #### Config:start #####################################################
@@ -33,17 +33,20 @@ EXTENSIONS=colormixer mousekeys
 # The interface you want packaged
 INTERFACE=default
 
+# The PHP binary for running PHP scripts
+BIN_PHP=php
+
 # The JSON encoder script
-BIN_JSON=scripts/json_encode.php
+BIN_JSON=$(BIN_PHP) scripts/json_encode.php
 
 # The XHTML minifier script
-BIN_XHTML=scripts/xhtml_minify.php
+BIN_XHTML=$(BIN_PHP) scripts/xhtml_minify.php
 
 # The compressor used for CSS files
 BIN_CSS=scripts/yuicompressor
 
 # The CSS images inliner script
-BIN_CSS_IMAGES=scripts/css_images.php
+BIN_CSS_IMAGES=$(BIN_PHP) scripts/css_images.php
 
 # The compressor used for JavaScript files
 BIN_JS=scripts/yuicompressor

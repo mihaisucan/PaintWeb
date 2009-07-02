@@ -1,4 +1,3 @@
-#!/usr/bin/php
 <?php
 /*
  * Copyright (C) 2008, 2009 Mihai Şucan
@@ -19,7 +18,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-30 20:00:10 +0300 $
+ * $Date: 2009-07-02 20:49:09 +0300 $
  */
 
 // This file takes a text file as input, and outputs a JSON-encoded string.
