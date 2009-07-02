@@ -1,13 +1,9 @@
 $Author: Mihai Şucan $
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-06-30 13:07:49 +0300 $
+$Date: 2009-07-02 20:19:01 +0300 $
 
 Until the end of GSOC:
 
-- Implement the ColorEditor extension.
-- Application packaging. Currently, all the code is split across multiple files.  
-For performance reasons, it's best to package all code in a single minified 
-file.
 - Integrate into TinyMCE and Moodle.
 - Color theme for the OLPC XO.
 

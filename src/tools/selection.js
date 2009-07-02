@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-01 18:50:18 +0300 $
+ * $Date: 2009-07-02 16:07:14 +0300 $
  */
 
 /**
@@ -110,27 +110,28 @@ pwlib.tools.selection = function (app) {
    * Selection state. Known states:
    *
    * <ul>
-   *   <li>{@link this.STATE_PENDING} - Selection dropped after the 
-   *   <code>mousedown</code> event is fired. The script can switch to 
+   *   <li>{@link pwlib.tools.selection#STATE_PENDING} - Selection dropped after 
+   *   the <code>mousedown</code> event is fired. The script can switch to 
    *   STATE_DRAWING if the mouse moves, or to STATE_NONE if it does not 
    *   (allowing the user to drop the selection).
    *
-   *   <li>{@link this.STATE_NONE} - No selection is available.
+   *   <li>{@link pwlib.tools.selection#STATE_NONE} - No selection is available.
    *
-   *   <li>{@link this.STATE_DRAWING} - The user is drawing the selection 
-   *   rectangle.
+   *   <li>{@link pwlib.tools.selection#STATE_DRAWING} - The user is drawing the 
+   *   selection rectangle.
    *
-   *   <li>{@link this.STATE_SELECTED} - The selection rectangle is available.
+   *   <li>{@link pwlib.tools.selection#STATE_SELECTED} - The selection 
+   *   rectangle is available.
    *
-   *   <li>{@link this.STATE_DRAGGING} - The user is dragging/moving the current 
-   *   selection.
+   *   <li>{@link pwlib.tools.selection#STATE_DRAGGING} - The user is 
+   *   dragging/moving the current selection.
    *
-   *   <li>{@link this.STATE_RESIZING} - The user is resizing the current 
-   *   selection.
+   *   <li>{@link pwlib.tools.selection#STATE_RESIZING} - The user is resizing 
+   *   the current selection.
    * </ul>
    *
    * @type Number
-   * @default this.STATE_NONE
+   * @default STATE_NONE
    */
   this.state = this.STATE_NONE;
 
@@ -226,9 +227,9 @@ pwlib.tools.selection = function (app) {
   /**
    * The area type under the current mouse location.
    * 
-   * <p>During state 2 (selection available) the mouse location can be on 
-   * top/inside the selection rectangle, on the border of the selection, or 
-   * outside the selection.
+   * <p>When the selection is available the mouse location can be on top/inside 
+   * the selection rectangle, on the border of the selection, or outside the 
+   * selection.
    *
    * <p>Possible values: 'in', 'out', 'border'.
    *
@@ -243,9 +244,9 @@ pwlib.tools.selection = function (app) {
    * selection can be resized. The direction of the resize operation is 
    * determined by the location of the mouse.
    * 
-   * <p>During the states 4 and 6 (resizing selection/ImageData) the property 
-   * can hold the following values: 'n' (North), 'ne' (North-East), 'e' (East), 
-   * 'se' (South-East), 's' (South), 'sw' (South-West), 'w' (West), 'nw' 
+   * <p>While the user resizes the selection this variable can hold the 
+   * following values: 'n' (North), 'ne' (North-East), 'e' (East), 'se' 
+   * (South-East), 's' (South), 'sw' (South-West), 'w' (West), 'nw' 
    * (North-West).
    *
    * @private
@@ -501,7 +502,6 @@ pwlib.tools.selection = function (app) {
    * simply tracks the mouse location for the purpose of determining the area 
    * being pointed at: the selection, the borders, or if the mouse is outside 
    * the selection.
-   *
    * @private
    */
   function timerFn () {
@@ -539,8 +539,9 @@ pwlib.tools.selection = function (app) {
    * The <code>mouseup</code> event handler. This method ends any selection 
    * operation.
    *
-   * <p>This method might dispatch the {@link pwlib.appEvent.selectionChange} 
-   * application event.
+   * <p>This method dispatches the {@link pwlib.appEvent.selectionChange} 
+   * application event when the selection state is changed or when the selection 
+   * size/location is updated.
    *
    * @param {Event} ev The DOM Event object.
    */
@@ -1115,8 +1116,8 @@ pwlib.tools.selection = function (app) {
   };
 
   /**
-   * Cut the selected pixels. The associated ImageData is stored in 
-   * <var>app.clipboard</var.
+   * Cut the selected pixels. The associated ImageData is stored in {@link 
+   * PaintWeb#clipboard}.
    *
    * <p>This method dispatches two application events: {@link 
    * pwlib.appEvent.clipboardUpdate} and {@link pwlib.appEvent.selectionChange}.
@@ -1150,8 +1151,8 @@ pwlib.tools.selection = function (app) {
   };
 
   /**
-   * Copy the selected pixels. The associated ImageData is stored in 
-   * <var>app.clipboard</var.
+   * Copy the selected pixels. The associated ImageData is stored in {@link 
+   * PaintWeb#clipboard}.
    *
    * <p>This method dispatches the {@link pwlib.appEvent.clipboardUpdate} 
    * application event.
@@ -1204,7 +1205,7 @@ pwlib.tools.selection = function (app) {
   };
 
   /**
-   * Paste an image from the "clipboard". The <var>app.clipboard</var object 
+   * Paste an image from the "clipboard". The {@link PaintWeb#clipboard} object 
    * must be an ImageData. This method will generate a new selection which will 
    * hold the pasted image.
    *
@@ -1441,6 +1442,63 @@ pwlib.tools.selection = function (app) {
 
     return true;
   };
+};
+
+/**
+ * @class Selection change event. This event is not cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {Number} state Tells the new state of the selection.
+ * @param {Number} [x] Selection start position on the x-axis of the image.
+ * @param {Number} [y] Selection start position on the y-axis of the image.
+ * @param {Number} [width] Selection width.
+ * @param {Number} [height] Selection height.
+ */
+pwlib.appEvent.selectionChange = function (state, x, y, width, height) {
+  /**
+   * No selection is available.
+   * @constant
+   */
+  this.STATE_NONE = 0;
+
+  /**
+   * Selection available.
+   * @constant
+   */
+  this.STATE_SELECTED = 2;
+
+  /**
+   * Selection state.
+   * @type Number
+   */
+  this.state = state;
+
+  /**
+   * Selection location on the x-axis of the image.
+   * @type Number
+   */
+  this.x = x;
+
+  /**
+   * Selection location on the y-axis of the image.
+   * @type Number
+   */
+  this.y = y;
+
+  /**
+   * Selection width.
+   * @type Number
+   */
+  this.width  = width;
+
+  /**
+   * Selection height.
+   * @type Number
+   */
+  this.height = height;
+
+  pwlib.appEvent.call(this, 'selectionChange');
 };
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:

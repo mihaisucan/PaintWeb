@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-07-01 18:35:31 +0300 $
+ * $Date: 2009-07-02 15:15:39 +0300 $
  */
 
 /**
@@ -53,12 +53,6 @@ pwlib.tools = {};
  * automatically when a PaintWeb instance is initialized.
  */
 pwlib.extensions = {};
-
-/**
- * @namespace Holds all the PaintWeb GUIs.
- * @type Object
- */
-pwlib.gui = {};
 
 /**
  * This function extends objects.
@@ -225,16 +219,42 @@ pwlib.appEvent = function (type, cancelable) {
     throw new TypeError('The second argument must be a boolean');
   }
 
+  /**
+   * Event target object.
+   * @type Object
+   */
+  this.target = null;
+
+  /**
+   * Tells if the event can be cancelled or not.
+   * @type Boolean
+   */
   this.cancelable = cancelable;
+
+  /**
+   * Tells if the event has the default action prevented or not.
+   * @type Boolean
+   */
   this.defaultPrevented = false;
+
+  /**
+   * Event type.
+   * @type String
+   */
   this.type = type;
 
+  /**
+   * Prevent the default action of the event.
+   */
   this.preventDefault = function () {
     if (cancelable) {
       this.defaultPrevented = true;
     }
   };
 
+  /**
+   * Stop the event propagation to other event handlers.
+   */
   this.stopPropagation = function () {
     this.propagationStopped_ = true;
   };
@@ -255,7 +275,40 @@ pwlib.appEvent.initApp = function (state, errorMessage) {
     throw new TypeError('The first argument must be a number.');
   }
 
+  /**
+   * Application initialization not started.
+   * @constant
+   */
+  this.INIT_NOT_STARTED = 0;
+
+  /**
+   * Application initialization started.
+   * @constant
+   */
+  this.INIT_STARTED = 1;
+
+  /**
+   * Application initialization completed successfully.
+   * @constant
+   */
+  this.INIT_DONE = 2;
+
+  /**
+   * Application initialization failed.
+   * @constant
+   */
+  this.INIT_ERROR = -1;
+
+  /**
+   * Initialization state.
+   * @type Number
+   */
   this.state = state;
+
+  /**
+   * Initialization error message, if any.
+   * @type String|null
+   */
   this.errorMessage = errorMessage || null;
 
   pwlib.appEvent.call(this, 'initApp');
@@ -279,7 +332,16 @@ pwlib.appEvent.toolPreactivate = function (id, prevId) {
     throw new TypeError('The second argument must be a string or null.');
   }
 
+  /**
+   * Tool ID.
+   * @type String
+   */
   this.id = id;
+
+  /**
+   * Previous tool ID.
+   * @type String
+   */
   this.prevId = prevId;
 
   pwlib.appEvent.call(this, 'toolPreactivate', true);
@@ -290,7 +352,7 @@ pwlib.appEvent.toolPreactivate = function (id, prevId) {
  *
  * @augments pwlib.appEvent
  *
- * @param {String} id The ID of the new tool being activated.
+ * @param {String} id The ID the tool which was activated.
  * @param {String|null} prevId The ID of the previous tool.
  *
  * @throws {TypeError} If the <var>id</var> is not a string.
@@ -303,7 +365,16 @@ pwlib.appEvent.toolActivate = function (id, prevId) {
     throw new TypeError('The second argument must be a string or null.');
   }
 
+  /**
+   * Tool ID.
+   * @type String
+   */
   this.id = id;
+
+  /**
+   * Previous tool ID.
+   * @type String
+   */
   this.prevId = prevId;
 
   pwlib.appEvent.call(this, 'toolActivate');
@@ -324,6 +395,10 @@ pwlib.appEvent.toolRegister = function (id) {
     throw new TypeError('The first argument must be a string.');
   }
 
+  /**
+   * Tool ID.
+   * @type String
+   */
   this.id = id;
 
   pwlib.appEvent.call(this, 'toolRegister');
@@ -344,6 +419,10 @@ pwlib.appEvent.toolUnregister = function (id) {
     throw new TypeError('The first argument must be a string.');
   }
 
+  /**
+   * Tool ID.
+   * @type String
+   */
   this.id = id;
 
   pwlib.appEvent.call(this, 'toolUnregister');
@@ -364,6 +443,10 @@ pwlib.appEvent.extensionRegister = function (id) {
     throw new TypeError('The first argument must be a string.');
   }
 
+  /**
+   * Extension ID.
+   * @type String
+   */
   this.id = id;
 
   pwlib.appEvent.call(this, 'extensionRegister');
@@ -384,6 +467,10 @@ pwlib.appEvent.extensionUnregister = function (id) {
     throw new TypeError('The first argument must be a string.');
   }
 
+  /**
+   * Extension ID.
+   * @type String
+   */
   this.id = id;
 
   pwlib.appEvent.call(this, 'extensionUnregister');
@@ -404,6 +491,10 @@ pwlib.appEvent.commandRegister = function (id) {
     throw new TypeError('The first argument must be a string.');
   }
 
+  /**
+   * Command ID.
+   * @type String
+   */
   this.id = id;
 
   pwlib.appEvent.call(this, 'commandRegister');
@@ -424,6 +515,10 @@ pwlib.appEvent.commandUnregister = function (id) {
     throw new TypeError('The first argument must be a string.');
   }
 
+  /**
+   * Command ID.
+   * @type String
+   */
   this.id = id;
 
   pwlib.appEvent.call(this, 'commandUnregister');
@@ -440,8 +535,22 @@ pwlib.appEvent.commandUnregister = function (id) {
  * @param {Number} height The image height.
  */
 pwlib.appEvent.imageSave = function (dataURL, width, height) {
+  /**
+   * The image saved by the browser, using base64 encoding.
+   * @type String
+   */
   this.dataURL = dataURL;
+
+  /**
+   * Image width.
+   * @type Number
+   */
   this.width = width;
+
+  /**
+   * Image height.
+   * @type Number
+   */
   this.height = height;
 
   pwlib.appEvent.call(this, 'imageSave', true);
@@ -464,8 +573,22 @@ pwlib.appEvent.historyUpdate = function (currentPos, previousPos, states) {
     throw new TypeError('All arguments must be numbers.');
   }
 
+  /**
+   * Current history position.
+   * @type Number
+   */
   this.currentPos = currentPos;
+
+  /**
+   * Previous history position.
+   * @type Number
+   */
   this.previousPos = previousPos;
+
+  /**
+   * History states count.
+   * @type Number
+   */
   this.states = states;
 
   pwlib.appEvent.call(this, 'historyUpdate');
@@ -486,7 +609,16 @@ pwlib.appEvent.imageSizeChange = function (width, height) {
     throw new TypeError('Both arguments must be numbers.');
   }
 
+  /**
+   * New image width.
+   * @type Number
+   */
   this.width  = width;
+
+  /**
+   * New image height.
+   * @type Number
+   */
   this.height = height;
 
   pwlib.appEvent.call(this, 'imageSizeChange');
@@ -513,8 +645,22 @@ pwlib.appEvent.canvasSizeChange = function (width, height, scale) {
     throw new TypeError('All the arguments must be numbers.');
   }
 
+  /**
+   * New Canvas style width.
+   * @type Number
+   */
   this.width  = width;
+
+  /**
+   * New Canvas style height.
+   * @type Number
+   */
   this.height = height;
+
+  /**
+   * The new Canvas scaling factor.
+   * @type Number
+   */
   this.scale  = scale;
 
   pwlib.appEvent.call(this, 'canvasSizeChange');
@@ -534,6 +680,10 @@ pwlib.appEvent.imageZoom = function (zoom) {
     throw new TypeError('The first argument must be a number.');
   }
 
+  /**
+   * The new image zoom level.
+   * @type Number
+   */
   this.zoom = zoom;
 
   pwlib.appEvent.call(this, 'imageZoom', true);
@@ -557,9 +707,28 @@ pwlib.appEvent.imageCrop = function (x, y, width, height) {
     throw new TypeError('All arguments must be numbers.');
   }
 
-  this.x      = x;
-  this.y      = y;
+  /**
+   * The crop start position the x-axis.
+   * @type Number
+   */
+  this.x = x;
+
+  /**
+   * The crop start position the y-axis.
+   * @type Number
+   */
+  this.y = y;
+
+  /**
+   * The cropped image width.
+   * @type Number
+   */
   this.width  = width;
+
+  /**
+   * The cropped image height.
+   * @type Number
+   */
   this.height = height;
 
   pwlib.appEvent.call(this, 'imageCrop', true);
@@ -590,11 +759,33 @@ pwlib.appEvent.configChange = function (value, previousValue, config, group,
     throw new TypeError('The fifth argument must be an object.');
   }
 
-  this.value         = value;
+  /**
+   * The new value.
+   */
+  this.value = value;
+
+  /**
+   * The previous value.
+   */
   this.previousValue = previousValue;
-  this.config        = config;
-  this.group         = group;
-  this.groupRef      = groupRef;
+
+  /**
+   * Configuration property name.
+   * @type String
+   */
+  this.config = config;
+
+  /**
+   * Configuration group name.
+   * @type String
+   */
+  this.group = group;
+
+  /**
+   * Reference to the object holding the configuration property.
+   * @type Object
+   */
+  this.groupRef = groupRef;
 
   pwlib.appEvent.call(this, 'configChange');
 };
@@ -613,33 +804,13 @@ pwlib.appEvent.shadowAllow = function (allowed) {
     throw new TypeError('The first argument must be a boolean.');
   }
 
+  /**
+   * Tells if the Canvas shadows are allowed or not.
+   * @type Boolean
+   */
   this.allowed = allowed;
 
   pwlib.appEvent.call(this, 'shadowAllow');
-};
-
-/**
- * @class Selection change event. This event is not cancelable.
- *
- * @augments pwlib.appEvent
- *
- * @param {Number} state Tells the new state of the selection.
- * @param {Number} [x] Selection start position on the x-axis of the image.
- * @param {Number} [y] Selection start position on the y-axis of the image.
- * @param {Number} [width] Selection width.
- * @param {Number} [height] Selection height.
- */
-pwlib.appEvent.selectionChange = function (state, x, y, width, height) {
-  this.STATE_NONE     = 0;
-  this.STATE_SELECTED = 2;
-
-  this.state  = state;
-  this.x      = x;
-  this.y      = y;
-  this.width  = width;
-  this.height = height;
-
-  pwlib.appEvent.call(this, 'selectionChange');
 };
 
 /**
@@ -650,6 +821,10 @@ pwlib.appEvent.selectionChange = function (state, x, y, width, height) {
  * @param {ImageData} data Holds the clipboard ImageData.
  */
 pwlib.appEvent.clipboardUpdate = function (data) {
+  /**
+   * The clipboard image data.
+   * @type ImageData
+   */
   this.data = data;
 
   pwlib.appEvent.call(this, 'clipboardUpdate');

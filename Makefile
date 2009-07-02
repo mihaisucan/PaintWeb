@@ -18,7 +18,7 @@
 # along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
 # 
 # $URL: http://code.google.com/p/paintweb $
-# $Date: 2009-07-01 21:02:26 +0300 $
+# $Date: 2009-07-02 19:54:11 +0300 $
 
 
 #### Config:start #####################################################
@@ -103,12 +103,15 @@ FILE_PAINTWEB_CAT=$(FOLDER_SRC)/$(FILE_PWLIB) \
 
 JSVAR_fileCache=pwlib.fileCache[
 
+BUILD_VERSION=$(shell sed -rn 's~\s+this.version = ([0-9.]+); //!~\1~p' $(FOLDER_SRC)/$(FILE_PAINTWEB))
+BUILD_DATE=$(shell date +'%Y%m%d')
+
 #### Make rules
 
 # The default rule
 all: $(FOLDER_BUILD)/$(FILE_PAINTWEB) \
 	$(FOLDER_BUILD)/$(FILE_JSONLIB) \
-	$(FOLDER_BUILD)/$(FOLDER_INTERFACE) \
+	$(FOLDER_BUILD)/$(INTERFACE_STYLE) \
 	$(FOLDER_BUILD)/$(FOLDER_COLORS) \
 	$(FOLDER_BUILD)/$(FOLDER_LANG) \
 	$(FOLDER_BUILD)/$(FILE_CONFIG)
@@ -122,7 +125,7 @@ $(FOLDER_BUILD)/$(FILE_PAINTWEB): $(FILE_PAINTWEB_DEPS)
 	$(BIN_XHTML) < $(FOLDER_SRC)/$(INTERFACE_LAYOUT) | $(BIN_JSON) >> $(@:.js=.src.js)
 	echo ";" >> $(@:.js=.src.js)
 	# Add the final script: PaintWeb itself
-	cat $(FOLDER_SRC)/$(FILE_PAINTWEB) >> $(@:.js=.src.js)
+	sed -e 's~this.build = -1; //!~this.build = $(BUILD_DATE);~1' $(FOLDER_SRC)/$(FILE_PAINTWEB) >> $(@:.js=.src.js)
 	$(BIN_JS) $(@:.js=.src.js) > $@
 
 # The color palettes
@@ -140,9 +143,9 @@ $(FOLDER_BUILD)/$(FILE_JSONLIB): $(FOLDER_SRC)/$(FILE_JSONLIB)
 	mkdir -p $(FOLDER_BUILD)/$(FOLDER_INCLUDES)
 	$(BIN_JS) $^ > $@
 
-# The interface folder: just minify the CSS
-$(FOLDER_BUILD)/$(FOLDER_INTERFACE): $(FOLDER_SRC)/$(INTERFACE_STYLE)
-	mkdir -p $@
+# The interface stylesheet.
+$(FOLDER_BUILD)/$(INTERFACE_STYLE): $(FOLDER_SRC)/$(INTERFACE_STYLE)
+	mkdir -p $(FOLDER_BUILD)/$(FOLDER_INTERFACE)
 	$(BIN_CSS) $^ > $^.tmp
 	$(BIN_CSS_IMAGES) $^.tmp > $(FOLDER_BUILD)/$(INTERFACE_STYLE)
 	rm $^.tmp
@@ -152,10 +155,18 @@ $(FOLDER_BUILD)/$(FILE_CONFIG): $(FOLDER_SRC)/$(FILE_CONFIG)
 	cp $^ $@
 
 
-.PHONY : docs
+.PHONY : docs release snapshot package
 docs:
 	$(BIN_JSDOC) $(FOLDER_SRC) $(FOLDER_DOCS_API)
 
+release: package
+	mv /tmp/paintweb.tar.bz2 ./paintweb-$(BUILD_VERSION).tar.bz2
+
+snapshot: package
+	mv /tmp/paintweb.tar.bz2 ./paintweb-$(BUILD_VERSION)-$(BUILD_DATE).tar.bz2
+
+package:
+	tar --exclude=".*" --exclude="*~" --exclude="*bz2" -cjvf /tmp/paintweb.tar.bz2 *
 
 # vim:set spell spl=en fo=wan1croql tw=80 ts=2 sw=2 sts=0 sta noet ai cin fenc=utf-8 ff=unix:
 

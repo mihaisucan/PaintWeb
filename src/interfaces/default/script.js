@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-01 22:50:15 +0300 $
+ * $Date: 2009-07-02 15:34:44 +0300 $
  */
 
 /**
@@ -26,13 +26,11 @@
  */
 
 /**
- * @name pwlib.gui.default
- *
  * @class The default PaintWeb interface.
  *
  * @param {PaintWeb} app Reference to the main paint application object.
  */
-pwlib.gui['default'] = function (app) {
+pwlib.gui = function (app) {
   var _self     = this,
       config    = app.config,
       doc       = app.doc,
@@ -422,42 +420,42 @@ pwlib.gui['default'] = function (app) {
    * Parse the interface markup. The layout file can have custom 
    * PaintWeb-specific attributes.
    *
-   * <p>Elements with the <code>data-pwId</code> attribute are added to 
-   * <var>this.elems</var> object.
+   * <p>Elements with the <code>data-pwId</code> attribute are added to the 
+   * {@link pwlib.gui#elems} object.
    *
    * <p>Elements having the <code>data-pwCommand</code> attribute are added to 
-   * the <var>this.commands</var> object.
+   * the {@link pwlib.gui#commands} object.
    *
    * <p>Elements having the <code>data-pwTool</code> attribute are added to the 
-   * <var>this.tools</var> object.
+   * {@link pwlib.gui#tools} object.
    *
    * <p>Elements having the <code>data-pwTabPanel</code> attribute are added to 
-   * the <var>this.tabPanels</var> object. These become interactive GUI 
+   * the {@link pwlib.gui#tabPanels} object. These become interactive GUI 
    * components (see {@link pwlib.guiTabPanel}).
    *
    * <p>Elements having the <code>data-pwFloatingPanel</code> attribute are 
-   * added to the <var>this.floatingPanels</var> object. These become 
+   * added to the {@link pwlib.gui#floatingPanels} object. These become 
    * interactive GUI components (see {@link pwlib.guiFloatingPanel}).
    *
    * <p>Elements having the <code>data-pwConfig</code> attribute are added to 
-   * the <var>this.inputs</var> object. These become interactive GUI components 
-   * which allow users to change configuration options.
+   * the {@link pwlib.gui#inputs} object. These become interactive GUI 
+   * components which allow users to change configuration options.
    *
    * <p>Elements having the <code>data-pwConfigValue</code> attribute are added 
-   * to the <var>this.inputValues</var> object. These can only be child nodes of 
-   * elements which have the <code>data-pwConfig</code> attribute. Each such 
+   * to the {@link pwlib.gui#inputValues} object. These can only be child nodes 
+   * of elements which have the <code>data-pwConfig</code> attribute. Each such 
    * element is considered an icon. Anchor elements are appended to ensure 
    * keyboard accessibility.
    *
    * <p>Elements having the <code>data-pwConfigToggle</code> attribute are added 
-   * to the <var>this.inputs</var> object. These become interactive GUI 
+   * to the {@link pwlib.gui#inputs} object. These become interactive GUI 
    * components which toggle the boolean value of the configuration property 
    * they are associated to.
    *
    * <p>Elements having the <code>data-pwColorInput</code> attribute are added 
-   * to the <var>this.colorInputs</var> object. These become color picker inputs 
-   * which are associated to the configuration property given as the attribute 
-   * value. (see {@link pwlib.guiColorInput})
+   * to the {@link pwlib.gui#colorInputs} object. These become color picker 
+   * inputs which are associated to the configuration property given as the 
+   * attribute value. (see {@link pwlib.guiColorInput})
    *
    * @returns {Boolean} True if the parsing was successful, or false if not.
    */
@@ -953,8 +951,8 @@ pwlib.gui['default'] = function (app) {
    * This simply shows the title / text content of the element in the GUI status 
    * bar.
    *
-   * @see this#statusShow The method used for displaying the message in the GUI 
-   * status bar.
+   * @see pwlib.gui#statusShow The method used for displaying the message in the 
+   * GUI status bar.
    */
   this.item_mouseover = function () {
     if (this.title || this.textConent) {
@@ -967,8 +965,8 @@ pwlib.gui['default'] = function (app) {
    * This method simply resets the GUI status bar to the previous message it was 
    * displaying before the user hovered the current element.
    *
-   * @see this#statusShow The method used for displaying the message in the GUI 
-   * status bar.
+   * @see pwlib.gui#statusShow The method used for displaying the message in the 
+   * GUI status bar.
    */
   this.item_mouseout = function () {
     _self.statusShow(-1);
@@ -1744,10 +1742,28 @@ pwlib.guiFloatingPanel = function (gui, container) {
   // These hold the panel starting location during the drag operation.
   var ptop, pleft;
 
-  // panel states.
+  /**
+   * Panel state: hidden.
+   * @constant
+   */
   this.STATE_HIDDEN    = 0;
+
+  /**
+   * Panel state: visible.
+   * @constant
+   */
   this.STATE_VISIBLE   = 1;
+
+  /**
+   * Panel state: minimized.
+   * @constant
+   */
   this.STATE_MINIMIZED = 3;
+
+  /**
+   * Panel state: the user is dragging the floating panel.
+   * @constant
+   */
   this.STATE_DRAGGING  = 4;
 
   /**
@@ -2105,12 +2121,34 @@ pwlib.guiFloatingPanel = function (gui, container) {
  * @param {Number} state The floating panel state.
  */
 pwlib.appEvent.guiFloatingPanelStateChange = function (state) {
-  // panel states.
+  /**
+   * Panel state: hidden.
+   * @constant
+   */
   this.STATE_HIDDEN    = 0;
+
+  /**
+   * Panel state: visible.
+   * @constant
+   */
   this.STATE_VISIBLE   = 1;
+
+  /**
+   * Panel state: minimized.
+   * @constant
+   */
   this.STATE_MINIMIZED = 3;
+
+  /**
+   * Panel state: the user is dragging the floating panel.
+   * @constant
+   */
   this.STATE_DRAGGING  = 4;
 
+  /**
+   * The current floating panel state.
+   * @type Number
+   */
   this.state = state;
 
   pwlib.appEvent.call(this, 'guiFloatingPanelStateChange');
@@ -2309,9 +2347,28 @@ pwlib.guiResizer = function (gui, resizeHandle, container) {
  * @param {Number} height The element height.
  */
 pwlib.appEvent.guiResizeStart = function (x, y, width, height) {
+  /**
+   * The mouse location on the x-axis.
+   * @type Number
+   */
   this.x = x;
+
+  /**
+   * The mouse location on the y-axis.
+   * @type Number
+   */
   this.y = y;
+
+  /**
+   * The element width.
+   * @type Number
+   */
   this.width = width;
+
+  /**
+   * The element height.
+   * @type Number
+   */
   this.height = height;
 
   pwlib.appEvent.call(this, 'guiResizeStart', true);
@@ -2328,9 +2385,28 @@ pwlib.appEvent.guiResizeStart = function (x, y, width, height) {
  * @param {Number} height The element height.
  */
 pwlib.appEvent.guiResizeEnd = function (x, y, width, height) {
+  /**
+   * The mouse location on the x-axis.
+   * @type Number
+   */
   this.x = x;
+
+  /**
+   * The mouse location on the y-axis.
+   * @type Number
+   */
   this.y = y;
+
+  /**
+   * The element width.
+   * @type Number
+   */
   this.width = width;
+
+  /**
+   * The element height.
+   * @type Number
+   */
   this.height = height;
 
   pwlib.appEvent.call(this, 'guiResizeEnd', true);
@@ -2582,7 +2658,16 @@ pwlib.guiTabPanel = function (gui, panel) {
  * @param {String} prevTabId The ID of the previously active tab.
  */
 pwlib.appEvent.guiTabActivate = function (tabId, prevTabId) {
+  /**
+   * The ID of the tab being activated.
+   * @type String
+   */
   this.tabId = tabId;
+
+  /**
+   * The ID of the previously active tab.
+   * @type String
+   */
   this.prevTabId = prevTabId;
 
   pwlib.appEvent.call(this, 'guiTabActivate', true);

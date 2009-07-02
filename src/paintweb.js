@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-01 23:12:41 +0300 $
+ * $Date: 2009-07-02 18:08:10 +0300 $
  */
 
 /**
@@ -45,13 +45,13 @@ function PaintWeb (win, doc) {
    * PaintWeb version.
    * @type Number
    */
-  this.version = 0.9;
+  this.version = 0.9; //!
 
   /**
    * PaintWeb build date (YYYYMMDD).
    * @type Number
    */
-  this.build = 20090701;
+  this.build = -1; //!
 
   /**
    * Holds all the PaintWeb configuration.
@@ -152,7 +152,7 @@ function PaintWeb (win, doc) {
   this.gui = null;
 
   /**
-   * The document element we will be working with.
+   * The document element PaintWeb is working with.
    *
    * @private
    * @type Document
@@ -161,7 +161,7 @@ function PaintWeb (win, doc) {
   this.doc = doc;
 
   /**
-   * The window object we will be working with.
+   * The window object PaintWeb is working with.
    *
    * @private
    * @type Window
@@ -296,6 +296,7 @@ function PaintWeb (win, doc) {
   /**
    * The image history.
    *
+   * @private
    * @type Object
    */
   this.history = {
@@ -429,15 +430,32 @@ function PaintWeb (win, doc) {
    * @private
    */
   function preInit() {
-    _self.UID = (new Date()).getMilliseconds() * MathRound(Math.random() * 100);
+    var d = new Date();
+
+    // If PaintWeb is running directly from the source code, then the build date 
+    // is always today.
+    if (_self.build === -1) {
+      var dateArr = [d.getFullYear(), d.getMonth()+1, d.getDate()];
+
+      if (dateArr[1] < 10) {
+        dateArr[1] = '0' + dateArr[1];
+      }
+      if (dateArr[2] < 10) {
+        dateArr[2] = '0' + dateArr[2];
+      }
+
+      _self.build = dateArr.join('');
+    }
+
+    _self.UID = d.getMilliseconds() * MathRound(Math.random() * 100);
     _self.elems.head = doc.getElementsByTagName('head')[0] || doc.body;
   };
 
   /**
    * Initialize PaintWeb.
    *
-   * <p>This method asynchronous, meaning that it will return much sooner before 
-   * the application initialization is completed.
+   * <p>This method is asynchronous, meaning that it will return much sooner 
+   * before the application initialization is completed.
    *
    * @param {Function} [handler] The <code>initApp</code> event handler. Your 
    * event handler will be invoked automatically when PaintWeb completes 
@@ -586,7 +604,7 @@ function PaintWeb (win, doc) {
    * @private
    *
    * @see PaintWeb.config.configFile The configuration file.
-   * @see pwlib#xhrLoad The library function being used for creating the 
+   * @see pwlib.xhrLoad The library function being used for creating the 
    * XMLHttpRequest object.
    */
   this.configLoad = function () {
@@ -638,7 +656,7 @@ function PaintWeb (win, doc) {
    * @private
    *
    * @see PaintWeb.config.langFile The language file.
-   * @see pwlib#xhrLoad The library function being used for creating the 
+   * @see pwlib.xhrLoad The library function being used for creating the 
    * XMLHttpRequest object.
    */
   this.langLoad = function () {
@@ -712,7 +730,7 @@ function PaintWeb (win, doc) {
    *
    * @see PaintWeb.config.guiStyle The interface style file.
    * @see PaintWeb.config.guiScript The interface script file.
-   * @see pwlib.gui The namespace holding the interfaces.
+   * @see pwlib.gui The interface object.
    */
   this.guiLoad = function () {
     var cfg    = this.config,
@@ -723,7 +741,7 @@ function PaintWeb (win, doc) {
 
     this.styleLoad(style, null);
 
-    if (gui in pwlib.gui) {
+    if (pwlib.gui) {
       this.guiScriptReady();
     } else {
       this.scriptLoad(script, this.guiScriptReady);
@@ -739,8 +757,8 @@ function PaintWeb (win, doc) {
    *
    * @see PaintWeb.config.guiScript The interface script file.
    * @see PaintWeb.config.guiMarkup The interface markup file.
-   * @see pwlib.gui The namespace holding the interfaces.
-   * @see pwlib#xhrLoad The library function being used for creating the 
+   * @see pwlib.gui The interface object.
+   * @see pwlib.xhrLoad The library function being used for creating the 
    * XMLHttpRequest object.
    */
   this.guiScriptReady = function () {
@@ -749,7 +767,7 @@ function PaintWeb (win, doc) {
         base   = cfg.interfacesFolder + '/' + gui + '/',
         markup = base + cfg.guiMarkup;
 
-    _self.gui = new pwlib.gui[gui](_self);
+    _self.gui = new pwlib.gui(_self);
 
     // Check if the interface markup is cached already.
     if (markup in pwlib.fileCache) {
@@ -880,7 +898,7 @@ function PaintWeb (win, doc) {
    * properties to reflect the values defined in the PaintWeb configuration 
    * file.
    * 
-   * <p>Shadows support is also determined. The {@link PaintWeb.shadowSupported} 
+   * <p>Shadows support is also determined. The {@link PaintWeb#shadowSupported} 
    * value is updated accordingly.
    *
    * @private
@@ -1156,7 +1174,7 @@ function PaintWeb (win, doc) {
    * <code>mousedown</code> event the <code><var>tool</var>.mousedown()</code> 
    * method is invoked.
    *
-   * <p>The mouse coordinates are stored in the {@link PaintWeb.mouse} object.  
+   * <p>The mouse coordinates are stored in the {@link PaintWeb#mouse} object.  
    * These properties take into account the current zoom level and the image 
    * scroll.
    *
@@ -1376,7 +1394,7 @@ function PaintWeb (win, doc) {
    *
    * @private
    * @param {Event} ev The DOM Event object.
-   * @see PaintWeb.ev_keyboard
+   * @see PaintWeb#ev_keyboard
    */
   this.ev_numberInput = function (ev) {
     var target = ev.target;
@@ -1443,7 +1461,7 @@ function PaintWeb (win, doc) {
    *
    * @returns {Boolean} True if the operation was successful, or false if not.
    *
-   * @see PaintWeb#zoomTo The method used for changing the zoom level.
+   * @see PaintWeb#imageZoomTo The method used for changing the zoom level.
    * @see PaintWeb.config.zoomStep The value used for increasing the zoom level.
    */
   this.imageZoomIn = function (ev) {
@@ -1469,7 +1487,7 @@ function PaintWeb (win, doc) {
    *
    * @returns {Boolean} True if the operation was successful, or false if not.
    *
-   * @see PaintWeb#zoomTo The method used for changing the zoom level.
+   * @see PaintWeb#imageZoomTo The method used for changing the zoom level.
    * @see PaintWeb.config.zoomStep The value used for decreasing the zoom level.
    */
   this.imageZoomOut = function (ev) {
@@ -1504,14 +1522,14 @@ function PaintWeb (win, doc) {
    * event before zooming the image. Once the image zoom is applied, the {@link 
    * pwlib.appEvent.canvasSizeChange} event is dispatched.
    *
-   * @param {Number|String} The level you want to zoom the image to.
+   * @param {Number|String} level The level you want to zoom the image to.
    * 
    * <p>If the value is a number, it must be a floating point positive number, 
    * where 0.5 means 50%, 1 means 100% (normal) zoom, 4 means 400% and so on.
    *
    * <p>If the value is a string it must be "+" or "-". This means that the zoom 
    * level will increase/decrease using the configured {@link 
-   * this.config.zoomStep}.
+   * PaintWeb.config.zoomStep}.
    *
    * @returns {Boolean} True if the image zoom level changed successfully, or 
    * false if not.
@@ -1859,7 +1877,7 @@ function PaintWeb (win, doc) {
    * @param {Number|String} pos The history position to jump to.
    * 
    * <p>If the value is a number, then it must point to an existing index in the  
-   * {@link this.history.states} array.
+   * <var>{@link PaintWeb#history}.states</var> array.
    *
    * <p>If the value is a string, it must be "undo" or "redo".
    *
@@ -1924,6 +1942,13 @@ function PaintWeb (win, doc) {
     return true;
   };
 
+  /**
+   * Perform horizontal/vertical line snapping. This method updates the mouse 
+   * coordinates to "snap" with the given coordinates.
+   *
+   * @param {Number} x The x-axis location.
+   * @param {Number} y The y-axis location.
+   */
   this.toolSnapXY = function (x, y) {
     var diffx = MathAbs(_self.mouse.x - x),
         diffy = MathAbs(_self.mouse.y - y);
@@ -2108,7 +2133,7 @@ function PaintWeb (win, doc) {
    * false if not.
    *
    * @see PaintWeb#extensionUnregister allows you to unregister extensions.
-   * @see PaintWeb.extensions Holds all the instances of registered extensions.
+   * @see PaintWeb#extensions Holds all the instances of registered extensions.
    * @see pwlib.extensions Holds all the extension classes.
    */
   this.extensionRegister = function (id) {
@@ -2151,7 +2176,7 @@ function PaintWeb (win, doc) {
    * not exist or some error occurred.
    *
    * @see PaintWeb#extensionRegister allows you to register new extensions.
-   * @see PaintWeb.extensions Holds all the instances of registered extensions.
+   * @see PaintWeb#extensions Holds all the instances of registered extensions.
    * @see pwlib.extensions Holds all the extension classes.
    */
   this.extensionUnregister = function (id) {
@@ -2183,7 +2208,7 @@ function PaintWeb (win, doc) {
    * false if not.
    *
    * @see PaintWeb#commandUnregister allows you to unregister commands.
-   * @see PaintWeb.commands Holds all the registered commands.
+   * @see PaintWeb#commands Holds all the registered commands.
    */
   this.commandRegister = function (id, func) {
     if (typeof id !== 'string' || !id || typeof func !== 'function' || id in 
@@ -2209,7 +2234,7 @@ function PaintWeb (win, doc) {
    * if not.
    *
    * @see PaintWeb#commandRegister allows you to register new commands.
-   * @see PaintWeb.commands Holds all the registered commands.
+   * @see PaintWeb#commands Holds all the registered commands.
    */
   this.commandUnregister = function (id) {
     if (typeof id !== 'string' || !id || !(id in this.commands)) {
@@ -2418,7 +2443,7 @@ function PaintWeb (win, doc) {
 
   /**
    * Paste the current clipboard image. This only works when some ImageData is 
-   * available in {@link PaintWeb.clipboard}.
+   * available in {@link PaintWeb#clipboard}.
    *
    * @param {Event} [ev] The DOM Event object which generated the request.
    * @returns {Boolean} True if the operation was successful, or false if not.
