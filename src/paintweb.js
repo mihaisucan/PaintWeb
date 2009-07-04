@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-02 18:08:10 +0300 $
+ * $Date: 2009-07-04 23:05:44 +0300 $
  */
 
 /**
@@ -739,7 +739,7 @@ function PaintWeb (win, doc) {
         style  = base + cfg.guiStyle,
         script = base + cfg.guiScript;
 
-    this.styleLoad(style, null);
+    this.styleLoad(gui + 'style', style);
 
     if (pwlib.gui) {
       this.guiScriptReady();
@@ -883,7 +883,8 @@ function PaintWeb (win, doc) {
      * The event handler (ev_canvas) calls the event handlers associated with 
      * the active tool (e.g. tool.mousemove).
      */
-    var events = ['click', 'mousedown', 'mouseup', 'mousemove', 'contextmenu'],
+    var events = ['dblclick', 'click', 'mousedown', 'mouseup', 'mousemove', 
+        'contextmenu'],
         n = events.length;
 
     for (var i = 0; i < n; i++) {
@@ -1588,7 +1589,7 @@ function PaintWeb (win, doc) {
    * <p>The content of the image is retained only if the browser implements the 
    * <code>getImageData</code> and <code>putImageData</code> methods.
    *
-   * <p>This method dispatches two application events: {@link 
+   * <p>This method dispatches three application events: {@link 
    * pwlib.appEvent.imageSizeChange}, {@link pwlib.appEvent.canvasSizeChange} 
    * and {@link pwlib.appEvent.imageCrop}. The <code>imageCrop</code> event is 
    * dispatched before the image is cropped. The <code>imageSizeChange</code> 
@@ -1943,6 +1944,20 @@ function PaintWeb (win, doc) {
   };
 
   /**
+   * Clear the image history.
+   *
+   * <p>This method dispatches the {@link pwlib.appEvent.historyUpdate} event.
+   *
+   * @private
+   */
+  this.historyReset = function () {
+    this.history.pos = 0;
+    this.history.states = [];
+
+    this.events.dispatch(new appEvent.historyUpdate(0, 0, 0));
+  };
+
+  /**
    * Perform horizontal/vertical line snapping. This method updates the mouse 
    * coordinates to "snap" with the given coordinates.
    *
@@ -2269,21 +2284,31 @@ function PaintWeb (win, doc) {
   /**
    * Insert a stylesheet into the document.
    *
+   * @param {String} id The stylesheet ID. This is used to avoid inserting the 
+   * same style in the document.
    * @param {String} url The URL of the stylesheet you want to insert.
    * @param {String} [media='screen, projection'] The media attribute.
    * @param {Function} [handler] The <code>load</code> event handler.
    */
-  this.styleLoad = function (url, media, handler) {
+  this.styleLoad = function (id, url, media, handler) {
+    id = 'paintweb_' + id;
+
+    var elem = doc.getElementById(id);
+    if (elem) {
+      return;
+    }
+
     if (!media) {
       media = 'screen, projection';
     }
 
-    var elem = doc.createElement('link');
+    elem = doc.createElement('link');
 
     if (handler) {
       elem.addEventListener('load', handler, false);
     }
 
+    elem.id = id;
     elem.rel = 'stylesheet';
     elem.type = 'text/css';
     elem.media = media;
@@ -2312,6 +2337,60 @@ function PaintWeb (win, doc) {
    */
   this.historyRedo = function () {
     return _self.historyGoto('redo');
+  };
+
+  /**
+   * Load an image. By loading an image the history is cleared and the Canvas 
+   * dimensions are updated to fit the new image.
+   *
+   * <p>This method dispatches two application events: {@link 
+   * pwlib.appEvent.imageSizeChange} and {@link 
+   * pwlib.appEvent.canvasSizeChange}.
+   *
+   * @param {Element} importImage The image element you want to load into the 
+   * Canvas.
+   *
+   * @returns {Boolean} True if the operation was successful, or false if not.
+   */
+  this.imageLoad = function (importImage) {
+    if (!importImage || !importImage.width || !importImage.height || 
+        importImage.nodeType !== Node.ELEMENT_NODE) {
+      return false;
+    }
+
+    this.historyReset();
+
+    var layerContext = this.layer.context,
+        layerCanvas  = this.layer.canvas,
+        layerStyle   = layerCanvas.style,
+        bufferCanvas = this.buffer.canvas,
+        bufferStyle  = bufferCanvas.style,
+        image        = this.image,
+        styleWidth   = importImage.width  * image.canvasScale,
+        styleHeight  = importImage.height * image.canvasScale,
+        result       = true;
+
+    image.width  = bufferCanvas.width  = layerCanvas.width  = importImage.width;
+    image.height = bufferCanvas.height = layerCanvas.height = importImage.height;
+
+    try {
+      layerContext.drawImage(importImage, 0, 0);
+    } catch (err) {
+      result = false;
+    }
+
+    bufferStyle.width  = layerStyle.width  = styleWidth  + 'px';
+    bufferStyle.height = layerStyle.height = styleHeight + 'px';
+
+    this.historyAdd();
+
+    this.events.dispatch(new appEvent.imageSizeChange(image.width, 
+          image.height));
+
+    this.events.dispatch(new appEvent.canvasSizeChange(styleWidth, styleHeight, 
+          image.canvasScale));
+
+    return result;
   };
 
   /**
