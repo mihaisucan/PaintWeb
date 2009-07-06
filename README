@@ -1,9 +1,11 @@
 Copyright (C) 2008 Mihai Şucan
 
 $URL: http://code.google.com/p/paintweb $
-$Date: 2008-11-06 22:20:26 +0200 $
+$Date: 2009-07-06 20:28:13 +0300 $
 
-Paint.Web is a Web application which allows users to draw inside the Web browser, making use of new Web technologies. Currently it is in an early alpha stage with lots of work planned.
+PaintWeb is a Web application which allows users to draw inside the Web browser 
+making use of new Web technologies. The project is undergoing heavy development 
+for the purpose of having it integrated into Moodle and TinyMCE.
 
 Requirements:
 
