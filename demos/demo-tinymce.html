@@ -1,65 +1,82 @@
 <!DOCTYPE html>
-<html>
-<head>
-<title>PaintWeb and TinyMCE integration demo</title>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>PaintWeb and TinyMCE integration demo</title>
+    <link rel="author" type="text/html" href="http://www.robodesign.ro" 
+    title="Marius and Mihai Şucan, ROBO Design">
+    <!-- $URL: http://code.google.com/p/paintweb $
+         $Date: 2009-07-06 20:06:28 +0300 $ -->
 
-<script type="text/javascript" src="../src/includes/debug.js"></script>
+    <!-- This demo requires you to have TinyMCE. -->
+    <script type="text/javascript" 
+      src="../../tinymce/jscripts/tiny_mce/tiny_mce.js"></script>
+    <script type="text/javascript"><!--
+tinyMCE.init({
+  mode: "textareas",
+  theme : "advanced",
+  plugins : "contextmenu,paintweb,save,advimage,advlink,inlinepopups,searchreplace,paste",
 
-<script type="text/javascript" src="../../tinymce/jscripts/tiny_mce/tiny_mce.js"></script>
+  paintweb_config : {
+    baseFolder: "../build/",
+    configFile: "config-example.json",
+    tinymce: {
+      imageSaveDataURI: true,
+      overlayButton: true,
+      contextmenu: true
+    }
+  },
 
-<script type="text/javascript">
-	tinyMCE.init({
-    mode: "textareas",
-    theme : "advanced",
-    plugins : "contextmenu,paintweb,save,advimage,advlink,inlinepopups,searchreplace,paste",
+  // Theme options
+  theme_advanced_buttons1 : "save,newdocument,|,bold,italic,underline,strikethrough,|,justifyleft,justifycenter,justifyright,justifyfull,formatselect,fontselect,fontsizeselect",
+  theme_advanced_buttons2 : "cut,copy,paste,pastetext,|,search,replace,|,bullist,numlist,|,outdent,indent,blockquote,|,undo,redo,|,link,unlink,anchor,image,paintwebEdit,cleanup,help,code,|,|,forecolor,backcolor",
+  theme_advanced_toolbar_location : "top",
+  theme_advanced_toolbar_align : "left",
+  theme_advanced_statusbar_location : "bottom",
+  theme_advanced_resizing : true,
 
-    paintweb_config : {
-      baseFolder: "../build/",
-      configFile: "config-example.json",
-      tinymce: {
-        imageSaveDataURI: true,
-        overlayButton: true,
-        contextmenu: true
-      }
-    },
+  // Example content CSS (should be your site CSS)
+  content_css : "css/content.css"
+});
+// --></script>
+  </head>
+  <body>
+    <h1>PaintWeb and TinyMCE</h1>
 
-    // Theme options
-    theme_advanced_buttons1 : "save,newdocument,|,bold,italic,underline,strikethrough,|,justifyleft,justifycenter,justifyright,justifyfull,formatselect,fontselect,fontsizeselect",
-    theme_advanced_buttons2 : "cut,copy,paste,pastetext,|,search,replace,|,bullist,numlist,|,outdent,indent,blockquote,|,undo,redo,|,link,unlink,anchor,image,paintwebEdit,cleanup,help,code,|,|,forecolor,backcolor",
-    theme_advanced_toolbar_location : "top",
-    theme_advanced_toolbar_align : "left",
-    theme_advanced_statusbar_location : "bottom",
-    theme_advanced_resizing : true,
+    <p>This page is a demonstration of <a 
+      href="http://code.google.com/p/paintweb">PaintWeb</a> integration inside <a 
+      href="http://tinymce.moxiecode.com">TinyMCE</a>.</p>
 
-    // Example content CSS (should be your site CSS)
-    content_css : "css/content.css"
-  });
-</script>
+    <p><textarea id="textar1" rows="30" cols="80" style="width: 80%">
+      &lt;p&gt;
+        This is some example text that you can edit inside the 
+        &lt;strong&gt;TinyMCE editor&lt;/strong&gt;. Below you have an image you 
+        can edit with &lt;strong&gt;PaintWeb&lt;/strong&gt;.
+      &lt;/p&gt;
 
-</head>
-<body>
-  <h1>PaintWeb and TinyMCE</h1>
+      &lt;p&gt;&lt;a title=&#34;Freshalicious&#34; 
+        href=&#34;http://www.robodesign.ro/marius/my-projects/images/freshalicious&#34;&gt;&lt;img 
+        src=&#34;freshalicious.jpg&#34; alt=&#34;Freshalicious&#34;&gt;&lt;/a&gt;&lt;/p&gt;
 
-  <p>This page is a demonstration of <a 
-    href="http://code.google.com/p/paintweb">PaintWeb</a> integration inside <a 
-    href="http://tinymce.moxiecode.com">TinyMCE</a>.</p>
+      &lt;p&gt;
+      Nam nisi elit, cursus in rhoncus sit amet, pulvinar laoreet leo. Nam sed lectus quam, ut sagittis tellus. Quisque dignissim mauris a augue rutrum tempor. Donec vitae purus nec massa vestibulum ornare sit amet id tellus. Nunc quam mauris, fermentum nec lacinia eget, sollicitudin nec ante. Aliquam molestie volutpat dapibus. Nunc interdum viverra sodales. Morbi laoreet pulvinar gravida. Quisque ut turpis sagittis nunc accumsan vehicula. Duis elementum congue ultrices. Cras faucibus feugiat arcu quis lacinia. In hac habitasse platea dictumst. Pellentesque fermentum magna sit amet tellus varius ullamcorper. Vestibulum at urna augue, eget varius neque. Fusce facilisis venenatis dapibus. Integer non sem at arcu euismod tempor nec sed nisl. Morbi ultricies, mauris ut ultricies adipiscing, felis odio condimentum massa, et luctus est nunc nec eros.
+      &lt;/p&gt;
+    </textarea></p>
 
-  <p><textarea id="textar1" rows="15" cols="80" style="width: 80%">
-		&lt;p&gt;
-      This is some example text that you can edit inside the 
-      &lt;strong&gt;TinyMCE editor&lt;/strong&gt;. Below you have an image you 
-      can edit with &lt;strong&gt;PaintWeb&lt;/strong&gt;.
-		&lt;/p&gt;
+    <p>Do you have any feedback to provide? Please <a 
+      href="http://moodle.org/mod/forum/discuss.php?d=126528">post it over at 
+      Moodle</a>!</p>
 
-    &lt;p&gt;&lt;a title=&#34;Freshalicious&#34; 
-      href=&#34;http://www.robodesign.ro/marius/my-projects/images/freshalicious&#34;&gt;&lt;img 
-      src=&#34;freshalicious.jpg&#34; alt=&#34;Freshalicious&#34;&gt;&lt;/a&gt;&lt;/p&gt;
+    <!--[if IE]>
+    <p>Please note that this application does not work in Internet Explorer. Any 
+    other modern browser should work fine. Try <a 
+      href="http://www.google.com/chrome">Chrome</a>, <a 
+      href="http://www.mozilla.com">Firefox</a>, <a 
+      href="http://www.apple.com/safari">Safari</a>, <a 
+      href="http://www.opera.com">Opera</a> or <a 
+      href="http://www.konqueror.org">Konqueror</a>)</p>
+    <![endif]-->
 
-		&lt;p&gt;
-		Nam nisi elit, cursus in rhoncus sit amet, pulvinar laoreet leo. Nam sed lectus quam, ut sagittis tellus. Quisque dignissim mauris a augue rutrum tempor. Donec vitae purus nec massa vestibulum ornare sit amet id tellus. Nunc quam mauris, fermentum nec lacinia eget, sollicitudin nec ante. Aliquam molestie volutpat dapibus. Nunc interdum viverra sodales. Morbi laoreet pulvinar gravida. Quisque ut turpis sagittis nunc accumsan vehicula. Duis elementum congue ultrices. Cras faucibus feugiat arcu quis lacinia. In hac habitasse platea dictumst. Pellentesque fermentum magna sit amet tellus varius ullamcorper. Vestibulum at urna augue, eget varius neque. Fusce facilisis venenatis dapibus. Integer non sem at arcu euismod tempor nec sed nisl. Morbi ultricies, mauris ut ultricies adipiscing, felis odio condimentum massa, et luctus est nunc nec eros.
-		&lt;/p&gt;
-  </textarea></p>
-
-  <!-- vim:set spell spl=en fo=tcroqwanl1 tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix: -->
-</body>
+    <!-- vim:set spell spl=en fo=tcroqwanl1 tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix: -->
+  </body>
 </html>
