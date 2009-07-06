@@ -18,7 +18,7 @@
 # along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
 # 
 # $URL: http://code.google.com/p/paintweb $
-# $Date: 2009-07-02 22:20:55 +0300 $
+# $Date: 2009-07-06 13:03:37 +0300 $
 
 
 #### Config:start #####################################################
@@ -64,6 +64,7 @@ FOLDER_INTERFACES=interfaces
 FOLDER_LANG=lang
 FOLDER_COLORS=colors
 FOLDER_DOCS_API=docs/api-ref
+FOLDER_TINYMCE_PLUGIN=ext/tinymce-plugin/paintweb
 
 # Changes below this line are not recommended
 #### Config:end #######################################################
@@ -117,7 +118,8 @@ all: $(FOLDER_BUILD)/$(FILE_PAINTWEB) \
 	$(FOLDER_BUILD)/$(INTERFACE_STYLE) \
 	$(FOLDER_BUILD)/$(FOLDER_COLORS) \
 	$(FOLDER_BUILD)/$(FOLDER_LANG) \
-	$(FOLDER_BUILD)/$(FILE_CONFIG)
+	$(FOLDER_BUILD)/$(FILE_CONFIG) \
+	$(FOLDER_TINYMCE_PLUGIN)/editor_plugin.js
 
 # The main PaintWeb script file.
 $(FOLDER_BUILD)/$(FILE_PAINTWEB): $(FILE_PAINTWEB_DEPS)
@@ -157,6 +159,9 @@ $(FOLDER_BUILD)/$(INTERFACE_STYLE): $(FOLDER_SRC)/$(INTERFACE_STYLE)
 $(FOLDER_BUILD)/$(FILE_CONFIG): $(FOLDER_SRC)/$(FILE_CONFIG)
 	cp $^ $@
 
+# Compress the TinyMCE plugin
+$(FOLDER_TINYMCE_PLUGIN)/editor_plugin.js: $(FOLDER_TINYMCE_PLUGIN)/editor_plugin_src.js
+	$(BIN_JS) $^ > $@
 
 .PHONY : docs release snapshot package
 docs:

@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-07-04 22:47:32 +0300 $
+ * $Date: 2009-07-06 16:28:03 +0300 $
  */
 
 /**
@@ -195,6 +195,46 @@ pwlib.xhrLoad = function (url, handler, method, send) {
   xhr.send(send);
 
   return xhr;
+};
+
+/**
+ * Check if an URL points to a resource from the same host as the desired one.
+ *
+ * <p>Note that data URIs always return true.
+ *
+ * @param {String} url The URL you want to check.
+ * @param {String} host The host you want in the URL.
+ *
+ * @returns {Boolean} True if the <var>url</var> points to a resource from the 
+ * <var>host</var> given, or false otherwise.
+ */
+pwlib.isSameHost = function (url, host) {
+  if (!url || !host) {
+    return false;
+  }
+
+  var pos = url.indexOf(':'),
+      proto = url.substr(0, pos + 1).toLowerCase();
+
+  if (proto === 'data:') {
+    return true;
+  }
+
+  if (proto !== 'http:' && proto !== 'https:') {
+    return false;
+  }
+
+  var urlHost = url.replace(/^https?:\/\//i, '');
+  pos  = urlHost.indexOf('/');
+  if (pos > -1) {
+    urlHost = urlHost.substr(0, pos);
+  }
+
+  if (urlHost !== host) {
+    return false;
+  }
+
+  return true;
 };
 
 /**

@@ -3,21 +3,24 @@
 <head>
 <title>PaintWeb and TinyMCE integration demo</title>
 
-<script type="text/javascript" src="../../tinymce/jscripts/tiny_mce/tiny_mce.js"></script>
+<script type="text/javascript" src="../src/includes/debug.js"></script>
 
-<!-- The PaintWeb plugin for TinyMCE -->
-<script type="text/javascript" 
-  src="../ext/tinymce-plugin/paintweb/editor_plugin_src.js"></script>
+<script type="text/javascript" src="../../tinymce/jscripts/tiny_mce/tiny_mce.js"></script>
 
 <script type="text/javascript">
 	tinyMCE.init({
     mode: "textareas",
     theme : "advanced",
-    plugins : "-paintweb,save,advimage,advlink,inlinepopups,searchreplace,contextmenu,paste",
+    plugins : "contextmenu,paintweb,save,advimage,advlink,inlinepopups,searchreplace,paste",
 
     paintweb_config : {
       baseFolder: "../build/",
-      configFile: "config-example.json"
+      configFile: "config-example.json",
+      tinymce: {
+        imageSaveDataURI: true,
+        overlayButton: true,
+        contextmenu: true
+      }
     },
 
     // Theme options
@@ -29,7 +32,7 @@
     theme_advanced_resizing : true,
 
     // Example content CSS (should be your site CSS)
-    content_css : "css/content.css",
+    content_css : "css/content.css"
   });
 </script>
 
@@ -43,7 +46,9 @@
 
   <p><textarea id="textar1" rows="15" cols="80" style="width: 80%">
 		&lt;p&gt;
-			This is some example text that you can edit inside the &lt;strong&gt;TinyMCE editor&lt;/strong&gt;.
+      This is some example text that you can edit inside the 
+      &lt;strong&gt;TinyMCE editor&lt;/strong&gt;. Below you have an image you 
+      can edit with &lt;strong&gt;PaintWeb&lt;/strong&gt;.
 		&lt;/p&gt;
 
     &lt;p&gt;&lt;a title=&#34;Freshalicious&#34; 

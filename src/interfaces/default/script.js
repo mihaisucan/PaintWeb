@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-02 15:34:44 +0300 $
+ * $Date: 2009-07-06 19:46:30 +0300 $
  */
 
 /**
@@ -1713,6 +1713,28 @@ pwlib.gui = function (app) {
         elem.className = elem.className.replace(classDisabled, '');
       }
     }
+  };
+
+  /**
+   * Show the graphical user interface.
+   */
+  this.show = function () {
+    var placeholder = config.guiPlaceholder,
+        className   = ' ' + this.classPrefix + 'placeholder';
+
+    if (placeholder.className.indexOf(className) === -1) {
+      placeholder.className += className;
+    }
+  };
+
+  /**
+   * Hide the graphical user interface.
+   */
+  this.hide = function () {
+    var placeholder = config.guiPlaceholder;
+
+    placeholder.className = placeholder.className.replace(' ' + this.classPrefix 
+        + 'placeholder', '');
   };
 };
 

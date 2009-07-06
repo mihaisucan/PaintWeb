@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-01 17:20:47 +0300 $
+ * $Date: 2009-07-06 19:34:43 +0300 $
  */
 
 .paintweb_placeholder {
@@ -971,7 +971,7 @@
   margin: 0
 }
 
-.paintweb_cmd_about a { background-image: url('icons/help.png') }
+.paintweb_cmd_about a { background-image: url('icons/paintweb.png') }
 
 .paintweb_tool_cpicker a { background-image: url('icons/cpicker.png') }
 

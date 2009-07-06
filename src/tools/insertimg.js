@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-04 19:54:16 +0300 $
+ * $Date: 2009-07-06 16:20:38 +0300 $
  */
 
 /**
@@ -147,21 +147,14 @@ pwlib.tools.insertimg = function (app) {
 
     _self.url = prompt(lang.promptInsertimg, _self.url);
 
-    if (!_self.url || _self.url.toLowerCase() === 'http://' ||
-        _self.url.substr(0, 7).toLowerCase() !== 'http://') {
+    if (!_self.url || _self.url.toLowerCase() === 'http://') {
       return false;
     }
 
     // Remember the URL.
     pwlib.extend(true, _self.constructor.prototype, {url: _self.url});
 
-    var host = _self.url.substr(7),
-        pos  = host.indexOf('/');
-    if (pos > -1) {
-      host = host.substr(0, pos);
-    }
-
-    if (host != app.win.location.host) {
+    if (!pwlib.isSameHost(_self.url, app.win.location.host)) {
       alert(lang.errorInsertimgHost);
       return false;
     }

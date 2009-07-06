@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-04 23:05:44 +0300 $
+ * $Date: 2009-07-06 16:25:42 +0300 $
  */
 
 /**
@@ -856,6 +856,11 @@ function PaintWeb (win, doc) {
     if (!layerCanvas || !bufferCanvas || !layerContext || !bufferContext) {
       this.initError(lang.noCanvasSupport);
       return false;
+    }
+
+    if (!pwlib.isSameHost(imagePreload.src, win.location.host)) {
+      cfg.imagePreload = imagePreload = null;
+      alert(lang.imagePreloadDifferentHost);
     }
 
     if (imagePreload) {
@@ -2354,7 +2359,8 @@ function PaintWeb (win, doc) {
    */
   this.imageLoad = function (importImage) {
     if (!importImage || !importImage.width || !importImage.height || 
-        importImage.nodeType !== Node.ELEMENT_NODE) {
+        importImage.nodeType !== Node.ELEMENT_NODE || 
+        !pwlib.isSameHost(importImage.src, win.location.host)) {
       return false;
     }
 

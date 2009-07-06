@@ -1,3 +1,18 @@
+2009-07-06:
+===========
+
+- More work on the TinyMCE plugin. Now PaintWeb can be started from the context 
+menu, and from a new overlay button which shows on top of the editable image.
+- New configuration options for the TinyMCE plugin.
+- New API for showing/hiding the PaintWeb GUI.
+- Changed the About/Help icon to be a "PaintWeb" icon. Olli suggested it's not 
+appropriate to show a Help icon when there's no context help. Thanks!
+- Minor corrections and some more error checks in PaintWeb with regards to the 
+loading of external images.
+- Added support for the TinyMCE plugin in the Makefile. Now the make process 
+also generates the editor_plugin.js - a minified version of the 
+editor_plugin_src.js file.
+
 2009-07-04:
 ===========
 

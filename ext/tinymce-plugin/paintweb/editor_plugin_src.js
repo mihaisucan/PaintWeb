@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-04 23:17:36 +0300 $
+ * $Date: 2009-07-06 16:18:51 +0300 $
  */
 
 /**
@@ -30,8 +30,12 @@ var paintwebInstance = null,
     paintwebConfig = null,
     targetImage = null,
     targetEditor = null,
-    targetContainer = null;
+    targetContainer = null,
+    overlayButton = null;
 
+/**
+ * Load PaintWeb. This function tells TinyMCE to load the PaintWeb script.
+ */
 function paintwebLoad () {
   if (window.PaintWeb) {
     paintwebLoaded();
@@ -44,6 +48,10 @@ function paintwebLoad () {
   tinymce.ScriptLoader.load(src, paintwebLoaded);
 };
 
+/**
+ * The event handler for the PaintWeb script load. This function creates a new 
+ * instance of PaintWeb and configures it.
+ */
 function paintwebLoaded () {
   if (paintwebInstance) {
     return;
@@ -67,6 +75,10 @@ function paintwebLoaded () {
   paintwebInstance.init(paintwebInitialized);
 };
 
+/**
+ * The initialization event handler for PaintWeb. When PaintWeb is initialized 
+ * this method configures the PaintWeb instance to work properly.
+ */
 function paintwebInitialized (ev) {
   if (ev.state === PaintWeb.INIT_DONE) {
     targetContainer.style.display = 'none';
@@ -77,30 +89,94 @@ function paintwebInitialized (ev) {
   }
 };
 
+/**
+ * The "imageSave" application event handler for PaintWeb. When the user elects 
+ * to save the image in PaintWeb, this function is invoked to ensure PaintWeb is 
+ * hidden and the TinyMCE editor is shown again.
+ */
 function paintwebSave (ev) {
   ev.preventDefault();
 
-  targetImage.src = ev.dataURI;
-  var guiPlaceholder = this.config.guiPlaceholder;
-  guiPlaceholder.style.display = 'none';
-  guiPlaceholder.className = '';
+  if (paintwebConfig.tinymce.imageSaveDataURI) {
+    targetImage.src = ev.dataURI;
+  }
+
+  paintwebInstance.gui.hide();
   targetContainer.style.display = '';
+  targetImage = null;
 };
 
-function paintwebEditCommand () {
-  targetEditor = this;
-  targetContainer = this.getContainer();
-  targetImage = this.selection.getNode();
+/**
+ * Start PaintWeb. This function performs the actual PaintWeb invocation.
+ */
+function paintwebEditStart () {
+  if (!checkEditableImage(targetImage)) {
+    targetImage = null;
+    return;
+  }
 
   if (paintwebInstance) {
     paintwebInstance.imageLoad(targetImage);
-    paintwebConfig.guiPlaceholder.style.display = '';
-    paintwebConfig.guiPlaceholder.className = 'paintweb_placeholder';
+    paintwebInstance.gui.show();
     targetContainer.style.display = 'none';
 
   } else {
     paintwebLoad();
   }
+};
+
+/**
+ * The PaintWeb "edit" command. This function is invoked when the user clicks 
+ * the PaintWeb button on the toolbar.
+ */
+function paintwebEditCommand () {
+  if (targetImage) {
+    return;
+  }
+
+  targetEditor = this;
+  targetContainer = this.getContainer();
+  targetImage = this.selection.getNode();
+
+  paintwebEditStart();
+};
+
+/**
+ * Check if an image element can be edited with PaintWeb. The image element 
+ * source must be a data URI or it must be an image from the same domain as 
+ * the page.
+ *
+ * @param {HTMLImageElement} n The image element.
+ * @returns {Boolean} True if the image can be edited, or false otherwise.
+ */
+function checkEditableImage (n) {
+  var url = n.src;
+  if (n.nodeName.toLowerCase() !== 'img' || !url) {
+    return false;
+  }
+
+  var pos = url.indexOf(':'),
+      proto = url.substr(0, pos + 1).toLowerCase();
+
+  if (proto === 'data:') {
+    return true;
+  }
+
+  if (proto !== 'http:' && proto !== 'https:') {
+    return false;
+  }
+
+  var host = url.replace(/^https?:\/\//i, '');
+  pos = host.indexOf('/');
+  if (pos > -1) {
+    host = host.substr(0, pos);
+  }
+
+  if (host !== window.location.host) {
+    return false;
+  }
+
+  return true;
 };
 
 // Load plugin specific language pack
@@ -123,18 +199,139 @@ tinymce.create('tinymce.plugins.paintweb', {
     // tinyMCE.activeEditor.execCommand('paintwebEdit');
     ed.addCommand('paintwebEdit', paintwebEditCommand);
 
-    // Register example button
+    // Register PaintWeb button
     ed.addButton('paintwebEdit', {
       title : 'paintweb.editButton',
       cmd : 'paintwebEdit',
-      image : url + '/img/paintweb_icon.png'
+      image : url + '/img/paintweb.gif'
     });
 
-    // Add a node change handler, selects the button in the UI when a image is 
-    // selected
-    ed.onNodeChange.add(function(ed, cm, n) {
-      cm.setActive('paintwebEdit', n.nodeName === 'IMG');
-    });
+    // Add a node change handler which enables the PaintWeb button in the UI 
+    // when an image is selected.
+    ed.onNodeChange.add(this.edNodeChange);
+
+    var config = ed.getParam('paintweb_config');
+
+    // Integrate into the ContextMenu plugin if the user desires so.
+    if (config && config.tinymce && config.tinymce.contextmenu && 
+        ed.plugins.contextmenu) {
+      ed.plugins.contextmenu.onContextMenu.add(this.pluginContextMenu);
+    }
+
+    // Create the overlay button element if the configuration allows so.
+    if (config && config.tinymce && config.tinymce.overlayButton) {
+      ed.onClick.add(this.edClick);
+      ed.onPreProcess.add(this.edPreProcess);
+      ed.onBeforeGetContent.add(this.edPreProcess);
+
+      overlayButton = document.createElement('a');
+
+      overlayButton.title = ed.getLang('paintweb.overlayButton', 'Edit');
+      overlayButton.appendChild(document.createTextNode(overlayButton.title));
+
+      overlayButton.style.position = 'absolute';
+      overlayButton.style.background = '#fff';
+      overlayButton.style.padding = '4px 6px';
+      overlayButton.style.border = '1px solid #000';
+      overlayButton.style.textDecoration = 'none';
+      overlayButton.style.color = '#000';
+    }
+  },
+
+  /**
+   * The <code>preProcess</code> and <code>beforeGetContent</code> event 
+   * handler. This method removes the PaintWeb overlay button.
+   */
+  edPreProcess: function () {
+    // Remove the overlay button.
+    if (overlayButton && overlayButton.parentNode) {
+      overlayButton._targetImage = null;
+
+      pNode = overlayButton.parentNode;
+      pNode.removeChild(overlayButton);
+    }
+  },
+
+  /**
+   * The <code>nodeChange</code> event handler for the TinyMCE editor. This 
+   * method provides visual feedback for editable image elements.
+   *
+   * @private
+   *
+   * @param {tinymce.Editor} ed The editor instance that the plugin is 
+   * initialized in.
+   * @param {tinymce.ControlManager} cm The control manager.
+   * @param {Node} n The DOM node for which the event is fired.
+   */
+  edNodeChange: function (ed, cm, n) {
+    // Do not do anything inside the overlay button.
+    if (!targetImage && overlayButton && n === overlayButton && 
+        overlayButton._targetImage) {
+      return;
+    }
+
+    var disabled = !checkEditableImage(n),
+        pNode = null;
+
+    cm.setDisabled('paintwebEdit', disabled);
+
+    if (!overlayButton) {
+      return;
+    }
+
+    if (disabled) {
+      // Remove the overlay button.
+      if (overlayButton.parentNode) {
+        overlayButton._targetImage = null;
+
+        pNode = overlayButton.parentNode;
+        pNode.removeChild(overlayButton);
+      }
+
+    } else {
+      // Add the overlay button.
+      overlayButton._targetImage = n;
+      overlayButton.style.top  = (n.offsetTop  + 5) + 'px';
+      overlayButton.style.left = (n.offsetLeft + 5) + 'px';
+
+      pNode = n.parentNode;
+      pNode.appendChild(overlayButton);
+    }
+  },
+
+  /**
+   * The <code>click</code> event handler for the editor. This method starts 
+   * PaintWeb when the user clicks the "Edit" overlay button.
+   *
+   * @param {tinymce.Editor} ed The TinyMCE editor instance.
+   * @param {Event} ev The DOM Event object.
+   */
+  edClick: function (ed, ev) {
+    // If the user clicked the Edit overlay button, then we consider the user 
+    // wants to start PaintWeb.
+    if (!targetImage && overlayButton && ev.target === overlayButton && 
+        overlayButton._targetImage) {
+      targetEditor = ed;
+      targetContainer = ed.getContainer();
+      targetImage = overlayButton._targetImage;
+
+      paintwebEditStart();
+    }
+  },
+
+  /**
+   * This is the <code>contextmenu</code> event handler for the ContextMenu 
+   * plugin provided in the default TinyMCE installation.
+   *
+   * @param {tinymce.plugin.contextmenu} plugin Instance of the ContextMenu 
+   * plugin of TinyMCE.
+   * @param {tinymce.ui.DropMenu} menu The dropmenu instance.
+   * @param {Element} elem The selected element.
+   */
+  pluginContextMenu: function (plugin, menu, elem) {
+    if (checkEditableImage(elem)) {
+      menu.add({title: 'paintweb.contextMenuEdit', cmd: 'paintwebEdit'});
+    }
   },
 
   /**
