@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-07-06 16:24:33 +0300 $
+  // $Date: 2009-07-09 19:55:09 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -68,7 +68,7 @@
       "mixerTitle": "Color space visualisation",
       "cpalettes": "Palettes",
       "cpalettesTitle": "Predefined color palettes"
-    },
+    }
   },
 
   "floatingPanelMinimize": "Minimize",

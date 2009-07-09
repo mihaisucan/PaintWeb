@@ -1,14 +1,32 @@
 {
-  // $Date: 2009-06-30 13:18:41 +0300 $
+  // $Date: 2009-07-09 15:05:04 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
-   * Language file.
+   * The list of available languages. This associated language IDs to their 
+   * language titles.
+   *
+   * @type Object
+   */
+  "languages": {
+    "en": "English"
+  },
+
+  /**
+   * The default language.
    *
    * @type String
-   * @default "lang/en.json"
+   * @default "en"
    */
-  "langFile": "lang/en.json",
+  "lang": "en",
+
+  /**
+   * The folder which holds the language files.
+   *
+   * @type String
+   * @default "lang"
+   */
+  "langFolder": "lang",
 
   /**
    * The graphical user interface you want to use.

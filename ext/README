@@ -1,0 +1,14 @@
+Copyright (C) 2009 Mihai Şucan
+
+$URL: http://code.google.com/p/paintweb $
+$Date: 2009-07-09 18:39:26 +0300 $
+
+This folder holds various scripts needed for using PaintWeb inside other popular 
+Web applications.
+
+Currently this folder holds a TinyMCE plugin and Moodle-related scripts.
+
+
+--
+vim:set spell spl=en fenc=utf-8 ff=unix: 
+

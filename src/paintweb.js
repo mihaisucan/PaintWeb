@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-06 16:25:42 +0300 $
+ * $Date: 2009-07-09 18:12:35 +0300 $
  */
 
 /**
@@ -58,7 +58,6 @@ function PaintWeb (win, doc) {
    * @type Object
    */
   this.config = {
-    baseFolder: '',
     showErrors: true
   };
 
@@ -513,7 +512,7 @@ function PaintWeb (win, doc) {
 
     // JSON parser and serializer.
     if (!window.JSON) {
-      this.scriptLoad(_self.config.baseFolder + 'includes/json2.js', 
+      this.scriptLoad(PaintWeb.baseFolder + 'includes/json2.js', 
           this.jsonlibReady);
     } else {
       this.jsonlibReady();
@@ -530,7 +529,7 @@ function PaintWeb (win, doc) {
     if (window.pwlib) {
       _self.pwlibReady();
     } else {
-      _self.scriptLoad(_self.config.baseFolder + 'includes/lib.js', 
+      _self.scriptLoad(PaintWeb.baseFolder + 'includes/lib.js', 
           _self.pwlibReady);
     }
   };
@@ -608,7 +607,7 @@ function PaintWeb (win, doc) {
    * XMLHttpRequest object.
    */
   this.configLoad = function () {
-    pwlib.xhrLoad(this.config.baseFolder + this.config.configFile, 
+    pwlib.xhrLoad(PaintWeb.baseFolder + this.config.configFile, 
         this.configReady);
   };
 
@@ -642,8 +641,6 @@ function PaintWeb (win, doc) {
     }
 
     var config = pwlib.jsonParse(xhr.responseText);
-
-    // Overwrite any existing configuration.
     pwlib.extend(_self.config, config);
 
     _self.langLoad();
@@ -655,13 +652,23 @@ function PaintWeb (win, doc) {
    *
    * @private
    *
-   * @see PaintWeb.config.langFile The language file.
+   * @see PaintWeb.config.lang The language you want for the PaintWeb user 
+   * interface.
    * @see pwlib.xhrLoad The library function being used for creating the 
    * XMLHttpRequest object.
    */
   this.langLoad = function () {
-    pwlib.xhrLoad(this.config.baseFolder + this.config.langFile, 
-        this.langReady);
+    var id = this.config.lang,
+        file;
+
+    // If the language is not available, always fallback to English.
+    if (!(id in this.config.languages)) {
+      id = this.config.lang = 'en';
+    }
+
+    file = PaintWeb.baseFolder + this.config.langFolder + '/' + id + '.json';
+
+    pwlib.xhrLoad(file, this.langReady);
   };
 
   /**
@@ -735,7 +742,7 @@ function PaintWeb (win, doc) {
   this.guiLoad = function () {
     var cfg    = this.config,
         gui    = this.config.gui,
-        base   = cfg.baseFolder + cfg.interfacesFolder + '/' + gui + '/',
+        base   = PaintWeb.baseFolder + cfg.interfacesFolder + '/' + gui + '/',
         style  = base + cfg.guiStyle,
         script = base + cfg.guiScript;
 
@@ -778,7 +785,7 @@ function PaintWeb (win, doc) {
       }
 
     } else {
-      pwlib.xhrLoad(cfg.baseFolder + markup, _self.guiMarkupReady);
+      pwlib.xhrLoad(PaintWeb.baseFolder + markup, _self.guiMarkupReady);
     }
   };
 
@@ -1010,7 +1017,7 @@ function PaintWeb (win, doc) {
     var id   = '',
         cfg  = this.config,
         n    = cfg.tools.length,
-        base = cfg.baseFolder + cfg.toolsFolder + '/';
+        base = PaintWeb.baseFolder + cfg.toolsFolder + '/';
 
     if (n < 1) {
       this.initError(lang.noToolConfigured);
@@ -1059,7 +1066,7 @@ function PaintWeb (win, doc) {
     var id   = '',
         cfg  = this.config,
         n    = cfg.extensions.length,
-        base = cfg.baseFolder + cfg.extensionsFolder + '/';
+        base = PaintWeb.baseFolder + cfg.extensionsFolder + '/';
 
     if (n < 1) {
       this.initComplete();
@@ -2275,15 +2282,40 @@ function PaintWeb (win, doc) {
    * @param {Function} [handler] The <code>load</code> event handler you want.
    */
   this.scriptLoad = function (url, handler) {
-    var elem = doc.createElement('script');
-
-    if (handler) {
-      elem.addEventListener('load', handler, false);
+    if (!handler) {
+      var elem = doc.createElement('script');
+      elem.type = 'text/javascript';
+      elem.src = url;
+      this.elems.head.appendChild(elem);
+      return;
     }
 
-    elem.type = 'text/javascript';
-    elem.src = url;
-    this.elems.head.appendChild(elem);
+    // huh, use XHR then eval() the code.
+    // browsers do not dispatch the 'load' event reliably for script elements.
+    var xhr = new XMLHttpRequest();
+
+    xhr.onreadystatechange = function () {
+      if (!xhr || xhr.readyState !== 4) {
+        return;
+
+      } else if ((xhr.status !== 304 && xhr.status !== 200) || 
+          !xhr.responseText) {
+        handler(false, xhr);
+
+      } else {
+        try {
+          eval.call(win, xhr.responseText);
+        } catch (err) {
+          eval(xhr.responseText, win);
+        }
+        handler(true, xhr);
+      }
+
+      xhr = null;
+    };
+
+    xhr.open('GET', url);
+    xhr.send('');
   };
 
   /**
@@ -2643,6 +2675,35 @@ PaintWeb.INIT_DONE = 2;
  * @constant
  */
 PaintWeb.INIT_ERROR = -1;
+
+/**
+ * PaintWeb base folder. This is determined automatically when the PaintWeb 
+ * script is added in a page.
+ * @type String
+ */
+PaintWeb.baseFolder = '';
+
+(function () {
+  var scripts = document.getElementsByTagName('script'),
+      n = scripts.length,
+      pos, src;
+
+  // Determine the baseFolder.
+
+  for (var i = 0; i < n; i++) {
+    src = scripts[i].src;
+    if (!src || !/paintweb(\.dev|\.src)?\.js/.test(src)) {
+      continue;
+    }
+
+    pos = src.lastIndexOf('/');
+    if (pos !== -1) {
+      PaintWeb.baseFolder = src.substr(0, pos + 1);
+    }
+
+    break;
+  }
+})();
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
 

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-02 15:20:14 +0300 $
+ * $Date: 2009-07-09 14:26:21 +0300 $
  */
 
 /**
@@ -625,8 +625,7 @@ pwlib.extensions.colormixer = function (app) {
     var palette = config.colorPalettes[id];
 
     if (palette.file) {
-      pwlib.xhrLoad(app.config.baseFolder + '/' + palette.file, 
-          this.cpalette_loaded);
+      pwlib.xhrLoad(PaintWeb.baseFolder + palette.file, this.cpalette_loaded);
 
       return true;
 

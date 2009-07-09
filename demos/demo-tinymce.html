@@ -6,7 +6,7 @@
     <link rel="author" type="text/html" href="http://www.robodesign.ro" 
     title="Marius and Mihai Şucan, ROBO Design">
     <!-- $URL: http://code.google.com/p/paintweb $
-         $Date: 2009-07-06 20:06:28 +0300 $ -->
+         $Date: 2009-07-09 16:33:48 +0300 $ -->
 
     <!-- This demo requires you to have TinyMCE. -->
     <script type="text/javascript" 
@@ -18,9 +18,9 @@ tinyMCE.init({
   plugins : "contextmenu,paintweb,save,advimage,advlink,inlinepopups,searchreplace,paste",
 
   paintweb_config : {
-    baseFolder: "../build/",
     configFile: "config-example.json",
     tinymce: {
+      paintwebFolder: "../build/",
       imageSaveDataURI: true,
       overlayButton: true,
       contextmenu: true

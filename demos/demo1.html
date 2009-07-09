@@ -10,7 +10,7 @@
     --></style>
 
     <!-- $URL: http://code.google.com/p/paintweb $
-         $Date: 2009-07-06 20:38:31 +0300 $ -->
+         $Date: 2009-07-09 16:43:12 +0300 $ -->
   </head>
   <body>
     <h1>PaintWeb</h1>
@@ -53,7 +53,9 @@
 
   // Function called when the PaintWeb application fires the "initApp" event.
   function pwInit (ev) {
-    var initTime = (new Date()).getTime() - timeStart;
+    var initTime = (new Date()).getTime() - timeStart,
+        str = 'Demo: Yay, PaintWeb loaded in ' + initTime + ' ms! ' +
+              pw.toString();
 
     document.body.removeChild(loadp);
 
@@ -63,8 +65,9 @@
 
     } else if (ev.state === PaintWeb.INIT_DONE) {
       if (window.console && console.log) {
-        console.log('Demo: Yay, PaintWeb loaded in ' + initTime + ' ms! ' +
-          pw.toString());
+        console.log(str);
+      } else if (window.opera) {
+        opera.postError(str);
       }
 
     } else {
@@ -88,7 +91,6 @@
 
   pw.config.guiPlaceholder = target;
   pw.config.imagePreload   = img;
-  pw.config.baseFolder     = '../build/';
   pw.config.configFile     = 'config-example.json';
   loadp.appendChild(document.createTextNode('Loading, please wait...'));
 

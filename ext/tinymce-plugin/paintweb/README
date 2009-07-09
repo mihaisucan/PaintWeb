@@ -1,0 +1,20 @@
+Copyright (C) 2009 Mihai Şucan
+
+$URL: http://code.google.com/p/paintweb $
+$Date: 2009-07-09 18:48:48 +0300 $
+
+
+This folder holds a TinyMCE plugin which allows you to easily integrate PaintWeb 
+into TinyMCE 3.
+
+Copy this folder into your TinyMCE plugins folder - that's 
+jscripts/tiny_mce/plugins.
+
+For additional documentation please check:
+
+http://code.google.com/p/paintweb/wiki/UsageInTinyMCE
+
+
+--
+vim:set spell spl=en fenc=utf-8 ff=unix: 
+

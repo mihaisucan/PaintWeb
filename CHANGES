@@ -1,3 +1,19 @@
+2009-07-09:
+===========
+
+- Improved multi-language support by changing the language-related options in 
+the configuration file.
+- Improved the TinyMCE plugin to properly determine the language of TinyMCE and 
+use the same language in PaintWeb.
+- Removed the need to tell PaintWeb the baseFolder - where the script is 
+located. PaintWeb now determines its own location automatically.
+- Hacked around the issue of failed PaintWeb loads - the 'load' event for script 
+elements is not always properly dispatched in all the supported browsers. Now 
+PaintWeb uses XHR to load and eval() the JS files. Uh-oh.
+- Fixed a bug the English language file.
+- Wrote a script which converts PaintWeb JSON language files to Moodle PHP 
+language files.
+
 2009-07-06:
 ===========
 

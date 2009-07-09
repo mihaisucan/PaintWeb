@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-06 16:18:51 +0300 $
+ * $Date: 2009-07-09 16:31:30 +0300 $
  */
 
 /**
@@ -43,7 +43,7 @@ function paintwebLoad () {
   }
 
   var config = targetEditor.getParam('paintweb_config'),
-      src = config.baseFolder + 'paintweb.js';
+      src = config.tinymce.paintwebFolder + 'paintweb.js';
 
   tinymce.ScriptLoader.load(src, paintwebLoaded);
 };
@@ -65,8 +65,10 @@ function paintwebLoaded () {
 
   targetContainer.parentNode.appendChild(container);
 
+  PaintWeb.baseFolder = config.tinymce.paintwebFolder;
   config.imagePreload = targetImage;
   config.guiPlaceholder = container;
+  config.lang = targetEditor.getParam('language');
 
   for (var prop in config) {
     paintwebConfig[prop] = config[prop];
