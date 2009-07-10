@@ -1,6 +1,6 @@
 $Author: Mihai Şucan $
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-07-03 23:39:35 +0300 $
+$Date: 2009-07-10 13:19:09 +0300 $
 
 Until the end of GSOC:
 
@@ -22,6 +22,7 @@ As quick as possible, after GSOC 2009:
   Chrome 2 on Windows, compared to the other browsers. To see this, test the RGB 
   color space visualisation in the color mixer. I cannot reproduce the issue 
   with Google Chrome 3 on Linux.
+  - images cannot be selected in editable content, on Webkit.
 
 - implement the GUI improvements suggested by Olli Savolainen.
 - write more tutorials/articles about paintweb.

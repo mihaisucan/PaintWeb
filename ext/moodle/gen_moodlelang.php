@@ -18,13 +18,23 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-09 20:02:21 +0300 $
+ * $Date: 2009-07-10 14:14:20 +0300 $
  */
 
 // This script allows you to convert PaintWeb JSON language files into Moodle 
 // PHP language files.
 
 // In a typical setup, Moodle holds PaintWeb in lib/paintweb.
+
+// If you execute this script without any arguments, all the PaintWeb language 
+// files will be converted into Moodle PHP language files.
+//
+// Optionally, you can give this script one argument, to tell it which language 
+// you want to convert. This allows you to convert one language file, instead of 
+// all at once.
+
+// Warning: running this script will overwrite "paintweb.php" in your Moodle 
+// lang/*/ folders.
 
 $paintwebLangDir = '../../src/lang';
 $moodleLangDir = '../../../../lang';
@@ -40,16 +50,39 @@ if (!is_dir($moodleLangDir)) {
   return 1;
 }
 
+if (isset($_SERVER['argv'][1])) {
+  $file = $_SERVER['argv'][1] . '.json';
+
+  if (!file_exists($paintwebLangDir . '/' . $file)) {
+    echo "The PaintWeb language file was not found: $paintwebLangDir/$file\n";
+    return 1;
+  }
+
+  convertFile($file);
+
+  return 0;
+}
+
 $dir = opendir($paintwebLangDir);
 while ($file = readdir($dir)) {
   if (!preg_match('/\.json$/', $file)) {
     continue;
   }
 
+  convertFile($file);
+}
+
+function convertFile ($file) {
+  global $moodleLangDir, $moodleLangFile, $paintwebLangDir;
+
   $lang = str_replace('.json', '', $file);
 
-  $output = "<?php\n// " . date('c') . "\n";
+  $outputFolder = $moodleLangDir . '/' . ($lang === 'en' ? 'en_utf8' : $lang);
 
+  if (!is_dir($outputFolder)) {
+    echo "Skipping $file because $outputFolder was not found.\n";
+    continue;
+  }
 
   $langParsed = file_get_contents($paintwebLangDir . '/' . $file);
   $langParsed = preg_replace(array('/\s*\/\*.+?\*\//ms', '/\s*\\/\\/.+/'), '', $langParsed);
@@ -60,25 +93,28 @@ while ($file = readdir($dir)) {
     continue;
   }
 
-  processLang($langParsed, '');
-  $outputFolder = $moodleLangDir . '/' . ($lang === 'en' ? 'en_utf8' : $lang);
+  $output = "<?php\n// " . date('c') . "\n" . json2php($langParsed, '');
 
-  if (is_dir($outputFolder)) {
-    file_put_contents($outputFolder . '/' . $moodleLangFile, $output);
+  if (file_put_contents($outputFolder . '/' . $moodleLangFile, $output)) {
+    echo "Generated $outputFolder/$moodleLangFile\n";
+  } else {
+    echo "Failed to write $outputFolder/$moodleLangFile\n";
   }
 }
 
-function processLang ($obj, $prefix) {
-  global $output;
+function json2php ($obj, $prefix) {
+  $result = '';
 
   foreach ($obj as $key => $val) {
     if (is_array($val)) {
-      processLang($val, $prefix . $key . ':');
+      $result .= json2php($val, $prefix . $key . ':');
     } else {
       $val = str_replace("'", "\\'", $val);
-      $output .= "\$string['$prefix$key'] = '" . $val . "';\n";
+      $result .= "\$string['$prefix$key'] = '" . $val . "';\n";
     }
   }
+
+  return $result;
 }
 
 // vim:set spell spl=en fo=anl1qrowcb tw=80 ts=2 sw=2 sts=2 sta et noai nocin fenc=utf-8 ff=unix: 
