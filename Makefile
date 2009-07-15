@@ -18,7 +18,7 @@
 # along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
 # 
 # $URL: http://code.google.com/p/paintweb $
-# $Date: 2009-07-06 13:03:37 +0300 $
+# $Date: 2009-07-15 20:15:59 +0300 $
 
 
 #### Config:start #####################################################
@@ -68,6 +68,14 @@ FOLDER_TINYMCE_PLUGIN=ext/tinymce-plugin/paintweb
 
 # Changes below this line are not recommended
 #### Config:end #######################################################
+
+# This holds the absolute path to the parent of the current working directory.  
+# Given /home/robod/src/paintweb this variable will hold /home/robod/src/.
+FOLDER_PARENT=$(dir $(CURDIR))
+
+# This holds the name of the current working directory. Given 
+# /home/robod/src/paintweb this variable will hold only "paintweb".
+FOLDER_SELF=$(subst $(FOLDER_PARENT),,$(CURDIR))
 
 # Package output file
 FILE_PAINTWEB=paintweb.js
@@ -155,15 +163,15 @@ $(FOLDER_BUILD)/$(INTERFACE_STYLE): $(FOLDER_SRC)/$(INTERFACE_STYLE)
 	$(BIN_CSS_IMAGES) $^.tmp > $(FOLDER_BUILD)/$(INTERFACE_STYLE)
 	rm $^.tmp
 
-# Copy the example configuration file
+# Copy the example configuration file.
 $(FOLDER_BUILD)/$(FILE_CONFIG): $(FOLDER_SRC)/$(FILE_CONFIG)
 	cp $^ $@
 
-# Compress the TinyMCE plugin
+# Compress the TinyMCE plugin.
 $(FOLDER_TINYMCE_PLUGIN)/editor_plugin.js: $(FOLDER_TINYMCE_PLUGIN)/editor_plugin_src.js
 	$(BIN_JS) $^ > $@
 
-.PHONY : docs release snapshot package
+.PHONY : docs release snapshot package tags
 docs:
 	$(BIN_JSDOC) $(FOLDER_SRC) $(FOLDER_DOCS_API)
 
@@ -173,8 +181,14 @@ release: package
 snapshot: package
 	mv /tmp/paintweb.tar.bz2 ./paintweb-$(BUILD_VERSION)-$(BUILD_DATE).tar.bz2
 
+# Create the PaintWeb package.
 package:
-	tar --exclude=".*" --exclude="*~" --exclude="*bz2" -cjvf /tmp/paintweb.tar.bz2 *
+	tar --exclude=".*" --exclude="*~" --exclude="*bak" --exclude="*bz2" \
+		-C $(FOLDER_PARENT) -cjvf /tmp/paintweb.tar.bz2 $(FOLDER_SELF)
+
+# Generate the tags file for the project.
+tags:
+	ctags -R $(FOLDER_SRC) --JavaScript-kinds=fcm --fields=afiklmnsSt
 
 # vim:set spell spl=en fo=wan1croql tw=80 ts=2 sw=2 sts=0 sta noet ai cin fenc=utf-8 ff=unix:
 

@@ -1,6 +1,6 @@
 $Author: Mihai Şucan $
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-07-10 13:19:09 +0300 $
+$Date: 2009-07-10 20:12:19 +0300 $
 
 Until the end of GSOC:
 
@@ -10,8 +10,6 @@ Until the end of GSOC:
 As quick as possible, after GSOC 2009:
 
 - report browser bugs:
-  - shadows are not applied in Chrome when using drawImage(). Tested with google 
-  Chrome 2 on Windows and Chromium 3 on Linux.
   - when strokeText() is used shadows do not render (Webkit, needs recheck).
   - elem.hasAttribute('data-whatever') fails to return true when it should do 
   so. The problem affects Webkit.

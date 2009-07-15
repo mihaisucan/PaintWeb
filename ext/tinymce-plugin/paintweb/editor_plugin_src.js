@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-09 16:31:30 +0300 $
+ * $Date: 2009-07-10 18:34:22 +0300 $
  */
 
 /**
@@ -32,6 +32,11 @@ var paintwebInstance = null,
     targetEditor = null,
     targetContainer = null,
     overlayButton = null;
+
+if (!window.tinymce) {
+  alert('It looks like the PaintWeb plugin for TinyMCE cannot run.' +
+    'TinyMCE was not detected!');
+}
 
 /**
  * Load PaintWeb. This function tells TinyMCE to load the PaintWeb script.
