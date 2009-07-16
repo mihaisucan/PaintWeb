@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-09 18:12:35 +0300 $
+ * $Date: 2009-07-16 20:15:23 +0300 $
  */
 
 /**
@@ -994,7 +994,7 @@ function PaintWeb (win, doc) {
     // The global keyboard events handler implements everything needed for 
     // switching between tools and for accessing any other functionality of the 
     // Web application.
-    kbListener_ = new pwlib.dom.KeyboardEventListener(window,
+    kbListener_ = new pwlib.dom.KeyboardEventListener(this.config.guiPlaceholder,
         {keydown:  this.ev_keyboard,
          keypress: this.ev_keyboard,
          keyup:    this.ev_keyboard});
@@ -1318,7 +1318,7 @@ function PaintWeb (win, doc) {
       }
     }
 
-    // Rather ugly, buuut the only way, at the moment, to detect the keys in 
+    // Rather ugly, but the only way, at the moment, to detect these keys in 
     // Opera and Firefox.
     if (ev.type === 'keypress' && ev.char_) {
       var isZoomKey = true,
@@ -2452,13 +2452,20 @@ function PaintWeb (win, doc) {
    * @returns {Boolean} True if the operation was successful, or false if not.
    */
   this.imageSave = function () {
-    var canvas = _self.layer.canvas;
+    var canvas = _self.layer.canvas,
+        idata = null;
 
     if (!canvas.toDataURL) {
       return false;
     }
 
-    var idata = canvas.toDataURL();
+    try {
+      idata = canvas.toDataURL();
+    } catch (err) {
+      alert(lang.errorImageSave + "\n" + err);
+      return false;
+    }
+
     if (!idata || idata.toLowerCase() == 'data:') {
       return false;
     }

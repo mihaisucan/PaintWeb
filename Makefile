@@ -18,7 +18,7 @@
 # along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
 # 
 # $URL: http://code.google.com/p/paintweb $
-# $Date: 2009-07-15 20:15:59 +0300 $
+# $Date: 2009-07-16 18:43:06 +0300 $
 
 
 #### Config:start #####################################################
@@ -171,7 +171,7 @@ $(FOLDER_BUILD)/$(FILE_CONFIG): $(FOLDER_SRC)/$(FILE_CONFIG)
 $(FOLDER_TINYMCE_PLUGIN)/editor_plugin.js: $(FOLDER_TINYMCE_PLUGIN)/editor_plugin_src.js
 	$(BIN_JS) $^ > $@
 
-.PHONY : docs release snapshot package tags
+.PHONY : docs release snapshot package tags moodle
 docs:
 	$(BIN_JSDOC) $(FOLDER_SRC) $(FOLDER_DOCS_API)
 
@@ -183,12 +183,16 @@ snapshot: package
 
 # Create the PaintWeb package.
 package:
-	tar --exclude=".*" --exclude="*~" --exclude="*bak" --exclude="*bz2" \
+	tar --exclude=".*" --exclude="*~" --exclude="*bak" --exclude="*bz2" --exclude="tags" \
 		-C $(FOLDER_PARENT) -cjvf /tmp/paintweb.tar.bz2 $(FOLDER_SELF)
 
 # Generate the tags file for the project.
 tags:
 	ctags -R $(FOLDER_SRC) --JavaScript-kinds=fcm --fields=afiklmnsSt
+
+# Generate a custom Moodle build.
+moodle: EXTENSIONS=colormixer moodle
+moodle: all
 
 # vim:set spell spl=en fo=wan1croql tw=80 ts=2 sw=2 sts=0 sta noet ai cin fenc=utf-8 ff=unix:
 

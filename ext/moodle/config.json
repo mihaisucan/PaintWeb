@@ -1,0 +1,634 @@
+{
+  // $Date: 2009-07-16 13:59:30 +0300 $
+
+  /**
+   * The list of available languages. This associated language IDs to their 
+   * language titles.
+   *
+   * @type Object
+   */
+  "languages": {
+    "en": "English"
+  },
+
+  /**
+   * The default language.
+   *
+   * @type String
+   * @default "en"
+   */
+  "lang": "en",
+
+  /**
+   * The folder which holds the language files.
+   *
+   * @type String
+   * @default "lang"
+   */
+  "langFolder": "lang",
+
+  /**
+   * The graphical user interface you want to use.
+   *
+   * @type String
+   * @default "default"
+   */
+  "gui": "default",
+
+  /**
+   * The folder contains all the interfaces.
+   *
+   * @type String
+   * @default "interfaces"
+   */
+  "interfacesFolder": "interfaces",
+
+  /**
+   * The interface markup file. The file must be an XHTML valid document.
+   *
+   * @type String
+   * @default "layout.xhtml"
+   */
+  "guiMarkup": "layout.xhtml",
+
+  /**
+   * The interface style file.
+   *
+   * @type String
+   * @default "style.css"
+   */
+  "guiStyle": "style.css",
+
+  /**
+   * The interface script file.
+   *
+   * @type String
+   * @default script.js
+   */
+  "guiScript": "script.js",
+
+  /**
+   * Viewport width.
+   *
+   * <p>Note: the GUI implementation might ignore this value.
+   *
+   * @type Number
+   * @default -1
+   */
+  "viewportWidth": -1,
+
+  /**
+   * Viewport height.
+   *
+   * <p>Note: the GUI implementation might ignore this value.
+   *
+   * @type Number
+   * @default 400
+   */
+  "viewportHeight": 400,
+
+  /**
+   * The default image width.
+   *
+   * @type Number
+   * @default 400
+   */
+  "imageWidth": 400,
+
+  /**
+   * The default image width.
+   *
+   * @type Number
+   * @default 300
+   */
+  "imageHeight": 300,
+
+  /**
+   * Image preload. The image you want to display when PaintWeb loads. This must 
+   * be a reference to an HTML Image element.
+   *
+   * @type HTMLImageElement
+   * @default null
+   */
+  "imagePreload": null,
+
+  /**
+   * Default background color.
+   *
+   * @type CSS3Color
+   * @default "#fff"
+   */
+  "backgroundColor": "#fff",
+
+  /**
+   * Default fill style.
+   *
+   * @type CSS3Color-rgba functional notation
+   * @default "rgba(0,0,0,1)"
+   */
+  "fillStyle": "rgba(0,0,0,1)",
+
+  /**
+   * Default stroke style.
+   *
+   * @type CSS3Color-rgba functional notation
+   * @default "rgba(0,0,255,1)"
+   */
+  "strokeStyle": "rgba(0,0,255,1)",
+
+  /**
+   * GUI placeholder element. This element will hold all the PaintWeb interface 
+   * elements.
+   *
+   * <p>For a successful initialization of PaintWeb, you must define this 
+   * configuration value programatically from your scripts.
+   *
+   * @type Element
+   * @default null
+   */
+  "guiPlaceholder": null,
+
+  /**
+   * Shape drawing "type": filled, only stroke, or both. Possible values: 
+   * "filled", "stroke" or "both".
+   *
+   * @type String
+   * @default "both"
+   */
+  "shapeType": "both",
+
+  /**
+   * Number of available history steps.
+   *
+   * @type Number
+   * @default 10
+   */
+  "historyLimit": 10,
+
+  /**
+   * Zoom factor when the user increases/decreases the image zoom level.
+   *
+   * @type Number
+   * @default 0.05
+   */
+  // 0.05 means 5% zoom.
+  "imageZoomStep": 0.05,
+
+  /**
+   * The maximum allowed image zoom level.
+   *
+   * @type Number
+   * @default 4
+   */
+  // 4 means 400% zoom.
+  "imageZoomMax": 4,
+
+  /**
+   * The minimum allowed image zoom level.
+   *
+   * @type Number
+   * @default 0.2
+   */
+  // 0.2 means 20% zoom.
+  "imageZoomMin": 0.2,
+
+  /**
+   * The image zoom control keys, for zoom in, zoom out and zoom reset.
+   * @type Object
+   */
+  "imageZoomKeys": {
+    "in":    "+",
+    "out":   "-",
+    "reset": "*"
+  },
+
+  /**
+   * Holds the list of drawing tools you want to load.
+   * @type Array
+   */
+  "tools": ["selection", "hand", "rectangle", "ellipse", "polygon", "line", "text", "bcurve", "insertimg", "pencil", "cpicker", "eraser"],
+
+  /**
+   * Tools folder.
+   * @type String
+   * @default "tools"
+   */
+  "toolsFolder": "tools",
+
+  /**
+   * The default tool ID.
+   *
+   * @type String
+   * @default "line"
+   * @see this.tools The array holding the list of drawing tools you want 
+   * loaded.
+   */
+  "toolDefault": "line",
+
+  /**
+   * Tool drawing delay. Some tools delay their drawing operations for 
+   * performance reasons.
+   *
+   * @type Number
+   * @default 80
+   */
+  "toolDrawDelay": 80,
+
+  /**
+   * Holds the list of extensions you want to load.
+   * @type Array
+   */
+  "extensions": ["colormixer", "moodle"],
+  //"extensions": ["colormixer", "mousekeys"],
+
+  /**
+   * Extensions folder.
+   *
+   * @type String
+   * @default "extensions"
+   */
+  "extensionsFolder": "extensions",
+
+  /**
+   * @namespace Line tool options.
+   */
+  "line": {
+    /**
+     * Line cap. Possible values: "butt", "round", "square".
+     *
+     * @type String
+     * @default "round"
+     */
+    "lineCap": "round",
+
+    /**
+     * Line join. Possible values: "round", "bevel", "miter".
+     *
+     * @type String
+     * @default "round"
+     */
+    "lineJoin": "round",
+
+    /**
+     * Line width.
+     *
+     * @type Number
+     * @default 1
+     */
+    "lineWidth": 1,
+
+    /**
+     * Miter limit.
+     *
+     * @type Number
+     * @default 10
+     */
+    "miterLimit": 10
+  },
+
+  /**
+   * @namespace Shadow options.
+   */
+  "shadow": {
+    /**
+     * Tells if a shadow should render or not.
+     *
+     * @type Boolean
+     * @default false
+     */
+    "enable": false,
+
+    /**
+     * Shadow color
+     *
+     * @type CSS3Color-rgba() functional notation
+     * @default "rgba(0,0,0,1)"
+     */
+    "shadowColor": "rgba(0,0,0,1)",
+
+    /**
+     * Shadow blur.
+     *
+     * @type Number
+     * @default 5
+     */
+    "shadowBlur": 5,
+
+    /**
+     * Shadow offset X.
+     *
+     * @type Number
+     * @default 5
+     */
+    "shadowOffsetX": 5,
+
+    /**
+     * Shadow offset %.
+     *
+     * @type Number
+     * @default 5
+     */
+    "shadowOffsetY": 5
+  },
+
+  /**
+   * @namespace Selection tool options.
+   */
+  "selection": {
+    /**
+     * Selection transformation mode. This tells if any drag/resize would also 
+     * affect the selected pixels or not.
+     *
+     * @type Boolean
+     * @default false
+     */
+    "transform": false,
+
+    /**
+     * Transparent selection.
+     *
+     * @type Boolean
+     * @default true
+     */
+    "transparent": true,
+
+    /**
+     * Selection marquee border width.
+     *
+     * @type Number
+     * @default 3
+     */
+    "borderWidth": 3,
+
+    /**
+     * Keyboard shortcuts for several selection-related commands.
+     * @type Object
+     */
+    "keys": {
+      "selectionCrop": "Control K",
+      "selectionDelete": "Delete",
+      "selectionDrop": "Escape",
+      "selectionFill": "Alt Backspace",
+      "transformToggle": "Enter"
+    }
+  },
+
+  /**
+   * Text tool options.
+   * @type Object
+   */
+  "text": {
+    "bold": false,
+    "italic": false,
+
+    /**
+     * The default list of font families available in font family drop-down.
+     * @type Array
+     */
+    "fontFamilies": ["sans-serif", "serif", "cursive", "fantasy", "monospace"],
+
+    /**
+     * The font family used for rendering the text.
+     * @type String
+     * @default "sans-serif"
+     */
+    "fontFamily": "sans-serif",
+
+    "fontSize": 36,
+
+    /**
+     * Horizontal text alignment. Possible values: "left", "center", "right".
+     *
+     * <p>Note that the Canvas Text API also defines the "start" and "end" 
+     * values, which are not "supported" by PaintWeb.
+     *
+     * @type String
+     * @default "left"
+     */
+    "textAlign": "left",
+
+    /**
+     * Vertical text alignment. Possible values: "top", "hanging", "middle", 
+     * "alphabetic", "ideographic", or "bottom".
+     *
+     * @type String
+     * @default "alphabetic"
+     */
+    "textBaseline": "top"
+  },
+
+  /**
+   * @namespace Color Mixer extension configuration.
+   */
+  "colormixer": {
+    /**
+     * Holds the minimum and maximum value for each color channel input field.  
+     * The value incrementation step is also included - this is used the user 
+     * presses the up/down arrow keys in the input of the color channel.
+     *
+     * @type Object
+     */
+    "inputValues": {
+      // RGB
+      // order: minimum, maximum, step
+      "red":   [0, 255, 1],
+      "green": [0, 255, 1],
+      "blue":  [0, 255, 1],
+
+      // HSV
+      // Hue - degrees
+      "hue": [0, 360, 1],
+      "sat": [0, 255, 1],
+      "val": [0, 255, 1],
+
+      // CMYK - all are percentages
+      "cyan":    [0, 100, 1],
+      "magenta": [0, 100, 1],
+      "yellow":  [0, 100, 1],
+      "black":   [0, 100, 1],
+
+      // CIE Lab
+      // cie_l = Lightness, it's a percentage value
+      // cie_a and cie_b are the color-opponent dimensions
+      "cie_l": [   0,   100, 1],
+      "cie_a": [ -86,    98, 1],
+      "cie_b": [-107,    94, 1],
+
+      "alpha": [0, 100, 1]
+    },
+
+    /**
+     * CIE Lab configuration.
+     * @type Object
+     */
+    "lab": {
+      // The RGB working space is sRGB which has the reference white point of 
+      // D65.
+      // These are the chromaticity coordinates for the red, green and blue 
+      // primaries.
+      "x_r": 0.64,
+      "y_r": 0.33,
+      "x_g": 0.3,
+      "y_g": 0.6,
+      "x_b": 0.13,
+      "y_b": 0.06,
+
+      // Standard observer: D65 (daylight), 2° (CIE 1931).
+      // Chromaticity coordinates.
+      "ref_x": 0.31271,
+      "ref_y": 0.32902,
+
+      // This is the calculated reference white point (xyY to XYZ) for D65, also 
+      // known as the reference illuminant tristimulus.
+      // These values are updated based on chromaticity coordinates, during 
+      // initialization.
+      "w_x": 0.95047,
+      "w_y": 1,
+      "w_z": 1.08883,
+
+      // The 3x3 matrix used for multiplying the RGB values when converting RGB 
+      // to XYZ.
+      // These values are updated based on the chromaticity coordinates, during 
+      // initialization.
+      "m": [ 0.412424,  0.212656, 0.0193324,
+             0.357579,  0.715158, 0.119193,
+             0.180464, 0.0721856, 0.950444],
+
+      // The same matrix, but inverted. This is used for the XYZ to RGB conversion.
+      "m_i": [ 3.24071,  -0.969258,   0.0556352,
+              -1.53726,   1.87599,   -0.203996,
+              -0.498571,  0.0415557,  1.05707]
+    },
+
+    /**
+     * Slider width. This value must be relative to the color space 
+     * visualisation canvas element: 1 means full width, 0.5 means half width, 
+     * etc.
+     *
+     * @type Number
+     * @default 0.10 (which is 10% of the canvas element width)
+     */
+    "sliderWidth": 0.10,
+
+    /**
+     * Spacing between the slider and the color chart.
+     *
+     * @type Number
+     * @default 0.03 (which is 3% of the canvas element width)
+     */
+    "sliderSpacing": 0.03,
+
+    /**
+     * Holds the list of color palettes.
+     * @type Object
+     */
+    "colorPalettes": {
+      "_saved" : {
+        // Color values are: red, green, blue. All three channels have values 
+        // ranging between 0 and 1.
+        "colors" : [[1,1,1], [1,1,0], [1,0,1], [0,1,1], [1,0,0], [0,1,0], [0,0,1], [0,0,0]]
+      },
+      "windows" : {
+        "file" : "colors/windows.json"
+      },
+      "macos" : {
+        "file" : "colors/macos.json"
+      },
+      "web" : {
+        "file" : "colors/web.json"
+      }
+    },
+
+    "paletteDefault": "windows"
+  },
+
+  /**
+   * @namespace Holds the MouseKeys extension options.
+   */
+  "mousekeys": {
+    /**
+     * The mouse keys movement acceleration.
+     *
+     * @type Number
+     * @default 0.1
+     * @see PaintMouseKeys The MouseKeys extension.
+     */
+    "accel": 0.1,
+
+    /**
+     * Holds the list of actions, associated to keyboard shortcuts.
+     *
+     * @type Object
+     */
+    // We make sure the number keys on the NumPad also work when the Shift key 
+    // is down.
+    "actions": {
+      "ButtonToggle": [0],
+      "SouthWest":    [1],
+      "South":        [2],
+      "SouthEast":    [3],
+      "West":         [4],
+      "ButtonClick":  [5],
+      "East":         [6],
+      "NorthWest":    [7],
+      "North":        [8],
+      "NorthEast":    [9]
+
+      /*
+      You might want Shift+NumPad keys as well ...
+      Shift+Arrows breaks spatial navigation in Opera.
+      "ButtonToggle": [0, "Shift Insert"],
+      "SouthWest":    [1, "Shift End"],
+      "South":        [2, "Shift Down"],
+      "SouthEast":    [3, "Shift PageDown"],
+      "West":         [4, "Shift Left"],
+      "ButtonClick":  [5, "Shift Clear"],
+      "East":         [6, "Shift Right"],
+      "NorthWest":    [7, "Shift Home"],
+      "North":        [8, "Shift Up"],
+      "NorthEast":    [9, "Shift PageUp"]
+      */
+    }
+  },
+
+  /**
+   * Keyboard shortcuts associated to drawing tools and other actions.
+   *
+   * @type Object
+   * @see PaintTools The object holding all the drawing tools.
+   */
+  "keys": {
+    // Use "command": "id" to execute some command.
+    "Control Z": { "command": "historyUndo" },
+    "Control Y": { "command": "historyRedo" },
+
+    "Control N": { "command": "imageClear" },
+    "Control S": { "command": "imageSave" },
+
+    "Control A":    { "command": "selectAll" },
+    "Control X":    { "command": "selectionCut" },
+    "Shift Delete": { "command": "selectionCut" },
+    "Control C":    { "command": "selectionCopy" },
+    "Control V":    { "command": "clipboardPaste" },
+
+    // Use "toolActivate": "id" to activate the tool with the given ID.
+    "C": { "toolActivate": "cpicker" },
+    "E": { "toolActivate": "ellipse" },
+    "G": { "toolActivate": "polygon" },
+    "H": { "toolActivate": "hand" },
+    "I": { "toolActivate": "insertimg" },
+    "L": { "toolActivate": "line" },
+    "O": { "toolActivate": "eraser" },
+    "P": { "toolActivate": "pencil" },
+    "R": { "toolActivate": "rectangle" },
+    "S": { "toolActivate": "selection" },
+    "T": { "toolActivate": "text" },
+    "V": { "toolActivate": "bcurve" },
+
+    // Miscellaneous commands.
+    "X":  { "command": "swapFillStroke" },
+    "F1": { "command": "about" },
+  }
+
+  // vim:set spell spl=en fo=wan1croql tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix ft=javascript:
+}

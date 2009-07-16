@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-10 18:34:22 +0300 $
+ * $Date: 2009-07-16 23:43:38 +0300 $
  */
 
 /**
@@ -109,8 +109,18 @@ function paintwebSave (ev) {
   }
 
   paintwebInstance.gui.hide();
+
+  if (overlayButton && overlayButton.parentNode && targetEditor) {
+    overlayButton.title = targetEditor.getLang('paintweb.overlayButton', 
+        'Edit');
+    overlayButton.replaceChild(document.createTextNode(overlayButton.title), 
+        overlayButton.firstChild);
+  }
+
   targetContainer.style.display = '';
   targetImage = null;
+
+  targetEditor.focus();
 };
 
 /**
@@ -120,6 +130,12 @@ function paintwebEditStart () {
   if (!checkEditableImage(targetImage)) {
     targetImage = null;
     return;
+  }
+
+  if (overlayButton && overlayButton.parentNode && targetEditor) {
+    overlayButton.title = targetEditor.getLang('paintweb.loading', 'Loading');
+    overlayButton.replaceChild(document.createTextNode(overlayButton.title), 
+        overlayButton.firstChild);
   }
 
   if (paintwebInstance) {
@@ -133,8 +149,8 @@ function paintwebEditStart () {
 };
 
 /**
- * The PaintWeb "edit" command. This function is invoked when the user clicks 
- * the PaintWeb button on the toolbar.
+ * The "paintwebEdit" command. This function is invoked when the user clicks the 
+ * PaintWeb button on the toolbar.
  */
 function paintwebEditCommand () {
   if (targetImage) {
@@ -157,6 +173,10 @@ function paintwebEditCommand () {
  * @returns {Boolean} True if the image can be edited, or false otherwise.
  */
 function checkEditableImage (n) {
+  if (!n) {
+    return false;
+  }
+
   var url = n.src;
   if (n.nodeName.toLowerCase() !== 'img' || !url) {
     return false;
@@ -191,11 +211,9 @@ tinymce.PluginManager.requireLangPack('paintweb');
 
 tinymce.create('tinymce.plugins.paintweb', {
   /**
-   * Initializes the plugin, this will be executed after the plugin has been 
-   * created.
-   * This call is done before the editor instance has finished it's 
-   * initialization so use the onInit event
-   * of the editor instance to intercept that event.
+   * Initializes the plugin. This method sets-up the current editor instance, by 
+   * adding a new button, <var>paintwebEdit</var>, and by setting up several 
+   * event listeners.
    *
    * @param {tinymce.Editor} ed Editor instance that the plugin is initialized 
    * in.
@@ -208,7 +226,7 @@ tinymce.create('tinymce.plugins.paintweb', {
 
     // Register PaintWeb button
     ed.addButton('paintwebEdit', {
-      title : 'paintweb.editButton',
+      title : 'paintweb.toolbarButton',
       cmd : 'paintwebEdit',
       image : url + '/img/paintweb.gif'
     });
@@ -220,7 +238,7 @@ tinymce.create('tinymce.plugins.paintweb', {
     var config = ed.getParam('paintweb_config');
 
     // Integrate into the ContextMenu plugin if the user desires so.
-    if (config && config.tinymce && config.tinymce.contextmenu && 
+    if (config && config.tinymce && config.tinymce.contextMenuItem && 
         ed.plugins.contextmenu) {
       ed.plugins.contextmenu.onContextMenu.add(this.pluginContextMenu);
     }
@@ -230,9 +248,11 @@ tinymce.create('tinymce.plugins.paintweb', {
       ed.onClick.add(this.edClick);
       ed.onPreProcess.add(this.edPreProcess);
       ed.onBeforeGetContent.add(this.edPreProcess);
+      ed.onRemove.add(this.edPreProcess);
 
       overlayButton = document.createElement('a');
 
+      overlayButton.className = 'paintwebOverlayButton';
       overlayButton.title = ed.getLang('paintweb.overlayButton', 'Edit');
       overlayButton.appendChild(document.createTextNode(overlayButton.title));
 
@@ -242,6 +262,41 @@ tinymce.create('tinymce.plugins.paintweb', {
       overlayButton.style.border = '1px solid #000';
       overlayButton.style.textDecoration = 'none';
       overlayButton.style.color = '#000';
+    }
+
+    // Handle the dblclick events for image elements, if the user wants it.
+    if (config && config.tinymce && config.tinymce.dblclickHandler) {
+      ed.onDblClick.add(this.edDblClick);
+    }
+
+    // Add the editor initialization event listener.
+    ed.onInit.add(this.edInit);
+  },
+
+  /**
+   * The <code>init</code> event handler for the editor instance. This makes 
+   * sure that the iframe DOM document does not contain any PaintWeb overlay 
+   * button. Firefox remembers the overlay button after a page refresh.
+   *
+   * @param {tinymce.Editor} ed The editor instance that the plugin is 
+   * initialized in.
+   */
+  edInit: function (ed) {
+    if (!ed || !ed.getDoc) {
+      return;
+    }
+
+    var iframe = ed.getDoc();
+    if (!iframe || !iframe.getElementsByClassName) {
+      return;
+    }
+
+    var elems = iframe.getElementsByClassName('paintwebOverlayButton'),
+        pNode;
+
+    for (var i = 0; i < elems.length; i++) {
+      pNode = elems[i].parentNode;
+      pNode.removeChild(elems[i]);
     }
   },
 
@@ -321,6 +376,24 @@ tinymce.create('tinymce.plugins.paintweb', {
       targetEditor = ed;
       targetContainer = ed.getContainer();
       targetImage = overlayButton._targetImage;
+
+      paintwebEditStart();
+    }
+  },
+
+  /**
+   * The <code>dblclick</code> event handler for the editor. This method starts 
+   * PaintWeb when the user double clicks an editable image element.
+   *
+   * @param {tinymce.Editor} ed The TinyMCE editor instance.
+   * @param {Event} ev The DOM Event object.
+   */
+  edDblClick: function (ed, ev) {
+    if (!targetImage && checkEditableImage(ev.target)) {
+      targetEditor = ed;
+      targetContainer = ed.getContainer();
+      targetImage = ev.target;
+      ev.target.focus();
 
       paintwebEditStart();
     }

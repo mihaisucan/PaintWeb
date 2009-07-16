@@ -1,3 +1,31 @@
+2009-07-16:
+===========
+
+- Started the implementation of a new extension for PaintWeb, intuitively named 
+"moodle". This will soon include glue-code for PaintWeb and Moodle.
+- The Makefile includes a new "moodle" target. Invoke "make moodle" to make 
+a custom Moodle build of PaintWeb. Currently, Moodle builds only differ in their 
+choice of included extensions: the MouseKeys extension is replaced by the new 
+Moodle extension.
+- The TinyMCE plugin now allows the user to start PaintWeb when the image 
+element is double clicked. So, now, you can simply double click the image to 
+edit it, yay!
+- When PaintWeb starts to load, the TinyMCE plugin provides feedback: the 
+overlay button shows "PaintWeb is loading".
+- Fixed a bug in the TinyMCE plugin: the overlay button was persisting across 
+page refreshes in Firefox.
+- New PaintWeb configuration file tailored for Moodle. Currently, the difference 
+is that it loads the new Moodle extension instead of the MouseKeys extension.
+- Bug fix in the PaintWeb.imageSave() method: when the image cannot be saved, 
+  show the error to the user, don't throw an exception.
+- Fixes across the board for keyboard accessibility: improved focusing of 
+elements, as needed.
+- Now PaintWeb no longer listens for all the keyboard events on the global 
+Window object - this created a conflict with TinyMCE and more complex Web 
+applications (obviously). Keyboard events are now handled only within the 
+PaintWeb target element - the GUI placeholder.
+- New English strings.
+
 2009-07-15:
 ===========
 

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-06 19:46:30 +0300 $
+ * $Date: 2009-07-16 20:07:22 +0300 $
  */
 
 /**
@@ -205,6 +205,9 @@ pwlib.gui = function (app) {
     placeholderStyle.visibility = 'hidden';
 
     placeholder.className += ' ' + this.classPrefix + 'placeholder';
+    if (!placeholder.tabIndex || placeholder.tabIndex == -1) {
+      placeholder.tabIndex = 1;
+    }
 
     if (!this.initImportDoc(markup)) {
       app.initError(lang.guiMarkupImportFailed);
@@ -900,13 +903,23 @@ pwlib.gui = function (app) {
     }
 
     // Make PaintWeb visible.
-    var placeholder = this.config.guiPlaceholder.style;
+    var placeholder = config.guiPlaceholder,
+        placeholderStyle = placeholder.style,
+        cs = win.getComputedStyle(placeholder, null);
 
     // We do not reset the display property. We leave this for the stylesheet.
-    placeholder.height = '';
-    placeholder.overflow = '';
-    placeholder.position = '';
-    placeholder.visibility = '';
+    placeholderStyle.height = '';
+    placeholderStyle.overflow = '';
+    placeholderStyle.position = '';
+    placeholderStyle.visibility = '';
+
+    // Do not allow the static positioning for the PaintWeb placeholder.  
+    // Usually, the GUI requires absolute/relative positioning.
+    if (cs.position === 'static') {
+      placeholderStyle.position = 'relative';
+    }
+
+    placeholder.focus();
   };
 
   /**
@@ -1047,10 +1060,10 @@ pwlib.gui = function (app) {
    */
   this.toolActivate = function (ev) {
     var tabAnchor,
+        tabActive = _self.tools[ev.id],
         tabConfig = _self.toolTabConfig[ev.id] || {},
         tabPanel = _self.tabPanels.main,
         lineTab = tabPanel.tabs.line,
-        tabActive = _self.tools[ev.id],
         shapeType = _self.inputs.shapeType,
         lineWidth = _self.inputs.line_lineWidth,
         lineCap = _self.inputs.line_lineCap,
@@ -1059,6 +1072,7 @@ pwlib.gui = function (app) {
         lineWidthLabel = null;
 
     tabActive.className += ' ' + _self.classPrefix + 'toolActive';
+    tabActive.firstChild.focus();
 
     if ((ev.id + 'Active') in lang.status) {
       _self.statusShow(ev.id + 'Active');
@@ -1254,6 +1268,7 @@ pwlib.gui = function (app) {
       app.commands[cmd].call(this, ev);
     }
     ev.preventDefault();
+    this.focus();
   };
 
   /**
@@ -1725,6 +1740,7 @@ pwlib.gui = function (app) {
     if (placeholder.className.indexOf(className) === -1) {
       placeholder.className += className;
     }
+    placeholder.focus();
   };
 
   /**
@@ -1749,14 +1765,15 @@ pwlib.gui = function (app) {
  * into a floating panel.
  */
 pwlib.guiFloatingPanel = function (gui, container) {
-  var _self       = this,
-      appEvent    = pwlib.appEvent,
-      cStyle      = container.style,
-      doc         = gui.app.doc,
-      lang        = gui.app.lang,
-      panels      = gui.floatingPanels,
-      win         = gui.app.win,
-      zIndex_step = 200;
+  var _self          = this,
+      appEvent       = pwlib.appEvent,
+      cStyle         = container.style,
+      doc            = gui.app.doc,
+      guiPlaceholder = gui.app.config.guiPlaceholder,
+      lang           = gui.app.lang,
+      panels         = gui.floatingPanels,
+      win            = gui.app.win,
+      zIndex_step    = 200;
 
   // These hold the mouse starting location during the drag operation.
   var mx, my;
@@ -1932,6 +1949,7 @@ pwlib.guiFloatingPanel = function (gui, container) {
    */
   function ev_minimize (ev) {
     ev.preventDefault();
+    this.focus();
 
     var classMinimized = ' ' + gui.classPrefix + 'floatingPanel_minimized';
 
@@ -1977,6 +1995,7 @@ pwlib.guiFloatingPanel = function (gui, container) {
   function ev_close (ev) {
     ev.preventDefault();
     _self.hide();
+    guiPlaceholder.focus();
   };
 
   /**
@@ -2061,6 +2080,7 @@ pwlib.guiFloatingPanel = function (gui, container) {
     doc.removeEventListener('mousemove', ev_mousemove, false);
     doc.removeEventListener('mouseup',   ev_mouseup,   false);
 
+    guiPlaceholder.focus();
     _self.events.dispatch(new appEvent.guiFloatingPanelStateChange(_self.state));
   };
 
@@ -2581,8 +2601,8 @@ pwlib.guiTabPanel = function (gui, panel) {
    * @param {Event} ev The DOM Event object.
    */
   function ev_tabClick (ev) {
-    _self.tabActivate(this.parentNode._pwTab);
     ev.preventDefault();
+    _self.tabActivate(this.parentNode._pwTab);
   };
 
   /**
@@ -2625,6 +2645,7 @@ pwlib.guiTabPanel = function (gui, panel) {
     tabButton = this.tabs[tabId].button;
     tabButton.className = gui.classPrefix + 'tabActive';
     tabButton.style.display = ''; // make sure the tab is not hidden
+    tabButton.firstChild.focus();
     this.tabId = tabId;
 
     return true;
