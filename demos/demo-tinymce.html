@@ -6,11 +6,11 @@
     <link rel="author" type="text/html" href="http://www.robodesign.ro" 
     title="Marius and Mihai Şucan, ROBO Design">
     <!-- $URL: http://code.google.com/p/paintweb $
-         $Date: 2009-07-16 20:18:01 +0300 $ -->
+         $Date: 2009-07-17 22:28:52 +0300 $ -->
 
     <!-- This demo requires you to have TinyMCE. -->
     <script type="text/javascript" 
-      src="../../tinymce/jscripts/tiny_mce/tiny_mce.js"></script>
+      src="../../tinymce/jscripts/tiny_mce/tiny_mce_src.js"></script>
     <script type="text/javascript"><!--
 tinyMCE.init({
   mode: "textareas",
@@ -20,11 +20,12 @@ tinyMCE.init({
   paintweb_config : {
     configFile: "config-example.json",
     tinymce: {
-      paintwebFolder: "../build/",
+      paintwebFolder: "../src/",
       imageSaveDataURI: true,
       overlayButton: true,
       contextMenuItem: true,
-      dblclickHandler: true
+      dblclickHandler: true,
+      pluginBar: true
     }
   },
 

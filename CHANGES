@@ -1,3 +1,12 @@
+2009-07-17:
+===========
+
+- Implemented a "plugin bar" which rendered at the top of the PaintWeb instance 
+by the TinyMCE plugin. This bar displays the current file name the user is 
+editing, and includes two buttons for image save / cancel edit.
+- A bug fix regarding the choice of inserting the PaintWeb instance closer to 
+the TinyMCE editor (DOM-wise).
+
 2009-07-16:
 ===========
 

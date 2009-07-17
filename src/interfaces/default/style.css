@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-06 19:34:43 +0300 $
+ * $Date: 2009-07-17 22:38:40 +0300 $
  */
 
 .paintweb_placeholder {
@@ -738,47 +738,45 @@
 
 .paintweb_floatingPanel_colormixer .paintweb_tabsList a {
   border-bottom: 0;
-  padding-top: 5px;
   padding-bottom: 5px;
+  padding-top: 5px
 }
 
 .paintweb_floatingPanel_colormixer .paintweb_tabActive a {
   background: #f2f2f2 !important;
-  padding-top: 6px !important;
+  padding-top: 6px !important
 }
 
-.paintweb_floatingPanel_colormixer .paintweb_floatingPanel_content {
-  height: 229px;
-}
+.paintweb_floatingPanel_colormixer .paintweb_floatingPanel_content { height: 229px }
 
 .paintweb_tabPanel_colormixer_selector {
-  position: absolute;
   bottom: 0;
   left: 0;
+  position: absolute
 }
 
 .paintweb_tabPanel_colormixer_selector .paintweb_tab {
   background: #656565;
   border: 1px solid #f2f2f2;
-  padding: 2px;
   height: 195px;
-  width: 199px;
+  padding: 2px;
+  width: 199px
 }
 
 .paintweb_tabPanel_colormixer_inputs {
-  position: absolute;
   bottom: 0;
   left: 214px;
-  width: 236px;
   margin: 0;
+  position: absolute;
+  width: 236px
 }
 
 .paintweb_tabPanel_colormixer_inputs ol {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  border: 1px solid #c6c6c6;
   border-width: 0 1px;
+  border: 1px solid #c6c6c6;
+  list-style: none;
+  margin: 0;
+  padding: 0
 }
 
 .paintweb_tabPanel_colormixer_inputs ol li {
@@ -786,160 +784,148 @@
   border-top: 1px solid #c6c6c6;
   margin: 0;
   padding: 7px;
-  vertical-align: middle;
+  vertical-align: middle
 }
 
 .paintweb_tabPanel_colormixer_inputs input:not([type=radio]) {
+  margin-top: -2px;
   position: absolute;
   right: 7px;
-  width: 4em;
-  margin-top: -2px;
   text-align: right;
+  width: 4em
 }
 
-.paintweb_tabPanel_colormixer_inputs input[type=radio] {
-  margin: 0;
-}
+.paintweb_tabPanel_colormixer_inputs input[type=radio] { margin: 0 }
 
 .paintweb_colormixer_controls {
-  position: absolute;
-  top: 2px;
   left: 2px;
+  position: absolute;
+  top: 2px
 }
 
 .paintweb_colormixer_chartDot {
-  position: absolute;
-  width: 3px;
-  height: 3px;
   background: #000;
   border: 1px solid #fff;
+  height: 3px;
   margin: -3px 0 0 -3px;
   opacity: 0.5;
+  position: absolute;
+  width: 3px
 }
 
 .paintweb_colormixer_slider {
-  position: absolute;
-  height: 3px;
   background: #000;
   border: 1px solid #fff;
+  height: 3px;
   margin: -2px 0 0 -1px;
   opacity: 0.5;
+  position: absolute
 }
 
 .paintweb_colormixer_cpaletteInput {
-  width: 97%;
   margin-bottom: 3px;
+  width: 97%
 }
 
 .paintweb_colormixer_cpaletteOutput {
   height: 166px;
-  overflow: auto;
+  overflow: auto
 }
 
 .paintweb_colormixer_cpaletteOutput a {
   float: left;
-  width: 11px;
   height: 0;
-  padding-top: 11px;
   margin: 1px 1px 0 0;
-  text-decoration: none;
   overflow: hidden;
+  padding-top: 11px;
+  text-decoration: none;
+  width: 11px
 }
 
 .paintweb_colormixer_cpaletteOutput a:hover,
-.paintweb_colormixer_cpaletteOutput a:focus {
-  outline: 1px solid #fff;
-}
+.paintweb_colormixer_cpaletteOutput a:focus { outline: 1px solid #fff }
 
 .paintweb_colormixer_preview {
+  background: #f2f2f2;
+  border: 1px solid #c6c6c6;
+  color: #555;
+  font-size: 0.9em;
+  left: 215px;
   list-style: none;
   margin: 0;
   padding: 0 0 1.6em 0;
-  background: #f2f2f2;
-  border: 1px solid #c6c6c6;
   position: absolute;
-  top: 0;
-  left: 215px;
-  font-size: 0.9em;
-  color: #555;
+  top: 0
 }
 
 .paintweb_colormixer_preview li {
   background: url('images/checkers.png');
-  float: left;
-  height: 40px;
   border: 1px solid #000;
+  float: left;
+  height: 40px
 }
 
 .paintweb_colormixer_preview span {
-  width: 40px;
-  height: 40px;
   display: block;
+  height: 40px;
   margin-bottom: 3px;
+  width: 40px
 }
 
 .paintweb_colormixer_colorOld {
   border-left: 0 !important;
-  text-align: right;
+  text-align: right
 }
 
-.paintweb_colormixer_colorOld span {
-  cursor: pointer;
-}
+.paintweb_colormixer_colorOld span { cursor: pointer }
 
 .paintweb_colormixer_actions {
-  position: absolute;
-  top: 0;
-  right: 0;
+  border-bottom: 0;
+  border: 1px solid #c6c6c6;
+  list-style: none;
   margin: 0;
   padding: 0;
-  list-style: none;
-  width: 90px;
-  border: 1px solid #c6c6c6;
-  border-bottom: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 90px
 }
 
 .paintweb_colormixer_actions a {
-  display: block;
   background: #e7e1db url('images/button.png') repeat-x;
-  text-decoration: none;
-  padding: 2px 5px;
-  color: #666;
   border-bottom: 1px solid #c6c6c6;
+  color: #666;
+  display: block;
+  padding: 2px 5px;
+  text-decoration: none
 }
 
 .paintweb_colormixer_actions a:hover, .paintweb_colormixer_actions a:focus {
-  color: #000;
   border-color: #000;
+  color: #000
 }
 
 .paintweb_colormixer_hexalpha {
-  position: absolute;
-  top: 0;
-  right: 100px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
   background: #f2f2f2;
   border: 1px solid #c6c6c6;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  right: 100px;
+  top: 0
 }
 
 .paintweb_colormixer_hexalpha li {
   float: left;
-  margin: 5px;
+  margin: 5px
 }
 
-.paintweb_colormixer_hexalpha input {
-  display: block;
-}
+.paintweb_colormixer_hexalpha input { display: block }
 
-.paintweb_ckey_alpha {
-  width: 4em;
-}
+.paintweb_ckey_alpha { width: 4em }
 
-.paintweb_ckey_hex {
-  width: 5em;
-}
+.paintweb_ckey_hex { width: 5em }
 
 
 /* Icons */
@@ -1024,6 +1010,47 @@
 .paintweb_textAlign_center a { background-image: url('icons/text-align-center.png') }
 
 .paintweb_textAlign_right a { background-image: url('icons/text-align-right.png') }
+
+/* TinyMCE plugin */
+
+.paintweb_tinymce_status {
+  background: #f5f5f5;
+  border: 1px solid #9e9e9e;
+  border-bottom: 0;
+  color: #000;
+  display: block !important;
+  position: relative;
+  padding: 6px;
+  font: 14px sans-serif;
+}
+
+.paintweb_tinymce_save, .paintweb_tinymce_cancel {
+  background: #e7e1db url('images/button.png') repeat-x;
+  border: 1px solid #c6c6c6;
+  color: #666;
+  padding: 6px;
+  position: absolute;
+  text-decoration: none;
+  top: 0;
+  text-align: center;
+  font-weight: bold;
+}
+
+.paintweb_tinymce_cancel {
+  right: 5px;
+  width: 4em;
+}
+
+.paintweb_tinymce_save {
+  right: 6em;
+  width: 3em;
+}
+
+.paintweb_tinymce_save:hover, .paintweb_tinymce_cancel:hover,
+.paintweb_tinymce_save:focus, .paintweb_tinymce_cancel:focus {
+  border-color: #000;
+  color: #000
+}
 
 /* vim:set fo=wan1croql tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix: */
 

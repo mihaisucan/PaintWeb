@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-16 23:43:38 +0300 $
+ * $Date: 2009-07-17 22:43:13 +0300 $
  */
 
 /**
@@ -31,7 +31,8 @@ var paintwebInstance = null,
     targetImage = null,
     targetEditor = null,
     targetContainer = null,
-    overlayButton = null;
+    overlayButton = null,
+    pluginBar = null;
 
 if (!window.tinymce) {
   alert('It looks like the PaintWeb plugin for TinyMCE cannot run.' +
@@ -66,13 +67,15 @@ function paintwebLoaded () {
   paintwebConfig = paintwebInstance.config;
 
   var config = targetEditor.getParam('paintweb_config'),
-      container = document.createElement('div');
+      textarea = targetEditor.getElement();
+      pNode = targetContainer.parentNode,
+      pwContainer = document.createElement('div');
 
-  targetContainer.parentNode.appendChild(container);
+  pNode.insertBefore(pwContainer, textarea.nextSibling);
 
   PaintWeb.baseFolder = config.tinymce.paintwebFolder;
   config.imagePreload = targetImage;
-  config.guiPlaceholder = container;
+  config.guiPlaceholder = pwContainer;
   config.lang = targetEditor.getParam('language');
 
   for (var prop in config) {
@@ -84,16 +87,40 @@ function paintwebLoaded () {
 
 /**
  * The initialization event handler for PaintWeb. When PaintWeb is initialized 
- * this method configures the PaintWeb instance to work properly.
+ * this method configures the PaintWeb instance to work properly. A bar 
+ * representing the plugin is also added, to let the user save/cancel image 
+ * edits.
  */
 function paintwebInitialized (ev) {
-  if (ev.state === PaintWeb.INIT_DONE) {
-    targetContainer.style.display = 'none';
-    paintwebInstance.events.add('imageSave', paintwebSave);
-
-  } else {
+  if (ev.state !== PaintWeb.INIT_DONE) {
     alert('PaintWeb initialization failed! ' + ev.errorMessage);
+    return;
   }
+
+  paintwebInstance.events.add('imageSave', paintwebSave);
+  paintwebShow();
+};
+
+/**
+ * The <code>click</code> event handler for the Save button displayed on the 
+ * plugin bar.
+ *
+ * @param {Event} ev The DOM Event object.
+ */
+function pluginSaveButton (ev) {
+  ev.preventDefault();
+  paintwebInstance.imageSave();
+};
+
+/**
+ * The <code>click</code> event handler for the Cancel button displayed on the 
+ * plugin bar.
+ *
+ * @param {Event} ev The DOM Event object.
+ */
+function pluginCancelButton (ev) {
+  ev.preventDefault();
+  paintwebHide();
 };
 
 /**
@@ -108,19 +135,7 @@ function paintwebSave (ev) {
     targetImage.src = ev.dataURI;
   }
 
-  paintwebInstance.gui.hide();
-
-  if (overlayButton && overlayButton.parentNode && targetEditor) {
-    overlayButton.title = targetEditor.getLang('paintweb.overlayButton', 
-        'Edit');
-    overlayButton.replaceChild(document.createTextNode(overlayButton.title), 
-        overlayButton.firstChild);
-  }
-
-  targetContainer.style.display = '';
-  targetImage = null;
-
-  targetEditor.focus();
+  paintwebHide();
 };
 
 /**
@@ -140,12 +155,67 @@ function paintwebEditStart () {
 
   if (paintwebInstance) {
     paintwebInstance.imageLoad(targetImage);
-    paintwebInstance.gui.show();
-    targetContainer.style.display = 'none';
-
+    paintwebShow();
   } else {
     paintwebLoad();
   }
+};
+
+/**
+ * Show PaintWeb on-screen. This function hides the current TinyMCE editor 
+ * instance and shows up the PaintWeb instance.
+ */
+function paintwebShow () {
+  paintwebInstance.gui.show();
+  targetContainer.style.display = 'none';
+
+  if (!pluginBar) {
+    return;
+  }
+
+  var imageFile = targetImage.src,
+      statusStr = '',
+      guiPlaceholder = paintwebConfig.guiPlaceholder;
+
+  if (imageFile.substr(0, 5) === 'data:') {
+    imageFile = 'data URI';
+  } else {
+    imageFile = imageFile.substr(imageFile.lastIndexOf('/') + 1);
+  }
+
+  statusStr = targetEditor.getLang('paintweb.statusImageEditing',
+      'You are editing %file%.').replace('%file%', imageFile);
+
+  pluginBar.replaceChild(document.createTextNode(statusStr), 
+      pluginBar.firstChild);
+
+  if (!pluginBar.parentNode) {
+    guiPlaceholder.parentNode.insertBefore(pluginBar, guiPlaceholder);
+  }
+};
+
+/**
+ * Hide PaintWeb from the screen. This hides the PaintWeb target object of the 
+ * current instance, and displays back the TinyMCE container element.
+ */
+function paintwebHide () {
+  paintwebInstance.gui.hide();
+
+  if (overlayButton && overlayButton.parentNode && targetEditor) {
+    overlayButton.title = targetEditor.getLang('paintweb.overlayButton', 
+        'Edit');
+    overlayButton.replaceChild(document.createTextNode(overlayButton.title), 
+        overlayButton.firstChild);
+  }
+
+  if (pluginBar && pluginBar.parentNode) {
+    targetContainer.parentNode.removeChild(pluginBar);
+  }
+
+  targetContainer.style.display = '';
+  targetImage = null;
+
+  targetEditor.focus();
 };
 
 /**
@@ -235,20 +305,23 @@ tinymce.create('tinymce.plugins.paintweb', {
     // when an image is selected.
     ed.onNodeChange.add(this.edNodeChange);
 
-    var config = ed.getParam('paintweb_config');
+    var config = ed.getParam('paintweb_config') || {};
+    if (!config.tinymce) {
+      config.tinymce = {};
+    }
 
     // Integrate into the ContextMenu plugin if the user desires so.
-    if (config && config.tinymce && config.tinymce.contextMenuItem && 
-        ed.plugins.contextmenu) {
+    if (config.tinymce.contextMenuItem && ed.plugins.contextmenu) {
       ed.plugins.contextmenu.onContextMenu.add(this.pluginContextMenu);
     }
 
     // Create the overlay button element if the configuration allows so.
-    if (config && config.tinymce && config.tinymce.overlayButton) {
+    if (config.tinymce.overlayButton) {
       ed.onClick.add(this.edClick);
       ed.onPreProcess.add(this.edPreProcess);
       ed.onBeforeGetContent.add(this.edPreProcess);
       ed.onRemove.add(this.edPreProcess);
+      ed.onInit.add(this.edInit);
 
       overlayButton = document.createElement('a');
 
@@ -265,12 +338,41 @@ tinymce.create('tinymce.plugins.paintweb', {
     }
 
     // Handle the dblclick events for image elements, if the user wants it.
-    if (config && config.tinymce && config.tinymce.dblclickHandler) {
+    if (config.tinymce.dblclickHandler) {
       ed.onDblClick.add(this.edDblClick);
     }
 
-    // Add the editor initialization event listener.
-    ed.onInit.add(this.edInit);
+    // Add a "plugin bar" above the PaintWeb editor, when PaintWeb is active.  
+    // This bar shows the image file name being edited, and provides two buttons 
+    // for image save and for cancelling any image edits.
+    if (config.tinymce.pluginBar) {
+      pluginBar = document.createElement('div');
+
+      var saveBtn   = document.createElement('a'),
+          cancelBtn = document.createElement('a'),
+          statusStr = '';
+
+      statusStr = ed.getLang('paintweb.statusImageEditing',
+          'You are editing %file%.');
+
+      saveBtn.className = 'paintweb_tinymce_save';
+      saveBtn.href = '#';
+      saveBtn.title = ed.getLang('paintweb.imageSaveButton', 'Save');
+      saveBtn.appendChild(document.createTextNode(saveBtn.title));
+      saveBtn.addEventListener('click', pluginSaveButton, false);
+
+      cancelBtn.className = 'paintweb_tinymce_cancel';
+      cancelBtn.href = '#';
+      cancelBtn.title = ed.getLang('paintweb.cancelEditButton', 'Cancel');
+      cancelBtn.appendChild(document.createTextNode(cancelBtn.title));
+      cancelBtn.addEventListener('click', pluginCancelButton, false);
+
+      pluginBar.className = 'paintweb_tinymce_status';
+      pluginBar.style.display = 'none';
+      pluginBar.appendChild(document.createTextNode(statusStr));
+      pluginBar.appendChild(saveBtn);
+      pluginBar.appendChild(cancelBtn);
+    }
   },
 
   /**
@@ -412,24 +514,6 @@ tinymce.create('tinymce.plugins.paintweb', {
     if (checkEditableImage(elem)) {
       menu.add({title: 'paintweb.contextMenuEdit', cmd: 'paintwebEdit'});
     }
-  },
-
-  /**
-   * Creates control instances based in the incomming name. This method is 
-   * normally not needed since the addButton method of the tinymce.Editor class 
-   * is a more easy way of adding buttons but you sometimes need to create more 
-   * complex controls like listboxes, split buttons etc then this method can be 
-   * used to create those.
-   *
-   * @param {String} n Name of the control to create.
-   * @param {tinymce.ControlManager} cm Control manager to use inorder to create 
-   * new control.
-   *
-   * @returns {tinymce.ui.Control} New control instance or null if no control 
-   * was created.
-   */
-  createControl: function (n, cm) {
-    return null;
   },
 
   /**
