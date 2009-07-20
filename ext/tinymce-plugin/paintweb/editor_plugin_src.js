@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008, 2009 Mihai Şucan
+ * Copyright (C) 2009 Mihai Şucan
  *
  * This file is part of PaintWeb.
  *
@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-17 22:43:13 +0300 $
+ * $Date: 2009-07-20 21:21:12 +0300 $
  */
 
 /**
@@ -26,13 +26,15 @@
  */
 
 (function() {
-var paintwebInstance = null,
+var overlayButton = null,
     paintwebConfig = null,
-    targetImage = null,
-    targetEditor = null,
+    paintwebInstance = null,
+    pluginBar = null,
+    pwDestroyDelay = 30000, // 30 seconds
+    pwDestroyTimer = null,
     targetContainer = null,
-    overlayButton = null,
-    pluginBar = null;
+    targetEditor = null,
+    targetImage = null;
 
 if (!window.tinymce) {
   alert('It looks like the PaintWeb plugin for TinyMCE cannot run.' +
@@ -147,6 +149,11 @@ function paintwebEditStart () {
     return;
   }
 
+  if (pwDestroyTimer) {
+    clearTimeout(pwDestroyTimer);
+    pwDestroyTimer = null;
+  }
+
   if (overlayButton && overlayButton.parentNode && targetEditor) {
     overlayButton.title = targetEditor.getLang('paintweb.loading', 'Loading');
     overlayButton.replaceChild(document.createTextNode(overlayButton.title), 
@@ -179,15 +186,15 @@ function paintwebShow () {
 
   if (imageFile.substr(0, 5) === 'data:') {
     imageFile = 'data URI';
+    statusStr = targetEditor.getLang('paintweb.statusEditingDataURI');
   } else {
     imageFile = imageFile.substr(imageFile.lastIndexOf('/') + 1);
+    statusStr = targetEditor.getLang('paintweb.statusImageEditing',
+        'You are editing %file%.').
+      replace('%file%', '<strong>' + imageFile + '</strong>');
   }
 
-  statusStr = targetEditor.getLang('paintweb.statusImageEditing',
-      'You are editing %file%.').replace('%file%', imageFile);
-
-  pluginBar.replaceChild(document.createTextNode(statusStr), 
-      pluginBar.firstChild);
+  pluginBar.firstChild.innerHTML = statusStr;
 
   if (!pluginBar.parentNode) {
     guiPlaceholder.parentNode.insertBefore(pluginBar, guiPlaceholder);
@@ -201,7 +208,7 @@ function paintwebShow () {
 function paintwebHide () {
   paintwebInstance.gui.hide();
 
-  if (overlayButton && overlayButton.parentNode && targetEditor) {
+  if (overlayButton && targetEditor) {
     overlayButton.title = targetEditor.getLang('paintweb.overlayButton', 
         'Edit');
     overlayButton.replaceChild(document.createTextNode(overlayButton.title), 
@@ -216,6 +223,27 @@ function paintwebHide () {
   targetImage = null;
 
   targetEditor.focus();
+
+  if (!pwDestroyTimer) {
+    pwDestroyTimer = setTimeout(paintwebDestroy, pwDestroyDelay);
+  }
+};
+
+/**
+ * After a given time of idleness, when the user stops from working with 
+ * PaintWeb, we destroy the current PaintWeb instance, to release some memory.
+ */
+function paintwebDestroy () {
+  if (paintwebInstance) {
+    paintwebInstance.destroy();
+
+    var pNode = paintwebConfig.guiPlaceholder.parentNode;
+    pNode.removeChild(paintwebConfig.guiPlaceholder);
+
+    paintwebInstance = null;
+    paintwebConfig = null;
+    pwDestroyTimer = null;
+  }
 };
 
 /**
@@ -276,6 +304,34 @@ function checkEditableImage (n) {
   return true;
 };
 
+/**
+ * The <code>init</code> and <code>preProcess</code> event handler for the 
+ * TinyMCE editor instance.  This makes sure that the iframe DOM document does 
+ * not contain any PaintWeb overlay button.  Firefox remembers the overlay 
+ * button after a page refresh.
+ *
+ * @param {tinymce.Editor} ed The editor instance that the plugin is 
+ * initialized in.
+ */
+function overlayButtonCleanup (ed) {
+  if (!ed || !ed.getDoc) {
+    return;
+  }
+
+  var iframe = ed.getDoc();
+  if (!iframe || !iframe.getElementsByClassName) {
+    return;
+  }
+
+  var elems = iframe.getElementsByClassName(overlayButton.className),
+      pNode;
+
+  for (var i = 0; i < elems.length; i++) {
+    pNode = elems[i].parentNode;
+    pNode.removeChild(elems[i]);
+  }
+};
+
 // Load plugin specific language pack
 tinymce.PluginManager.requireLangPack('paintweb');
 
@@ -321,20 +377,21 @@ tinymce.create('tinymce.plugins.paintweb', {
       ed.onPreProcess.add(this.edPreProcess);
       ed.onBeforeGetContent.add(this.edPreProcess);
       ed.onRemove.add(this.edPreProcess);
-      ed.onInit.add(this.edInit);
+      ed.onInit.add(overlayButtonCleanup);
 
       overlayButton = document.createElement('a');
+      overlayStyle = overlayButton.style;
 
       overlayButton.className = 'paintwebOverlayButton';
       overlayButton.title = ed.getLang('paintweb.overlayButton', 'Edit');
       overlayButton.appendChild(document.createTextNode(overlayButton.title));
 
-      overlayButton.style.position = 'absolute';
-      overlayButton.style.background = '#fff';
-      overlayButton.style.padding = '4px 6px';
-      overlayButton.style.border = '1px solid #000';
-      overlayButton.style.textDecoration = 'none';
-      overlayButton.style.color = '#000';
+      overlayStyle.position = 'absolute';
+      overlayStyle.background = '#fff';
+      overlayStyle.padding = '4px 6px';
+      overlayStyle.border = '1px solid #000';
+      overlayStyle.textDecoration = 'none';
+      overlayStyle.color = '#000';
     }
 
     // Handle the dblclick events for image elements, if the user wants it.
@@ -350,63 +407,41 @@ tinymce.create('tinymce.plugins.paintweb', {
 
       var saveBtn   = document.createElement('a'),
           cancelBtn = document.createElement('a'),
-          statusStr = '';
-
-      statusStr = ed.getLang('paintweb.statusImageEditing',
-          'You are editing %file%.');
+          textSpan  = document.createElement('span');
 
       saveBtn.className = 'paintweb_tinymce_save';
       saveBtn.href = '#';
-      saveBtn.title = ed.getLang('paintweb.imageSaveButton', 'Save');
-      saveBtn.appendChild(document.createTextNode(saveBtn.title));
+      saveBtn.title = ed.getLang('paintweb.imageSaveButtonTitle',
+          'Save the image and return to TinyMCE.');
+
+      saveBtn.appendChild(document.createTextNode(ed.getLang('paintweb.imageSaveButton', 
+              'Save')));
       saveBtn.addEventListener('click', pluginSaveButton, false);
 
       cancelBtn.className = 'paintweb_tinymce_cancel';
       cancelBtn.href = '#';
-      cancelBtn.title = ed.getLang('paintweb.cancelEditButton', 'Cancel');
-      cancelBtn.appendChild(document.createTextNode(cancelBtn.title));
+      cancelBtn.title = ed.getLang('paintweb.cancelEditButtonTitle',
+          'Cancel image edits and return to TinyMCE.');
+      cancelBtn.appendChild(document.createTextNode(ed.getLang('paintweb.cancelEditButton', 
+              'Cancel')));
       cancelBtn.addEventListener('click', pluginCancelButton, false);
 
       pluginBar.className = 'paintweb_tinymce_status';
       pluginBar.style.display = 'none';
-      pluginBar.appendChild(document.createTextNode(statusStr));
+      pluginBar.appendChild(textSpan);
       pluginBar.appendChild(saveBtn);
       pluginBar.appendChild(cancelBtn);
     }
   },
 
   /**
-   * The <code>init</code> event handler for the editor instance. This makes 
-   * sure that the iframe DOM document does not contain any PaintWeb overlay 
-   * button. Firefox remembers the overlay button after a page refresh.
+   * The <code>preProcess</code> and <code>beforeGetContent</code> event 
+   * handler. This method removes the PaintWeb overlay button.
    *
    * @param {tinymce.Editor} ed The editor instance that the plugin is 
    * initialized in.
    */
-  edInit: function (ed) {
-    if (!ed || !ed.getDoc) {
-      return;
-    }
-
-    var iframe = ed.getDoc();
-    if (!iframe || !iframe.getElementsByClassName) {
-      return;
-    }
-
-    var elems = iframe.getElementsByClassName('paintwebOverlayButton'),
-        pNode;
-
-    for (var i = 0; i < elems.length; i++) {
-      pNode = elems[i].parentNode;
-      pNode.removeChild(elems[i]);
-    }
-  },
-
-  /**
-   * The <code>preProcess</code> and <code>beforeGetContent</code> event 
-   * handler. This method removes the PaintWeb overlay button.
-   */
-  edPreProcess: function () {
+  edPreProcess: function (ed) {
     // Remove the overlay button.
     if (overlayButton && overlayButton.parentNode) {
       overlayButton._targetImage = null;
@@ -414,6 +449,8 @@ tinymce.create('tinymce.plugins.paintweb', {
       pNode = overlayButton.parentNode;
       pNode.removeChild(overlayButton);
     }
+
+    overlayButtonCleanup(ed);
   },
 
   /**
@@ -429,8 +466,8 @@ tinymce.create('tinymce.plugins.paintweb', {
    */
   edNodeChange: function (ed, cm, n) {
     // Do not do anything inside the overlay button.
-    if (!targetImage && overlayButton && n === overlayButton && 
-        overlayButton._targetImage) {
+    if (!targetImage && overlayButton && n && n.className === 
+        overlayButton.className && n._targetImage === n.previousSibling) {
       return;
     }
 
@@ -443,23 +480,34 @@ tinymce.create('tinymce.plugins.paintweb', {
       return;
     }
 
-    if (disabled) {
-      // Remove the overlay button.
-      if (overlayButton.parentNode) {
-        overlayButton._targetImage = null;
+    // Remove the overlay button.
+    if (overlayButton.parentNode) {
+      overlayButton._targetImage = null;
 
-        pNode = overlayButton.parentNode;
-        pNode.removeChild(overlayButton);
-      }
+      pNode = overlayButton.parentNode;
+      pNode.removeChild(overlayButton);
+    }
 
-    } else {
+    if (n.nextSibling && n.nextSibling.className === overlayButton.className) {
+      pNode = n.parentNode;
+      pNode.removeChild(n.nextSibling);
+    }
+
+    if (n.className === overlayButton.className) {
+      pNode = n.parentNode;
+      pNode.removeChild(n);
+    }
+
+    if (!disabled) {
       // Add the overlay button.
       overlayButton._targetImage = n;
       overlayButton.style.top  = (n.offsetTop  + 5) + 'px';
       overlayButton.style.left = (n.offsetLeft + 5) + 'px';
 
       pNode = n.parentNode;
-      pNode.appendChild(overlayButton);
+      pNode.insertBefore(overlayButton, n.nextSibling);
+    } else if (overlayButton._targetImage) {
+      overlayButton._targetImage = null;
     }
   },
 
@@ -473,8 +521,8 @@ tinymce.create('tinymce.plugins.paintweb', {
   edClick: function (ed, ev) {
     // If the user clicked the Edit overlay button, then we consider the user 
     // wants to start PaintWeb.
-    if (!targetImage && overlayButton && ev.target === overlayButton && 
-        overlayButton._targetImage) {
+    if (!targetImage && overlayButton && ev.target && ev.target.className === 
+        overlayButton.className && overlayButton._targetImage) {
       targetEditor = ed;
       targetContainer = ed.getContainer();
       targetImage = overlayButton._targetImage;

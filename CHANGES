@@ -1,3 +1,13 @@
+2009-07-20:
+===========
+
+- PaintWeb instances can now be destroyed. Use PaintWeb.destroy().
+- New application event: appDestroy.
+- Renamed the "initApp" event to "appInit".
+- The configuration can now tell the file name of a language.
+- Fixes and improvements for the TinyMCE plugin.
+
+
 2009-07-17:
 ===========
 

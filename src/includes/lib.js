@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-07-06 16:28:03 +0300 $
+ * $Date: 2009-07-20 13:39:55 +0300 $
  */
 
 /**
@@ -310,7 +310,7 @@ pwlib.appEvent = function (type, cancelable) {
  *
  * @throws {TypeError} If the <var>state</var> is not a number.
  */
-pwlib.appEvent.initApp = function (state, errorMessage) {
+pwlib.appEvent.appInit = function (state, errorMessage) {
   if (typeof state !== 'number') {
     throw new TypeError('The first argument must be a number.');
   }
@@ -351,7 +351,16 @@ pwlib.appEvent.initApp = function (state, errorMessage) {
    */
   this.errorMessage = errorMessage || null;
 
-  pwlib.appEvent.call(this, 'initApp');
+  pwlib.appEvent.call(this, 'appInit');
+};
+
+/**
+ * @class Application destroy event. This event is not cancelable.
+ *
+ * @augments pwlib.appEvent
+ */
+pwlib.appEvent.appDestroy = function () {
+  pwlib.appEvent.call(this, 'appDestroy');
 };
 
 /**

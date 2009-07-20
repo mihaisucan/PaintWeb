@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-16 20:07:22 +0300 $
+ * $Date: 2009-07-20 14:19:38 +0300 $
  */
 
 /**
@@ -286,7 +286,7 @@ pwlib.gui = function (app) {
     app.events.add('configChange',      this.configChangeHandler);
     app.events.add('imageSizeChange',   this.imageSizeChange);
     app.events.add('imageZoom',         this.imageZoom);
-    app.events.add('initApp',           this.initApp);
+    app.events.add('appInit',           this.appInit);
     app.events.add('shadowAllow',       this.shadowAllow);
     app.events.add('toolActivate',      this.toolActivate);
     app.events.add('toolRegister',      this.toolRegister);
@@ -747,7 +747,7 @@ pwlib.gui = function (app) {
     };
 
     input.addEventListener('change', changeFn, false);
-    input.addEventListener('input', changeFn, false);
+    input.addEventListener('input',  changeFn, false);
 
     // Update some language strings
 
@@ -890,13 +890,13 @@ pwlib.gui = function (app) {
   };
 
   /**
-   * The <code>initApp</code> event handler. This method is invoked once 
+   * The <code>appInit</code> event handler. This method is invoked once 
    * PaintWeb completes all the loading.
    *
    * @private
-   * @param {pwlib.appEvent.initApp} ev The application event object.
+   * @param {pwlib.appEvent.appInit} ev The application event object.
    */
-  this.initApp = function (ev) {
+  this.appInit = function (ev) {
     // Initialization was not successful ...
     if (ev.state !== PaintWeb.INIT_DONE) {
       return;
@@ -1751,6 +1751,22 @@ pwlib.gui = function (app) {
 
     placeholder.className = placeholder.className.replace(' ' + this.classPrefix 
         + 'placeholder', '');
+  };
+
+  /**
+   * The application destroy event handler. This method is invoked by the main 
+   * PaintWeb application when the instance is destroyed, for the purpose of 
+   * cleaning-up the GUI-related things from the document add by the current 
+   * instance.
+   *
+   * @private
+   */
+  this.destroy = function () {
+    var placeholder = config.guiPlaceholder;
+
+    while(placeholder.hasChildNodes()) {
+      placeholder.removeChild(placeholder.firstChild);
+    }
   };
 };
 

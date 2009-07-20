@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-16 20:15:23 +0300 $
+ * $Date: 2009-07-20 22:22:48 +0300 $
  */
 
 /**
@@ -456,7 +456,7 @@ function PaintWeb (win, doc) {
    * <p>This method is asynchronous, meaning that it will return much sooner 
    * before the application initialization is completed.
    *
-   * @param {Function} [handler] The <code>initApp</code> event handler. Your 
+   * @param {Function} [handler] The <code>appInit</code> event handler. Your 
    * event handler will be invoked automatically when PaintWeb completes 
    * loading, or when an error occurs.
    *
@@ -547,7 +547,7 @@ function PaintWeb (win, doc) {
 
     // Add the init event handler.
     if (typeof temp_.onInit === 'function') {
-      _self.events.add('initApp', temp_.onInit);
+      _self.events.add('appInit', temp_.onInit);
       delete temp_.onInit;
     }
 
@@ -557,13 +557,13 @@ function PaintWeb (win, doc) {
   /**
    * Report an initialization error.
    *
-   * <p>This method dispatches the {@link pwlib.appEvent.initApp} event.
+   * <p>This method dispatches the {@link pwlib.appEvent.appInit} event.
    *
    * @private
    *
    * @param {String} msg The error message.
    *
-   * @see pwlib.appEvent.initApp
+   * @see pwlib.appEvent.appInit
    */
   this.initError = function (msg) {
     switch (this.initialized) {
@@ -578,14 +578,14 @@ function PaintWeb (win, doc) {
     var ev = null;
 
     if (this.events && 'dispatch' in this.events &&
-        appEvent    && 'initApp'  in appEvent) {
+        appEvent    && 'appInit'  in appEvent) {
 
-      ev = new appEvent.initApp(this.initialized, msg);
+      ev = new appEvent.appInit(this.initialized, msg);
       this.events.dispatch(ev);
 
     } else if (typeof temp_.onInit === 'function') {
       // fake an event dispatch.
-      ev = {type: 'initApp', state: this.initialized, errorMessage: msg};
+      ev = {type: 'appInit', state: this.initialized, errorMessage: msg};
       temp_.onInit.call(this, ev);
     }
 
@@ -666,7 +666,13 @@ function PaintWeb (win, doc) {
       id = this.config.lang = 'en';
     }
 
-    file = PaintWeb.baseFolder + this.config.langFolder + '/' + id + '.json';
+    file = PaintWeb.baseFolder + this.config.langFolder + '/';
+
+    if ('file' in this.config.languages[id]) {
+      file += this.config.languages[id].file;
+    } else {
+      file += id + '.json';
+    }
 
     pwlib.xhrLoad(file, this.langReady);
   };
@@ -976,11 +982,11 @@ function PaintWeb (win, doc) {
    * Initialization procedure which runs after the configuration, language and 
    * GUI files have loaded.
    *
-   * <p>This method dispatches the {@link pwlib.appEvent.initApp} event.
+   * <p>This method dispatches the {@link pwlib.appEvent.appInit} event.
    *
    * @private
    *
-   * @see pwlib.appEvent.initApp
+   * @see pwlib.appEvent.appInit
    */
   this.initComplete = function () {
     if (!this.initCommands()) {
@@ -1006,7 +1012,7 @@ function PaintWeb (win, doc) {
 
     this.initialized = PaintWeb.INIT_DONE;
 
-    this.events.dispatch(new appEvent.initApp(this.initialized));
+    this.events.dispatch(new appEvent.appInit(this.initialized));
   };
 
   /**
@@ -2328,7 +2334,7 @@ function PaintWeb (win, doc) {
    * @param {Function} [handler] The <code>load</code> event handler.
    */
   this.styleLoad = function (id, url, media, handler) {
-    id = 'paintweb_' + id;
+    id = 'paintweb_style_' + id;
 
     var elem = doc.getElementById(id);
     if (elem) {
@@ -2649,6 +2655,37 @@ function PaintWeb (win, doc) {
           _self.buffer.context[ev.config] = ev.value;
       }
     }
+  };
+
+  /**
+   * Destroy a PaintWeb instance. This method allows you to unload a PaintWeb 
+   * instance. Extensions, tools and commands are unregistered, and the GUI 
+   * elements are removed.
+   *
+   * <p>The scripts and styles loaded are not removed, since they might be used 
+   * by other PaintWeb instances.
+   *
+   * <p>The {@link pwlib.appEvent.appDestroy} application event is dispatched 
+   * before the current instance is destroyed.
+   */
+  this.destroy = function () {
+    this.events.dispatch(new appEvent.appDestroy());
+
+    for (var cmd in this.commands) {
+      this.commandUnregister(cmd);
+    }
+
+    for (var ext in this.extensions) {
+      this.extensionUnregister(ext);
+    }
+
+    for (var tool in this.gui.tools) {
+      this.toolUnregister(tool);
+    }
+
+    this.gui.destroy();
+
+    this.initialized = PaintWeb.INIT_NOT_STARTED;
   };
 
   this.toString = function () {

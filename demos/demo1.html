@@ -7,10 +7,10 @@
     title="Marius and Mihai Şucan, ROBO Design">
 
     <!-- $URL: http://code.google.com/p/paintweb $
-         $Date: 2009-07-16 23:36:03 +0300 $ -->
+         $Date: 2009-07-20 13:40:38 +0300 $ -->
   </head>
   <body>
-    <h1>PaintWeb</h1>
+    <h1>PaintWeb simple demo</h1>
     <p>This is a demonstration page showing an image you can edit using <a 
       href="http://code.google.com/p/paintweb">PaintWeb</a>.</p>
 
@@ -48,7 +48,7 @@
     pw.init(pwInit);
   };
 
-  // Function called when the PaintWeb application fires the "initApp" event.
+  // Function called when the PaintWeb application fires the "appInit" event.
   function pwInit (ev) {
     var initTime = (new Date()).getTime() - timeStart,
         str = 'Demo: Yay, PaintWeb loaded in ' + initTime + ' ms! ' +
