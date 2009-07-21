@@ -1,9 +1,9 @@
 {
-  // $Date: 2009-07-16 23:36:49 +0300 $
+  // $Date: 2009-07-21 23:07:35 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
-  "errorElementNotFound": "Error: the following element was not found: %id%.",
+  "errorElementNotFound": "Error: the following element was not found: {id}.",
   "noComputedStyle": "Error: window.getComputedStyle is not available.",
   "noXMLHttpRequest": "Error: window.XMLHttpRequest is not available.",
   "errorInitCanvas": "Error: Canvas initialization failed.",
@@ -13,9 +13,9 @@
   "failedMarkupLoad": "Error: Failed loading the interface markup file.",
   "errorInitCommands": "Error: failed to initialize the PaintWeb commands!",
   "noToolConfigured": "Error: you have no drawing tool configured to load!",
-  "imagePreloadDifferentHost": "Warning: the configured image cannot be loaded because it is from a different domain.",
-  "toolRegisterFailed": "Error: failed to register tool '%id%'!",
-  "extensionRegisterFailed": "Error: failed to register extension '%id%'!",
+  "imageLoadDifferentHost": "Warning: the configured image cannot be loaded because it is from a different domain.",
+  "toolRegisterFailed": "Error: failed to register tool '{id}'!",
+  "extensionRegisterFailed": "Error: failed to register extension '{id}'!",
   "errorToolActivate": "Error: the tool you want could not be properly activated!",
   "errorInitGUI": "Error: the interface failed to initialize!",
   "failedSelectionCopy": "Error: failed to copy the selected pixels into memory.",
@@ -234,6 +234,14 @@
     "selectionResize": "Hold the Shift key down to preserve the aspect ratio.",
     "textActive": "Pick where you want to place the text. Make sure you adjust the properties as desired.",
     "guiCanvasResizerActive": "Move the mouse to resize the image canvas."
+  },
+
+  // Moodle-related language strings
+  "moodle": {
+    "xhrRequestFailed": "The image save request failed.",
+    "jsonParseFailed": "Parsing the JSON result from the server failed!",
+    "imageSaveFailed": "The image save operation failed.",
+    "urlMismatch": "Image address mismatch!\nThe current image is {url}.\nThe server replied a successful save for {urlServer}."
   }
 
   // vim:set spell spl=en fo=wan1croql tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix ft=javascript:

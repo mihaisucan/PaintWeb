@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2008, 2009 Mihai Şucan
+ * Copyright (C) 2009 Mihai Şucan
  *
  * This file is part of PaintWeb.
  *
@@ -18,7 +18,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-13 13:38:40 +0300 $
+ * $Date: 2009-07-21 20:36:53 +0300 $
  */
 
 // This script allows you to convert PaintWeb JSON language files into Moodle 

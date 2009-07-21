@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-20 21:21:12 +0300 $
+ * $Date: 2009-07-21 23:00:39 +0300 $
  */
 
 /**
@@ -30,15 +30,25 @@ var overlayButton = null,
     paintwebConfig = null,
     paintwebInstance = null,
     pluginBar = null,
+    pluginBarDelay = 5000, // 5 seconds
     pwDestroyDelay = 30000, // 30 seconds
     pwDestroyTimer = null,
+    pwSaveReturn = false,
     targetContainer = null,
     targetEditor = null,
+    targetFile = null,
     targetImage = null;
 
 if (!window.tinymce) {
   alert('It looks like the PaintWeb plugin for TinyMCE cannot run.' +
     'TinyMCE was not detected!');
+  return;
+}
+
+// Basic functionality used by PaintWeb.
+if (!window.XMLHttpRequest || !window.getComputedStyle || 
+  !document.createElement('canvas').getContext) {
+  return;
 }
 
 /**
@@ -66,19 +76,22 @@ function paintwebLoaded () {
   }
 
   paintwebInstance = new PaintWeb();
-  paintwebConfig = paintwebInstance.config;
+  paintwebConfig   = paintwebInstance.config;
 
-  var config = targetEditor.getParam('paintweb_config'),
-      textarea = targetEditor.getElement();
-      pNode = targetContainer.parentNode,
+  var config      = targetEditor.getParam('paintweb_config'),
+      textarea    = targetEditor.getElement();
+      pNode       = targetContainer.parentNode,
       pwContainer = document.createElement('div');
 
   pNode.insertBefore(pwContainer, textarea.nextSibling);
 
-  PaintWeb.baseFolder = config.tinymce.paintwebFolder;
-  config.imagePreload = targetImage;
+  PaintWeb.baseFolder   = config.tinymce.paintwebFolder;
+  config.imageLoad      = targetImage;
   config.guiPlaceholder = pwContainer;
-  config.lang = targetEditor.getParam('language');
+
+  if (!config.lang) {
+    config.lang = targetEditor.getParam('language');
+  }
 
   for (var prop in config) {
     paintwebConfig[prop] = config[prop];
@@ -94,12 +107,22 @@ function paintwebLoaded () {
  * edits.
  */
 function paintwebInitialized (ev) {
+  if (overlayButton && targetEditor) {
+    overlayButton.title = targetEditor.getLang('paintweb.overlayButton', 
+        'Edit');
+    overlayButton.replaceChild(document.createTextNode(overlayButton.title), 
+        overlayButton.firstChild);
+  }
+
   if (ev.state !== PaintWeb.INIT_DONE) {
     alert('PaintWeb initialization failed! ' + ev.errorMessage);
+    paintwebInstance = null;
+
     return;
   }
 
-  paintwebInstance.events.add('imageSave', paintwebSave);
+  paintwebInstance.events.add('imageSave',       paintwebSave);
+  paintwebInstance.events.add('imageSaveResult', paintwebSaveResult);
   paintwebShow();
 };
 
@@ -111,6 +134,7 @@ function paintwebInitialized (ev) {
  */
 function pluginSaveButton (ev) {
   ev.preventDefault();
+  pwSaveReturn = true;
   paintwebInstance.imageSave();
 };
 
@@ -126,18 +150,87 @@ function pluginCancelButton (ev) {
 };
 
 /**
- * The "imageSave" application event handler for PaintWeb. When the user elects 
- * to save the image in PaintWeb, this function is invoked to ensure PaintWeb is 
- * hidden and the TinyMCE editor is shown again.
+ * The <code>imageSave</code> application event handler for PaintWeb. When the 
+ * user elects to save the image in PaintWeb, this function is invoked to 
+ * provide visual feedback in the plugin bar.
+ * 
+ * <p>If the <var>imageSaveDataURL</var> boolean property is set to true, then 
+ * the source of the image is also updated to hold the new data URL.
+ *
+ * @param {pwlib.appEvent.imageSave} ev The PaintWeb application event object.
  */
 function paintwebSave (ev) {
-  ev.preventDefault();
+  if (paintwebConfig.tinymce.imageSaveDataURL) {
+    targetImage.src = ev.dataURL;
+    targetFile = 'dataURL';
+    ev.preventDefault();
+    paintwebInstance.events.dispatch(new pwlib.appEvent.imageSaveResult(true));
 
-  if (paintwebConfig.tinymce.imageSaveDataURI) {
-    targetImage.src = ev.dataURI;
+  } else if (pluginBar && targetEditor) {
+    if (targetFile === 'dataURL') {
+      str = targetEditor.getLang('paintweb.statusSavingDataURL',
+              'Saving image data URL...');
+    } else {
+      str = targetEditor.getLang('paintweb.statusSavingImage',
+              'Saving image {file}...').
+                replace('{file}', '<strong>' + targetFile + '</strong>');
+    }
+    pluginBar.firstChild.innerHTML = str;
+  }
+};
+
+/**
+ * The <code>imageSaveResult</code> application event handler for PaintWeb.
+ *
+ * @param {pwlib.appEvent.imageSaveResult} ev The PaintWeb application event 
+ * object.
+ */
+function paintwebSaveResult (ev) {
+  if (!targetImage) {
+    return;
   }
 
-  paintwebHide();
+  if (ev.successful && pwSaveReturn) {
+    pwSaveReturn = false;
+    paintwebHide();
+    return;
+  }
+
+  pwSaveReturn = false;
+
+  if (pluginBar) {
+    if (ev.successful) {
+      pluginBar.firstChild.innerHTML 
+        = targetEditor.getLang('paintweb.statusImageSaved',
+            'Image save was succesful!');
+    } else {
+      pluginBar.firstChild.innerHTML 
+        = targetEditor.getLang('paintweb.statusImageSaveFailed',
+            'Image save failed!');
+    }
+    setTimeout(pluginBarResetContent, pluginBarDelay);
+  }
+};
+
+/**
+ * Reset the text content of the plugin bar.
+ */
+function pluginBarResetContent () {
+  if (!pluginBar || !targetImage || !targetFile) {
+    return;
+  }
+
+  var str = '';
+
+  if (targetFile === 'dataURL') {
+    str = targetEditor.getLang('paintweb.statusEditingDataURL');
+  } else {
+    str = targetEditor.getLang('paintweb.statusImageEditing',
+        'You are editing {file}.').
+      replace('{file}', '<strong>' + targetFile + '</strong>');
+  }
+
+  pluginBar.firstChild.innerHTML = str;
 };
 
 /**
@@ -146,6 +239,7 @@ function paintwebSave (ev) {
 function paintwebEditStart () {
   if (!checkEditableImage(targetImage)) {
     targetImage = null;
+    targetFile = null;
     return;
   }
 
@@ -154,8 +248,17 @@ function paintwebEditStart () {
     pwDestroyTimer = null;
   }
 
+  targetFile = targetImage.src;
+
+  if (targetFile.substr(0, 5) === 'data:') {
+    targetFile = 'dataURL';
+  } else {
+    targetFile = targetFile.substr(targetFile.lastIndexOf('/') + 1);
+  }
+
   if (overlayButton && overlayButton.parentNode && targetEditor) {
-    overlayButton.title = targetEditor.getLang('paintweb.loading', 'Loading');
+    overlayButton.title = targetEditor.getLang('paintweb.overlayLoading', 
+        'Loading PaintWeb...');
     overlayButton.replaceChild(document.createTextNode(overlayButton.title), 
         overlayButton.firstChild);
   }
@@ -180,24 +283,11 @@ function paintwebShow () {
     return;
   }
 
-  var imageFile = targetImage.src,
-      statusStr = '',
-      guiPlaceholder = paintwebConfig.guiPlaceholder;
+  pluginBarResetContent();
 
-  if (imageFile.substr(0, 5) === 'data:') {
-    imageFile = 'data URI';
-    statusStr = targetEditor.getLang('paintweb.statusEditingDataURI');
-  } else {
-    imageFile = imageFile.substr(imageFile.lastIndexOf('/') + 1);
-    statusStr = targetEditor.getLang('paintweb.statusImageEditing',
-        'You are editing %file%.').
-      replace('%file%', '<strong>' + imageFile + '</strong>');
-  }
-
-  pluginBar.firstChild.innerHTML = statusStr;
-
+  var placeholder = paintwebConfig.guiPlaceholder;
   if (!pluginBar.parentNode) {
-    guiPlaceholder.parentNode.insertBefore(pluginBar, guiPlaceholder);
+    placeholder.parentNode.insertBefore(pluginBar, placeholder);
   }
 };
 
@@ -221,6 +311,7 @@ function paintwebHide () {
 
   targetContainer.style.display = '';
   targetImage = null;
+  targetFile  = null;
 
   targetEditor.focus();
 
@@ -348,7 +439,7 @@ tinymce.create('tinymce.plugins.paintweb', {
   init: function (ed, url) {
     // Register the command so that it can be invoked by using 
     // tinyMCE.activeEditor.execCommand('paintwebEdit');
-    ed.addCommand('paintwebEdit', paintwebEditCommand);
+    ed.addCommand('paintwebEdit', paintwebEditCommand, ed);
 
     // Register PaintWeb button
     ed.addButton('paintwebEdit', {
@@ -503,6 +594,9 @@ tinymce.create('tinymce.plugins.paintweb', {
       overlayButton._targetImage = n;
       overlayButton.style.top  = (n.offsetTop  + 5) + 'px';
       overlayButton.style.left = (n.offsetLeft + 5) + 'px';
+      overlayButton.title = ed.getLang('paintweb.overlayButton', 'Edit');
+      overlayButton.replaceChild(document.createTextNode(overlayButton.title), 
+          overlayButton.firstChild);
 
       pNode = n.parentNode;
       pNode.insertBefore(overlayButton, n.nextSibling);

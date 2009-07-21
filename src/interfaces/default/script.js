@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-20 14:19:38 +0300 $
+ * $Date: 2009-07-21 16:06:06 +0300 $
  */
 
 /**
@@ -893,6 +893,9 @@ pwlib.gui = function (app) {
    * The <code>appInit</code> event handler. This method is invoked once 
    * PaintWeb completes all the loading.
    *
+   * <p>This method dispatches the {@link pwlib.appEvent.guiShow} application 
+   * event.
+   *
    * @private
    * @param {pwlib.appEvent.appInit} ev The application event object.
    */
@@ -920,6 +923,8 @@ pwlib.gui = function (app) {
     }
 
     placeholder.focus();
+
+    app.events.dispatch(new appEvent.guiShow());
   };
 
   /**
@@ -1732,6 +1737,9 @@ pwlib.gui = function (app) {
 
   /**
    * Show the graphical user interface.
+   *
+   * <p>This method dispatches the {@link pwlib.appEvent.guiShow} application 
+   * event.
    */
   this.show = function () {
     var placeholder = config.guiPlaceholder,
@@ -1740,17 +1748,25 @@ pwlib.gui = function (app) {
     if (placeholder.className.indexOf(className) === -1) {
       placeholder.className += className;
     }
+
     placeholder.focus();
+
+    app.events.dispatch(new appEvent.guiShow());
   };
 
   /**
    * Hide the graphical user interface.
+   *
+   * <p>This method dispatches the {@link pwlib.appEvent.guiHide} application 
+   * event.
    */
   this.hide = function () {
     var placeholder = config.guiPlaceholder;
 
     placeholder.className = placeholder.className.replace(' ' + this.classPrefix 
         + 'placeholder', '');
+
+    app.events.dispatch(new appEvent.guiHide());
   };
 
   /**

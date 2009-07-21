@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-20 22:22:48 +0300 $
+ * $Date: 2009-07-21 21:15:27 +0300 $
  */
 
 /**
@@ -504,10 +504,10 @@ function PaintWeb (win, doc) {
       return false;
     }
 
-    // Silently ignore any wrong value for the config.imagePreload property.
-    if (typeof this.config.imagePreload !== 'object' || 
-        this.config.imagePreload.nodeType !== Node.ELEMENT_NODE) {
-      this.config.imagePreload = null;
+    // Silently ignore any wrong value for the config.imageLoad property.
+    if (typeof this.config.imageLoad !== 'object' || 
+        this.config.imageLoad.nodeType !== Node.ELEMENT_NODE) {
+      this.config.imageLoad = null;
     }
 
     // JSON parser and serializer.
@@ -658,20 +658,18 @@ function PaintWeb (win, doc) {
    * XMLHttpRequest object.
    */
   this.langLoad = function () {
-    var id = this.config.lang,
-        file;
+    var id   = this.config.lang,
+        file = PaintWeb.baseFolder;
 
     // If the language is not available, always fallback to English.
     if (!(id in this.config.languages)) {
       id = this.config.lang = 'en';
     }
 
-    file = PaintWeb.baseFolder + this.config.langFolder + '/';
-
     if ('file' in this.config.languages[id]) {
       file += this.config.languages[id].file;
     } else {
-      file += id + '.json';
+      file += this.config.langFolder + '/' + id + '.json';
     }
 
     pwlib.xhrLoad(file, this.langReady);
@@ -827,8 +825,8 @@ function PaintWeb (win, doc) {
    * Initialize the Canvas elements. This method creates the elements and 
    * sets-up their dimensions.
    * 
-   * <p>If {@link PaintWeb.config.imagePreload} is defined, then the image 
-   * element is inserted into the Canvas image.
+   * <p>If {@link PaintWeb.config.imageLoad} is defined, then the image element 
+   * is inserted into the Canvas image.
    *
    * <p>All the Canvas event listeners are also attached to the buffer Canvas 
    * element.
@@ -840,16 +838,16 @@ function PaintWeb (win, doc) {
    * @see PaintWeb#ev_canvas The global Canvas events handler.
    */
   this.initCanvas = function () {
-    var cfg             = this.config,
-        res             = this.resolution,
-        resInfo         = doc.getElementById(res.elemId),
-        layerCanvas     = doc.createElement('canvas'),
-        bufferCanvas    = doc.createElement('canvas'),
-        layerContext    = layerCanvas.getContext('2d'),
-        bufferContext   = bufferCanvas.getContext('2d'),
-        width           = cfg.imageWidth,
-        height          = cfg.imageHeight,
-        imagePreload    = cfg.imagePreload;
+    var cfg           = this.config,
+        res           = this.resolution,
+        resInfo       = doc.getElementById(res.elemId),
+        layerCanvas   = doc.createElement('canvas'),
+        bufferCanvas  = doc.createElement('canvas'),
+        layerContext  = layerCanvas.getContext('2d'),
+        bufferContext = bufferCanvas.getContext('2d'),
+        width         = cfg.imageWidth,
+        height        = cfg.imageHeight,
+        imageLoad     = cfg.imageLoad;
 
     if (!resInfo) {
       var style = doc.createElement('style');
@@ -871,14 +869,14 @@ function PaintWeb (win, doc) {
       return false;
     }
 
-    if (!pwlib.isSameHost(imagePreload.src, win.location.host)) {
-      cfg.imagePreload = imagePreload = null;
-      alert(lang.imagePreloadDifferentHost);
+    if (!pwlib.isSameHost(imageLoad.src, win.location.host)) {
+      cfg.imageLoad = imageLoad = null;
+      alert(lang.imageLoadDifferentHost);
     }
 
-    if (imagePreload) {
-      width  = parseInt(imagePreload.width);
-      height = parseInt(imagePreload.height);
+    if (imageLoad) {
+      width  = parseInt(imageLoad.width);
+      height = parseInt(imageLoad.height);
     }
 
     res.elem = resInfo;
@@ -891,8 +889,8 @@ function PaintWeb (win, doc) {
     this.buffer.canvas  = bufferCanvas;
     this.buffer.context = bufferContext;
 
-    if (imagePreload) {
-      layerContext.drawImage(imagePreload, 0, 0);
+    if (imageLoad) {
+      layerContext.drawImage(imageLoad, 0, 0);
     }
 
     /*
@@ -2414,25 +2412,32 @@ function PaintWeb (win, doc) {
         styleHeight  = importImage.height * image.canvasScale,
         result       = true;
 
-    image.width  = bufferCanvas.width  = layerCanvas.width  = importImage.width;
-    image.height = bufferCanvas.height = layerCanvas.height = importImage.height;
+    bufferCanvas.width  = layerCanvas.width  = importImage.width;
+    bufferCanvas.height = layerCanvas.height = importImage.height;
 
     try {
       layerContext.drawImage(importImage, 0, 0);
     } catch (err) {
       result = false;
+      bufferCanvas.width  = layerCanvas.width  = image.width;
+      bufferCanvas.height = layerCanvas.height = image.height;
     }
 
-    bufferStyle.width  = layerStyle.width  = styleWidth  + 'px';
-    bufferStyle.height = layerStyle.height = styleHeight + 'px';
+    if (result) {
+      image.width  = importImage.width;
+      image.height = importImage.height;
+      bufferStyle.width  = layerStyle.width  = styleWidth  + 'px';
+      bufferStyle.height = layerStyle.height = styleHeight + 'px';
+      _self.config.imageLoad = importImage;
+
+      this.events.dispatch(new appEvent.imageSizeChange(image.width, 
+            image.height));
+
+      this.events.dispatch(new appEvent.canvasSizeChange(styleWidth, styleHeight, 
+            image.canvasScale));
+    }
 
     this.historyAdd();
-
-    this.events.dispatch(new appEvent.imageSizeChange(image.width, 
-          image.height));
-
-    this.events.dispatch(new appEvent.canvasSizeChange(styleWidth, styleHeight, 
-          image.canvasScale));
 
     return result;
   };
@@ -2455,6 +2460,13 @@ function PaintWeb (win, doc) {
    * image in a new tab using a data: URL. You must have some event listener for 
    * the <code>imageSave</code> event and you must prevent the default action.
    *
+   * <p>If the default action for the <code>imageSave</code> application event 
+   * is not prevented, then this method will also dispatch the {@link 
+   * pwlib.appEvent.imageSaveResult} application event.
+   *
+   * <p>Your event handler for the <code>imageSave</code> event must dispatch 
+   * the <code>imageSaveResult</code> event.
+   *
    * @returns {Boolean} True if the operation was successful, or false if not.
    */
   this.imageSave = function () {
@@ -2472,7 +2484,7 @@ function PaintWeb (win, doc) {
       return false;
     }
 
-    if (!idata || idata.toLowerCase() == 'data:') {
+    if (!idata || idata.toLowerCase() === 'data:') {
       return false;
     }
 
@@ -2491,6 +2503,8 @@ function PaintWeb (win, doc) {
 
     imgwin.location = idata;
     idata = null;
+
+    _self.events.dispatch(new appEvent.imageSaveResult(true));
 
     return true;
   };

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-16 15:27:32 +0300 $
+ * $Date: 2009-07-21 22:37:43 +0300 $
  */
 
 /**
@@ -33,7 +33,22 @@
  * @param {PaintWeb} app Reference to the main paint application object.
  */
 pwlib.extensions.moodle = function (app) {
-  var _self = this;
+  var _self    = this,
+      appEvent = pwlib.appEvent,
+      config   = app.config,
+      gui      = app.gui,
+      lang     = app.lang.moodle;
+
+  // Holds properties related to Moodle.
+  var moodle = {
+    // The class name for the element which holds the textarea buttons (toggle 
+    // on/off).
+    textareaButtons: 'textareaicons',
+
+    // The image save handler script on the server-side. The path is relative to 
+    // the PaintWeb base folder.
+    imageSaveHandler: '../ext/moodle/imagesave.php'
+  };
 
   /**
    * The <code>extensionRegister</code> event handler.
@@ -42,6 +57,10 @@ pwlib.extensions.moodle = function (app) {
    * if not.
    */
   this.extensionRegister = function () {
+    // Register application events.
+    app.events.add('guiShow',   this.guiShow);
+    app.events.add('guiHide',   this.guiHide);
+    app.events.add('imageSave', this.imageSave);
 
     return true;
   };
@@ -51,6 +70,126 @@ pwlib.extensions.moodle = function (app) {
    */
   this.extensionUnregister = function () {
     return;
+  };
+
+  /**
+   * The <code>imageSave</code> application event handler. When the user 
+   * attempts to save an image, this extension handles the event by sending the 
+   * image data to the Moodle server, to perform the actual save operation.
+   *
+   * @param {pwlib.appEvent.imageSave} ev The application event object.
+   */
+  this.imageSave = function (ev) {
+    if (!ev.dataURL) {
+      return;
+    }
+    ev.preventDefault();
+
+    var handlerURL = PaintWeb.baseFolder + moodle.imageSaveHandler,
+        imageURL   = config.imageLoad.src,
+        send       = 'url=' + encodeURIComponent(imageURL) +
+                     '&dataURL=' + encodeURIComponent(ev.dataURL);
+
+    pwlib.xhrLoad(handlerURL, imageSaveReady, 'POST', send);
+  };
+
+
+  /**
+   * The image save <code>onreadystatechange</code> event handler for the 
+   * <code>XMLHttpRequest</code> which performs the image save. This function 
+   * uses the reply to determine if the image save operation is successful or 
+   * not.
+   *
+   * <p>The {@link pwlib.appEvent.imageSaveResult} application event is 
+   * dispatched.
+   *
+   * <p>The server-side script must reply with a JSON object with the following 
+   * properties:
+   *
+   * <ul>
+   *   <li><var>successful</var> which tells if the image save operation was 
+   *   successful or not;
+   *
+   *   <li><var>url</var> which must tell the same URL as the image we just 
+   *   saved (sanity/security check);
+   *
+   *   <li><var>urlNew</var> is optional. This allows the server-side script to 
+   *   change the image URL;
+   *
+   *   <li><var>errorMessage</var> is optional. When the image save was not 
+   *   successful, an error message can be displayed.
+   * </ul>
+   *
+   * @private
+   * @param {XMLHttpRequest} xhr The XMLHttpRequest object.
+   */
+  function imageSaveReady (xhr) {
+    if (!xhr || xhr.readyState !== 4) {
+      return;
+    }
+
+    var result = {successful: false, url: config.imageLoad.src};
+
+    if ((xhr.status !== 304 && xhr.status !== 200) || !xhr.responseText) {
+      alert(lang.xhrRequestFailed);
+
+      app.events.dispatch(new appEvent.imageSaveResult(false, result.url, null, 
+            lang.xhrRequestFailed));
+
+      return;
+    }
+
+    try {
+      result = JSON.parse(xhr.responseText);
+    } catch (err) {
+      result.errorMessage = lang.jsonParseFailed + "\n" + err;
+      alert(result.errorMessage);
+    }
+
+    if (result.successful) {
+      if (result.url !== config.imageLoad.src) {
+        alert(pwlib.strf(lang.urlMismatch, {
+                url: config.imageLoad.src,
+                urlServer: result.url || 'null'}));
+      }
+    } else {
+      if (result.errorMessage) {
+        alert(lang.imageSaveFailed + "\n" + result.errorMessage);
+      } else {
+        alert(lang.imageSaveFailed);
+      }
+    }
+
+    app.events.dispatch(new appEvent.imageSaveResult(result.successful, 
+          result.url, result.urlNew, result.errorMessage));
+  };
+
+  /**
+   * The <code>guiShow</code> application event handler. When the PaintWeb GUI 
+   * is shown, we must hide the textarea icons for the current textarea element, 
+   * inside a Moodle page.
+   */
+  this.guiShow = function () {
+    var pNode = config.guiPlaceholder.parentNode,
+        elem = pNode.getElementsByClassName(moodle.textareaButtons)[0];
+
+    if (elem) {
+      elem.style.display = 'none';
+    }
+  };
+
+  /**
+   * The <code>guiHide</code> application event handler. When the PaintWeb GUI 
+   * is hidden, we must show again the textarea icons for the current textarea 
+   * element, inside a Moodle page.
+   */
+  this.guiHide = function () {
+    var pNode = config.guiPlaceholder.parentNode,
+        elem = pNode.getElementsByClassName(moodle.textareaButtons)[0];
+
+    if (elem) {
+      elem.style.display = '';
+    }
   };
 
 };
