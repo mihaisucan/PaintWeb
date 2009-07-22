@@ -18,7 +18,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-21 20:36:53 +0300 $
+ * $Date: 2009-07-22 13:05:53 +0300 $
  */
 
 // This script allows you to convert PaintWeb JSON language files into Moodle 
@@ -93,7 +93,7 @@ function convertFile ($file) {
     continue;
   }
 
-  $output = "<?php\n// " . date('c') . "\n" . json2php($langParsed, '');
+  $output = "<?php\n// " . date('c', filemtime($paintwebLangDir . '/' . $file)) . "\n" . json2php($langParsed, '');
 
   if (file_put_contents($outputFolder . '/' . $moodleLangFile, $output)) {
     echo "Generated $outputFolder/$moodleLangFile\n";
