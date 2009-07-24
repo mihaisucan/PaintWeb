@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-21 23:00:39 +0300 $
+ * $Date: 2009-07-24 21:53:23 +0300 $
  */
 
 /**
@@ -31,6 +31,7 @@ var overlayButton = null,
     paintwebInstance = null,
     pluginBar = null,
     pluginBarDelay = 5000, // 5 seconds
+    pluginBarTimeout = null,
     pwDestroyDelay = 30000, // 30 seconds
     pwDestroyTimer = null,
     pwSaveReturn = false,
@@ -161,12 +162,16 @@ function pluginCancelButton (ev) {
  */
 function paintwebSave (ev) {
   if (paintwebConfig.tinymce.imageSaveDataURL) {
-    targetImage.src = ev.dataURL;
-    targetFile = 'dataURL';
     ev.preventDefault();
-    paintwebInstance.events.dispatch(new pwlib.appEvent.imageSaveResult(true));
 
-  } else if (pluginBar && targetEditor) {
+    var url = targetFile === 'dataURL' ? '-' 
+      : targetEditor.dom.getAttrib(targetImage, 
+          'src');
+
+    paintwebInstance.events.dispatch(new pwlib.appEvent.imageSaveResult(true, 
+          url, ev.dataURL));
+
+  } else if (pluginBar && targetEditor && !pluginBarTimeout) {
     if (targetFile === 'dataURL') {
       str = targetEditor.getLang('paintweb.statusSavingDataURL',
               'Saving image data URL...');
@@ -190,14 +195,6 @@ function paintwebSaveResult (ev) {
     return;
   }
 
-  if (ev.successful && pwSaveReturn) {
-    pwSaveReturn = false;
-    paintwebHide();
-    return;
-  }
-
-  pwSaveReturn = false;
-
   if (pluginBar) {
     if (ev.successful) {
       pluginBar.firstChild.innerHTML 
@@ -208,7 +205,19 @@ function paintwebSaveResult (ev) {
         = targetEditor.getLang('paintweb.statusImageSaveFailed',
             'Image save failed!');
     }
-    setTimeout(pluginBarResetContent, pluginBarDelay);
+
+    pluginBarTimeout = setTimeout(pluginBarResetContent, pluginBarDelay);
+  }
+
+  if (ev.successful) {
+    if (ev.urlNew) {
+      targetEditor.dom.setAttrib(targetImage, 'src', ev.urlNew);
+    }
+
+    if (pwSaveReturn) {
+      pwSaveReturn = false;
+      paintwebHide();
+    }
   }
 };
 
@@ -219,6 +228,8 @@ function pluginBarResetContent () {
   if (!pluginBar || !targetImage || !targetFile) {
     return;
   }
+
+  pluginBarTimeout = null;
 
   var str = '';
 
@@ -248,7 +259,7 @@ function paintwebEditStart () {
     pwDestroyTimer = null;
   }
 
-  targetFile = targetImage.src;
+  targetFile = targetEditor.dom.getAttrib(targetImage, 'src');
 
   if (targetFile.substr(0, 5) === 'data:') {
     targetFile = 'dataURL';

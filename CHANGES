@@ -1,3 +1,26 @@
+2009-07-24:
+===========
+
+- Attempted to implement image save using data URLs.
+
+The attempt consisted of getting the TinyMCE plugin and the Moodle extension for
+PaintWeb to update the target image src attribute to hold the data URL generated
+by the browser. This is doable, but the attempt pretty much failed. Reasons:
+
+* TinyMCE does not really allow a plugin to manually change the .src DOM
+attribute for the image element, thus I must use their dom.setAttrib() method.
+If I do, their attribute value processing functions break the date URL making it
+invalid. If I manually set image.src to be what I want, it looks good in the
+browser, but when you save the textarea content will still point to the old
+image src attribute. Yay!
+
+* For some reason, Webkit considers images with data URLs as "external
+resources", thus when I draw them in Canvas, the Canvas is marked as dirty
+(security violation). Therefore, In Chrome/Safari one cannot edit data URLs and
+save them again.
+
+* Firefox crashes/freezes sometimes when TinyMCE + data URLs are used. Uh-oh.
+
 2009-07-21:
 ===========
 
@@ -22,7 +45,6 @@ Currently, it's only a placeholder.
 - Renamed the "initApp" event to "appInit".
 - The configuration can now tell the file name of a language.
 - Fixes and improvements for the TinyMCE plugin.
-
 
 2009-07-17:
 ===========

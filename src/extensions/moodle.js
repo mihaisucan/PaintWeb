@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-21 22:37:43 +0300 $
+ * $Date: 2009-07-24 21:59:45 +0300 $
  */
 
 /**
@@ -41,13 +41,18 @@ pwlib.extensions.moodle = function (app) {
 
   // Holds properties related to Moodle.
   var moodle = {
+    // Holds the URL of the image the user is saving.
+    imageURL: null,
+
     // The class name for the element which holds the textarea buttons (toggle 
     // on/off).
     textareaButtons: 'textareaicons',
 
     // The image save handler script on the server-side. The path is relative to 
-    // the PaintWeb base folder.
-    imageSaveHandler: '../ext/moodle/imagesave.php'
+    // the PaintWeb base folder. If the value is set to '-' then the image src 
+    // attribute is updated to hold the generated dataURL.
+    //imageSaveHandler: '../ext/moodle/imagesave.php'
+    imageSaveHandler: '-'
   };
 
   /**
@@ -77,22 +82,32 @@ pwlib.extensions.moodle = function (app) {
    * attempts to save an image, this extension handles the event by sending the 
    * image data to the Moodle server, to perform the actual save operation.
    *
+   * @private
    * @param {pwlib.appEvent.imageSave} ev The application event object.
    */
   this.imageSave = function (ev) {
     if (!ev.dataURL) {
       return;
     }
+
     ev.preventDefault();
 
-    var handlerURL = PaintWeb.baseFolder + moodle.imageSaveHandler,
-        imageURL   = config.imageLoad.src,
-        send       = 'url=' + encodeURIComponent(imageURL) +
-                     '&dataURL=' + encodeURIComponent(ev.dataURL);
+    moodle.imageURL = config.imageLoad.src;
+    if (!moodle.imageURL || moodle.imageURL.substr(0, 5) === 'data:') {
+      moodle.imageURL = '-';
+    }
 
-    pwlib.xhrLoad(handlerURL, imageSaveReady, 'POST', send);
+    if (moodle.imageSaveHandler === '-') {
+      app.events.dispatch(new appEvent.imageSaveResult(true, moodle.imageURL, 
+            ev.dataURL));
+    } else {
+      var handlerURL = PaintWeb.baseFolder + moodle.imageSaveHandler,
+          send       = 'url=' + encodeURIComponent(moodle.imageURL) +
+                       '&dataURL=' + encodeURIComponent(ev.dataURL);
+
+      pwlib.xhrLoad(handlerURL, imageSaveReady, 'POST', send);
+    }
   };
-
 
   /**
    * The image save <code>onreadystatechange</code> event handler for the 
@@ -128,7 +143,7 @@ pwlib.extensions.moodle = function (app) {
       return;
     }
 
-    var result = {successful: false, url: config.imageLoad.src};
+    var result = {successful: false, url: moodle.imageURL};
 
     if ((xhr.status !== 304 && xhr.status !== 200) || !xhr.responseText) {
       alert(lang.xhrRequestFailed);
@@ -147,9 +162,9 @@ pwlib.extensions.moodle = function (app) {
     }
 
     if (result.successful) {
-      if (result.url !== config.imageLoad.src) {
+      if (result.url !== moodle.imageURL) {
         alert(pwlib.strf(lang.urlMismatch, {
-                url: config.imageLoad.src,
+                url: moodle.imageURL,
                 urlServer: result.url || 'null'}));
       }
     } else {
@@ -168,6 +183,7 @@ pwlib.extensions.moodle = function (app) {
    * The <code>guiShow</code> application event handler. When the PaintWeb GUI 
    * is shown, we must hide the textarea icons for the current textarea element, 
    * inside a Moodle page.
+   * @private
    */
   this.guiShow = function () {
     var pNode = config.guiPlaceholder.parentNode,
@@ -182,6 +198,7 @@ pwlib.extensions.moodle = function (app) {
    * The <code>guiHide</code> application event handler. When the PaintWeb GUI 
    * is hidden, we must show again the textarea icons for the current textarea 
    * element, inside a Moodle page.
+   * @private
    */
   this.guiHide = function () {
     var pNode = config.guiPlaceholder.parentNode,
@@ -191,7 +208,6 @@ pwlib.extensions.moodle = function (app) {
       elem.style.display = '';
     }
   };
-
 };
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
