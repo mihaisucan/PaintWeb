@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-24 21:53:23 +0300 $
+ * $Date: 2009-07-26 18:53:03 +0300 $
  */
 
 /**
@@ -38,7 +38,8 @@ var overlayButton = null,
     targetContainer = null,
     targetEditor = null,
     targetFile = null,
-    targetImage = null;
+    targetImage = null,
+    pwlib = null;
 
 if (!window.tinymce) {
   alert('It looks like the PaintWeb plugin for TinyMCE cannot run.' +
@@ -106,6 +107,8 @@ function paintwebLoaded () {
  * this method configures the PaintWeb instance to work properly. A bar 
  * representing the plugin is also added, to let the user save/cancel image 
  * edits.
+ *
+ * @param {pwlib.appEvent.appInit} ev The PaintWeb application event object.
  */
 function paintwebInitialized (ev) {
   if (overlayButton && targetEditor) {
@@ -122,9 +125,10 @@ function paintwebInitialized (ev) {
     return;
   }
 
+  pwlib = window.pwlib;
   paintwebInstance.events.add('imageSave',       paintwebSave);
   paintwebInstance.events.add('imageSaveResult', paintwebSaveResult);
-  paintwebShow();
+  paintwebShow(ev);
 };
 
 /**
@@ -211,7 +215,13 @@ function paintwebSaveResult (ev) {
 
   if (ev.successful) {
     if (ev.urlNew) {
-      targetEditor.dom.setAttrib(targetImage, 'src', ev.urlNew);
+      // The tinymce.utl.URI class mangles the data URL.
+      //targetEditor.dom.setAttrib(targetImage, 'src', ev.urlNew);
+      targetImage.src = ev.urlNew;
+
+      if (targetImage.hasAttribute('mce_src')) {
+        targetImage.setAttribute('mce_src', ev.urlNew);
+      }
     }
 
     if (pwSaveReturn) {
@@ -285,9 +295,14 @@ function paintwebEditStart () {
 /**
  * Show PaintWeb on-screen. This function hides the current TinyMCE editor 
  * instance and shows up the PaintWeb instance.
+ *
+ * @param {mixed} [ev] Event object.
  */
-function paintwebShow () {
-  paintwebInstance.gui.show();
+function paintwebShow (ev) {
+  if (!ev || ev.type !== 'appInit') {
+    paintwebInstance.gui.show();
+  }
+
   targetContainer.style.display = 'none';
 
   if (!pluginBar) {

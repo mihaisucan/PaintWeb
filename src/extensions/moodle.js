@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-24 21:59:45 +0300 $
+ * $Date: 2009-07-26 21:16:36 +0300 $
  */
 
 /**
@@ -51,8 +51,8 @@ pwlib.extensions.moodle = function (app) {
     // The image save handler script on the server-side. The path is relative to 
     // the PaintWeb base folder. If the value is set to '-' then the image src 
     // attribute is updated to hold the generated dataURL.
-    //imageSaveHandler: '../ext/moodle/imagesave.php'
-    imageSaveHandler: '-'
+    imageSaveHandler: '../ext/moodle/imagesave.php'
+    //imageSaveHandler: '-'
   };
 
   /**
@@ -103,9 +103,10 @@ pwlib.extensions.moodle = function (app) {
     } else {
       var handlerURL = PaintWeb.baseFolder + moodle.imageSaveHandler,
           send       = 'url=' + encodeURIComponent(moodle.imageURL) +
-                       '&dataURL=' + encodeURIComponent(ev.dataURL);
+                       '&dataURL=' + encodeURIComponent(ev.dataURL),
+          headers    = {'Content-Type': 'application/x-www-form-urlencoded'};
 
-      pwlib.xhrLoad(handlerURL, imageSaveReady, 'POST', send);
+      pwlib.xhrLoad(handlerURL, imageSaveReady, 'POST', send, headers);
     }
   };
 

@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-07-21 23:02:20 +0300 $
+ * $Date: 2009-07-26 21:29:57 +0300 $
  */
 
 /**
@@ -187,16 +187,36 @@ pwlib.jsonParse = function (str) {
  *
  * @param {String} [send] The string you want to send in an HTTP POST request.
  *
+ * @param {Object} [headers] An object holding the header names and values you 
+ * want to set for the request.
+ *
  * @returns {XMLHttpRequest} The XMLHttpRequest object created by this method.
  */
-pwlib.xhrLoad = function (url, handler, method, send) {
+pwlib.xhrLoad = function (url, handler, method, send, headers) {
+  if (!url) {
+    throw new TypeError('The first argument must be a string!');
+  }
+
   if (!method) {
     method = 'GET';
   }
 
+  if (!headers) {
+    headers = {};
+  }
+
+  if (!send) {
+    send = null;
+  }
+
   var xhr = new XMLHttpRequest();
   xhr.onreadystatechange = function () { handler(xhr); };
-  xhr.open(method || 'GET', url);
+  xhr.open(method, url);
+
+  for (var header in headers) {
+    xhr.setRequestHeader(header, headers[header]);
+  }
+
   xhr.send(send);
 
   return xhr;

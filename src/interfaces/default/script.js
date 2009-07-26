@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-21 16:06:06 +0300 $
+ * $Date: 2009-07-26 17:56:47 +0300 $
  */
 
 /**
@@ -1743,10 +1743,11 @@ pwlib.gui = function (app) {
    */
   this.show = function () {
     var placeholder = config.guiPlaceholder,
-        className   = ' ' + this.classPrefix + 'placeholder';
+        className   = this.classPrefix + 'placeholder',
+        re          = new RegExp('\\b' + className);
 
-    if (placeholder.className.indexOf(className) === -1) {
-      placeholder.className += className;
+    if (!re.test(placeholder.className)) {
+      placeholder.className += ' ' + className;
     }
 
     placeholder.focus();
@@ -1761,10 +1762,10 @@ pwlib.gui = function (app) {
    * event.
    */
   this.hide = function () {
-    var placeholder = config.guiPlaceholder;
+    var placeholder = config.guiPlaceholder,
+        re = new RegExp('\\b' + this.classPrefix + 'placeholder', 'g');
 
-    placeholder.className = placeholder.className.replace(' ' + this.classPrefix 
-        + 'placeholder', '');
+    placeholder.className = placeholder.className.replace(re, '');
 
     app.events.dispatch(new appEvent.guiHide());
   };

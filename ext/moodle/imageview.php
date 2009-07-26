@@ -18,55 +18,43 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-26 22:04:16 +0300 $
+ * $Date: 2009-07-26 22:09:50 +0300 $
  */
 
-// This script generates the PaintWeb JSON language file dynamically using the 
-// Moodle language files. The language picked is the one configured in Moodle.
+// This script serves images saved by PaintWeb to the browser.
 
 require_once('../../../../config.php');
 
-$moodleLangDir = '../../../../lang';
-$moodleLangFile = 'paintweb.php';
+// The list of allowed image MIME types associated to file extensions.
+$allowedTypes = array('png' => 'image/png', 'jpg' => 'image/jpeg');
 
-if (!is_dir($moodleLangDir)) {
-  echo "The Moodle folder could not be found: $moodleLangDir\n";
-  return 1;
+$file = $_GET['img'];
+if (empty($file) || strpos($file, '/') !== false) {
+  die('image not found');
 }
 
-require_once($moodleLangDir . '/en_utf8/' . $moodleLangFile);
-
-$keys = array_keys($string);
-
-$outputArray = array();
-
-foreach ($keys as $key) {
-  $keyArr = explode(':', $key);
-  $langProp = array_pop($keyArr);
-  $langGroup = &$outputArray;
-
-  foreach ($keyArr as $prop) {
-    if (!isset($langGroup[$prop])) {
-      $langGroup[$prop] = array();
-    }
-
-    $langGroup = &$langGroup[$prop];
-  }
-
-  $langGroup[$langProp] = get_string($key, 'paintweb');
+$filetype = substr($file, strpos($file, '.') + 1);
+if (empty($filetype) || !array_key_exists($filetype, $allowedTypes)) {
+  die('image not found');
 }
 
-$output = json_encode($outputArray);
+$filetype = $allowedTypes[$filetype];
+
+$file = $CFG->dataroot . '/' . $CFG->paintwebImagesFolder . '/' . $file;
+
+if (!file_exists($file)) {
+  die('image not found');
+}
 
 $lifetime = '86400';
-@header('Content-Type: text/plain; charset=utf-8');
-@header('Content-Length: ' . strlen($output));
+@header('Content-Type: ' . $filetype);
+@header('Content-Length: ' . filesize($file));
 @header('Last-Modified: ' . gmdate('D, d M Y H:i:s', time()) . ' GMT');
 @header('Cache-control: max-age=' . $lifetime);
 @header('Expires: ' .  gmdate('D, d M Y H:i:s', time() + $lifetime) . ' GMT');
 @header('Pragma: ');
 
-echo $output;
+readfile($file);
 
 // vim:set spell spl=en fo=anl1qrowcb tw=80 ts=2 sw=2 sts=2 sta et noai nocin fenc=utf-8 ff=unix: 
-?>
+

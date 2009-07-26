@@ -1,3 +1,28 @@
+2009-07-26:
+===========
+
+- Fixed the TinyMCE plugin in Firefox 3.0. PaintWeb was failing image saves, GUI 
+show/hide, etc.
+- Further work on image save in Moodle 1.9. This time on two fronts:
+
+a) Save image as a data URL. I worked around the problem in TinyMCE which causes 
+data URLs to be mangled. Now saving the image as a data URL works fine. I can 
+also provide a patch to TinyMCE 3 which fixes the problem entirely.
+
+Problems remaining:
+* IE 6 / IE 7 data URL support;
+* client-side security issues when trying to edit an image with a data URL in 
+Webkit and Gecko 1.9.0.
+
+b) Save the image in the data directory of Moodle, with a unique hash (sha1).  
+This works well in all of the browsers (Firefox, Opera, Chrome, Safari).
+
+Problems remaining:
+* server-side security issues: who and when is allowed to save an image? How 
+about viewing an image?
+* save location: I rather picked it arbitrarily, based on a chat I had with 
+Martin.
+
 2009-07-24:
 ===========
 
