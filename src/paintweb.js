@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-21 21:15:27 +0300 $
+ * $Date: 2009-07-28 21:43:08 +0300 $
  */
 
 /**
@@ -2467,24 +2467,57 @@ function PaintWeb (win, doc) {
    * <p>Your event handler for the <code>imageSave</code> event must dispatch 
    * the <code>imageSaveResult</code> event.
    *
+   * @param {String} [type="auto"] Image MIME type. This tells the browser which 
+   * format to use when saving the image. If the image format type is not 
+   * supported, then the image is saved as PNG.
+   *
+   * <p>You can use the resulting data URL to check which is the actual image 
+   * format.
+   *
+   * <p>When <var>type</var> is "auto" then PaintWeb checks the type of the 
+   * image currently loaded ({@link PaintWeb.config.imageLoad}). If the format 
+   * is recognized, then the same format is used to save the image.
+   *
    * @returns {Boolean} True if the operation was successful, or false if not.
    */
-  this.imageSave = function () {
+  this.imageSave = function (type) {
     var canvas = _self.layer.canvas,
-        idata = null;
+        imageLoad = _self.config.imageLoad,
+        ext = 'png', idata = null, src = null, pos;
 
     if (!canvas.toDataURL) {
       return false;
     }
 
+    var extMap = {'jpg' : 'image/jpeg', 'jpeg' : 'image/jpeg', 'png' 
+      : 'image/png', 'gif' : 'image/gif'};
+
+    // Detect the MIME type of the image currently loaded.
+    if (!type) {
+      if (imageLoad && imageLoad.src && imageLoad.src.substr(0, 5) !== 'data:') {
+        src = imageLoad.src;
+        pos = src.indexOf('?');
+        if (pos !== -1) {
+          src = src.substr(0, pos);
+        }
+        ext = src.substr(src.lastIndexOf('.') + 1).toLowerCase();
+      }
+
+      type = extMap[ext] || 'image/png';
+    }
+
     try {
-      idata = canvas.toDataURL();
+      if (type === 'image/jpeg') {
+        idata = canvas.toDataURL(type, _self.config.jpegSaveQuality);
+      } else {
+        idata = canvas.toDataURL(type);
+      }
     } catch (err) {
       alert(lang.errorImageSave + "\n" + err);
       return false;
     }
 
-    if (!idata || idata.toLowerCase() === 'data:') {
+    if (!idata || idata === 'data:,') {
       return false;
     }
 

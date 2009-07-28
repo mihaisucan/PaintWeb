@@ -1,3 +1,35 @@
+2009-07-28:
+===========
+
+- Continued work on image save into Moodle. This time worked on refining the 
+implementation of image save as a file.
+
+- Fixes/improvements to the server-side script imagesave.php. Now the script 
+determines if an image comes from a course and updates it accordingly - if 
+permissions allow it. If the image cannot be found/updated, then a new image is 
+saved in the PaintWeb images folder inside the data dir.
+
+- Implemented support for image file types in the PaintWeb.imageSave() method.  
+Currently only Firefox 3.5 and Opera 10 can save PNG and JPEG images. The rest 
+of the browsers only support PNG.
+
+- When an image from a course is updated, PaintWeb tries to maintain the same 
+file format: PNG or JPEG. If the format cannot be maintained, then a new PNG 
+image is created in the PaintWeb images folder from the data dir.
+
+- TinyMCE plugin improvements. Made it behave better with regards to image 
+updates/saves.
+
+- New config option for image save quality (for JPEGs).
+- New config option for "moodleSaveMethod". Now users/devs can easily switch the 
+PaintWeb Moodle extension to save images as data URLs or as files, depending on 
+their likings.
+
+- Updated ext/moodle/imageview.php to better integrate into Moodle.
+
+- Updates for English strings.
+
+
 2009-07-26:
 ===========
 

@@ -18,12 +18,16 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-26 22:09:50 +0300 $
+ * $Date: 2009-07-28 13:26:35 +0300 $
  */
 
 // This script serves images saved by PaintWeb to the browser.
 
 require_once('../../../../config.php');
+require_once('../../../../lib/filelib.php');
+
+// disable moodle specific debug messages
+disable_debugging();
 
 // The list of allowed image MIME types associated to file extensions.
 $allowedTypes = array('png' => 'image/png', 'jpg' => 'image/jpeg');
@@ -40,21 +44,21 @@ if (empty($filetype) || !array_key_exists($filetype, $allowedTypes)) {
 
 $filetype = $allowedTypes[$filetype];
 
-$file = $CFG->dataroot . '/' . $CFG->paintwebImagesFolder . '/' . $file;
+$path = $CFG->dataroot . '/' . $CFG->paintwebImagesFolder . '/' . $file;
 
-if (!file_exists($file)) {
+if (!file_exists($path)) {
   die('image not found');
 }
 
-$lifetime = '86400';
-@header('Content-Type: ' . $filetype);
-@header('Content-Length: ' . filesize($file));
-@header('Last-Modified: ' . gmdate('D, d M Y H:i:s', time()) . ' GMT');
-@header('Cache-control: max-age=' . $lifetime);
-@header('Expires: ' .  gmdate('D, d M Y H:i:s', time() + $lifetime) . ' GMT');
-@header('Pragma: ');
+// Seconds for files to remain in caches
+$lifetime = isset($CFG->filelifetime) ? $CFG->filelifetime : 86400;
+$forcerefresh = optional_param('forcerefresh', 0, PARAM_BOOL);
+if ($forcerefresh) {
+  $lifetime = 0;
+}
 
-readfile($file);
+session_write_close(); // unlock session during fileserving
+send_file($path, $file, $lifetime, 0, false, false, $filetype);
 
 // vim:set spell spl=en fo=anl1qrowcb tw=80 ts=2 sw=2 sts=2 sta et noai nocin fenc=utf-8 ff=unix: 
 

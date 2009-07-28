@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-26 21:16:36 +0300 $
+ * $Date: 2009-07-28 18:49:37 +0300 $
  */
 
 /**
@@ -49,10 +49,8 @@ pwlib.extensions.moodle = function (app) {
     textareaButtons: 'textareaicons',
 
     // The image save handler script on the server-side. The path is relative to 
-    // the PaintWeb base folder. If the value is set to '-' then the image src 
-    // attribute is updated to hold the generated dataURL.
+    // the PaintWeb base folder.
     imageSaveHandler: '../ext/moodle/imagesave.php'
-    //imageSaveHandler: '-'
   };
 
   /**
@@ -97,9 +95,10 @@ pwlib.extensions.moodle = function (app) {
       moodle.imageURL = '-';
     }
 
-    if (moodle.imageSaveHandler === '-') {
+    if (!moodle.imageSaveHandler || config.moodleSaveMethod === 'dataURL') {
       app.events.dispatch(new appEvent.imageSaveResult(true, moodle.imageURL, 
             ev.dataURL));
+
     } else {
       var handlerURL = PaintWeb.baseFolder + moodle.imageSaveHandler,
           send       = 'url=' + encodeURIComponent(moodle.imageURL) +

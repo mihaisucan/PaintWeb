@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-07-21 15:44:12 +0300 $
+  // $Date: 2009-07-28 20:04:15 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -91,6 +91,14 @@
    * @default 400
    */
   "viewportHeight": 400,
+
+  /**
+   * Image save quality for the JPEG format.
+   *
+   * @type Number
+   * @default 0.9
+   */
+  "jpegSaveQuality": 0.9,
 
   /**
    * The default image width.

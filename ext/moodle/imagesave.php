@@ -18,7 +18,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-26 21:53:12 +0300 $
+ * $Date: 2009-07-28 20:59:29 +0300 $
  */
 
 // This script performs asynchronous image save in PaintWeb. This is used by the 
@@ -27,12 +27,12 @@
 require_once('../../../../config.php');
 
 function paintwebSaveDone ($successful, $errorMessage = null) {
-  global $url, $urlNew;
+  global $imgUrl, $imgUrlNew;
 
   $output = array(
     'successful' => $successful,
-    'url' => $url,
-    'urlNew' => $urlNew,
+    'url' => $imgUrl,
+    'urlNew' => $imgUrlNew,
     'errorMessage' => $errorMessage
   );
 
@@ -40,19 +40,110 @@ function paintwebSaveDone ($successful, $errorMessage = null) {
   exit;
 }
 
+function prepareImgUrl () {
+  global $CFG, $imgUrl, $imgUrlNew, $imgDest, $imgProxies, $myProxy, $imgDataURL, $imgAllowedTypes, $imgInfo;
+
+  // check if the image URL points to a proxy.
+  foreach ($imgProxies as $proxy => $type) {
+    if (strpos($imgUrl, $proxy) !== 0) {
+      continue;
+    }
+
+    $relpath = substr($imgUrl, strlen($proxy));
+    if ($relpath{0} === '?') {
+      $relpath = substr($relpath, 1);
+      $pathvars = array();
+      parse_str($relpath, $pathvars);
+      if (isset($pathvars['file'])) {
+        $relpath = $pathvars['file'];
+      } else {
+        $relpath = false;
+      }
+      unset($pathvars);
+
+    } else if (strpos($relpath, '?')) {
+      $relpath = substr($relpath, 0, strpos($relpath, '?'));
+    }
+
+    if (!$relpath) {
+        continue;
+    }
+
+    $relpath = trim($relpath, '/');
+    $tmpDest = $CFG->dataroot . '/' . $relpath;
+
+    if (!file_exists($tmpDest) || !is_writeable($tmpDest) || is_dir($tmpDest)) {
+      continue;
+    }
+
+    $fname = basename($tmpDest);
+    $ext = substr($fname, strrpos($fname, '.') + 1);
+    $ftype = array_search(strtolower($ext), $imgAllowedTypes);
+
+    if (!$ftype || $ftype !== $imgInfo[0]) {
+      continue;
+    }
+
+    // check permissions, if the image proxy is for a course file.
+    if ($type === 'course') {
+      $arrpath = explode('/', $relpath);
+      if (count($arrpath) < 2) {
+        continue;
+      }
+
+      $course = get_record('course', 'id', $arrpath[0]);
+      require_login($course);
+      require_capability('moodle/course:managefiles', get_context_instance(CONTEXT_COURSE, $course->id));
+    }
+
+    $imgDest = $tmpDest;
+    return;
+  }
+
+  $imgDest = $CFG->dataroot . '/' . $CFG->paintwebImagesFolder;
+
+  if (!is_dir($imgDest) || !make_upload_directory($imgDest, false)) {
+    paintwebSaveDone(false, 'failed to mkdir ' . $imgDest);
+  }
+
+  // simply create a new file in the PainWeb images folder.
+  $fname = sha1($imgDataURL) . '.' . $imgAllowedTypes[$imgInfo[0]];
+  $imgDest .=  '/' . $fname;
+  $imgUrlNew = $CFG->wwwroot . '/' . $myProxy . '?img=' . $fname;
+}
+
 // The list of allowed image MIME types associated to file extensions.
-$allowedTypes = array('image/png' => 'png', 'image/jpeg' => 'jpg');
+$imgAllowedTypes = array('image/png' => 'png', 'image/jpeg' => 'jpg');
 
-$url = $_POST['url'];
-$urlNew = null;
+// The list of file serving proxies recognized from Moodle. For example, course 
+// images are served by /file.php. So, when you add an image in TinyMCE, the 
+// path will be like /file.php/course_id/dir/file.ext.
+$imgProxies = array(
+  $CFG->wwwroot . '/file.php' => 'course',     // course files
+  $CFG->httpswwwroot . '/file.php' => 'course' // course files
+);
 
-$dataURL = &$_POST['dataURL'];
+if (!$CFG->paintwebAllowImageUpdates) {
+  $imgProxies = array();
+}
 
-if (empty($url)) {
+$myProxy = dirname(__FILE__) . '/imageview.php';
+if (strpos($myProxy, $CFG->dirroot) === 0) {
+  $myProxy = trim(substr($myProxy, strlen($CFG->dirroot)), '/');
+} else {
+  paintwebSaveDone(false, 'failed to find my image file proxy!');
+}
+
+$imgUrl = $_POST['url'];
+$imgUrlNew = null;
+
+$imgDataURL = &$_POST['dataURL'];
+
+if (empty($imgUrl)) {
   paintwebSaveDone(false, 'empty url');
 }
 
-if (empty($dataURL)) {
+if (empty($imgDataURL)) {
   paintwebSaveDone(false, 'empty data URL');
 }
 
@@ -60,44 +151,36 @@ if (empty($dataURL)) {
 // data:[<MIME-type>][;charset="<encoding>"][;base64],<data>
 
 // Here we find the comma delimiter.
-$comma = strpos($dataURL, ',');
-$info = substr($dataURL, 0, $comma);
-if (empty($info) || !isset($dataURL{($comma+2)})) {
+$comma = strpos($imgDataURL, ',');
+$imgInfo = substr($imgDataURL, 0, $comma);
+if (empty($imgInfo) || !isset($imgDataURL{($comma+2)})) {
   paintwebSaveDone(false, 'malformed data URL');
 }
 
 // Split by ':' to find the 'data' prefix and the rest of the info.
-$info = explode(':', $info);
+$imgInfo = explode(':', $imgInfo);
 
 // The array must have exactly two elements and the second element must not be 
 // empty.
-if (count($info) !== 2 || $info[0] !== 'data' || empty($info[1])) {
+if (count($imgInfo) !== 2 || $imgInfo[0] !== 'data' || empty($imgInfo[1])) {
   paintwebSaveDone(false, 'malformed data URL');
 }
 
 // The MIME type must be given and it must be base64-encoded.
-$info = explode(';', $info[1]);
+$imgInfo = explode(';', $imgInfo[1]);
 
-if (count($info) < 2 || !array_key_exists($info[0], $allowedTypes) ||
-    ($info[1] !== 'base64' && $info[2] !== 'base64')) {
+if (count($imgInfo) < 2 || !array_key_exists($imgInfo[0], $imgAllowedTypes) ||
+    ($imgInfo[1] !== 'base64' && $imgInfo[2] !== 'base64')) {
   paintwebSaveDone(false, 'malformed data URL');
 }
 
-$dest = $CFG->dataroot . '/' . $CFG->paintwebImagesFolder;
+prepareImgUrl();
 
-if (!is_dir($dest) || !make_upload_directory($dest, false)) {
-  paintwebSaveDone(false, 'failed to mkdir ' . $dest);
-}
+$imgDataURL = substr($imgDataURL, $comma + 1);
 
-$filename = sha1($dataURL) . '.' . $allowedTypes[$info[0]];
-$dest .=  '/' . $filename;
-$dataURL = substr($dataURL, $comma + 1);
-
-if (!file_put_contents($dest, base64_decode($dataURL))) {
+if (!file_put_contents($imgDest, base64_decode($imgDataURL))) {
   paintwebSaveDone(false, 'failed to save file');
 }
-
-$urlNew = $CFG->wwwroot . '/lib/paintweb/ext/moodle/imageview.php?img=' . $filename;
 
 paintwebSaveDone(true);
 

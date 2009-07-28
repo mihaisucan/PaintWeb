@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-26 18:53:03 +0300 $
+ * $Date: 2009-07-28 22:14:35 +0300 $
  */
 
 /**
@@ -26,20 +26,59 @@
  */
 
 (function() {
-var overlayButton = null,
-    paintwebConfig = null,
-    paintwebInstance = null,
-    pluginBar = null,
-    pluginBarDelay = 5000, // 5 seconds
-    pluginBarTimeout = null,
-    pwDestroyDelay = 30000, // 30 seconds
-    pwDestroyTimer = null,
-    pwSaveReturn = false,
-    targetContainer = null,
-    targetEditor = null,
-    targetFile = null,
-    targetImage = null,
-    pwlib = null;
+// Reference to the DOM element of the overlay button displayed on top of the 
+// selected image.
+var overlayButton = null;
+
+// Reference to the PaintWeb configuration object.
+var paintwebConfig = null;
+
+// Reference to the current PaintWeb instance object.
+var paintwebInstance = null;
+
+// Reference to the TinyMCE "plugin bar" displayed above PaintWeb, when PaintWeb 
+// is displayed. This "plugin bar" allows the user to save/cancel image edits.
+var pluginBar = null;
+
+// The delay used for displaying temporary messages in the plugin bar.
+var pluginBarDelay = 5000; // 5 seconds
+
+// The timeout ID used for the plugin bar when a temporary message is displayed.
+var pluginBarTimeout = null;
+
+// Once PaintWeb is closed, the instance remains active. This value controls how 
+// long the PaintWeb instance is kept alive. Once the time elapsed, the PaintWeb 
+// instance is destroyed entirely.
+var pwDestroyDelay = 30000; // 30 seconds
+
+// The timeout ID used for destroying the PaintWeb instance.
+var pwDestroyTimer = null;
+
+// Tells if the user intends to save the image and return to TinyMCE or not.  
+// This value is set to true when the user clicks the "Save" button in the 
+// plugin bar.
+var pwSaveReturn = false;
+
+// Reference to the container of the current TinyMCE editor instance.
+var targetContainer = null;
+
+// The current TinyMCE editor instance.
+var targetEditor = null;
+
+// Reference to the image element being edited.
+var targetImage = null;
+
+// Tells if the image being edited uses a data URL or not.
+var imgIsDataURL = false;
+
+// The new image URL. Once the user saves the image, the remote server might 
+// require a change for the image URL.
+var imgNewUrl = null;
+
+// Tells if the current image has been ever updated using "image save".
+var imgSaved = false;
+
+var pwlib = null;
 
 if (!window.tinymce) {
   alert('It looks like the PaintWeb plugin for TinyMCE cannot run.' +
@@ -87,7 +126,10 @@ function paintwebLoaded () {
 
   pNode.insertBefore(pwContainer, textarea.nextSibling);
 
-  PaintWeb.baseFolder   = config.tinymce.paintwebFolder;
+  if (!PaintWeb.baseFolder) {
+    PaintWeb.baseFolder   = config.tinymce.paintwebFolder;
+  }
+
   config.imageLoad      = targetImage;
   config.guiPlaceholder = pwContainer;
 
@@ -121,6 +163,8 @@ function paintwebInitialized (ev) {
   if (ev.state !== PaintWeb.INIT_DONE) {
     alert('PaintWeb initialization failed! ' + ev.errorMessage);
     paintwebInstance = null;
+    targetImage = null;
+    targetEditor = null;
 
     return;
   }
@@ -168,23 +212,15 @@ function paintwebSave (ev) {
   if (paintwebConfig.tinymce.imageSaveDataURL) {
     ev.preventDefault();
 
-    var url = targetFile === 'dataURL' ? '-' 
-      : targetEditor.dom.getAttrib(targetImage, 
-          'src');
+    var url = imgIsDataURL ? '-' : targetEditor.dom.getAttrib(targetImage, 
+        'src');
 
     paintwebInstance.events.dispatch(new pwlib.appEvent.imageSaveResult(true, 
           url, ev.dataURL));
 
-  } else if (pluginBar && targetEditor && !pluginBarTimeout) {
-    if (targetFile === 'dataURL') {
-      str = targetEditor.getLang('paintweb.statusSavingDataURL',
-              'Saving image data URL...');
-    } else {
-      str = targetEditor.getLang('paintweb.statusSavingImage',
-              'Saving image {file}...').
-                replace('{file}', '<strong>' + targetFile + '</strong>');
-    }
-    pluginBar.firstChild.innerHTML = str;
+  } else if (pluginBar && !pluginBarTimeout) {
+    pluginBar.firstChild.innerHTML 
+      = targetEditor.getLang('paintweb.statusSavingImage', 'Saving image...');
   }
 };
 
@@ -199,6 +235,7 @@ function paintwebSaveResult (ev) {
     return;
   }
 
+  // Update the status message in the "plugin bar".
   if (pluginBar) {
     if (ev.successful) {
       pluginBar.firstChild.innerHTML 
@@ -214,14 +251,12 @@ function paintwebSaveResult (ev) {
   }
 
   if (ev.successful) {
-    if (ev.urlNew) {
-      // The tinymce.utl.URI class mangles the data URL.
-      //targetEditor.dom.setAttrib(targetImage, 'src', ev.urlNew);
-      targetImage.src = ev.urlNew;
+    imgSaved = true;
 
-      if (targetImage.hasAttribute('mce_src')) {
-        targetImage.setAttribute('mce_src', ev.urlNew);
-      }
+    if (ev.urlNew) {
+      // store the new URL. When PaintWeb is closed, the image src attribute is 
+      // updated.
+      imgNewUrl = ev.urlNew;
     }
 
     if (pwSaveReturn) {
@@ -235,23 +270,15 @@ function paintwebSaveResult (ev) {
  * Reset the text content of the plugin bar.
  */
 function pluginBarResetContent () {
-  if (!pluginBar || !targetImage || !targetFile) {
+  if (!pluginBar || !targetImage) {
     return;
   }
 
   pluginBarTimeout = null;
 
-  var str = '';
-
-  if (targetFile === 'dataURL') {
-    str = targetEditor.getLang('paintweb.statusEditingDataURL');
-  } else {
-    str = targetEditor.getLang('paintweb.statusImageEditing',
-        'You are editing {file}.').
-      replace('{file}', '<strong>' + targetFile + '</strong>');
-  }
-
-  pluginBar.firstChild.innerHTML = str;
+  pluginBar.firstChild.innerHTML 
+    = targetEditor.getLang('paintweb.statusImageEditing',
+        'You are editing {file}.');
 };
 
 /**
@@ -260,7 +287,6 @@ function pluginBarResetContent () {
 function paintwebEditStart () {
   if (!checkEditableImage(targetImage)) {
     targetImage = null;
-    targetFile = null;
     return;
   }
 
@@ -269,12 +295,12 @@ function paintwebEditStart () {
     pwDestroyTimer = null;
   }
 
-  targetFile = targetEditor.dom.getAttrib(targetImage, 'src');
+  var src = targetEditor.dom.getAttrib(targetImage, 'src');
 
-  if (targetFile.substr(0, 5) === 'data:') {
-    targetFile = 'dataURL';
+  if (src.substr(0, 5) === 'data:') {
+    imgIsDataURL = true;
   } else {
-    targetFile = targetFile.substr(targetFile.lastIndexOf('/') + 1);
+    imgIsDataURL = false;
   }
 
   if (overlayButton && overlayButton.parentNode && targetEditor) {
@@ -335,9 +361,42 @@ function paintwebHide () {
     targetContainer.parentNode.removeChild(pluginBar);
   }
 
+  // Update the target image src attribute if needed.
+  if (imgNewUrl) {
+    // The tinymce.utl.URI class mangles the data URL.
+    //targetEditor.dom.setAttrib(targetImage, 'src', imgNewUrl);
+    targetImage.src = imgNewUrl;
+
+    if (targetImage.hasAttribute('mce_src')) {
+      targetImage.setAttribute('mce_src', imgNewUrl);
+    }
+
+    imgNewUrl = null;
+
+  } else if (!imgIsDataURL && imgSaved) {
+    // Force a refresh for the target image from the server.
+
+    var src = targetEditor.dom.getAttrib(targetImage, 'src'),
+        rnd = (new Date()).getMilliseconds() * Math.round(Math.random() * 100);
+
+    if (src.indexOf('?') === -1) {
+      src += '?' + rnd;
+    } else {
+      if (/\?[0-9]+$/.test(src)) {
+        src = src.replace(/\?[0-9]+$/, '?' + rnd);
+      } else if (/&[0-9]+$/.test(src)) {
+        src = src.replace(/&[0-9]+$/, '&' + rnd);
+      } else {
+        src += '&' + rnd;
+      }
+    }
+
+    targetEditor.dom.setAttrib(targetImage, 'src', src);
+  }
+
   targetContainer.style.display = '';
   targetImage = null;
-  targetFile  = null;
+  imgSaved = false;
 
   targetEditor.focus();
 
