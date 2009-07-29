@@ -10,5 +10,5 @@ tinyMCE.addI18n('en.paintweb',{
   imageSaveButton: 'Save',
   imageSaveButtonTitle: 'Save the image and return to TinyMCE.',
   cancelButton: 'Cancel',
-  cancelButtonTitle: 'Cancel image edits and return to TinyMCE.',
+  cancelButtonTitle: 'Cancel image edits and return to TinyMCE.'
 });

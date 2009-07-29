@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-26 17:56:47 +0300 $
+ * $Date: 2009-07-29 14:09:30 +0300 $
  */
 
 /**
@@ -333,7 +333,6 @@ pwlib.gui = function (app) {
 
     canvasContainer.appendChild(layerCanvas);
     canvasContainer.appendChild(bufferCanvas);
-    canvasContainer.style.backgroundColor = config.backgroundColor;
 
     // Make sure the selection transparency input checkbox is disabled if the 
     // putImageData and getImageData methods are unsupported.

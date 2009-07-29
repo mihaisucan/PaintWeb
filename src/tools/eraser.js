@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-01 18:46:31 +0300 $
+ * $Date: 2009-07-29 20:34:06 +0300 $
  */
 
 /**
@@ -32,16 +32,17 @@
  */
 pwlib.tools.eraser = function (app) {
   var _self         = this,
+      bufferContext = app.buffer.context,
       clearInterval = app.win.clearInterval,
       config        = app.config,
-      context       = app.buffer.context,
+      history       = app.history.pos,
       image         = app.image,
       layerContext  = app.layer.context,
       mouse         = app.mouse,
       setInterval   = app.win.setInterval;
 
   /**
-   * The interval ID used for running the pencil drawing operation every few 
+   * The interval ID used for running the erasing operation every few 
    * milliseconds.
    *
    * @private
@@ -76,7 +77,8 @@ pwlib.tools.eraser = function (app) {
    */
   var y0 = 0;
 
-  var strokeStyle_ = null;
+  var globalOp_  = null,
+      lineWidth_ = null;
 
   /**
    * The tool deactivation event handler. This function clears timers, clears 
@@ -89,7 +91,14 @@ pwlib.tools.eraser = function (app) {
     }
 
     if (mouse.buttonDown) {
-      context.clearRect(0, 0, image.width, image.height);
+      if (globalOp_) {
+        layerContext.globalCompositeOperation = globalOp_;
+      }
+      if (lineWidth_) {
+        layerContext.lineWidth = lineWidth_;
+      }
+
+      app.historyGoto(history.pos);
     }
 
     points = [];
@@ -112,12 +121,11 @@ pwlib.tools.eraser = function (app) {
    * Initialize the drawing operation.
    */
   this.mousedown = function () {
-    // The mousedown event remembers the current strokeStyle and sets a white 
-    // colored stroke (same as the background), such that the user gets live 
-    // feedback of what he/she erases.
+    globalOp_  = layerContext.globalCompositeOperation;
+    lineWidth_ = layerContext.lineWidth;
 
-    strokeStyle_ = context.strokeStyle;
-    context.strokeStyle = config.backgroundColor;
+    layerContext.globalCompositeOperation = 'destination-out';
+    layerContext.lineWidth = bufferContext.lineWidth;
 
     x0 = mouse.x;
     y0 = mouse.y;
@@ -151,17 +159,17 @@ pwlib.tools.eraser = function (app) {
       return;
     }
 
-    context.beginPath();
-    context.moveTo(x0, y0);
+    layerContext.beginPath();
+    layerContext.moveTo(x0, y0);
 
     while (i < n) {
       x0 = points[i++];
       y0 = points[i++];
-      context.lineTo(x0, y0);
+      layerContext.lineTo(x0, y0);
     }
 
-    context.stroke();
-    context.closePath();
+    layerContext.stroke();
+    layerContext.closePath();
 
     points = [];
   };
@@ -170,10 +178,6 @@ pwlib.tools.eraser = function (app) {
    * End the drawing operation, once the user releases the mouse button.
    */
   this.mouseup = function () {
-    // The mouseup event handler changes the globalCompositeOperation to 
-    // destination-out such that the white pencil path drawn by the user cuts 
-    // out/clears the destination image
-
     if (mouse.x == x0 && mouse.y == y0) {
       points.push(x0+1, y0+1);
     }
@@ -184,13 +188,10 @@ pwlib.tools.eraser = function (app) {
     }
     _self.draw();
 
-    var op = layerContext.globalCompositeOperation;
-    layerContext.globalCompositeOperation = 'destination-out';
+    layerContext.globalCompositeOperation = globalOp_;
+    layerContext.lineWidth = lineWidth_;
 
-    app.layerUpdate();
-
-    layerContext.globalCompositeOperation = op;
-    context.strokeStyle = strokeStyle_;
+    app.historyAdd();
 
     return true;
   };
@@ -213,10 +214,13 @@ pwlib.tools.eraser = function (app) {
       timer = null;
     }
 
-    context.clearRect(0, 0, image.width, image.height);
-    context.strokeStyle = strokeStyle_;
+    layerContext.globalCompositeOperation = globalOp_;
+    layerContext.lineWidth = lineWidth_;
+
     mouse.buttonDown = false;
     points = [];
+
+    app.historyGoto(history.pos);
 
     return true;
   };

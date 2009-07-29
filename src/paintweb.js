@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-28 21:43:08 +0300 $
+ * $Date: 2009-07-29 20:03:26 +0300 $
  */
 
 /**
@@ -824,6 +824,9 @@ function PaintWeb (win, doc) {
   /**
    * Initialize the Canvas elements. This method creates the elements and 
    * sets-up their dimensions.
+   *
+   * <p>The layer Canvas element will have the background rendered with the 
+   * color from {@link PaintWeb.config.backgroundColor}.
    * 
    * <p>If {@link PaintWeb.config.imageLoad} is defined, then the image element 
    * is inserted into the Canvas image.
@@ -891,6 +894,12 @@ function PaintWeb (win, doc) {
 
     if (imageLoad) {
       layerContext.drawImage(imageLoad, 0, 0);
+    } else {
+      // Set the configured background color.
+      var fillStyle = layerContext.fillStyle;
+      layerContext.fillStyle = cfg.backgroundColor;
+      layerContext.fillRect(0, 0, width, height);
+      layerContext.fillStyle = fillStyle;
     }
 
     /*
@@ -1917,7 +1926,7 @@ function PaintWeb (win, doc) {
       pos = cpos+1;
     }
 
-    if (pos === cpos || pos < 1 || pos > history.states.length) {
+    if (pos < 1 || pos > history.states.length) {
       return false;
     }
 
@@ -1948,6 +1957,8 @@ function PaintWeb (win, doc) {
       tmp2.putImageData(himg, 0, 0);
 
       layerContext.drawImage(tmp, 0, 0);
+
+      tmp2 = tmp = null;
       delete tmp2, tmp;
     }
 
@@ -2446,7 +2457,17 @@ function PaintWeb (win, doc) {
    * Clear the image.
    */
   this.imageClear = function (ev) {
-    _self.layer.context.clearRect(0, 0, _self.image.width, _self.image.height);
+    var layerContext = _self.layer.context,
+        image = _self.image;
+
+    layerContext.clearRect(0, 0, image.width, image.height);
+
+    // Set the configured background color.
+    var fillStyle = layerContext.fillStyle;
+    layerContext.fillStyle = _self.config.backgroundColor;
+    layerContext.fillRect(0, 0, image.width, image.height);
+    layerContext.fillStyle = fillStyle;
+
     _self.historyAdd();
   };
 
@@ -2482,6 +2503,8 @@ function PaintWeb (win, doc) {
    */
   this.imageSave = function (type) {
     var canvas = _self.layer.canvas,
+        cfg = _self.config,
+        img = _self.image,
         imageLoad = _self.config.imageLoad,
         ext = 'png', idata = null, src = null, pos;
 
@@ -2506,9 +2529,26 @@ function PaintWeb (win, doc) {
       type = extMap[ext] || 'image/png';
     }
 
+    // We consider that other formats than PNG do not support transparencies.  
+    // Thus, we create a new Canvas element for which we set the configured 
+    // background color, and we render the image onto it.
+    if (type !== 'image/png') {
+      canvas = doc.createElement('canvas');
+      var context = canvas.getContext('2d');
+
+      canvas.width  = img.width;
+      canvas.height = img.height;
+
+      context.fillStyle = cfg.backgroundColor;
+      context.fillRect(0, 0, img.width, img.height);
+      context.drawImage(_self.layer.canvas, 0, 0);
+
+      context = null;
+    }
+
     try {
       if (type === 'image/jpeg') {
-        idata = canvas.toDataURL(type, _self.config.jpegSaveQuality);
+        idata = canvas.toDataURL(type, cfg.jpegSaveQuality);
       } else {
         idata = canvas.toDataURL(type);
       }
@@ -2517,12 +2557,13 @@ function PaintWeb (win, doc) {
       return false;
     }
 
+    canvas = null;
+
     if (!idata || idata === 'data:,') {
       return false;
     }
 
-    var img = _self.image,
-        ev = new appEvent.imageSave(idata, img.width, img.height),
+    var ev = new appEvent.imageSave(idata, img.width, img.height),
         cancel = _self.events.dispatch(ev);
 
     if (cancel) {

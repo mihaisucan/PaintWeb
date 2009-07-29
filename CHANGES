@@ -1,3 +1,14 @@
+2009-07-29:
+===========
+
+- Implemented better support for the background color configuration option. Now 
+PaintWeb makes it more obvious when an image has true transparency and when not.
+- Fixed the eraser tool to properly erase the image pixels, irrespective of the 
+background color.
+- New icon for the PaintWeb button from the TinyMCE plugin.
+- Implemented support for creating new images from the TinyMCE plugin. New 
+images use data URLs. (still needs bug fixing / testing)
+
 2009-07-28:
 ===========
 

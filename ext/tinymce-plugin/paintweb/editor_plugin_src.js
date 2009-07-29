@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-28 22:14:35 +0300 $
+ * $Date: 2009-07-29 23:37:05 +0300 $
  */
 
 /**
@@ -26,6 +26,9 @@
  */
 
 (function() {
+// The plugin URL. This points to the location of this TinyMCE plugin.
+var pluginUrl = null;
+
 // Reference to the DOM element of the overlay button displayed on top of the 
 // selected image.
 var overlayButton = null;
@@ -283,11 +286,13 @@ function pluginBarResetContent () {
 
 /**
  * Start PaintWeb. This function performs the actual PaintWeb invocation.
+ *
+ * @returns {Boolean} True PaintWeb is about to start, or false otherwise.
  */
 function paintwebEditStart () {
   if (!checkEditableImage(targetImage)) {
     targetImage = null;
-    return;
+    return false;
   }
 
   if (pwDestroyTimer) {
@@ -316,6 +321,55 @@ function paintwebEditStart () {
   } else {
     paintwebLoad();
   }
+
+  return true;
+};
+
+/**
+ * Create a new image and start PaintWeb.
+ *
+ * @param {Number} width The image width.
+ * @param {Number} height The image height.
+ * @param {String} bgrColor The image background color.
+ * @param {String} alt The alternative text / the value for the "alt" attribute.
+ */
+function paintwebNewImage (width, height, bgrColor, alt) {
+  width  = parseInt(width) || 0;
+  height = parseInt(height) || 0;
+  if (!width || !height) {
+    return;
+  }
+
+  var canvas  = document.createElement('canvas'),
+      context = canvas.getContext('2d');
+
+  canvas.width  = width;
+  canvas.height = height;
+
+  //alert(width + ' x ' + height + ' ' + bgrColor + ' ' + alt);
+  if (bgrColor) {
+    context.fillStyle = bgrColor;
+    context.fillRect(0, 0, width, height);
+  }
+
+  targetEditor.execCommand('mceInsertContent', false,
+      '<img id="paintwebNewImage">');
+
+  var elem = targetEditor.dom.get('paintwebNewImage');
+
+  if (alt) {
+    elem.setAttribute('alt', alt);
+  }
+  elem.src = canvas.toDataURL();
+  elem.setAttribute('mce_src', elem.src);
+  elem.removeAttribute('id');
+
+  targetImage = elem;
+
+  canvas = null;
+  context = null;
+
+  paintwebEditStart();
 };
 
 /**
@@ -431,11 +485,27 @@ function paintwebEditCommand () {
     return;
   }
 
+  var n = this.selection.getNode();
+
   targetEditor = this;
   targetContainer = this.getContainer();
-  targetImage = this.selection.getNode();
+  targetImage = n;
 
-  paintwebEditStart();
+  // If PaintWeb won't start, then we create a new image
+  if (!paintwebEditStart() && n.nodeName.toLowerCase() !== 'img') {
+    this.windowManager.open(
+      {
+        file:   pluginUrl + '/newimage.html',
+        width:  480,
+        height: 320,
+        inline: 1
+      },
+      {
+        plugin_url: pluginUrl,
+        newImageFn: paintwebNewImage
+      }
+    );
+  }
 };
 
 /**
@@ -522,15 +592,17 @@ tinymce.create('tinymce.plugins.paintweb', {
    * @param {String} url Absolute URL to where the plugin is located.
    */
   init: function (ed, url) {
+    pluginUrl = url;
+
     // Register the command so that it can be invoked by using 
     // tinyMCE.activeEditor.execCommand('paintwebEdit');
     ed.addCommand('paintwebEdit', paintwebEditCommand, ed);
 
     // Register PaintWeb button
     ed.addButton('paintwebEdit', {
-      title : 'paintweb.toolbarButton',
-      cmd : 'paintwebEdit',
-      image : url + '/img/paintweb.gif'
+      title: 'paintweb.toolbarButton',
+      cmd:   'paintwebEdit',
+      image: pluginUrl + '/img/paintweb2.gif'
     });
 
     // Add a node change handler which enables the PaintWeb button in the UI 
@@ -650,7 +722,13 @@ tinymce.create('tinymce.plugins.paintweb', {
     var disabled = !checkEditableImage(n),
         pNode = null;
 
-    cm.setDisabled('paintwebEdit', disabled);
+    if (n.nodeName.toLowerCase() === 'img' && disabled) {
+      cm.setDisabled('paintwebEdit', true);
+      cm.setActive('paintwebEdit', false);
+    } else {
+      cm.setDisabled('paintwebEdit', false);
+      cm.setActive('paintwebEdit', !disabled);
+    }
 
     if (!overlayButton) {
       return;
@@ -739,7 +817,11 @@ tinymce.create('tinymce.plugins.paintweb', {
    */
   pluginContextMenu: function (plugin, menu, elem) {
     if (checkEditableImage(elem)) {
-      menu.add({title: 'paintweb.contextMenuEdit', cmd: 'paintwebEdit'});
+      menu.add({
+        title: 'paintweb.contextMenuEdit',
+        cmd:   'paintwebEdit',
+        image: pluginUrl + '/img/paintweb2.gif'
+      });
     }
   },
 
