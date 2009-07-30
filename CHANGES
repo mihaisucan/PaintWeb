@@ -1,3 +1,12 @@
+2009-07-30:
+===========
+
+- Completed work on the "Create image" functionality in the TinyMCE plugin.
+- Worked around the security violation caused by rendering of images with data 
+URLs in Webkit/Gecko 1.9.0.
+- A bit of improved browser detection in the PaintWeb lib.
+- Fixed image saving as JPEG in Firefox.
+
 2009-07-29:
 ===========
 

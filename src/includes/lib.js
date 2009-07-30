@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-07-26 21:29:57 +0300 $
+ * $Date: 2009-07-30 19:20:27 +0300 $
  */
 
 /**
@@ -1088,7 +1088,7 @@ if (window.navigator && window.navigator.userAgent) {
 /**
  * @type Boolean
  */
-pwlib.browser.opera = window.opera ? true : /\bopera\b/.test(ua);
+pwlib.browser.opera = window.opera || /\bopera\b/.test(ua);
 
 /**
  * Webkit is the render engine used primarily by Safari. It's also used by 
@@ -1096,7 +1096,8 @@ pwlib.browser.opera = window.opera ? true : /\bopera\b/.test(ua);
  *
  * @type Boolean
  */
-pwlib.browser.webkit = /\b(applewebkit|webkit)\b/.test(ua);
+pwlib.browser.webkit = !pwlib.browser.opera &&
+                       /\b(applewebkit|webkit)\b/.test(ua);
 
 /**
  * Firefox uses the Gecko render engine.
@@ -1147,7 +1148,7 @@ pwlib.browser.os = (ua.match(/\b(windows|linux)\b/) || [])[1];
  *
  * @type Boolean
  */
-pwlib.browser.olpcxo = ua.match(/\bolpc\b/) && ua.match(/\bxo\b/);
+pwlib.browser.olpcxo = /\bolpc\b/.test(ua) && /\bxo\b/.test(ua);
 
 delete ua;
 })();

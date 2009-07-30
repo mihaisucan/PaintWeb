@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-29 23:37:23 +0300 $
+ * $Date: 2009-07-30 21:08:19 +0300 $
  */
 
 /**
@@ -33,6 +33,7 @@ tinyMCEPopup.onInit.add(function() {
       imgWidth     = document.getElementById('imgWidth'),
       imgHeight    = document.getElementById('imgHeight'),
       imgBgrColor  = document.getElementById('imgBgrColor'),
+      imgTitle     = document.getElementById('imgTitle'),
       altText      = document.getElementById('altText'),
       btnCancel    = document.getElementById('cancel');
 
@@ -40,14 +41,19 @@ tinyMCEPopup.onInit.add(function() {
     var fn = tinyMCEPopup.getWindowArg('newImageFn');
 
     if (fn) {
-      fn(imgWidth.value, imgHeight.value, imgBgrColor.value, altText.value);
+      fn(imgWidth.value, imgHeight.value, imgBgrColor.value, altText.value, 
+        imgTitle.value);
     }
 
     tinyMCEPopup.close();
   }, false);
 
-  imgBgrColor.parentNode.innerHTML += ' ' + getColorPickerHTML('imgBgrColor_pick',
+  imgBgrColor.parentNode.lastChild.innerHTML 
+    = ' ' + getColorPickerHTML('imgBgrColor_pick',
     'imgBgrColor');
+
+  imgBgrColor.onchange = function () { updateColor('imgBgrColor_pick', 
+      'imgBgrColor'); };
 
   updateColor('imgBgrColor_pick', 'imgBgrColor');
 

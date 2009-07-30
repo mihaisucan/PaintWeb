@@ -18,7 +18,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-28 20:59:29 +0300 $
+ * $Date: 2009-07-30 22:31:47 +0300 $
  */
 
 // This script performs asynchronous image save in PaintWeb. This is used by the 
@@ -123,7 +123,7 @@ $imgProxies = array(
   $CFG->httpswwwroot . '/file.php' => 'course' // course files
 );
 
-if (!$CFG->paintwebAllowImageUpdates) {
+if ($CFG->paintwebDisallowImageUpdates) {
   $imgProxies = array();
 }
 

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-29 23:37:05 +0300 $
+ * $Date: 2009-07-30 21:47:45 +0300 $
  */
 
 /**
@@ -94,6 +94,33 @@ if (!window.XMLHttpRequest || !window.getComputedStyle ||
   !document.createElement('canvas').getContext) {
   return;
 }
+
+// Image data URLs are considered external resources when they are drawn in 
+// a Canvas element. This happens only in Gecko 1.9.0 or older (Firefox 3.0) and  
+// in Webkit (Chrome/Safari). This is a problem because PaintWeb cannot save the 
+// image once such data URL is loaded.
+var dataURLfilterNeeded = (function () {
+ var ua = navigator.userAgent.toLowerCase(),
+     isOpera = window.opera || /\b(opera|presto)\b/.test(ua),
+     isWebkit = !isOpera && /\b(applewebkit|webkit)\b/.test(ua),
+     isGecko = !isOpera && !isWebkit && /\bgecko\b/.test(ua);
+
+  if (isWebkit) {
+    return true;
+  }
+
+  if (isGecko) {
+    var geckoRev = /\brv\:([^;\)\s]+)[;\)\s]/.exec(ua);
+    if (geckoRev && geckoRev[1]) {
+      geckoRev = geckoRev[1].replace(/[^\d]+$/, '').split('.');
+      if (geckoRev[0] == 1 && geckoRev[1] <= 9 && geckoRev[2] < 1) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+})();
 
 /**
  * Load PaintWeb. This function tells TinyMCE to load the PaintWeb script.
@@ -300,6 +327,28 @@ function paintwebEditStart () {
     pwDestroyTimer = null;
   }
 
+  var pwStart = function () {
+    if (overlayButton && overlayButton.parentNode) {
+      overlayButton.title = targetEditor.getLang('paintweb.overlayLoading', 
+          'Loading PaintWeb...');
+      overlayButton.replaceChild(document.createTextNode(overlayButton.title), 
+          overlayButton.firstChild);
+    }
+
+    if (paintwebInstance) {
+      paintwebInstance.imageLoad(targetImage);
+      paintwebShow();
+    } else {
+      paintwebLoad();
+    }
+  };
+
+  var dataURLfilterLoaded = function () {
+    targetImage.removeEventListener('load', dataURLfilterLoaded, false);
+    imgIsDataURL = false;
+    pwStart();
+  };
+
   var src = targetEditor.dom.getAttrib(targetImage, 'src');
 
   if (src.substr(0, 5) === 'data:') {
@@ -308,19 +357,45 @@ function paintwebEditStart () {
     imgIsDataURL = false;
   }
 
-  if (overlayButton && overlayButton.parentNode && targetEditor) {
-    overlayButton.title = targetEditor.getLang('paintweb.overlayLoading', 
-        'Loading PaintWeb...');
-    overlayButton.replaceChild(document.createTextNode(overlayButton.title), 
-        overlayButton.firstChild);
+  var cfg = imgIsDataURL && dataURLfilterNeeded ?
+              targetEditor.getParam('paintweb_config') : null;
+
+  if (cfg && cfg.tinymce.imageDataURLfilter) {
+    tinymce.util.XHR.send({
+      url: cfg.tinymce.imageDataURLfilter,
+      content_type: 'application/x-www-form-urlencoded',
+      data: 'url=-&dataURL=' + encodeURIComponent(src),
+
+      error: function () {
+        if (window.console && console.log) {
+          console.log('TinyMCE.PaintWeb: failed to preload image data URL!');
+        }
+        pwStart();
+      },
+
+      success: function (result) {
+        if (!result) {
+          pwStart();
+          return;
+        }
+
+        result = tinymce.util.JSON.parse(result);
+        if (!result || !result.successful || !result.urlNew) {
+          pwStart();
+          return;
+        }
+
+        imgNewUrl = targetImage.src;
+        targetImage.addEventListener('load', dataURLfilterLoaded, false);
+        targetEditor.dom.setAttrib(targetImage, 'src', result.urlNew);
+      }
+    });
+
+  } else {
+    pwStart();
   }
 
-  if (paintwebInstance) {
-    paintwebInstance.imageLoad(targetImage);
-    paintwebShow();
-  } else {
-    paintwebLoad();
-  }
+  src = null;
 
   return true;
 };
@@ -330,10 +405,12 @@ function paintwebEditStart () {
  *
  * @param {Number} width The image width.
  * @param {Number} height The image height.
- * @param {String} bgrColor The image background color.
- * @param {String} alt The alternative text / the value for the "alt" attribute.
+ * @param {String} [bgrColor] The image background color.
+ * @param {String} [alt] The alternative text / the value for the "alt" 
+ * attribute.
+ * @param {String} [title]
  */
-function paintwebNewImage (width, height, bgrColor, alt) {
+function paintwebNewImage (width, height, bgrColor, alt, title) {
   width  = parseInt(width) || 0;
   height = parseInt(height) || 0;
   if (!width || !height) {
@@ -346,7 +423,6 @@ function paintwebNewImage (width, height, bgrColor, alt) {
   canvas.width  = width;
   canvas.height = height;
 
-  //alert(width + ' x ' + height + ' ' + bgrColor + ' ' + alt);
   if (bgrColor) {
     context.fillStyle = bgrColor;
     context.fillRect(0, 0, width, height);
@@ -356,18 +432,24 @@ function paintwebNewImage (width, height, bgrColor, alt) {
       '<img id="paintwebNewImage">');
 
   var elem = targetEditor.dom.get('paintwebNewImage');
+  if (!elem || elem.id !== 'paintwebNewImage' || elem.nodeName.toLowerCase() !== 
+      'img') {
+    return;
+  }
 
   if (alt) {
     elem.setAttribute('alt', alt);
+  }
+  if (title) {
+    elem.setAttribute('title', title);
   }
   elem.src = canvas.toDataURL();
   elem.setAttribute('mce_src', elem.src);
   elem.removeAttribute('id');
 
   targetImage = elem;
-
-  canvas = null;
-  context = null;
+  canvas      = null;
+  context     = null;
 
   paintwebEditStart();
 };
@@ -417,12 +499,14 @@ function paintwebHide () {
 
   // Update the target image src attribute if needed.
   if (imgNewUrl) {
-    // The tinymce.utl.URI class mangles the data URL.
-    //targetEditor.dom.setAttrib(targetImage, 'src', imgNewUrl);
-    targetImage.src = imgNewUrl;
-
-    if (targetImage.hasAttribute('mce_src')) {
-      targetImage.setAttribute('mce_src', imgNewUrl);
+    // The tinymce.utl.URI class mangles data URLs.
+    if (imgNewUrl.substr(0, 5) !== 'data:') {
+      targetEditor.dom.setAttrib(targetImage, 'src', imgNewUrl);
+    } else {
+      targetImage.src = imgNewUrl;
+      if (targetImage.hasAttribute('mce_src')) {
+        targetImage.setAttribute('mce_src', imgNewUrl);
+      }
     }
 
     imgNewUrl = null;
@@ -487,17 +571,17 @@ function paintwebEditCommand () {
 
   var n = this.selection.getNode();
 
-  targetEditor = this;
+  targetEditor    = this;
   targetContainer = this.getContainer();
-  targetImage = n;
+  targetImage     = n;
 
-  // If PaintWeb won't start, then we create a new image
+  // If PaintWeb won't start, then we create a new image.
   if (!paintwebEditStart() && n.nodeName.toLowerCase() !== 'img') {
     this.windowManager.open(
       {
         file:   pluginUrl + '/newimage.html',
-        width:  480,
-        height: 320,
+        width:  350 + parseInt(this.getLang('paintweb.dlg_delta_width',  0)),
+        height: 200 + parseInt(this.getLang('paintweb.dlg_delta_height', 0)),
         inline: 1
       },
       {

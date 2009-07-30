@@ -1,7 +1,7 @@
 Copyright (C) 2009 Mihai Şucan
 
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-07-22 14:20:19 +0300 $
+$Date: 2009-07-30 22:34:08 +0300 $
 
 This folder holds scripts used for integration PaintWeb into Moodle.
 
@@ -18,101 +18,34 @@ PaintWeb JSON language files.
 imagesave.php - implements the image save operation of PaintWeb, using the 
 Moodle API.
 
+imageview.php - implements an image file serving mechanism. Images saved are 
+stored in the Moodle data dir which is not accessible from the browser, thus 
+this script is needed to allow users to view such images from the data dir.
+
 lang.json.php - the JSON language file loaded by PaintWeb in Moodle. This is 
 a PHP script which generates the JSON dynamically based on the Moodle PHP 
 language files.
 
 moodle19-paintweb.patch - the patch you need to apply to Moodle 1.9 to get 
-PaintWeb working.
+PaintWeb working. This is a patch you can apply once you have Moodle 1.9 and 
+TinyMCE 3.
 
-
-=== Usage 1 ====
-
-To install PaintWeb into Moodle 1.9 you need TinyMCE 3. For that, you need to 
-download the patch from:
-
-  http://www.robodesign.ro/moodle/patches/moodle19-tinymce3.tar.bz2
-
-The package includes installation instructions.
-
-Once you have TinyMCE 3 working, you need to apply the moodle19-paintweb.patch 
-from this folder, then you copy the entire PaintWeb folder into your Moodle lib 
-folder. You will end-up having:
-
-  lib/paintweb/build
-  lib/paintweb/src
-  lib/paintweb/...
-
-Go to lib/paintweb/ext/moodle and execute:
-
-$ php gen_moodlelang.php
-
-This will generate the Moodle language files from the PaintWeb JSON language 
-files.
-
-In your Moodle config.php you need to add:
-
-  $CFG->defaulthtmleditor = 'tinymce';
-  $CFG->tinymcePaintWeb = true;
-
-This tells Moodle you want to use the TinyMCE 3 editor and that PaintWeb should 
-be initialized as well.
-
-
-=== Usage 2 ===
-
-If you do not want to bother too much, then you can get:
-
-  http://www.robodesign.ro/moodle/patches/moodle19-tinymce3.tar.bz2 and
-  http://www.robodesign.ro/moodle/patches/moodle19-paintweb-full.tar.bz2
-
-You first add TinyMCE 3 to your Moodle, then you add PaintWeb. The patch 
-includes all the PaintWeb files as well.
-
-You only need to add in your configuration file:
-
-  $CFG->defaulthtmleditor = 'tinymce';
-  $CFG->tinymcePaintWeb = true;
-
-
-=== Git usage ===
+=== Usage ===
 
 If you have no experience with Git, here's what you need to do:
 
-# clone the Moodle git repo
-  git clone git://git.moodle.org/moodle.git ~/src/moodle
+# Get the Moodle 1.9 code with PaintWeb integrated
+  git clone git://repo.or.cz/moodle/mihaisucan.git ~/src/moodle
   cd ~/src/moodle
+  git checkout -b mdl19-paintweb origin/mdl19-paintweb
 
-# checkout the Moodle 1.9 stable branch
-  git checkout -b MOODLE_19_STABLE origin/MOODLE_19_STABLE
+You need to add the following in your Moodle configuration file (config.php):
 
-# create a branch for the TinyMCE 3 patch
-  git branch mdl19-tinymce
+  $CFG->defaulthtmleditor = 'tinymce';
+  $CFG->tinymcePaintWeb = true;
+# The PaintWeb folder used for storing images inside the Moodle data folder.
+  $CFG->paintwebImagesFolder = 'paintweb-images';
 
-# switch to the new branch
-  git checkout mdl19-tinymce
-
-# apply the downloaded patch
-  git apply --binary moodle19-tinymce3.patch
-
-# create a branch for the PaintWeb patch
-  git branch mdl19-paintweb
-  git checkout mdl19-paintweb
-  git apply --binary moodle19-paintweb-full.patch
-
-At any time, when MOODLE_19_STABLE changes, you can do:
-
-# Update the MOODLE_19_STABLE branch
-  git checkout MOODLE_19_STABLE
-  git pull
-
-# Rebase/update the mdl19-tinymce branch
-  git checkout mdl19-tinymce
-  git rebase MOODLE_19_STABLE
-
-# Rebase/update the mdl19-paintweb branch
-  git checkout mdl19-paintweb
-  git rebase mdl19-tinymce
 
 Good luck!
 

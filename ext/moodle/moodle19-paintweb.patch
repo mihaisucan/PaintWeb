@@ -1,8 +1,8 @@
 diff --git a/lang/en_utf8/tinymce.php b/lang/en_utf8/tinymce.php
-index 6c71704..ae1117d 100644
+index 6c71704..3aaed65 100644
 --- a/lang/en_utf8/tinymce.php
 +++ b/lang/en_utf8/tinymce.php
-@@ -729,6 +729,22 @@ $string['plugins/moodleimage_dlg:title']='Insert Image';
+@@ -729,6 +729,31 @@ $string['plugins/moodleimage_dlg:title']='Insert Image';
  $string['plugins/moodleimage_dlg:missing_alt']='Are you sure you want to continue without including an Alternate Text? Without it the image may not be accessible to some users with disabilities, or to those using a text browser, or browsing the Web with images turned off.';
  $string['plugins/moodlelink_dlg:title']='Choose file to link';
  $string['plugins/moodlenolink:desc']='Prevent automatic linking';
@@ -10,7 +10,7 @@ index 6c71704..ae1117d 100644
 +$string['plugins/paintweb:overlayButton']='Edit';
 +$string['plugins/paintweb:contextMenuEdit']='Edit the image in PaintWeb';
 +$string['plugins/paintweb:loading']='PaintWeb is loading...';
-+$string['plugins/paintweb:statusImageEditing']='You are editing {file}.';
++$string['plugins/paintweb:statusImageEditing']='You are editing an image from TinyMCE.';
 +$string['plugins/paintweb:imageSaveButton']='Save';
 +$string['plugins/paintweb:cancelButton']='Cancel';
 +$string['plugins/paintweb:statusEditingDataURI']='You are editing a local data URI.';
@@ -19,17 +19,26 @@ index 6c71704..ae1117d 100644
 +$string['plugins/paintweb:overlayLoading']='PaintWeb is loading...';
 +$string['plugins/paintweb:statusEditingDataURL']='You are editing a local data URL.';
 +$string['plugins/paintweb:statusSavingDataURL']='Saving image data URL...';
-+$string['plugins/paintweb:statusSavingImage']='Saving image {file}...';
++$string['plugins/paintweb:statusSavingImage']='Saving image changes...';
 +$string['plugins/paintweb:statusImageSaved']='Image save completed successfully!';
 +$string['plugins/paintweb:statusImageSaveFailed']='Image save failed!';
++$string['plugins/paintweb:dlg_delta_width']='0,';
++$string['plugins/paintweb:dlg_delta_height']='0';
++$string['plugins/paintweb_dlg:dlg_title']='Create a new image';
++$string['plugins/paintweb_dlg:widthLabel']='Width: ';
++$string['plugins/paintweb_dlg:heightLabel']='Height: ';
++$string['plugins/paintweb_dlg:bgrColorLabel']='Background color: ';
++$string['plugins/paintweb_dlg:imgTitleLabel']='Title: ';
++$string['plugins/paintweb_dlg:altTextLabel']='Alternate text: ';
++$string['plugins/paintweb_dlg:altTextTitle']='This text is displayed when the image cannot render.';
  $string['plugins/example:desc']='This is just a template button';
  $string['plugins/example_dlg:title']='This is just a example title';
  $string['plugins/moodlenolink:desc']='Prevent automatic linking';
 diff --git a/lib/editor/tinymce.js.php b/lib/editor/tinymce.js.php
-index 6bca7a2..04b6e41 100644
+index 6bca7a2..ce73fff 100644
 --- a/lib/editor/tinymce.js.php
 +++ b/lib/editor/tinymce.js.php
-@@ -21,6 +21,28 @@ if (empty($CFG->tinymcehidebuttons)) {
+@@ -21,6 +21,29 @@ if (empty($CFG->tinymcehidebuttons)) {
      $CFG->tinymcehidebuttons = '';
  }
  
@@ -42,6 +51,7 @@ index 6bca7a2..04b6e41 100644
 +    tinymce: {
 +      paintwebFolder: "' . $CFG->wwwroot . '/lib/paintweb/build/",
 +      imageSaveDataURL: false,
++      imageDataURLfilter: "' . $CFG->wwwroot . '/lib/paintweb/ext/moodle/imagesave.php",
 +      overlayButton: true,
 +      contextMenuItem: true,
 +      dblclickHandler: true,
@@ -58,7 +68,7 @@ index 6bca7a2..04b6e41 100644
  $editorhidebuttons = str_replace(' ', ',', $CFG->tinymcehidebuttons);
  
  $editorhidebuttons1 = $editorhidebuttons . ',visualaid,styleselect';
-@@ -180,7 +202,7 @@ echo <<<EOF
+@@ -180,7 +203,7 @@ echo <<<EOF
          entity_encoding: "raw",
          language: "$editorlanguage",
          directionality: "$directionality",
@@ -67,7 +77,7 @@ index 6bca7a2..04b6e41 100644
          plugin_insertdate_dateFormat : "$strdate",
          plugin_insertdate_timeFormat : "$strtime",
          theme_advanced_font_sizes: "1,2,3,4,5,6,7",
-@@ -190,7 +212,7 @@ echo <<<EOF
+@@ -190,7 +213,7 @@ echo <<<EOF
          theme_advanced_buttons1_add: "|,undo,redo,|,search,spellchecker",
          theme_advanced_buttons2: "bold,italic,underline,strikethrough,sub,sup,|,justifyleft,justifycenter,justifyright,justifyfull",
          theme_advanced_buttons2_add: "|,selectall,cleanup,removeformat,pastetext,pasteword,|,forecolor,backcolor,|,ltr,rtl",
@@ -76,7 +86,7 @@ index 6bca7a2..04b6e41 100644
          theme_advanced_buttons3_add: "|,table,insertlayer,styleprops,visualchars,|,code,preview",
          theme_advanced_fonts: "Trebuchet=Trebuchet MS,Verdana,Arial,Helvetica,sans-serif;Arial=arial,helvetica,sans-serif;Courier New=courier new,courier,monospace;Georgia=georgia,times new roman,times,serif;Tahoma=tahoma,arial,helvetica,sans-serif;Times New Roman=times new roman,times,serif;Verdana=verdana,arial,helvetica,sans-serif;Impact=impact;Wingdings=wingdings", 
          theme_advanced_resize_horizontal: true,
-@@ -198,6 +220,7 @@ echo <<<EOF
+@@ -198,6 +221,7 @@ echo <<<EOF
          theme_advanced_toolbar_location : "top",
          theme_advanced_statusbar_location : "bottom",
          file_browser_callback : "mce_moodlefilemanager",

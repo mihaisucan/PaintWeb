@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-29 20:03:26 +0300 $
+ * $Date: 2009-07-30 20:50:13 +0300 $
  */
 
 /**
@@ -1156,10 +1156,11 @@ function PaintWeb (win, doc) {
       // The scaling factor is the same as in Gecko.
       scaleNew = MathFloor(res.dpiLocal / res.dpiOptimal);
 
-    } else if (pwlib.browser.olpcxo) {
+    } else if (pwlib.browser.olpcxo && pwlib.browser.gecko) {
       // Support for the default Gecko included on the OLPC XO-1 system.
       //
       // See:
+      // http://www.robodesign.ro/mihai/blog/paintweb-performance
       // http://mxr.mozilla.org/mozilla-central/source/gfx/src/thebes/nsThebesDeviceContext.cpp#725
       // dotsArePixels = false on the XO due to a hard-coded patch.
       // Thanks go to roc from Mozilla for his feedback on making this work.
@@ -2547,7 +2548,9 @@ function PaintWeb (win, doc) {
     }
 
     try {
-      if (type === 'image/jpeg') {
+      // WTF: canvas.toDataURL('image/jpeg', quality) fails in Gecko. It works 
+      // when you do not provide the quality argument.
+      if (type === 'image/jpeg' && !pwlib.browser.gecko) {
         idata = canvas.toDataURL(type, cfg.jpegSaveQuality);
       } else {
         idata = canvas.toDataURL(type);

@@ -1,6 +1,6 @@
 $Author: Mihai Şucan $
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-07-22 20:53:55 +0300 $
+$Date: 2009-07-30 14:35:21 +0300 $
 
 Until the end of GSOC:
 
@@ -20,7 +20,10 @@ As quick as possible, after GSOC 2009:
   Chrome 2 on Windows, compared to the other browsers. To see this, test the RGB 
   color space visualisation in the color mixer. I cannot reproduce the issue 
   with Google Chrome 3 on Linux.
-  - images cannot be selected in editable content, on Webkit.
+  - images cannot be selected in editable content, on Webkit - in some special 
+  cases.
+  - images with data URL are considered external, and thus when drawn on Canvas 
+  they cause security violations, in Webkit and Gecko 1.9.0 (fixed in 1.9.1).
 
 - implement the GUI improvements suggested by Olli Savolainen.
 - new tools: bucket, pencil v2 (avec pression).
@@ -38,7 +41,7 @@ of tabs.
 resize handle.
 - allow single click on the image size, in the status bar to bring-up a panel 
 which shows the image dimensions, where the user can crop and resize the image.
-- fully implement the notion of background color.
+- implement a GUI option to allow live changing of background color.
 - flip and rotate image.
 - some issues when middle/right clicking instead of simple left click on the 
 canvas, with some drawing tools.
