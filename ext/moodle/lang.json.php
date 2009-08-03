@@ -18,7 +18,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-26 22:04:16 +0300 $
+ * $Date: 2009-08-03 21:17:30 +0300 $
  */
 
 // This script generates the PaintWeb JSON language file dynamically using the 
@@ -26,37 +26,37 @@
 
 require_once('../../../../config.php');
 
-$moodleLangDir = '../../../../lang';
-$moodleLangFile = 'paintweb.php';
+$moodlelangdir = '../../../../lang';
+$moodlelangfile = 'paintweb.php';
 
-if (!is_dir($moodleLangDir)) {
-  echo "The Moodle folder could not be found: $moodleLangDir\n";
-  return 1;
+if (!is_dir($moodlelangdir)) {
+    echo "The Moodle folder could not be found: $moodlelangdir\n";
+    return 1;
 }
 
-require_once($moodleLangDir . '/en_utf8/' . $moodleLangFile);
+require_once($moodlelangdir . '/en_utf8/' . $moodlelangfile);
 
 $keys = array_keys($string);
 
-$outputArray = array();
+$outputarray = array();
 
 foreach ($keys as $key) {
-  $keyArr = explode(':', $key);
-  $langProp = array_pop($keyArr);
-  $langGroup = &$outputArray;
+    $keyarr = explode(':', $key);
+    $langprop = array_pop($keyarr);
+    $langgroup = &$outputarray;
 
-  foreach ($keyArr as $prop) {
-    if (!isset($langGroup[$prop])) {
-      $langGroup[$prop] = array();
+    foreach ($keyarr as $prop) {
+        if (!isset($langgroup[$prop])) {
+            $langgroup[$prop] = array();
+        }
+
+        $langgroup = &$langgroup[$prop];
     }
 
-    $langGroup = &$langGroup[$prop];
-  }
-
-  $langGroup[$langProp] = get_string($key, 'paintweb');
+    $langgroup[$langprop] = get_string($key, 'paintweb');
 }
 
-$output = json_encode($outputArray);
+$output = json_encode($outputarray);
 
 $lifetime = '86400';
 @header('Content-Type: text/plain; charset=utf-8');
@@ -68,5 +68,5 @@ $lifetime = '86400';
 
 echo $output;
 
-// vim:set spell spl=en fo=anl1qrowcb tw=80 ts=2 sw=2 sts=2 sta et noai nocin fenc=utf-8 ff=unix: 
-?>
+// vim:set spell spl=en fo=tanqrowcb tw=80 ts=4 sw=4 sts=4 sta et noai nocin fenc=utf-8 ff=unix: 
+

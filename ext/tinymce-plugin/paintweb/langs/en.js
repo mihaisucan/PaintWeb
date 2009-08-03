@@ -1,5 +1,5 @@
 tinyMCE.addI18n('en.paintweb',{
-	toolbarButton: 'Edit the selected image in PaintWeb',
+	toolbarButton: 'Edit the selected image in PaintWeb. If no image is selected, then you can create a new drawing.',
   overlayButton: 'Edit',
 	contextMenuEdit: 'Edit the image in PaintWeb',
   overlayLoading: 'PaintWeb is loading...',

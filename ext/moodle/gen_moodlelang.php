@@ -18,7 +18,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-24 19:55:28 +0300 $
+ * $Date: 2009-08-03 19:46:27 +0300 $
  */
 
 // This script allows you to convert PaintWeb JSON language files into Moodle 
@@ -36,86 +36,95 @@
 // Warning: running this script will overwrite "paintweb.php" in your Moodle 
 // lang/*/ folders.
 
-$paintwebLangDir = '../../build/lang';
-$moodleLangDir = '../../../../lang';
-$moodleLangFile = 'paintweb.php';
+$paintweblangdir = '../../build/lang';
+$moodlelangdir = '../../../../lang';
+$moodlelangfile = 'paintweb.php';
 
-if (!is_dir($paintwebLangDir)) {
-  echo "The PaintWeb folder could not be found: $paintwebLangDir\n";
-  return 1;
+if (!is_dir($paintweblangdir)) {
+    echo "The PaintWeb folder could not be found: $paintweblangdir\n";
+    return 1;
 }
 
-if (!is_dir($moodleLangDir)) {
-  echo "The Moodle folder could not be found: $moodleLangDir\n";
-  return 1;
+if (!is_dir($moodlelangdir)) {
+    echo "The Moodle folder could not be found: $moodlelangdir\n";
+    return 1;
 }
 
 if (isset($_SERVER['argv'][1])) {
-  $file = $_SERVER['argv'][1] . '.json';
+    $file = $_SERVER['argv'][1] . '.json';
 
-  if (!file_exists($paintwebLangDir . '/' . $file)) {
-    echo "The PaintWeb language file was not found: $paintwebLangDir/$file\n";
-    return 1;
-  }
-
-  convertFile($file);
-
-  return 0;
-}
-
-$dir = opendir($paintwebLangDir);
-while ($file = readdir($dir)) {
-  if (!preg_match('/\.json$/', $file)) {
-    continue;
-  }
-
-  convertFile($file);
-}
-
-function convertFile ($file) {
-  global $moodleLangDir, $moodleLangFile, $paintwebLangDir;
-
-  $lang = str_replace('.json', '', $file);
-
-  $outputFolder = $moodleLangDir . '/' . ($lang === 'en' ? 'en_utf8' : $lang);
-
-  if (!is_dir($outputFolder)) {
-    echo "Skipping $file because $outputFolder was not found.\n";
-    continue;
-  }
-
-  $langParsed = file_get_contents($paintwebLangDir . '/' . $file);
-  $langParsed = preg_replace(array('/\s*\/\*.+?\*\//ms', '/\s*\\/\\/.+/'), '', $langParsed);
-
-  $langParsed = json_decode($langParsed, true);
-  if (!$langParsed) {
-    echo "Parsing $file failed. \n";
-    continue;
-  }
-
-  $output = "<?php\n". json2php($langParsed, '');
-
-  if (file_put_contents($outputFolder . '/' . $moodleLangFile, $output)) {
-    echo "Generated $outputFolder/$moodleLangFile\n";
-  } else {
-    echo "Failed to write $outputFolder/$moodleLangFile\n";
-  }
-}
-
-function json2php ($obj, $prefix) {
-  $result = '';
-
-  foreach ($obj as $key => $val) {
-    if (is_array($val)) {
-      $result .= json2php($val, $prefix . $key . ':');
-    } else {
-      $val = str_replace("'", "\\'", $val);
-      $result .= "\$string['$prefix$key'] = '" . $val . "';\n";
+    if (!file_exists($paintweblangdir . '/' . $file)) {
+        echo "The PaintWeb language file was not found: $paintweblangdir/$file\n";
+        return 1;
     }
-  }
 
-  return $result;
+    paintweb_convert_json_file($file);
+
+    return 0;
 }
 
-// vim:set spell spl=en fo=anl1qrowcb tw=80 ts=2 sw=2 sts=2 sta et noai nocin fenc=utf-8 ff=unix: 
-?>
+$files = glob($paintweblangdir . '/*.json');
+foreach($files as $file) {
+    paintweb_convert_json_file($file);
+}
+
+/**
+ * Convert a PaintWeb JSON language file to a Moodle PHP language file.
+ *
+ * @param string $file The file you want to convert.
+ */
+function paintweb_convert_json_file($file) {
+    global $moodlelangdir, $moodlelangfile, $paintweblangdir;
+
+    $lang = str_replace('.json', '', $file);
+
+    $outputfolder = $moodlelangdir . '/' . ($lang === 'en' ? 'en_utf8' : $lang);
+
+    if (!is_dir($outputfolder)) {
+        echo "Skipping $file because $outputfolder was not found.\n";
+        continue;
+    }
+
+    $langparsed = file_get_contents($paintweblangdir . '/' . $file);
+    $langparsed = preg_replace(array('/\s*\/\*.+?\*\//ms', '/\s*\\/\\/.+/'), '', $langparsed);
+
+    $langparsed = json_decode($langparsed, true);
+    if (!$langparsed) {
+        echo "Parsing $file failed. \n";
+        continue;
+    }
+
+    $output = "<?php\n". paintweb_json2php($langparsed);
+
+    if (file_put_contents($outputfolder . '/' . $moodlelangfile, $output)) {
+        echo "Generated $outputfolder/$moodlelangfile\n";
+    } else {
+        echo "Failed to write $outputfolder/$moodlelangfile\n";
+    }
+}
+
+/**
+ * Convert a PaintWeb JSON object parsed from a language file, to a Moodle PHP 
+ * language file.
+ *
+ * @param array $obj The array object returned by json_decode().
+ * @param string $prefix The accumulated language group.
+ * @return string The Moodle PHP language file.
+ */
+function paintweb_json2php($obj, $prefix='') {
+    $result = '';
+
+    foreach ($obj as $key => $val) {
+        if (is_array($val)) {
+            $result .= paintweb_json2php($val, $prefix . $key . ':');
+        } else {
+            $val = str_replace("'", "\\'", $val);
+            $result .= "\$string['$prefix$key'] = '" . $val . "';\n";
+        }
+    }
+
+    return $result;
+}
+
+// vim:set spell spl=en fo=tanqrowcb tw=80 ts=4 sw=4 sts=4 sta et noai nocin fenc=utf-8 ff=unix: 
+

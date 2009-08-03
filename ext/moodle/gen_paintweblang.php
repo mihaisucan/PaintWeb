@@ -18,7 +18,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-21 20:37:09 +0300 $
+ * $Date: 2009-08-03 19:35:04 +0300 $
  */
 
 // This script allows you to convert a Moodle PHP language file into a PaintWeb 
@@ -32,70 +32,71 @@
 // Warning: running this script will overwrite the JSON language file from the 
 // PaintWeb language folder.
 
-$paintwebLangDir = '../../build/lang';
-$moodleLangDir = '../../../../lang';
-$moodleLangFile = 'paintweb.php';
+$paintweblangdir = '../../build/lang';
+$moodlelangdir = '../../../../lang';
+$moodlelangfile = 'paintweb.php';
 
-if (!is_dir($paintwebLangDir)) {
-  echo "The PaintWeb folder could not be found: $paintwebLangDir\n";
-  return 1;
+if (!is_dir($paintweblangdir)) {
+    echo "The PaintWeb folder could not be found: $paintweblangdir\n";
+    return 1;
 }
 
-if (!is_dir($moodleLangDir)) {
-  echo "The Moodle folder could not be found: $moodleLangDir\n";
-  return 1;
+if (!is_dir($moodlelangdir)) {
+    echo "The Moodle folder could not be found: $moodlelangdir\n";
+    return 1;
 }
 
 if (!isset($_SERVER['argv'][1])) {
-  echo "This script requires one argument, the language code for which you want this script to perform the conversion.\n";
-  return 1;
+    echo 'This script requires one argument, the language code for which you ' .
+        "want this script to perform the conversion.\n";
+    return 1;
 }
 
 $lang = $_SERVER['argv'][1];
 
-$inputFolder = $moodleLangDir . '/' . ($lang === 'en' ? 'en_utf8' : $lang);
+$inputfolder = $moodlelangdir . '/' . ($lang === 'en' ? 'en_utf8' : $lang);
 
-if (!is_dir($inputFolder)) {
-  echo "The following folder was not found: $inputFolder\n";
-  return 1;
+if (!is_dir($inputfolder)) {
+    echo "The following folder was not found: $inputfolder\n";
+    return 1;
 }
 
-$inputFile = $inputFolder . '/' . $moodleLangFile;
+$inputfile = $inputfolder . '/' . $moodlelangfile;
 
-if (!file_exists($inputFile)) {
-  echo "The following file was not found: $inputFile\n";
-  return 1;
+if (!file_exists($inputfile)) {
+    echo "The following file was not found: $inputfile\n";
+    return 1;
 }
 
-include($inputFile);
+require_once($inputfile);
 
-$outputArray = array();
+$outputarray = array();
 
 foreach ($string as $key => $val) {
-  $keyArr = explode(':', $key);
-  $langProp = array_pop($keyArr);
-  $langGroup = &$outputArray;
+    $keyarr = explode(':', $key);
+    $langprop = array_pop($keyarr);
+    $langgroup = &$outputarray;
 
-  foreach ($keyArr as $prop) {
-    if (!isset($langGroup[$prop])) {
-      $langGroup[$prop] = array();
+    foreach ($keyarr as $prop) {
+        if (!isset($langgroup[$prop])) {
+            $langgroup[$prop] = array();
+        }
+
+        $langgroup = &$langgroup[$prop];
     }
 
-    $langGroup = &$langGroup[$prop];
-  }
-
-  $langGroup[$langProp] = $val;
+    $langgroup[$langprop] = $val;
 }
 
-$output = json_encode($outputArray);
-$outputFile = $paintwebLangDir . '/' . $lang . '.json';
+$output = json_encode($outputarray);
+$outputfile = $paintweblangdir . '/' . $lang . '.json';
 
-if (file_put_contents($outputFile, $output)) {
-  echo "Updated file $outputFile\n";
+if (file_put_contents($outputfile, $output)) {
+    echo "Updated file $outputfile\n";
 } else {
-  echo "Failed to update $outputFile\n";
-  return 1;
+    echo "Failed to update $outputfile\n";
+    return 1;
 }
 
-// vim:set spell spl=en fo=anl1qrowcb tw=80 ts=2 sw=2 sts=2 sta et noai nocin fenc=utf-8 ff=unix: 
-?>
+// vim:set spell spl=en fo=tanqrowcb tw=80 ts=4 sw=4 sts=4 sta et noai nocin fenc=utf-8 ff=unix: 
+

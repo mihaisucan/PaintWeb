@@ -18,51 +18,143 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-30 22:31:47 +0300 $
+ * $Date: 2009-08-03 22:03:08 +0300 $
  */
 
 // This script performs asynchronous image save in PaintWeb. This is used by the 
-// Moodle extension of PaintWeb, to save image edits.
+// Moodle extension of PaintWeb, to save image edits. You should not include 
+// this script yourself.
 
 require_once('../../../../config.php');
 
-function paintwebSaveDone ($successful, $errorMessage = null) {
-  global $imgUrl, $imgUrlNew;
+/**
+ * Send the JSON object result to PaintWeb.
+ *
+ * @param string $url The image URL we are saving/updating.
+ * @param string $urlnew The new image URL generated for the saved image.
+ * @param boolean $successful Tells if the save operation was successful or not.
+ * @param string $errormessage Holds an error message if the save operation 
+ * failed.
+ */
+function paintweb_send_result($url, $urlnew, $successful, $errormessage=null) {
+    $output = array(
+        'successful'   => $successful,
+        'url'          => $url,
+        'urlNew'       => $urlnew,
+        'errorMessage' => $errormessage
+    );
 
-  $output = array(
-    'successful' => $successful,
-    'url' => $imgUrl,
-    'urlNew' => $imgUrlNew,
-    'errorMessage' => $errorMessage
-  );
-
-  echo json_encode($output);
-  exit;
+    echo json_encode($output);
+    exit;
 }
 
-function prepareImgUrl () {
-  global $CFG, $imgUrl, $imgUrlNew, $imgDest, $imgProxies, $myProxy, $imgDataURL, $imgAllowedTypes, $imgInfo;
+// The list of allowed image MIME types associated to file extensions.
+$imgallowedtypes = array(
+    'image/png'  => 'png',
+    'image/jpeg' => 'jpg'
+);
 
-  // check if the image URL points to a proxy.
-  foreach ($imgProxies as $proxy => $type) {
-    if (strpos($imgUrl, $proxy) !== 0) {
-      continue;
+// The list of file serving proxies recognized from Moodle. For example, course 
+// images are served by /file.php. So, when you add an image in TinyMCE, the 
+// path will be like /file.php/course_id/dir/file.ext.
+$imgproxies = array(
+    $CFG->wwwroot . '/file.php'      => 'course', // course files
+    $CFG->httpswwwroot . '/file.php' => 'course'  // course files
+);
+
+// Check if the configuration disallows in-place image updates.
+if ($CFG->paintwebDisallowImageUpdates) {
+    $imgproxies = array();
+}
+
+// The PaintWeb image viewer file serve script.
+$pwproxy = dirname(__FILE__) . '/imageview.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    die('illegal request');
+}
+
+if (!isloggedin()) {
+    die('user not logged-in');
+}
+
+$imgurl = optional_param('url', '', PARAM_URL);
+$imgurlnew = null;
+$imgdataurl = required_param('dataURL', PARAM_RAW);
+
+if (empty($imgurl)) {
+    $imgurl = '-';
+}
+
+if (empty($imgdataurl)) {
+    paintweb_send_result($imgurl, $imgurlnew, false,
+        get_string('moodleServer:saveEmptyDataUrl', 'paintweb'));
+}
+
+if (strpos($pwproxy, $CFG->dirroot) === 0) {
+    $pwproxy = trim(substr($pwproxy, strlen($CFG->dirroot)), '/');
+} else {
+    paintweb_send_result($imgurl, $imgurlnew, false,
+        get_string('moodleServer:proxyNotFound', 'paintweb'));
+}
+
+// A data URL starts like this:
+// data:[<MIME-type>][;charset="<encoding>"][;base64],<data>
+
+// Here we find the comma delimiter.
+$comma = strpos($imgdataurl, ',');
+if (!$comma) {
+    paintweb_send_result($imgurl, $imgurlnew, false,
+        get_string('moodleServer:malformedDataUrl', 'paintweb'));
+}
+
+$imginfo = substr($imgdataurl, 0, $comma);
+if (empty($imginfo) || !isset($imgdataurl{($comma+2)})) {
+    paintweb_send_result($imgurl, $imgurlnew, false,
+        get_string('moodleServer:malformedDataUrl', 'paintweb'));
+}
+
+// Split by ':' to find the 'data' prefix and the rest of the info.
+$imginfo = explode(':', $imginfo);
+
+// The array must have exactly two elements and the second element must not be 
+// empty.
+if (count($imginfo) !== 2 || $imginfo[0] !== 'data' || empty($imginfo[1])) {
+    paintweb_send_result($imgurl, $imgurlnew, false,
+        get_string('moodleServer:malformedDataUrl', 'paintweb'));
+}
+
+// The MIME type must be given and it must be base64-encoded.
+$imginfo = explode(';', $imginfo[1]);
+
+if (count($imginfo) < 2 || !array_key_exists($imginfo[0], $imgallowedtypes) ||
+    ($imginfo[1] !== 'base64' && $imginfo[2] !== 'base64')) {
+    paintweb_send_result($imgurl, $imgurlnew, false,
+        get_string('moodleServer:malformedDataUrl', 'paintweb'));
+}
+
+$imgdest = null;
+
+// Check if the image URL points to a proxy.
+foreach ($imgproxies as $proxy => $type) {
+    if (strpos($imgurl, $proxy) !== 0) {
+        continue;
     }
 
-    $relpath = substr($imgUrl, strlen($proxy));
+    $relpath = substr($imgurl, strlen($proxy));
     if ($relpath{0} === '?') {
-      $relpath = substr($relpath, 1);
-      $pathvars = array();
-      parse_str($relpath, $pathvars);
-      if (isset($pathvars['file'])) {
-        $relpath = $pathvars['file'];
-      } else {
-        $relpath = false;
-      }
-      unset($pathvars);
+        $relpath = substr($relpath, 1);
+        $pathvars = array();
+        parse_str($relpath, $pathvars);
+        if (isset($pathvars['file'])) {
+            $relpath = $pathvars['file'];
+        } else {
+            $relpath = false;
+        }
+        unset($pathvars);
 
     } else if (strpos($relpath, '?')) {
-      $relpath = substr($relpath, 0, strpos($relpath, '?'));
+        $relpath = substr($relpath, 0, strpos($relpath, '?'));
     }
 
     if (!$relpath) {
@@ -70,119 +162,59 @@ function prepareImgUrl () {
     }
 
     $relpath = trim($relpath, '/');
-    $tmpDest = $CFG->dataroot . '/' . $relpath;
+    $tmpdest = $CFG->dataroot . '/' . $relpath;
 
-    if (!file_exists($tmpDest) || !is_writeable($tmpDest) || is_dir($tmpDest)) {
-      continue;
-    }
-
-    $fname = basename($tmpDest);
-    $ext = substr($fname, strrpos($fname, '.') + 1);
-    $ftype = array_search(strtolower($ext), $imgAllowedTypes);
-
-    if (!$ftype || $ftype !== $imgInfo[0]) {
-      continue;
-    }
-
-    // check permissions, if the image proxy is for a course file.
-    if ($type === 'course') {
-      $arrpath = explode('/', $relpath);
-      if (count($arrpath) < 2) {
+    if (!file_exists($tmpdest) || !is_writeable($tmpdest) || is_dir($tmpdest)) {
         continue;
-      }
-
-      $course = get_record('course', 'id', $arrpath[0]);
-      require_login($course);
-      require_capability('moodle/course:managefiles', get_context_instance(CONTEXT_COURSE, $course->id));
     }
 
-    $imgDest = $tmpDest;
-    return;
-  }
+    $fname = basename($tmpdest);
+    $ext = substr($fname, strrpos($fname, '.') + 1);
+    $ftype = array_search(strtolower($ext), $imgallowedtypes);
 
-  $imgDest = $CFG->dataroot . '/' . $CFG->paintwebImagesFolder;
+    if (!$ftype || $ftype !== $imginfo[0]) {
+        continue;
+    }
 
-  if (!is_dir($imgDest) || !make_upload_directory($imgDest, false)) {
-    paintwebSaveDone(false, 'failed to mkdir ' . $imgDest);
-  }
+    // Check permissions, if the image proxy is for a course file.
+    if ($type === 'course') {
+        $arrpath = explode('/', $relpath);
+        if (count($arrpath) < 2) {
+            continue;
+        }
 
-  // simply create a new file in the PainWeb images folder.
-  $fname = sha1($imgDataURL) . '.' . $imgAllowedTypes[$imgInfo[0]];
-  $imgDest .=  '/' . $fname;
-  $imgUrlNew = $CFG->wwwroot . '/' . $myProxy . '?img=' . $fname;
+        $course = get_record('course', 'id', $arrpath[0]);
+        require_login($course);
+        require_capability('moodle/course:managefiles', get_context_instance(CONTEXT_COURSE, $course->id));
+    }
+
+    $imgdest = $tmpdest;
+    break;
 }
 
-// The list of allowed image MIME types associated to file extensions.
-$imgAllowedTypes = array('image/png' => 'png', 'image/jpeg' => 'jpg');
+// If no image destination has been determined, then we create a new image file.
+if (empty($imgdest)) {
+    $imgdest = $CFG->dataroot . '/' . $CFG->paintwebImagesFolder;
 
-// The list of file serving proxies recognized from Moodle. For example, course 
-// images are served by /file.php. So, when you add an image in TinyMCE, the 
-// path will be like /file.php/course_id/dir/file.ext.
-$imgProxies = array(
-  $CFG->wwwroot . '/file.php' => 'course',     // course files
-  $CFG->httpswwwroot . '/file.php' => 'course' // course files
-);
+    if (!is_dir($imgdest) || !make_upload_directory($imgdest, false)) {
+        paintweb_send_result($imgurl, $imgurlnew, false,
+            get_string('moodleServer:failedMkdir', 'paintweb'));
+    }
 
-if ($CFG->paintwebDisallowImageUpdates) {
-  $imgProxies = array();
+    // Simply create a new file in the PainWeb images folder.
+    $fname = sha1($imgdataurl) . '.' . $imgallowedtypes[$imginfo[0]];
+    $imgdest .=  '/' . $fname;
+    $imgurlnew = $CFG->wwwroot . '/' . $pwproxy . '?img=' . $fname;
 }
 
-$myProxy = dirname(__FILE__) . '/imageview.php';
-if (strpos($myProxy, $CFG->dirroot) === 0) {
-  $myProxy = trim(substr($myProxy, strlen($CFG->dirroot)), '/');
-} else {
-  paintwebSaveDone(false, 'failed to find my image file proxy!');
+$imgdataurl = substr($imgdataurl, $comma + 1);
+
+if (!file_put_contents($imgdest, base64_decode($imgdataurl))) {
+    paintweb_send_result($imgurl, $imgurlnew, false,
+        get_string('moodleServer:saveFailed', 'paintweb'));
 }
 
-$imgUrl = $_POST['url'];
-$imgUrlNew = null;
+paintweb_send_result($imgurl, $imgurlnew, true);
 
-$imgDataURL = &$_POST['dataURL'];
-
-if (empty($imgUrl)) {
-  paintwebSaveDone(false, 'empty url');
-}
-
-if (empty($imgDataURL)) {
-  paintwebSaveDone(false, 'empty data URL');
-}
-
-// A data URL starts like this:
-// data:[<MIME-type>][;charset="<encoding>"][;base64],<data>
-
-// Here we find the comma delimiter.
-$comma = strpos($imgDataURL, ',');
-$imgInfo = substr($imgDataURL, 0, $comma);
-if (empty($imgInfo) || !isset($imgDataURL{($comma+2)})) {
-  paintwebSaveDone(false, 'malformed data URL');
-}
-
-// Split by ':' to find the 'data' prefix and the rest of the info.
-$imgInfo = explode(':', $imgInfo);
-
-// The array must have exactly two elements and the second element must not be 
-// empty.
-if (count($imgInfo) !== 2 || $imgInfo[0] !== 'data' || empty($imgInfo[1])) {
-  paintwebSaveDone(false, 'malformed data URL');
-}
-
-// The MIME type must be given and it must be base64-encoded.
-$imgInfo = explode(';', $imgInfo[1]);
-
-if (count($imgInfo) < 2 || !array_key_exists($imgInfo[0], $imgAllowedTypes) ||
-    ($imgInfo[1] !== 'base64' && $imgInfo[2] !== 'base64')) {
-  paintwebSaveDone(false, 'malformed data URL');
-}
-
-prepareImgUrl();
-
-$imgDataURL = substr($imgDataURL, $comma + 1);
-
-if (!file_put_contents($imgDest, base64_decode($imgDataURL))) {
-  paintwebSaveDone(false, 'failed to save file');
-}
-
-paintwebSaveDone(true);
-
-// vim:set spell spl=en fo=anl1qrowcb tw=80 ts=2 sw=2 sts=2 sta et noai nocin fenc=utf-8 ff=unix: 
+// vim:set spell spl=en fo=tanqrowcb tw=80 ts=4 sw=4 sts=4 sta et noai nocin fenc=utf-8 ff=unix: 
 
