@@ -18,7 +18,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-03 19:46:27 +0300 $
+ * $Date: 2009-08-10 20:41:45 +0300 $
  */
 
 // This script allows you to convert PaintWeb JSON language files into Moodle 
@@ -35,6 +35,8 @@
 
 // Warning: running this script will overwrite "paintweb.php" in your Moodle 
 // lang/*/ folders.
+
+// This script works with Moodle 1.9 and Moodle 2.0.
 
 $paintweblangdir = '../../build/lang';
 $moodlelangdir = '../../../../lang';
@@ -72,17 +74,19 @@ foreach($files as $file) {
  * Convert a PaintWeb JSON language file to a Moodle PHP language file.
  *
  * @param string $file The file you want to convert.
+ * @return boolean True if the operation executed successfully, or false 
+ * otherwise.
  */
 function paintweb_convert_json_file($file) {
     global $moodlelangdir, $moodlelangfile, $paintweblangdir;
 
-    $lang = str_replace('.json', '', $file);
+    $lang = basename($file, '.json');
 
     $outputfolder = $moodlelangdir . '/' . ($lang === 'en' ? 'en_utf8' : $lang);
 
     if (!is_dir($outputfolder)) {
         echo "Skipping $file because $outputfolder was not found.\n";
-        continue;
+        return false;
     }
 
     $langparsed = file_get_contents($paintweblangdir . '/' . $file);
@@ -91,7 +95,7 @@ function paintweb_convert_json_file($file) {
     $langparsed = json_decode($langparsed, true);
     if (!$langparsed) {
         echo "Parsing $file failed. \n";
-        continue;
+        return false;
     }
 
     $output = "<?php\n". paintweb_json2php($langparsed);
@@ -101,6 +105,8 @@ function paintweb_convert_json_file($file) {
     } else {
         echo "Failed to write $outputfolder/$moodlelangfile\n";
     }
+
+    return true;
 }
 
 /**
@@ -118,8 +124,9 @@ function paintweb_json2php($obj, $prefix='') {
         if (is_array($val)) {
             $result .= paintweb_json2php($val, $prefix . $key . ':');
         } else {
-            $val = str_replace("'", "\\'", $val);
-            $result .= "\$string['$prefix$key'] = '" . $val . "';\n";
+            $key = var_export($prefix . $key, true);
+            $val = var_export($val, true);
+            $result .= "\$string[$key] = $val;\n";
         }
     }
 

@@ -18,11 +18,14 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-03 21:17:30 +0300 $
+ * $Date: 2009-08-10 21:55:57 +0300 $
  */
 
 // This script generates the PaintWeb JSON language file dynamically using the 
 // Moodle language files. The language picked is the one configured in Moodle.
+
+
+// This script works with Moodle 1.9 and Moodle 2.0.
 
 require_once('../../../../config.php');
 

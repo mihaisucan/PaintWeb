@@ -1,3 +1,20 @@
+2009-08-10:
+===========
+
+- Started work on Moodle 2.0 integration. Moodle 1.9 integration has been 
+postponed for a number of reasons. Further details in an upcoming blog post at 
+robodesign.ro/mihai.
+
+- New script for localization integration specific to Moodle 2.0 - see 
+update_tinymcelang.pnp.
+
+- Improved/fixed gen_moodlelang.php.
+
+- Moved the TODO file to the Google Code wiki:
+http://code.google.com/p/paintweb/wiki/TODO
+
+The wiki page includes new items and some fixes.
+
 2009-08-03:
 ===========
 

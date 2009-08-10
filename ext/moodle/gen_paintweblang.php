@@ -18,7 +18,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-03 19:35:04 +0300 $
+ * $Date: 2009-08-10 15:58:48 +0300 $
  */
 
 // This script allows you to convert a Moodle PHP language file into a PaintWeb 
@@ -31,6 +31,8 @@
 
 // Warning: running this script will overwrite the JSON language file from the 
 // PaintWeb language folder.
+
+// This script works with Moodle 1.9 and Moodle 2.0.
 
 $paintweblangdir = '../../build/lang';
 $moodlelangdir = '../../../../lang';

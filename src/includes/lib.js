@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-07-30 19:20:27 +0300 $
+ * $Date: 2009-08-04 19:34:48 +0300 $
  */
 
 /**
@@ -185,15 +185,18 @@ pwlib.jsonParse = function (str) {
  *
  * @param {String} [method="GET"] The HTTP method to use for loading the URL.
  *
- * @param {String} [send] The string you want to send in an HTTP POST request.
+ * @param {String} [send=null] The string you want to send in an HTTP POST 
+ * request.
  *
  * @param {Object} [headers] An object holding the header names and values you 
  * want to set for the request.
  *
  * @returns {XMLHttpRequest} The XMLHttpRequest object created by this method.
+ *
+ * @throws {TypeError} If the <var>url</var> is not a string.
  */
 pwlib.xhrLoad = function (url, handler, method, send, headers) {
-  if (!url) {
+  if (typeof url !== 'string') {
     throw new TypeError('The first argument must be a string!');
   }
 
@@ -209,7 +212,9 @@ pwlib.xhrLoad = function (url, handler, method, send, headers) {
     send = null;
   }
 
+  /** @ignore */
   var xhr = new XMLHttpRequest();
+  /** @ignore */
   xhr.onreadystatechange = function () { handler(xhr); };
   xhr.open(method, url);
 
@@ -2144,12 +2149,15 @@ pwlib.dom.KeyboardEventListener = function (elem_, handlers_) {
     } else {
       // This happens when the keydown event tries to dispatch a keypress event.
 
-      // FIXME: I could use createEvent() ... food for thought for later
+      // FIXME: I could use createEvent() ... food for thought for later.
+
+      /** @ignore */
       var ev_new = {};
       pwlib.extend(ev_new, ev);
       ev_new.type = type;
 
       // Make sure preventDefault() is not borked...
+      /** @ignore */
       ev_new.preventDefault = function () {
         ev.preventDefault();
       };

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-30 20:50:13 +0300 $
+ * $Date: 2009-08-04 19:46:19 +0300 $
  */
 
 /**
@@ -2308,8 +2308,11 @@ function PaintWeb (win, doc) {
 
     // huh, use XHR then eval() the code.
     // browsers do not dispatch the 'load' event reliably for script elements.
+
+    /** @ignore */
     var xhr = new XMLHttpRequest();
 
+    /** @ignore */
     xhr.onreadystatechange = function () {
       if (!xhr || xhr.readyState !== 4) {
         return;
