@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-12 19:57:50 +0300 $
+ * $Date: 2009-08-12 20:06:23 +0300 $
  */
 
 /**
@@ -781,8 +781,8 @@ tinymce.create('tinymce.plugins.paintweb', {
    */
   edNodeChange: function (ed, cm, n) {
     // Do not do anything inside the overlay button.
-    if (!targetImage && overlayButton && n && n.className === 
-        overlayButton.className && n._targetImage === n.previousSibling) {
+    if (overlayButton && overlayButton._targetImage && n && n.className === 
+        overlayButton.className) {
       return;
     }
 
