@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-12 18:42:12 +0300 $
+ * $Date: 2009-08-12 19:57:50 +0300 $
  */
 
 /**
@@ -187,10 +187,8 @@ function paintwebLoaded () {
  */
 function paintwebInitialized (ev) {
   if (overlayButton && targetEditor) {
-    overlayButton.title = targetEditor.getLang('paintweb.overlayButton', 
+    overlayButton.value = targetEditor.getLang('paintweb.overlayButton', 
         'Edit');
-    overlayButton.replaceChild(document.createTextNode(overlayButton.title), 
-        overlayButton.firstChild);
   }
 
   if (ev.state !== PaintWeb.INIT_DONE) {
@@ -326,10 +324,8 @@ function paintwebEditStart () {
 
   var pwStart = function () {
     if (overlayButton && overlayButton.parentNode) {
-      overlayButton.title = targetEditor.getLang('paintweb.overlayLoading', 
+      overlayButton.value = targetEditor.getLang('paintweb.overlayLoading', 
           'Loading PaintWeb...');
-      overlayButton.replaceChild(document.createTextNode(overlayButton.title), 
-          overlayButton.firstChild);
     }
 
     if (paintwebInstance) {
@@ -486,10 +482,8 @@ function paintwebHide () {
   paintwebInstance.gui.hide();
 
   if (overlayButton && targetEditor) {
-    overlayButton.title = targetEditor.getLang('paintweb.overlayButton', 
+    overlayButton.value = targetEditor.getLang('paintweb.overlayButton', 
         'Edit');
-    overlayButton.replaceChild(document.createTextNode(overlayButton.title), 
-        overlayButton.firstChild);
   }
 
   if (pluginBar && pluginBar.parentNode) {
@@ -710,19 +704,12 @@ tinymce.create('tinymce.plugins.paintweb', {
       ed.onRemove.add(this.edPreProcess);
       ed.onInit.add(overlayButtonCleanup);
 
-      overlayButton = document.createElement('a');
-      overlayStyle = overlayButton.style;
-
+      overlayButton = document.createElement('input');
+      overlayButton.type = 'button';
       overlayButton.className = 'paintwebOverlayButton';
-      overlayButton.title = ed.getLang('paintweb.overlayButton', 'Edit');
-      overlayButton.appendChild(document.createTextNode(overlayButton.title));
+      overlayButton.value = ed.getLang('paintweb.overlayButton', 'Edit');
 
-      overlayStyle.position = 'absolute';
-      overlayStyle.background = '#fff';
-      overlayStyle.padding = '4px 6px';
-      overlayStyle.border = '1px solid #000';
-      overlayStyle.textDecoration = 'none';
-      overlayStyle.color = '#000';
+      overlayButton.style.position = 'absolute';
     }
 
     // Handle the dblclick events for image elements, if the user wants it.
@@ -833,16 +820,26 @@ tinymce.create('tinymce.plugins.paintweb', {
     }
 
     if (!disabled) {
+      var offsetTop  = 5,
+          offsetLeft = 5,
+          sibling    = null;
+
+      // Try to avoid adding the overlay button inside an anchor.
+      if (n.parentNode.nodeName.toLowerCase() === 'a') {
+        pNode   = n.parentNode.parentNode;
+        sibling = n.parentNode.nextSibling;
+      } else {
+        pNode   = n.parentNode;
+        sibling = n.nextSibling;
+      }
+
       // Add the overlay button.
       overlayButton._targetImage = n;
-      overlayButton.style.top  = (n.offsetTop  + 5) + 'px';
-      overlayButton.style.left = (n.offsetLeft + 5) + 'px';
-      overlayButton.title = ed.getLang('paintweb.overlayButton', 'Edit');
-      overlayButton.replaceChild(document.createTextNode(overlayButton.title), 
-          overlayButton.firstChild);
+      overlayButton.style.top  = (n.offsetTop  + offsetTop)  + 'px';
+      overlayButton.style.left = (n.offsetLeft + offsetLeft) + 'px';
+      overlayButton.value = ed.getLang('paintweb.overlayButton', 'Edit');
 
-      pNode = n.parentNode;
-      pNode.insertBefore(overlayButton, n.nextSibling);
+      pNode.insertBefore(overlayButton, sibling);
     } else if (overlayButton._targetImage) {
       overlayButton._targetImage = null;
     }
