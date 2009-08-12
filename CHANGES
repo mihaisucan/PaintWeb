@@ -1,3 +1,26 @@
+2009-08-12:
+===========
+
+- Modified the Makefile such that "make moodle" creates an archive which only 
+holds the important parts of PaintWeb - without the docs, tests and demos.  
+(Suggested by Martin Langhoff, my mentor.)
+
+- Changed the styling of the "plugin bar" of the TinyMCE plugin - the one 
+displayed at the top of PaintWeb, when it runs inside TinyMCE. The background 
+color is now yellow, and the two Save/Cancel actions use inputs of type=button.  
+Thanks to Olli Savolainen.
+
+- The TinyMCE plugin now sets up a reference to the current TinyMCE editor 
+instance in the current PaintWeb.config instance. This allows extensions from 
+inside PaintWeb to access the TinyMCE editor - using 
+PaintWeb.config.tinymceEditor. This is used by the updated Moodle extension.
+
+- Updated the Moodle extension to support image saving inside Moodle 2.0.
+
+- Created a new imagesave20.php script which implements the image save operation 
+for Moodle 2.0. This script saves images inside the user_draft file area.
+
+
 2009-08-10:
 ===========
 

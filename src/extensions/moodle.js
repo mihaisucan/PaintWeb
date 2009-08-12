@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-28 18:49:37 +0300 $
+ * $Date: 2009-08-12 17:51:51 +0300 $
  */
 
 /**
@@ -30,27 +30,44 @@
  * @class The Moodle extension for PaintWeb. This extension handles the Moodle 
  * integration inside the PaintWeb code.
  *
+ * <p><strong>Note:</strong> This extension is supposed to work with Moodle 1.9 
+ * and Moodle 2.0.
+ *
  * @param {PaintWeb} app Reference to the main paint application object.
  */
 pwlib.extensions.moodle = function (app) {
-  var _self    = this,
-      appEvent = pwlib.appEvent,
-      config   = app.config,
-      gui      = app.gui,
-      lang     = app.lang.moodle;
+  var _self         = this,
+      appEvent      = pwlib.appEvent,
+      config        = app.config,
+      gui           = app.gui,
+      lang          = app.lang.moodle,
+      moodleServer  = config.moodleServer,
+      tinymceEditor = null;
 
-  // Holds properties related to Moodle.
-  var moodle = {
+  // Holds information related to Moodle.
+  var moodleInfo = {
     // Holds the URL of the image the user is saving.
     imageURL: null,
 
     // The class name for the element which holds the textarea buttons (toggle 
     // on/off).
+    // This element exists only in Moodle 1.9.
     textareaButtons: 'textareaicons',
 
     // The image save handler script on the server-side. The path is relative to 
     // the PaintWeb base folder.
-    imageSaveHandler: '../ext/moodle/imagesave.php'
+    // This used with Moodle 2.0.
+    imageSaveHandler20: '../ext/moodle/imagesave20.php',
+
+    // The image save handler script for Moodle 1.9.
+    imageSaveHandler19: '../ext/moodle/imagesave19.php',
+
+    // This holds the release version of Moodle being used. This should be 1.9 
+    // or 2.0.
+    release: 0,
+
+    // Moodle 2.0 draft item ID used for file storage.
+    draftitemid: null
   };
 
   /**
@@ -65,14 +82,14 @@ pwlib.extensions.moodle = function (app) {
     app.events.add('guiHide',   this.guiHide);
     app.events.add('imageSave', this.imageSave);
 
-    return true;
-  };
+    if (moodleServer && moodleServer.release) {
+      var matches = moodleServer.release.match(/^\s*(\d+\.\d+)/);
+      if (matches && matches[1]) {
+        moodleInfo.release = parseFloat(matches[1]);
+      }
+    }
 
-  /**
-   * The <code>extensionUnregister</code> event handler.
-   */
-  this.extensionUnregister = function () {
-    return;
+    return true;
   };
 
   /**
@@ -90,20 +107,36 @@ pwlib.extensions.moodle = function (app) {
 
     ev.preventDefault();
 
-    moodle.imageURL = config.imageLoad.src;
-    if (!moodle.imageURL || moodle.imageURL.substr(0, 5) === 'data:') {
-      moodle.imageURL = '-';
+    moodleInfo.imageURL = config.imageLoad.src;
+    if (!moodleInfo.imageURL || moodleInfo.imageURL.substr(0, 5) === 'data:') {
+      moodleInfo.imageURL = '-';
     }
 
-    if (!moodle.imageSaveHandler || config.moodleSaveMethod === 'dataURL') {
-      app.events.dispatch(new appEvent.imageSaveResult(true, moodle.imageURL, 
-            ev.dataURL));
+    if (config.moodleSaveMethod === 'dataURL') {
+      app.events.dispatch(new appEvent.imageSaveResult(true, 
+            moodleInfo.imageURL, ev.dataURL));
 
     } else {
-      var handlerURL = PaintWeb.baseFolder + moodle.imageSaveHandler,
-          send       = 'url=' + encodeURIComponent(moodle.imageURL) +
+      var handlerURL = PaintWeb.baseFolder,
+          send       = 'url=' + encodeURIComponent(moodleInfo.imageURL) +
                        '&dataURL=' + encodeURIComponent(ev.dataURL),
           headers    = {'Content-Type': 'application/x-www-form-urlencoded'};
+
+      // In Moodle 2.0 we include the context ID and the draft item ID, such 
+      // that the image save script can properly save the new image inside the 
+      // current draft area of the current textarea element.
+      if (moodleInfo.release >= 2) {
+        handlerURL += moodleInfo.imageSaveHandler20;
+        if (moodleServer.contextid) {
+          send += '&contextid=' + encodeURIComponent(moodleServer.contextid);
+        }
+        if (moodleInfo.draftitemid) {
+          send += '&draftitemid=' + encodeURIComponent(moodleInfo.draftitemid);
+        }
+
+      } else {
+        handlerURL += moodleInfo.imageSaveHandler19;
+      }
 
       pwlib.xhrLoad(handlerURL, imageSaveReady, 'POST', send, headers);
     }
@@ -143,7 +176,7 @@ pwlib.extensions.moodle = function (app) {
       return;
     }
 
-    var result = {successful: false, url: moodle.imageURL};
+    var result = {successful: false, url: moodleInfo.imageURL};
 
     if ((xhr.status !== 304 && xhr.status !== 200) || !xhr.responseText) {
       alert(lang.xhrRequestFailed);
@@ -162,9 +195,9 @@ pwlib.extensions.moodle = function (app) {
     }
 
     if (result.successful) {
-      if (result.url !== moodle.imageURL) {
+      if (result.url !== moodleInfo.imageURL) {
         alert(pwlib.strf(lang.urlMismatch, {
-                url: moodle.imageURL,
+                url: moodleInfo.imageURL,
                 urlServer: result.url || 'null'}));
       }
     } else {
@@ -187,10 +220,35 @@ pwlib.extensions.moodle = function (app) {
    */
   this.guiShow = function () {
     var pNode = config.guiPlaceholder.parentNode,
-        elem = pNode.getElementsByClassName(moodle.textareaButtons)[0];
+        elem  = pNode.getElementsByClassName(moodleInfo.textareaButtons)[0];
 
     if (elem) {
       elem.style.display = 'none';
+    }
+
+    // For Moodle 2.0 we must determine the draft item ID in order to properly 
+    // perform the image save operation into the current draft area.
+    if (moodleInfo.release < 2) {
+      return;
+    }
+
+    // Typically the TinyMCE editor instance is attached to a textarea element 
+    // which has a name=whatever[text] or similar form. In the same form as the 
+    // textarea, there must be a hidden input element with the 
+    // name=whatever[itemid]. The value of that input holds the draft item ID.
+    var tmce     = config.tinymceEditor,
+        textarea = tmce ? tmce.getElement() : null,
+        frm      = textarea ? textarea.form : null;
+
+    if (!textarea || !textarea.name || !frm) {
+      return;
+    }
+
+    var tname = textarea.name.replace(/\[text\]$/, ''),
+        draftitemid = tname ? frm.elements.namedItem(tname + '[itemid]') : null;
+
+    if (draftitemid) {
+      moodleInfo.draftitemid = draftitemid.value;
     }
   };
 
@@ -202,7 +260,7 @@ pwlib.extensions.moodle = function (app) {
    */
   this.guiHide = function () {
     var pNode = config.guiPlaceholder.parentNode,
-        elem = pNode.getElementsByClassName(moodle.textareaButtons)[0];
+        elem = pNode.getElementsByClassName(moodleInfo.textareaButtons)[0];
 
     if (elem) {
       elem.style.display = '';

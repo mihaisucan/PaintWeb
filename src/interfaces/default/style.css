@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-29 20:34:14 +0300 $
+ * $Date: 2009-08-12 18:13:42 +0300 $
  */
 
 .paintweb_placeholder {
@@ -1014,42 +1014,28 @@
 /* TinyMCE plugin */
 
 .paintweb_tinymce_status {
-  background: #f5f5f5;
-  border: 1px solid #9e9e9e;
+  background: #ffffc5;
   border-bottom: 0;
+  border: 1px solid #9e9e9e;
   color: #000;
   display: block !important;
-  position: relative;
-  padding: 6px;
-  font: 14px sans-serif;
+  font: 14px/2.3em sans-serif;
+  padding: 0 6px;
+  position: relative
 }
 
 .paintweb_tinymce_save, .paintweb_tinymce_cancel {
-  background: #e7e1db url('images/button.png') repeat-x;
-  border: 1px solid #c6c6c6;
-  color: #666;
-  padding: 6px;
+  cursor: pointer;
   position: absolute;
-  text-decoration: none;
-  top: 0;
-  text-align: center;
-  font-weight: bold;
+  top: 4px;
 }
 
 .paintweb_tinymce_cancel {
   right: 5px;
-  width: 4em;
 }
 
 .paintweb_tinymce_save {
   right: 6em;
-  width: 3em;
-}
-
-.paintweb_tinymce_save:hover, .paintweb_tinymce_cancel:hover,
-.paintweb_tinymce_save:focus, .paintweb_tinymce_cancel:focus {
-  border-color: #000;
-  color: #000
 }
 
 /* vim:set fo=wan1croql tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix: */

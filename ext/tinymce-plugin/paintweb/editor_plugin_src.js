@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-30 21:47:45 +0300 $
+ * $Date: 2009-08-12 18:42:12 +0300 $
  */
 
 /**
@@ -171,6 +171,9 @@ function paintwebLoaded () {
     paintwebConfig[prop] = config[prop];
   }
 
+  // Give PaintWeb access to the TinyMCE editor instance.
+  paintwebConfig.tinymceEditor = targetEditor;
+
   paintwebInstance.init(paintwebInitialized);
 };
 
@@ -208,11 +211,8 @@ function paintwebInitialized (ev) {
 /**
  * The <code>click</code> event handler for the Save button displayed on the 
  * plugin bar.
- *
- * @param {Event} ev The DOM Event object.
  */
-function pluginSaveButton (ev) {
-  ev.preventDefault();
+function pluginSaveButton () {
   pwSaveReturn = true;
   paintwebInstance.imageSave();
 };
@@ -220,11 +220,8 @@ function pluginSaveButton (ev) {
 /**
  * The <code>click</code> event handler for the Cancel button displayed on the 
  * plugin bar.
- *
- * @param {Event} ev The DOM Event object.
  */
-function pluginCancelButton (ev) {
-  ev.preventDefault();
+function pluginCancelButton () {
   paintwebHide();
 };
 
@@ -336,6 +333,8 @@ function paintwebEditStart () {
     }
 
     if (paintwebInstance) {
+      // Give PaintWeb access to the TinyMCE editor instance.
+      paintwebConfig.tinymceEditor = targetEditor;
       paintwebInstance.imageLoad(targetImage);
       paintwebShow();
     } else {
@@ -737,25 +736,22 @@ tinymce.create('tinymce.plugins.paintweb', {
     if (config.tinymce.pluginBar) {
       pluginBar = document.createElement('div');
 
-      var saveBtn   = document.createElement('a'),
-          cancelBtn = document.createElement('a'),
+      var saveBtn   = document.createElement('input'),
+          cancelBtn = document.createElement('input'),
           textSpan  = document.createElement('span');
 
+      saveBtn.type = 'button';
       saveBtn.className = 'paintweb_tinymce_save';
-      saveBtn.href = '#';
       saveBtn.title = ed.getLang('paintweb.imageSaveButtonTitle',
           'Save the image and return to TinyMCE.');
-
-      saveBtn.appendChild(document.createTextNode(ed.getLang('paintweb.imageSaveButton', 
-              'Save')));
+      saveBtn.value = ed.getLang('paintweb.imageSaveButton', 'Save');
       saveBtn.addEventListener('click', pluginSaveButton, false);
 
+      cancelBtn.type = 'button';
       cancelBtn.className = 'paintweb_tinymce_cancel';
-      cancelBtn.href = '#';
       cancelBtn.title = ed.getLang('paintweb.cancelEditButtonTitle',
           'Cancel image edits and return to TinyMCE.');
-      cancelBtn.appendChild(document.createTextNode(ed.getLang('paintweb.cancelEditButton', 
-              'Cancel')));
+      cancelBtn.value = ed.getLang('paintweb.cancelEditButton', 'Cancel');
       cancelBtn.addEventListener('click', pluginCancelButton, false);
 
       pluginBar.className = 'paintweb_tinymce_status';

@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-08-03 22:03:18 +0300 $
+  // $Date: 2009-08-11 20:12:31 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -244,6 +244,7 @@
     "urlMismatch": "Image address mismatch!\nThe current image is {url}.\nThe server replied a successful save for {urlServer}."
   },
   "moodleServer": {
+    "permissionDenied": "Permission denied.",
     "saveEmptyDataUrl": "Your request has no data URL.",
     "proxyNotFound": "Could not find the PaintWeb image file proxy script.",
     "malformedDataUrl": "The data URL is malformed.",

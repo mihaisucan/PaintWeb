@@ -18,7 +18,7 @@
 # along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
 # 
 # $URL: http://code.google.com/p/paintweb $
-# $Date: 2009-07-16 18:43:06 +0300 $
+# $Date: 2009-08-12 12:52:24 +0300 $
 
 
 #### Config:start #####################################################
@@ -193,6 +193,11 @@ tags:
 # Generate a custom Moodle build.
 moodle: EXTENSIONS=colormixer moodle
 moodle: all
+	tar --exclude=".*" --exclude="*~" --exclude="*bak" --exclude="*bz2" --exclude="tags" \
+		--exclude="paintweb/docs" --exclude="paintweb/demos" --exclude="paintweb/tests" --exclude="paintweb/scripts" \
+		-C $(FOLDER_PARENT) -cjvf /tmp/paintweb.tar.bz2 $(FOLDER_SELF)
+	mv /tmp/paintweb.tar.bz2 ./paintweb-$(BUILD_VERSION)-$(BUILD_DATE)-moodle.tar.bz2
+
 
 # vim:set spell spl=en fo=wan1croql tw=80 ts=2 sw=2 sts=0 sta noet ai cin fenc=utf-8 ff=unix:
 

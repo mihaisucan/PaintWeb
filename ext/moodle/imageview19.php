@@ -18,10 +18,12 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-03 19:35:31 +0300 $
+ * $Date: 2009-08-11 14:29:31 +0300 $
  */
 
 // This script serves images saved by PaintWeb to the browser.
+
+// This script only works with Moodle 1.9.
 
 require_once('../../../../config.php');
 require_once('../../../../lib/filelib.php');
