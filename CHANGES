@@ -1,3 +1,26 @@
+2009-08-13:
+===========
+
+- Implemented support for dynamic PaintWeb GUI resize. Developers now have 
+a method for resizing the GUI: PaintWeb.gui.resizeTo(width, height).
+
+- Added a new application event: viewportSizeChange.
+
+- Users can easily resize the PaintWeb GUI with a new resize handle added in the 
+status bar.
+
+- The TinyMCE plugin has been updated to synchronize the size of the editor 
+viewport with the image editor viewport of PaintWeb. So, now when you start 
+editing an image from TinyMCE, the PaintWeb instance will be of a similar size 
+(GUI differences account for the size differences). Nonetheless, strictly 
+speaking of the PaintWeb image viewport, it always has the same dimensions as 
+the TinyMCE editor iframe (where the article is displayed).
+
+- Added a new application event: guiResizeMouseMove. This is used by the new 
+viewport resize handle.
+
+- Updated English strings and configuration properties.
+
 2009-08-12:
 ===========
 

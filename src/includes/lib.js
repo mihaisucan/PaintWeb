@@ -2,7 +2,7 @@
  * © 2009 ROBO Design
  * http://www.robodesign.ro
  *
- * $Date: 2009-08-04 19:34:48 +0300 $
+ * $Date: 2009-08-13 18:47:20 +0300 $
  */
 
 /**
@@ -327,6 +327,10 @@ pwlib.appEvent = function (type, cancelable) {
    */
   this.stopPropagation = function () {
     this.propagationStopped_ = true;
+  };
+
+  this.toString = function () {
+    return '[pwlib.appEvent.' + this.type + ']';
   };
 };
 
@@ -794,6 +798,34 @@ pwlib.appEvent.canvasSizeChange = function (width, height, scale) {
 
   pwlib.appEvent.call(this, 'canvasSizeChange');
 };
+
+/**
+ * @class Image viewport size change event. This event is not cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {String} width The new viewport width. This must be a CSS length 
+ * value, like "100px", "100%" or "100em".
+ *
+ * @param {String} height The new viewport height. This must be a CSS length 
+ * value, like "100px", "100%" or "100em".
+ */
+pwlib.appEvent.viewportSizeChange = function (width, height) {
+  /**
+   * New viewport width.
+   * @type String
+   */
+  this.width  = width;
+
+  /**
+   * New viewport height.
+   * @type String
+   */
+  this.height = height;
+
+  pwlib.appEvent.call(this, 'viewportSizeChange');
+};
+
 
 /**
  * @class Image zoom event. This event is cancelable.

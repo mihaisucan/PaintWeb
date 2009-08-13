@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-08-11 20:12:31 +0300 $
+  // $Date: 2009-08-13 19:04:48 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -22,6 +22,8 @@
   "noMainTabPanel": "Error: the interface layout has no tabbed panel with ID = main.",
   "guiMarkupImportFailed": "Error: the interface markup code could not be imported into the main document.",
   "guiMarkupParseFailed": "Error: the interface markup code could not be properly parsed.",
+  "missingViewport": "Error: the interface markup does not have the image viewport element.",
+  "missingViewportResizer": "Error: the interface markup does not have the image viewport resize handle.",
   "missingCanvasResizer": "Error: the interface markup does not have the Canvas resize handle.",
   "missingCanvasContainer": "Error: the interface markup does not have the Canvas container.",
   "errorCpickerUnsupported": "Error: your browser does not implement the get/putImageData method! The color picker cannot be used.",
@@ -36,6 +38,7 @@
   "errorImageSave": "The image cannot be saved!",
 
   "guiCanvasResizer": "Resize the image canvas.",
+  "guiViewportResizer": "Resize the image viewport.",
   "imageZoomTitle": "Zoom image",
   "imageZoomLabel": "Zoom:",
 

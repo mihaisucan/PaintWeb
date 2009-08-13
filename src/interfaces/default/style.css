@@ -17,14 +17,15 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-12 18:13:42 +0300 $
+ * $Date: 2009-08-13 20:19:48 +0300 $
  */
 
 .paintweb_placeholder {
   background: #fff;
   color: #000;
+  display: block !important;
   font: 12px sans-serif;
-  display: block !important
+  min-width: 535px
 }
 
 .paintweb_placeholder label { cursor: pointer }
@@ -39,6 +40,8 @@
   background: #999;
   border: 1px solid #000;
   height: 400px;
+  min-height: 150px;
+  min-width: 535px;
   overflow: auto;
   position: relative
 }
@@ -253,7 +256,8 @@
 
 .paintweb_statusZoom {
   background: #cbcbcb url('icons/zoom.png') no-repeat;
-  border-left: 1px solid #a3a3a3;
+  border: 1px solid #a3a3a3;
+  border-width: 0 1px;
   float: right;
   font-size: 0.9em;
   height: 100%;
@@ -261,12 +265,33 @@
   margin: 0;
   padding: 0 8px 0 31px;
   position: absolute;
-  right: 0;
+  right: 20px;
   top: 0;
   vertical-align: middle
 }
 
 .paintweb_imageZoom { width: 4em }
+
+.paintweb_viewportResizer {
+  background: #999;
+  border: 4px solid #fff;
+  border-width: 4px 0 0 4px;
+  bottom: 0;
+  cursor: se-resize;
+  height: 10px;
+  margin: 0;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  right: 0;
+  text-indent: 15px;
+  width: 10px
+}
+
+.paintweb_viewportResizer:hover, .paintweb_viewportResizer:focus {
+  background: #fff;
+  border-color: #999
+}
 
 .paintweb_main_line,
 .paintweb_main_line_bcurve,
@@ -1015,28 +1040,26 @@
 
 .paintweb_tinymce_status {
   background: #ffffc5;
-  border-bottom: 0;
   border: 1px solid #9e9e9e;
+  border-bottom: 0;
   color: #000;
   display: block !important;
   font: 14px/2.3em sans-serif;
-  padding: 0 6px;
+  min-width: 535px;
   position: relative
 }
+
+.paintweb_tinymce_status span { padding: 0 6px }
 
 .paintweb_tinymce_save, .paintweb_tinymce_cancel {
   cursor: pointer;
   position: absolute;
-  top: 4px;
+  top: 4px
 }
 
-.paintweb_tinymce_cancel {
-  right: 5px;
-}
+.paintweb_tinymce_cancel { right: 5px }
 
-.paintweb_tinymce_save {
-  right: 6em;
-}
+.paintweb_tinymce_save { right: 6em }
 
 /* vim:set fo=wan1croql tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix: */
 

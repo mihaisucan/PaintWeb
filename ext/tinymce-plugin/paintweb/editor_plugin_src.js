@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-12 20:06:23 +0300 $
+ * $Date: 2009-08-13 20:15:20 +0300 $
  */
 
 /**
@@ -201,8 +201,14 @@ function paintwebInitialized (ev) {
   }
 
   pwlib = window.pwlib;
-  paintwebInstance.events.add('imageSave',       paintwebSave);
-  paintwebInstance.events.add('imageSaveResult', paintwebSaveResult);
+  paintwebInstance.events.add('imageSave',          paintwebSave);
+  paintwebInstance.events.add('imageSaveResult',    paintwebSaveResult);
+
+  if (pluginBar) {
+    paintwebInstance.events.add('viewportSizeChange', 
+        paintwebViewportSizeChange);
+  }
+
   paintwebShow(ev);
 };
 
@@ -307,6 +313,17 @@ function pluginBarResetContent () {
 };
 
 /**
+ * The <code>viewportSizeChange</code> PaintWeb application event handler. This 
+ * synchronises the size of the TinyMCE plugin bar with that of the PaintWeb 
+ * GUI.
+ *
+ * @param {pwlib.appEvent.viewportSizeChange} ev The application event object.
+ */
+function paintwebViewportSizeChange (ev) {
+  pluginBar.style.width = ev.width;
+};
+
+/**
  * Start PaintWeb. This function performs the actual PaintWeb invocation.
  *
  * @returns {Boolean} True PaintWeb is about to start, or false otherwise.
@@ -329,8 +346,6 @@ function paintwebEditStart () {
     }
 
     if (paintwebInstance) {
-      // Give PaintWeb access to the TinyMCE editor instance.
-      paintwebConfig.tinymceEditor = targetEditor;
       paintwebInstance.imageLoad(targetImage);
       paintwebShow();
     } else {
@@ -453,24 +468,30 @@ function paintwebNewImage (width, height, bgrColor, alt, title) {
  * Show PaintWeb on-screen. This function hides the current TinyMCE editor 
  * instance and shows up the PaintWeb instance.
  *
- * @param {mixed} [ev] Event object.
+ * @param [ev] Event object.
  */
 function paintwebShow (ev) {
+  var rect = targetEditor.dom.getRect(targetEditor.getContentAreaContainer());
+
+  targetContainer.style.display = 'none';
+
+  // Give PaintWeb access to the TinyMCE editor instance.
+  paintwebConfig.tinymceEditor = targetEditor;
   if (!ev || ev.type !== 'appInit') {
     paintwebInstance.gui.show();
   }
 
-  targetContainer.style.display = 'none';
-
-  if (!pluginBar) {
-    return;
+  if (rect && rect.w && rect.h) {
+    paintwebInstance.gui.resizeTo(rect.w + 'px', rect.h + 'px');
   }
 
-  pluginBarResetContent();
+  if (pluginBar) {
+    pluginBarResetContent();
 
-  var placeholder = paintwebConfig.guiPlaceholder;
-  if (!pluginBar.parentNode) {
-    placeholder.parentNode.insertBefore(pluginBar, placeholder);
+    var placeholder = paintwebConfig.guiPlaceholder;
+    if (!pluginBar.parentNode) {
+      placeholder.parentNode.insertBefore(pluginBar, placeholder);
+    }
   }
 };
 

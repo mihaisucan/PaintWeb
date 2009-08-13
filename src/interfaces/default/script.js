@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-29 14:09:30 +0300 $
+ * $Date: 2009-08-13 20:20:10 +0300 $
  */
 
 /**
@@ -112,6 +112,15 @@ pwlib.gui = function (app) {
    * @type pwlib.guiResizer
    */
   this.canvasResizer = null;
+
+  /**
+   * Holds an instance of the guiResizer object attached to the viewport 
+   * element.
+   *
+   * @private
+   * @type pwlib.guiResizer
+   */
+  this.viewportResizer = null;
 
   /**
    * Holds tab configuration information for most drawing tools.
@@ -240,10 +249,14 @@ pwlib.gui = function (app) {
       panel.tabHide('shadow');
     }
 
-    // Setup the viewport height.
-    if ('viewport' in this.elems) {
-      this.elems.viewport.style.height = config.viewportHeight + 'px';
+    if (!('viewport' in this.elems)) {
+      app.initError(lang.missingViewport);
+      return false;
     }
+
+    // Setup the GUI dimensions .
+    this.elems.viewport.style.height = config.viewportHeight;
+    placeholderStyle.width = config.viewportWidth;
 
     // Setup the Canvas resizer.
     var resizeHandle = this.elems.canvasResizer;
@@ -252,7 +265,7 @@ pwlib.gui = function (app) {
       return false;
     }
     resizeHandle.title = lang.guiCanvasResizer;
-    resizeHandle.replaceChild(doc.createTextNode(lang.guiCanvasResizer), 
+    resizeHandle.replaceChild(doc.createTextNode(resizeHandle.title), 
         resizeHandle.firstChild);
     resizeHandle.addEventListener('mouseover', this.item_mouseover, false);
     resizeHandle.addEventListener('mouseout',  this.item_mouseout,  false);
@@ -262,6 +275,26 @@ pwlib.gui = function (app) {
 
     this.canvasResizer.events.add('guiResizeStart', this.canvasResizeStart);
     this.canvasResizer.events.add('guiResizeEnd',   this.canvasResizeEnd);
+
+    // Setup the viewport resizer.
+    var resizeHandle = this.elems.viewportResizer;
+    if (!resizeHandle) {
+      app.initError(lang.missingViewportResizer);
+      return false;
+    }
+    resizeHandle.title = lang.guiViewportResizer;
+    resizeHandle.replaceChild(doc.createTextNode(resizeHandle.title), 
+        resizeHandle.firstChild);
+    resizeHandle.addEventListener('mouseover', this.item_mouseover, false);
+    resizeHandle.addEventListener('mouseout',  this.item_mouseout,  false);
+
+    this.viewportResizer = new pwlib.guiResizer(this, resizeHandle, 
+        this.elems.viewport);
+
+    this.viewportResizer.dispatchMouseMove = true;
+    this.viewportResizer.events.add('guiResizeMouseMove', 
+        this.viewportResizeMouseMove);
+    this.viewportResizer.events.add('guiResizeEnd', this.viewportResizeEnd);
 
     if ('statusMessage' in this.elems) {
       this.elems.statusMessage._prevText = false;
@@ -280,17 +313,17 @@ pwlib.gui = function (app) {
     }
 
     // Add application-wide event listeners.
-    app.events.add('canvasSizeChange',  this.canvasSizeChange);
-    app.events.add('commandRegister',   this.commandRegister);
-    app.events.add('commandUnregister', this.commandUnregister);
-    app.events.add('configChange',      this.configChangeHandler);
-    app.events.add('imageSizeChange',   this.imageSizeChange);
-    app.events.add('imageZoom',         this.imageZoom);
-    app.events.add('appInit',           this.appInit);
-    app.events.add('shadowAllow',       this.shadowAllow);
-    app.events.add('toolActivate',      this.toolActivate);
-    app.events.add('toolRegister',      this.toolRegister);
-    app.events.add('toolUnregister',    this.toolUnregister);
+    app.events.add('canvasSizeChange',   this.canvasSizeChange);
+    app.events.add('commandRegister',    this.commandRegister);
+    app.events.add('commandUnregister',  this.commandUnregister);
+    app.events.add('configChange',       this.configChangeHandler);
+    app.events.add('imageSizeChange',    this.imageSizeChange);
+    app.events.add('imageZoom',          this.imageZoom);
+    app.events.add('appInit',            this.appInit);
+    app.events.add('shadowAllow',        this.shadowAllow);
+    app.events.add('toolActivate',       this.toolActivate);
+    app.events.add('toolRegister',       this.toolRegister);
+    app.events.add('toolUnregister',     this.toolUnregister);
 
     // Make sure the historyUndo and historyRedo command elements are 
     // synchronized with the application history state.
@@ -904,6 +937,13 @@ pwlib.gui = function (app) {
       return;
     }
 
+    // Make sure the Hand tool is enabled/disabled as needed.
+    if ('hand' in _self.tools) {
+      app.events.add('canvasSizeChange',   _self.toolHandStateChange);
+      app.events.add('viewportSizeChange', _self.toolHandStateChange);
+      _self.toolHandStateChange(ev);
+    }
+
     // Make PaintWeb visible.
     var placeholder = config.guiPlaceholder,
         placeholderStyle = placeholder.style,
@@ -961,6 +1001,30 @@ pwlib.gui = function (app) {
     } else {
       _self.statusShow(-1);
     }
+  };
+
+  /**
+   * The <code>guiResizeMouseMove</code> event handler for the viewport resize 
+   * operation.
+   *
+   * @private
+   * @param {pwlib.appEvent.guiResizeMouseMove} ev The application event object.
+   */
+  this.viewportResizeMouseMove = function (ev) {
+    config.guiPlaceholder.style.width = ev.width + 'px';
+  };
+
+  /**
+   * The <code>guiResizeEnd</code> event handler for the viewport resize 
+   * operation.
+   *
+   * @private
+   * @param {pwlib.appEvent.guiResizeEnd} ev The application event object.
+   */
+  this.viewportResizeEnd = function (ev) {
+    _self.elems.viewport.style.width = '';
+    _self.resizeTo(ev.width + 'px', ev.height + 'px');
+    config.guiPlaceholder.focus();
   };
 
   /**
@@ -1318,6 +1382,8 @@ pwlib.gui = function (app) {
    * simply removes all the user interactivity from the GUI element associated 
    * to the command being unregistered.
    *
+   * @private
+   *
    * @param {pwlib.appEvent.commandUnregister} ev The application event object.
    *
    * @see PaintWeb#commandUnregister the method which allows you to unregister 
@@ -1347,7 +1413,10 @@ pwlib.gui = function (app) {
    * <code>historyRedo</code> commands are updated such that they are either 
    * enabled or disabled, depending on the current history position.
    *
+   * @private
+   *
    * @param {pwlib.appEvent.historyUpdate} ev The application event object.
+   *
    * @see PaintWeb#historyGoto the method which allows you to go to different 
    * history states.
    */
@@ -1392,6 +1461,7 @@ pwlib.gui = function (app) {
    * <p>Image size refers strictly to the dimensions of the image being edited 
    * by the user, that's width and height.
    *
+   * @private
    * @param {pwlib.appEvent.imageSizeChange} ev The application event object.
    */
   this.imageSizeChange = function (ev) {
@@ -1404,64 +1474,36 @@ pwlib.gui = function (app) {
 
   /**
    * The <code>canvasSizeChange</code> application event handler. The Canvas 
-   * container element dimensions are updated to the new values and the Hand 
-   * tool is enabled/disabled as necessary.
+   * container element dimensions are updated to the new values, and the image 
+   * resize handle is positioned accordingly.
    *
    * <p>Canvas size refers strictly to the dimensions of the Canvas elements in 
    * the browser, changed with CSS style properties, width and height. Scaling 
    * of the Canvas elements is applied when the user zooms the image or when the 
    * browser changes the render DPI / zoom.
    *
+   * @private
    * @param {pwlib.appEvent.canvasSizeChange} ev The application event object.
    */
   this.canvasSizeChange = function (ev) {
     var canvasContainer = _self.elems.canvasContainer,
         canvasResizer   = _self.canvasResizer,
         className       = ' ' + _self.classPrefix + 'disabled',
-        hand            = _self.tools.hand,
-        resizeHandle    = canvasResizer.resizeHandle,
-        viewport        = _self.elems.viewport;
+        resizeHandle    = canvasResizer.resizeHandle;
 
     // Update the Canvas container to be the same size as the Canvas elements.
     canvasContainer.style.width  = ev.width  + 'px';
     canvasContainer.style.height = ev.height + 'px';
 
-    if (resizeHandle) {
-      resizeHandle.style.top  = ev.height + 'px';
-      resizeHandle.style.left = ev.width  + 'px';
-    }
-
-    if (!hand || !viewport) {
-      return;
-    }
-
-    // Update Hand tool state.
-    var cs         = win.getComputedStyle(viewport, null),
-        vwidth     = parseInt(cs.width),
-        vheight    = parseInt(cs.height),
-        enableHand = false,
-        handState  = hand.className.indexOf(className) === -1;
-
-    if (vheight < ev.height || vwidth < ev.width) {
-      enableHand = true;
-    }
-
-    if (enableHand && !handState) {
-      hand.className = hand.className.replace(className, '');
-    } else if (!enableHand && handState) {
-      hand.className += className;
-    }
-
-    if (!enableHand && app.tool && app.tool._id === 'hand' && 'prevTool' in 
-        app.tool) {
-      app.toolActivate(app.tool.prevTool);
-    }
+    resizeHandle.style.top  = ev.height + 'px';
+    resizeHandle.style.left = ev.width  + 'px';
   };
 
   /**
    * The <code>imageZoom</code> application event handler. The GUI input element 
    * which displays the image zoom level is updated to display the new value.
    *
+   * @private
    * @param {pwlib.appEvent.imageZoom} ev The application event object.
    */
   this.imageZoom = function (ev) {
@@ -1477,6 +1519,7 @@ pwlib.gui = function (app) {
    * ensures the GUI input elements stay up-to-date when some PaintWeb 
    * configuration is modified.
    *
+   * @private
    * @param {pwlib.appEvent.configChange} ev The application event object.
    */
   this.configChangeHandler = function (ev) {
@@ -1553,6 +1596,7 @@ pwlib.gui = function (app) {
    *
    * <p>This method dispatches the {@link pwlib.appEvent.configChange} event.
    *
+   * @private
    * @param {Event} ev The DOM Event object.
    */
   this.configValueClick = function (ev) {
@@ -1597,6 +1641,8 @@ pwlib.gui = function (app) {
    * PaintWeb configuration properties.
    *
    * <p>This method dispatches the {@link pwlib.appEvent.configChange} event.
+   *
+   * @private
    */
   this.configInputChange = function () {
     if (!this._pwConfigProperty) {
@@ -1633,6 +1679,7 @@ pwlib.gui = function (app) {
    *
    * <p>This method dispatches the {@link pwlib.appEvent.configChange} event.
    *
+   * @private
    * @param {Event} ev The DOM Event object.
    */
   this.configToggleClick = function (ev) {
@@ -1661,6 +1708,7 @@ pwlib.gui = function (app) {
    * The <code>shadowAllow</code> application event handler. This method 
    * shows/hide the shadow tab when shadows are allowed/disallowed.
    *
+   * @private
    * @param {pwlib.appEvent.shadowAllow} ev The application event object.
    */
   this.shadowAllow = function (ev) {
@@ -1678,6 +1726,7 @@ pwlib.gui = function (app) {
    * associated to the <code>clipboardPaste</code> command is updated to be 
    * disabled/enabled depending on the event.
    *
+   * @private
    * @param {pwlib.appEvent.clipboardUpdate} ev The application event object.
    */
   this.clipboardUpdate = function (ev) {
@@ -1708,6 +1757,7 @@ pwlib.gui = function (app) {
    * <code>selectionCopy</code> commands are updated to be disabled/enabled 
    * depending on the event.
    *
+   * @private
    * @param {pwlib.appEvent.selectionChange} ev The application event object.
    */
   this.selectionChange = function (ev) {
@@ -1782,6 +1832,104 @@ pwlib.gui = function (app) {
 
     while(placeholder.hasChildNodes()) {
       placeholder.removeChild(placeholder.firstChild);
+    }
+  };
+
+  /**
+   * Resize the PaintWeb graphical user interface.
+   *
+   * <p>This method dispatches the {@link pwlib.appEvent.configChange} event for 
+   * the "viewportWidth" and "viewportHeight" configuration properties. Both 
+   * properties are updated to hold the new values you give.
+   *
+   * <p>Once the GUI is resized, the {@link pwlib.appEvent.viewportSizeChange} 
+   * event is also dispatched.
+   *
+   * @param {String} width The new width you want. Make sure the value is a CSS 
+   * length, like "50%", "450px" or "30em".
+   *
+   * @param {String} height The new height you want.
+   */
+  this.resizeTo = function (width, height) {
+    if (!width || !height) {
+      return;
+    }
+
+    var width_old  = config.viewportWidth,
+        height_old = config.viewportHeight;
+
+    config.viewportWidth  = width;
+    config.viewportHeight = height;
+
+    app.events.dispatch(new appEvent.configChange(width, width_old, 
+          'viewportWidth', '', config));
+
+    app.events.dispatch(new appEvent.configChange(height, height_old, 
+          'viewportHeight', '', config));
+
+    config.guiPlaceholder.style.width = config.viewportWidth;
+    this.elems.viewport.style.height  = config.viewportHeight;
+
+    app.events.dispatch(new appEvent.viewportSizeChange(width, height));
+  };
+
+  /**
+   * The state change event handler for the Hand tool. This function 
+   * enables/disables the Hand tool by checking if the current image fits into 
+   * the viewport or not.
+   *
+   * <p>This function is invoked when one of the following application events is  
+   * dispatched: <code>viewportSizeChange</code>, <code>canvasSizeChange</code> 
+   * or <code>appInit</code.
+   *
+   * @private
+   * @param 
+   * {pwlib.appEvent.viewportSizeChange|pwlib.appEvent.canvasSizeChange|pwlib.appEvent.appInit} 
+   * [ev] The application event object.
+   */
+  this.toolHandStateChange = function (ev) {
+    var cwidth    = 0,
+        cheight   = 0,
+        className = ' ' + _self.classPrefix + 'disabled',
+        hand      = _self.tools.hand,
+        viewport  = _self.elems.viewport;
+
+    if (!hand) {
+      return;
+    }
+
+    if (ev.type === 'canvasSizeChange') {
+      cwidth  = ev.width;
+      cheight = ev.height;
+    } else {
+      var containerStyle = _self.elems.canvasContainer.style;
+      cwidth  = parseInt(containerStyle.width);
+      cheight = parseInt(containerStyle.height);
+    }
+
+    // FIXME: it should be noted that when PaintWeb loads, the entire GUI is 
+    // hidden, and win.getComputedStyle() style tells that the viewport 
+    // width/height is 0.
+    cs = win.getComputedStyle(viewport, null);
+
+    var vwidth     = parseInt(cs.width),
+        vheight    = parseInt(cs.height),
+        enableHand = false,
+        handState  = hand.className.indexOf(className) === -1;
+
+    if (vheight < cheight || vwidth < cwidth) {
+      enableHand = true;
+    }
+
+    if (enableHand && !handState) {
+      hand.className = hand.className.replace(className, '');
+    } else if (!enableHand && handState) {
+      hand.className += className;
+    }
+
+    if (!enableHand && app.tool && app.tool._id === 'hand' && 'prevTool' in 
+        app.tool) {
+      app.toolActivate(app.tool.prevTool, ev);
     }
   };
 };
@@ -2244,12 +2392,13 @@ pwlib.appEvent.guiFloatingPanelStateChange = function (state) {
  * element.
  */
 pwlib.guiResizer = function (gui, resizeHandle, container) {
-  var _self          = this,
-      cStyle         = container.style,
-      doc            = gui.app.doc,
-      guiResizeEnd   = pwlib.appEvent.guiResizeEnd,
-      guiResizeStart = pwlib.appEvent.guiResizeStart,
-      win            = gui.app.win;
+  var _self              = this,
+      cStyle             = container.style,
+      doc                = gui.app.doc,
+      guiResizeEnd       = pwlib.appEvent.guiResizeEnd,
+      guiResizeMouseMove = pwlib.appEvent.guiResizeMouseMove,
+      guiResizeStart     = pwlib.appEvent.guiResizeStart,
+      win                = gui.app.win;
 
   /**
    * Custom application events interface.
@@ -2278,8 +2427,20 @@ pwlib.guiResizer = function (gui, resizeHandle, container) {
   this.viewport = null;
 
   /**
-   * Tells if the user resizing the container now.
+   * Tells if the GUI resizer should dispatch the {@link 
+   * pwlib.appEvent.guiResizeMouseMove} application event when the user moves 
+   * the mouse during the resize operation.
+   *
    * @type Boolean
+   * @default false
+   */
+  this.dispatchMouseMove = false;
+
+  /**
+   * Tells if the user resizing the container now.
+   *
+   * @type Boolean
+   * @default false
    */
   this.resizing = false;
 
@@ -2384,6 +2545,11 @@ pwlib.guiResizer = function (gui, resizeHandle, container) {
 
     cStyle.width  = w + 'px';
     cStyle.height = h + 'px';
+
+    if (_self.dispatchMouseMove) {
+      _self.events.dispatch(new guiResizeMouseMove(ev.clientX, ev.clientY, w, 
+            h));
+    }
   };
 
   /**
@@ -2484,6 +2650,44 @@ pwlib.appEvent.guiResizeEnd = function (x, y, width, height) {
   this.height = height;
 
   pwlib.appEvent.call(this, 'guiResizeEnd', true);
+};
+
+/**
+ * @class The GUI element resize mouse move event. This event is not cancelable.
+ *
+ * @augments pwlib.appEvent
+ *
+ * @param {Number} x The mouse location on the x-axis.
+ * @param {Number} y The mouse location on the y-axis.
+ * @param {Number} width The element width.
+ * @param {Number} height The element height.
+ */
+pwlib.appEvent.guiResizeMouseMove = function (x, y, width, height) {
+  /**
+   * The mouse location on the x-axis.
+   * @type Number
+   */
+  this.x = x;
+
+  /**
+   * The mouse location on the y-axis.
+   * @type Number
+   */
+  this.y = y;
+
+  /**
+   * The element width.
+   * @type Number
+   */
+  this.width = width;
+
+  /**
+   * The element height.
+   * @type Number
+   */
+  this.height = height;
+
+  pwlib.appEvent.call(this, 'guiResizeMouseMove');
 };
 
 /**

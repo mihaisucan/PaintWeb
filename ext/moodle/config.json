@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-07-28 20:03:39 +0300 $
+  // $Date: 2009-08-13 20:22:44 +0300 $
 
   /**
    * The list of available languages. This associated language IDs to their 
@@ -76,24 +76,26 @@
   "guiScript": "script.js",
 
   /**
-   * Viewport width.
+   * The image viewport width. Make sure the value is a CSS length, like "50%", 
+   * "450px" or "30em".
    *
    * <p>Note: the GUI implementation might ignore this value.
    *
-   * @type Number
-   * @default -1
+   * @type String
+   * @default "100%"
    */
-  "viewportWidth": -1,
+  "viewportWidth": "100%",
 
   /**
-   * Viewport height.
+   * The image viewport height. Make sure the value is a CSS length, like "50%", 
+   * "450px" or "30em".
    *
    * <p>Note: the GUI implementation might ignore this value.
    *
-   * @type Number
-   * @default 400
+   * @type String
+   * @default "400px"
    */
-  "viewportHeight": 400,
+  "viewportHeight": "400px",
 
   /**
    * Image save quality for the JPEG format.
