@@ -1,0 +1,26 @@
+Copyright (C) 2009 Mihai Şucan
+
+$URL: http://code.google.com/p/paintweb $
+$Date: 2009-08-14 13:03:31 +0300 $
+
+This folder holds scripts used for packaging PaintWeb.
+
+css_images.php modifies CSS files to include the images they reference. Images 
+are inlined using data URLs.
+
+jsdoc invokes the jsdoc-toolkit script. This is used by the Makefile to generate 
+the API reference.
+
+json_encode.php simply JSON-encodes any input.
+
+xhtml_minify.php does a bit of "minification" for the interface layout XHTML 
+file.
+
+yuicompressor invokes the yuicompressor with correct settings for PaintWeb 
+packaging.
+
+
+--
+vim:set spell spl=en fenc=utf-8 ff=unix: 
+
+

@@ -1,9 +1,10 @@
 Copyright (C) 2009 Mihai Şucan
 
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-07-30 22:34:08 +0300 $
+$Date: 2009-08-14 13:18:18 +0300 $
 
-This folder holds scripts used for integration PaintWeb into Moodle.
+This folder holds scripts used for integration PaintWeb into Moodle 1.9 and 
+Moodle 2.0.
 
 === Files ===
 
@@ -15,12 +16,16 @@ Moodle PHP language files.
 gen_paintweblang.php - allows you to convert Moodle PHP language files to 
 PaintWeb JSON language files.
 
-imagesave.php - implements the image save operation of PaintWeb, using the 
-Moodle API.
+imagesave19.php - implements the image save operation of PaintWeb, for Moodle 
+1.9.
 
-imageview.php - implements an image file serving mechanism. Images saved are 
-stored in the Moodle data dir which is not accessible from the browser, thus 
-this script is needed to allow users to view such images from the data dir.
+imagesave20.php - implements the image save operation of PaintWeb, for Moodle 
+2.0, using the new File API
+
+imageview19.php - implements an image file serving mechanism for Moodle 1.9.  
+Images saved are stored in the Moodle data dir which is not accessible from the 
+browser, thus this script is needed to allow users to view such images from the 
+data dir.
 
 lang.json.php - the JSON language file loaded by PaintWeb in Moodle. This is 
 a PHP script which generates the JSON dynamically based on the Moodle PHP 
@@ -28,9 +33,14 @@ language files.
 
 moodle19-paintweb.patch - the patch you need to apply to Moodle 1.9 to get 
 PaintWeb working. This is a patch you can apply once you have Moodle 1.9 and 
-TinyMCE 3.
+TinyMCE 3. This holds the differences *only* for the Moodle core files.
 
-=== Usage ===
+moodle20-paintweb.patch - the patch you need to apply to Moodle 2.0 to get 
+PaintWeb working. This is a patch you can apply once you have Moodle 2.0. This 
+holds the differences *only* for the Moodle core files.
+
+
+=== Usage in Moodle 1.9 ===
 
 If you have no experience with Git, here's what you need to do:
 
@@ -39,12 +49,25 @@ If you have no experience with Git, here's what you need to do:
   cd ~/src/moodle
   git checkout -b mdl19-paintweb origin/mdl19-paintweb
 
-You need to add the following in your Moodle configuration file (config.php):
+You need to add the following in your Moodle 1.9 configuration file 
+(config.php):
 
   $CFG->defaulthtmleditor = 'tinymce';
   $CFG->tinymcePaintWeb = true;
 # The PaintWeb folder used for storing images inside the Moodle data folder.
   $CFG->paintwebImagesFolder = 'paintweb-images';
+
+
+=== Usage in Moodle 2.0 ===
+
+If you have no experience with Git, here's what you need to do:
+
+# Get the Moodle 2.0 code with PaintWeb integrated:
+  git clone git://repo.or.cz/moodle/mihaisucan.git ~/src/moodle
+  cd ~/src/moodle
+  git checkout -b mdl20-paintweb origin/mdl20-paintweb
+
+There's nothing to configure in your config.php. PaintWeb is ready to use.
 
 
 Good luck!

@@ -1,0 +1,135 @@
+diff --git a/lang/en_utf8/editor_tinymce.php b/lang/en_utf8/editor_tinymce.php
+index 2748455..9773efd 100644
+--- a/lang/en_utf8/editor_tinymce.php
++++ b/lang/en_utf8/editor_tinymce.php
+@@ -756,3 +756,22 @@ $string['xhtmlxtras_dlg:title_acronym_element'] = 'Acronym Element';
+ $string['xhtmlxtras_dlg:title_cite_element'] = 'Citation Element';
+ $string['xhtmlxtras_dlg:title_del_element'] = 'Deletion Element';
+ $string['xhtmlxtras_dlg:title_ins_element'] = 'Insertion Element';
++$string['paintweb:toolbarButton'] = 'Edit the selected image in PaintWeb. If no image is selected, then you can create a new drawing.';
++$string['paintweb:overlayButton'] = 'Edit';
++$string['paintweb:contextMenuEdit'] = 'Edit the image in PaintWeb';
++$string['paintweb:overlayLoading'] = 'PaintWeb is loading...';
++$string['paintweb:statusImageEditing'] = 'You are editing an image from TinyMCE.';
++$string['paintweb:statusSavingImage'] = 'Saving image changes...';
++$string['paintweb:statusImageSaved'] = 'Image save completed successfully!';
++$string['paintweb:statusImageSaveFailed'] = 'Image save failed!';
++$string['paintweb:imageSaveButton'] = 'Save';
++$string['paintweb:imageSaveButtonTitle'] = 'Save the image and return to TinyMCE.';
++$string['paintweb:cancelButton'] = 'Cancel';
++$string['paintweb:cancelButtonTitle'] = 'Cancel image edits and return to TinyMCE.';
++$string['paintweb_dlg:dlg_title'] = 'Create a new image';
++$string['paintweb_dlg:widthLabel'] = 'Width: ';
++$string['paintweb_dlg:heightLabel'] = 'Height: ';
++$string['paintweb_dlg:bgrColorLabel'] = 'Background color: ';
++$string['paintweb_dlg:imgTitleLabel'] = 'Title: ';
++$string['paintweb_dlg:altTextLabel'] = 'Alternate text: ';
++$string['paintweb_dlg:altTextTitle'] = 'This text is displayed when the image cannot render.';
+diff --git a/lib/editor/tinymce/extra/tools/update_lang_files.php b/lib/editor/tinymce/extra/tools/update_lang_files.php
+index 692f05e..f58cf38 100644
+--- a/lib/editor/tinymce/extra/tools/update_lang_files.php
++++ b/lib/editor/tinymce/extra/tools/update_lang_files.php
+@@ -42,7 +42,7 @@ $langconversion = array(
+     'zh_tw' => 'zh',
+ );
+ 
+-$targetlangdir = "$CFG->dirroot/../lang"; // change if needed
++$targetlangdir = "$CFG->dirroot/lang"; // change if needed
+ $tempdir       = "$CFG->dirroot/lib/editor/tinymce/extra/tools/temp";
+ $enfile        = "$CFG->dirroot/lang/en_utf8/editor_tinymce.php";
+ 
+@@ -230,4 +230,4 @@ function editor_tinymce_get_all_strings($file) {
+     }
+ 
+     return $string;
+-}
+\ No newline at end of file
++}
+diff --git a/lib/editor/tinymce/lib.php b/lib/editor/tinymce/lib.php
+index b07e85c..287655e 100644
+--- a/lib/editor/tinymce/lib.php
++++ b/lib/editor/tinymce/lib.php
+@@ -95,6 +95,40 @@ class tinymce_texteditor extends texteditor {
+             $xdragmath = '';
+         }
+ 
++        // PaintWeb is enabled by default. If the developer wants, he can set 
++        // $options['plugin/paintweb'] to false to disable the plugin.
++        if (isset($options['maxfiles']) && $options['maxfiles'] != 0 &&
++            (!isset($options['plugin/paintweb']) || $options['plugin/paintweb'])) {
++
++            $paintwebcontext = get_system_context();
++            $paintwebcontext = !empty($paintwebcontext) ? $paintwebcontext->id : $context->id;
++            $paintwebplugin = 'paintweb,';
++            $paintwebbutton = 'paintwebEdit,';
++
++            $paintwebconfig = array(
++                'configFile' => '../ext/moodle/config.json',
++                'lang' => 'moodle',
++                'moodleServer' => array(
++                    'version' => $CFG->version,
++                    'release' => $CFG->release,
++                    'contextid' => $paintwebcontext
++                ),
++                'tinymce' => array(
++                    'paintwebFolder' => $CFG->httpswwwroot . '/lib/paintweb/build/',
++                    'imageSaveDataURL' => false,
++                    'imageDataURLfilter' => $CFG->httpswwwroot . '/lib/paintweb/ext/moodle/imagesave20.php',
++                    'overlayButton' => true,
++                    'dblclickHandler' => true,
++                    'contextMenuItem' => true,
++                    'pluginBar' => true
++                ),
++            );
++        } else {
++          $paintwebplugin = '';
++          $paintwebbutton = '';
++          $paintwebconfig = '';
++        }
++
+         $params = array(
+                     'mode' => "exact",
+                     'elements' => $elementid,
+@@ -111,7 +145,7 @@ class tinymce_texteditor extends texteditor {
+                     'apply_source_formatting' => true,
+                     'remove_script_host' => false,
+                     'entity_encoding' => "raw",
+-                    'plugins' => "safari,table,style,layer,advhr,advimage,advlink,emotions,inlinepopups,{$xmedia}searchreplace,paste,directionality,fullscreen,moodlenolink,{$xdragmath}nonbreaking,contextmenu,insertdatetime,save,iespell,preview,print,noneditable,visualchars,xhtmlxtras,template,pagebreak",
++                    'plugins' => "safari,table,style,layer,advhr,advimage,advlink,emotions,inlinepopups,{$xmedia}searchreplace,paste,directionality,fullscreen,moodlenolink,{$xdragmath}nonbreaking,contextmenu,{$paintwebplugin}insertdatetime,save,iespell,preview,print,noneditable,visualchars,xhtmlxtras,template,pagebreak",
+                     'theme_advanced_font_sizes' => "1,2,3,4,5,6,7",
+                     'theme_advanced_layout_manager' => "SimpleLayout",
+                     'theme_advanced_toolbar_align' => "left",
+@@ -119,7 +153,7 @@ class tinymce_texteditor extends texteditor {
+                     'theme_advanced_buttons1_add' => "|,undo,redo,|,search,replace,|,fullscreen",
+                     'theme_advanced_buttons2' => "bold,italic,underline,strikethrough,sub,sup,|,justifyleft,justifycenter,justifyright,justifyfull,|,cite,abbr,acronym",
+                     'theme_advanced_buttons2_add' => "|,selectall,cleanup,removeformat,pastetext,pasteword,|,forecolor,backcolor,|,ltr,rtl",
+-                    'theme_advanced_buttons3' => "bullist,numlist,outdent,indent,|,link,unlink,moodlenolink,anchor,|,emotions,image,{$xmedia}{$xdragmath}advhr,nonbreaking,charmap",
++                    'theme_advanced_buttons3' => "bullist,numlist,outdent,indent,|,link,unlink,moodlenolink,anchor,|,emotions,image,{$paintwebbutton}{$xmedia}{$xdragmath}advhr,nonbreaking,charmap",
+                     'theme_advanced_buttons3_add' => "|,table,insertlayer,styleprops,visualchars,|,code,preview",
+                     'theme_advanced_fonts' => "Trebuchet=Trebuchet MS,Verdana,Arial,Helvetica,sans-serif;Arial=arial,helvetica,sans-serif;Courier New=courier new,courier,monospace;Georgia=georgia,times new roman,times,serif;Tahoma=tahoma,arial,helvetica,sans-serif;Times New Roman=times new roman,times,serif;Verdana=verdana,arial,helvetica,sans-serif;Impact=impact;Wingdings=wingdings",
+                     'theme_advanced_resize_horizontal' => true,
+@@ -128,6 +162,10 @@ class tinymce_texteditor extends texteditor {
+                     'theme_advanced_statusbar_location' => "bottom",
+                   );
+ 
++        if (!empty($paintwebconfig)) {
++          $params['paintweb_config'] = $paintwebconfig;
++        }
++
+         if (empty($options['legacy'])) {
+             if (isset($options['maxfiles']) and $options['maxfiles'] != 0) {
+                 $params['file_browser_callback'] = "mce_moodlefilemanager";
+diff --git a/theme/standard/styles_layout.css b/theme/standard/styles_layout.css
+index f522f24..46fe356 100644
+--- a/theme/standard/styles_layout.css
++++ b/theme/standard/styles_layout.css
+@@ -711,9 +711,6 @@ fieldset.fdate_selector label {
+   text-align:right;
+ }
+ 
+-.mform input, .mform select {
+-  width: auto;
+-}
+ .mform .ftextarea #id_alltext {
+   width: 100%;
+ }
