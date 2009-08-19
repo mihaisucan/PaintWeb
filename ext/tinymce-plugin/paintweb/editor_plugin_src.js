@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-13 20:15:20 +0300 $
+ * $Date: 2009-08-19 20:02:09 +0300 $
  */
 
 /**
@@ -100,10 +100,10 @@ if (!window.XMLHttpRequest || !window.getComputedStyle ||
 // in Webkit (Chrome/Safari). This is a problem because PaintWeb cannot save the 
 // image once such data URL is loaded.
 var dataURLfilterNeeded = (function () {
- var ua = navigator.userAgent.toLowerCase(),
-     isOpera = window.opera || /\b(opera|presto)\b/.test(ua),
+ var ua       = navigator.userAgent.toLowerCase(),
+     isOpera  = window.opera || /\b(opera|presto)\b/.test(ua),
      isWebkit = !isOpera && /\b(applewebkit|webkit)\b/.test(ua),
-     isGecko = !isOpera && !isWebkit && /\bgecko\b/.test(ua);
+     isGecko  = !isOpera && !isWebkit && /\bgecko\b/.test(ua);
 
   if (isWebkit) {
     return true;
@@ -132,7 +132,7 @@ function paintwebLoad () {
   }
 
   var config = targetEditor.getParam('paintweb_config'),
-      src = config.tinymce.paintwebFolder + 'paintweb.js';
+      src    = config.tinymce.paintwebFolder + 'paintweb.js';
 
   tinymce.ScriptLoader.load(src, paintwebLoaded);
 };
@@ -152,12 +152,12 @@ function paintwebLoaded () {
   var config      = targetEditor.getParam('paintweb_config'),
       textarea    = targetEditor.getElement();
       pNode       = targetContainer.parentNode,
-      pwContainer = document.createElement('div');
+      pwContainer = tinymce.DOM.create('div');
 
   pNode.insertBefore(pwContainer, textarea.nextSibling);
 
   if (!PaintWeb.baseFolder) {
-    PaintWeb.baseFolder   = config.tinymce.paintwebFolder;
+    PaintWeb.baseFolder = config.tinymce.paintwebFolder;
   }
 
   config.imageLoad      = targetImage;
@@ -201,8 +201,8 @@ function paintwebInitialized (ev) {
   }
 
   pwlib = window.pwlib;
-  paintwebInstance.events.add('imageSave',          paintwebSave);
-  paintwebInstance.events.add('imageSaveResult',    paintwebSaveResult);
+  paintwebInstance.events.add('imageSave',       paintwebSave);
+  paintwebInstance.events.add('imageSaveResult', paintwebSaveResult);
 
   if (pluginBar) {
     paintwebInstance.events.add('viewportSizeChange', 
@@ -320,7 +320,7 @@ function pluginBarResetContent () {
  * @param {pwlib.appEvent.viewportSizeChange} ev The application event object.
  */
 function paintwebViewportSizeChange (ev) {
-  pluginBar.style.width = ev.width;
+  tinymce.DOM.setStyle(pluginBar, 'width', ev.width);
 };
 
 /**
@@ -354,7 +354,7 @@ function paintwebEditStart () {
   };
 
   var dataURLfilterLoaded = function () {
-    targetImage.removeEventListener('load', dataURLfilterLoaded, false);
+    tinymce.dom.Event.remove(targetImage, 'load', dataURLfilterLoaded);
     imgIsDataURL = false;
     pwStart();
   };
@@ -396,7 +396,7 @@ function paintwebEditStart () {
         }
 
         imgNewUrl = targetImage.src;
-        targetImage.addEventListener('load', dataURLfilterLoaded, false);
+        tinymce.dom.Event.add(targetImage, 'load', dataURLfilterLoaded);
         targetEditor.dom.setAttrib(targetImage, 'src', result.urlNew);
       }
     });
@@ -427,11 +427,10 @@ function paintwebNewImage (width, height, bgrColor, alt, title) {
     return;
   }
 
-  var canvas  = document.createElement('canvas'),
+  var canvas  = tinymce.DOM.create('canvas', {
+                  'width':  width,
+                  'height': height}),
       context = canvas.getContext('2d');
-
-  canvas.width  = width;
-  canvas.height = height;
 
   if (bgrColor) {
     context.fillStyle = bgrColor;
@@ -448,10 +447,10 @@ function paintwebNewImage (width, height, bgrColor, alt, title) {
   }
 
   if (alt) {
-    elem.setAttribute('alt', alt);
+    targetEditor.dom.setAttrib(elem, 'alt', alt);
   }
   if (title) {
-    elem.setAttribute('title', title);
+    targetEditor.dom.setAttrib(elem, 'title', title);
   }
   elem.src = canvas.toDataURL();
   elem.setAttribute('mce_src', elem.src);
@@ -471,9 +470,9 @@ function paintwebNewImage (width, height, bgrColor, alt, title) {
  * @param [ev] Event object.
  */
 function paintwebShow (ev) {
-  var rect = targetEditor.dom.getRect(targetEditor.getContentAreaContainer());
+  var rect = tinymce.DOM.getRect(targetEditor.getContentAreaContainer());
 
-  targetContainer.style.display = 'none';
+  tinymce.DOM.setStyle(targetContainer, 'display', 'none');
 
   // Give PaintWeb access to the TinyMCE editor instance.
   paintwebConfig.tinymceEditor = targetEditor;
@@ -725,12 +724,11 @@ tinymce.create('tinymce.plugins.paintweb', {
       ed.onRemove.add(this.edPreProcess);
       ed.onInit.add(overlayButtonCleanup);
 
-      overlayButton = document.createElement('input');
-      overlayButton.type = 'button';
-      overlayButton.className = 'paintwebOverlayButton';
-      overlayButton.value = ed.getLang('paintweb.overlayButton', 'Edit');
-
-      overlayButton.style.position = 'absolute';
+      overlayButton = tinymce.DOM.create('input', {
+          'type':  'button',
+          'class': 'paintweb_tinymce_overlayButton',
+          'style': 'position:absolute',
+          'value': ed.getLang('paintweb.overlayButton', 'Edit')});
     }
 
     // Handle the dblclick events for image elements, if the user wants it.
@@ -742,28 +740,30 @@ tinymce.create('tinymce.plugins.paintweb', {
     // This bar shows the image file name being edited, and provides two buttons 
     // for image save and for cancelling any image edits.
     if (config.tinymce.pluginBar) {
-      pluginBar = document.createElement('div');
+      pluginBar = tinymce.DOM.create('div', {
+          'class': 'paintweb_tinymce_status',
+          'style': 'display:none'});
 
-      var saveBtn   = document.createElement('input'),
-          cancelBtn = document.createElement('input'),
-          textSpan  = document.createElement('span');
+      var saveBtn  = tinymce.DOM.create('input', {
+          'type':  'button',
+          'class': 'paintweb_tinymce_save',
+          'title': ed.getLang('paintweb.imageSaveButtonTitle',
+                     'Save the image and return to TinyMCE.'),
+          'value': ed.getLang('paintweb.imageSaveButton', 'Save')});
 
-      saveBtn.type = 'button';
-      saveBtn.className = 'paintweb_tinymce_save';
-      saveBtn.title = ed.getLang('paintweb.imageSaveButtonTitle',
-          'Save the image and return to TinyMCE.');
-      saveBtn.value = ed.getLang('paintweb.imageSaveButton', 'Save');
       saveBtn.addEventListener('click', pluginSaveButton, false);
 
-      cancelBtn.type = 'button';
-      cancelBtn.className = 'paintweb_tinymce_cancel';
-      cancelBtn.title = ed.getLang('paintweb.cancelEditButtonTitle',
-          'Cancel image edits and return to TinyMCE.');
-      cancelBtn.value = ed.getLang('paintweb.cancelEditButton', 'Cancel');
+      var cancelBtn = tinymce.DOM.create('input', {
+          'type':  'button',
+          'class': 'paintweb_tinymce_cancel',
+          'title': ed.getLang('paintweb.cancelEditButtonTitle',
+                     'Cancel image edits and return to TinyMCE.'),
+          'value': ed.getLang('paintweb.cancelEditButton', 'Cancel')});
+
       cancelBtn.addEventListener('click', pluginCancelButton, false);
 
-      pluginBar.className = 'paintweb_tinymce_status';
-      pluginBar.style.display = 'none';
+      var textSpan = tinymce.DOM.create('span');
+
       pluginBar.appendChild(textSpan);
       pluginBar.appendChild(saveBtn);
       pluginBar.appendChild(cancelBtn);
@@ -856,10 +856,12 @@ tinymce.create('tinymce.plugins.paintweb', {
 
       // Add the overlay button.
       overlayButton._targetImage = n;
-      overlayButton.style.top  = (n.offsetTop  + offsetTop)  + 'px';
-      overlayButton.style.left = (n.offsetLeft + offsetLeft) + 'px';
-      overlayButton.value = ed.getLang('paintweb.overlayButton', 'Edit');
 
+      ed.dom.setStyles(overlayButton, {
+         'top':  (n.offsetTop  + offsetTop)  + 'px',
+         'left': (n.offsetLeft + offsetLeft) + 'px'});
+
+      overlayButton.value = ed.getLang('paintweb.overlayButton', 'Edit');
       pNode.insertBefore(overlayButton, sibling);
     } else if (overlayButton._targetImage) {
       overlayButton._targetImage = null;
@@ -932,10 +934,10 @@ tinymce.create('tinymce.plugins.paintweb', {
   getInfo: function () {
     return {
       longname: 'PaintWeb - online painting application',
-      author: 'Mihai Şucan',
+      author:   'Mihai Şucan',
       authorurl: 'http://www.robodesign.ro/mihai',
-      infourl: 'http://code.google.com/p/paintweb',
-      version: '0.9'
+      infourl:   'http://code.google.com/p/paintweb',
+      version:   '0.9'
     };
   }
 });

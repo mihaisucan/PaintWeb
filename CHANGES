@@ -1,3 +1,13 @@
+2009-08-19:
+===========
+
+- Switched to using a regular expression to parse the data URL, inside the 
+moodle/imagesave20.php script as suggested by Dan Poltawski. Thanks! It's 
+cleaner and nicer now.
+
+- Some code adjustments in the TinyMCE plugin - using more of the TinyMCE API, 
+  where appropriate.
+
 2009-08-13:
 ===========
 

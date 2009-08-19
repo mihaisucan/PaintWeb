@@ -18,7 +18,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-12 17:24:43 +0300 $
+ * $Date: 2009-08-19 19:06:45 +0300 $
  */
 
 // This script performs asynchronous image save in PaintWeb. This is used by the 
@@ -108,43 +108,33 @@ if (empty($imgdataurl)) {
 
 // A data URL starts like this:
 // data:[<MIME-type>][;charset="<encoding>"][;base64],<data>
+// See details at:
+// http://en.wikipedia.org/wiki/Data_URI_scheme
 
-// Here we find the comma delimiter.
-$comma = strpos($imgdataurl, ',');
-if (!$comma) {
+$mimetype = 'text/plain';
+$base64data = '';
+
+$regex = '/^data:([^;,]+);base64,(.+)$/';
+
+$matches = array();
+if (preg_match($regex, $imgdataurl, $matches)) {
+    $mimetype   = $matches[1];
+    $base64data = $matches[2];
+    $imgdataurl = null;
+} else {
     paintweb_send_result($imgurl, $imgurlnew, false,
         get_string('moodleServer:malformedDataUrl', 'paintweb'));
 }
 
-$imginfo = substr($imgdataurl, 0, $comma);
-if (empty($imginfo) || !isset($imgdataurl{($comma+2)})) {
+if (empty($base64data) || !isset($imgallowedtypes[$mimetype])) {
     paintweb_send_result($imgurl, $imgurlnew, false,
         get_string('moodleServer:malformedDataUrl', 'paintweb'));
 }
 
-// Split by ':' to find the 'data' prefix and the rest of the info.
-$imginfo = explode(':', $imginfo);
+$imgdata = base64_decode($base64data);
+$base64data = null;
 
-// The array must have exactly two elements and the second element must not be 
-// empty.
-if (count($imginfo) !== 2 || $imginfo[0] !== 'data' || empty($imginfo[1])) {
-    paintweb_send_result($imgurl, $imgurlnew, false,
-        get_string('moodleServer:malformedDataUrl', 'paintweb'));
-}
-
-// The MIME type must be given and it must be base64-encoded.
-$imginfo = explode(';', $imginfo[1]);
-
-if (count($imginfo) < 2 || !array_key_exists($imginfo[0], $imgallowedtypes) ||
-    ($imginfo[1] !== 'base64' && $imginfo[2] !== 'base64')) {
-    paintweb_send_result($imgurl, $imgurlnew, false,
-        get_string('moodleServer:malformedDataUrl', 'paintweb'));
-}
-
-$imgdata = base64_decode(substr($imgdataurl, $comma + 1));
-$imgdataurl = null;
-
-$filename = 'paintweb_' . sha1($imgdata) . '.' . $imgallowedtypes[$imginfo[0]];
+$filename = 'paintweb_' . sha1($imgdata) . '.' . $imgallowedtypes[$mimetype];
 
 // Save the file using the new File API.
 
@@ -164,6 +154,7 @@ try {
 } catch (Exception $err) {
     paintweb_send_result($imgurl, $imgurlnew, false, $err->getMessage());
 }
+$imgdata = null;
 
 $binfo = $fbrowser->get_file_info($context, $file->get_filearea(),
     $file->get_itemid(), $file->get_filepath(), $file->get_filename());

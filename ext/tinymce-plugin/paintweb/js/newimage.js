@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-30 21:08:19 +0300 $
+ * $Date: 2009-08-19 20:09:54 +0300 $
  */
 
 /**
@@ -37,7 +37,7 @@ tinyMCEPopup.onInit.add(function() {
       altText      = document.getElementById('altText'),
       btnCancel    = document.getElementById('cancel');
 
-  newImageForm.addEventListener('submit', function (ev) {
+  newImageForm.onsubmit = function (ev) {
     var fn = tinyMCEPopup.getWindowArg('newImageFn');
 
     if (fn) {
@@ -46,7 +46,7 @@ tinyMCEPopup.onInit.add(function() {
     }
 
     tinyMCEPopup.close();
-  }, false);
+  };
 
   imgBgrColor.parentNode.lastChild.innerHTML 
     = ' ' + getColorPickerHTML('imgBgrColor_pick',
@@ -57,8 +57,7 @@ tinyMCEPopup.onInit.add(function() {
 
   updateColor('imgBgrColor_pick', 'imgBgrColor');
 
-  btnCancel.addEventListener('click', function () { tinyMCEPopup.close(); }, 
-      false);
+  btnCancel.onclick = function () { tinyMCEPopup.close(); };
 });
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
