@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-19 20:02:09 +0300 $
+ * $Date: 2009-08-20 20:03:26 +0300 $
  */
 
 /**
@@ -44,7 +44,7 @@ var paintwebInstance = null;
 var pluginBar = null;
 
 // The delay used for displaying temporary messages in the plugin bar.
-var pluginBarDelay = 5000; // 5 seconds
+var pluginBarDelay = 10000; // 10 seconds
 
 // The timeout ID used for the plugin bar when a temporary message is displayed.
 var pluginBarTimeout = null;
@@ -249,7 +249,12 @@ function paintwebSave (ev) {
     paintwebInstance.events.dispatch(new pwlib.appEvent.imageSaveResult(true, 
           url, ev.dataURL));
 
-  } else if (pluginBar && !pluginBarTimeout) {
+  } else if (pluginBar) {
+    if (pluginBarTimeout) {
+      clearTimeout(pluginBarTimeout);
+      pluginBarTimeout = null;
+    }
+
     pluginBar.firstChild.innerHTML 
       = targetEditor.getLang('paintweb.statusSavingImage', 'Saving image...');
   }
@@ -278,6 +283,10 @@ function paintwebSaveResult (ev) {
             'Image save failed!');
     }
 
+    if (pluginBarTimeout) {
+      clearTimeout(pluginBarTimeout);
+    }
+
     pluginBarTimeout = setTimeout(pluginBarResetContent, pluginBarDelay);
   }
 
@@ -301,7 +310,7 @@ function paintwebSaveResult (ev) {
  * Reset the text content of the plugin bar.
  */
 function pluginBarResetContent () {
-  if (!pluginBar || !targetImage) {
+  if (!pluginBar) {
     return;
   }
 
@@ -309,7 +318,7 @@ function pluginBarResetContent () {
 
   pluginBar.firstChild.innerHTML 
     = targetEditor.getLang('paintweb.statusImageEditing',
-        'You are editing {file}.');
+        'You are editing an image from TinyMCE.');
 };
 
 /**
@@ -470,7 +479,10 @@ function paintwebNewImage (width, height, bgrColor, alt, title) {
  * @param [ev] Event object.
  */
 function paintwebShow (ev) {
-  var rect = tinymce.DOM.getRect(targetEditor.getContentAreaContainer());
+  var rect = null;
+  if (paintwebConfig.tinymce.syncViewportSize) {
+    rect = tinymce.DOM.getRect(targetEditor.getContentAreaContainer());
+  }
 
   tinymce.DOM.setStyle(targetContainer, 'display', 'none');
 
@@ -716,6 +728,11 @@ tinymce.create('tinymce.plugins.paintweb', {
       ed.plugins.contextmenu.onContextMenu.add(this.pluginContextMenu);
     }
 
+    // Listen for the form submission event. This is needed when the user is 
+    // inside PaintWeb, editing an image. The user is warned that image changed 
+    // and it's not saved, and the form submission event is cancelled.
+    ed.onSubmit.add(this.edSubmit);
+
     // Create the overlay button element if the configuration allows so.
     if (config.tinymce.overlayButton) {
       ed.onClick.add(this.edClick);
@@ -903,6 +920,56 @@ tinymce.create('tinymce.plugins.paintweb', {
       ev.target.focus();
 
       paintwebEditStart();
+    }
+  },
+
+  /**
+   * The <code>submit</code> event handler for the form associated to the 
+   * textarea of the current TinyMCE editor instance. This method checks if the 
+   * current PaintWeb instance is open and if the user has made changes to the 
+   * image. If yes, then the form submission is cancelled and the user is warned 
+   * about losing unsaved changes.
+   *
+   * @param {tinymce.Editor} ed The TinyMCE editor instance.
+   * @param {Event} ev The DOM Event object.
+   */
+  edSubmit: function (ed, ev) {
+    // Check if PaintWeb is active.
+    if (!targetImage || !paintwebInstance) {
+      return;
+    }
+
+    // Check if the image has been modified.
+    if (!paintwebInstance.image.modified) {
+      // If not, then hide PaintWeb so we can update the target image.
+      paintwebHide();
+      // Save the textarea content once again.
+      ed.save();
+      return;
+    }
+
+    // The image is not saved, thus we prevent form submission.
+    ev.preventDefault();
+
+    if (typeof paintwebConfig.tinymce.onSubmitUnsaved === 'function') {
+      paintwebConfig.tinymce.onSubmitUnsaved(ev, ed, paintwebInstance);
+
+    } else {
+      var str = ed.getLang('paintweb.submitUnsaved',
+            'The image is not saved! You cannot submit the form. Please save ' +
+            'the image changes, or cancel image editing, then try again.');
+      pluginBar.firstChild.innerHTML = str;
+
+      if (pluginBarTimeout) {
+        clearTimeout(pluginBarTimeout);
+      }
+
+      pluginBarTimeout = setTimeout(pluginBarResetContent, pluginBarDelay);
+
+      // tabIndex is needed so we can focus and scroll to the plugin bar.
+      pluginBar.tabIndex = 5;
+      pluginBar.focus();
+      pluginBar.tabIndex = -1;
     }
   },
 

@@ -11,6 +11,7 @@ tinyMCE.addI18n('en.paintweb',{
   imageSaveButtonTitle: 'Save the image and return to TinyMCE.',
   cancelButton: 'Cancel',
   cancelButtonTitle: 'Cancel image edits and return to TinyMCE.',
+  submitUnsaved: 'The image is not saved! You cannot submit the form. Please save the image changes, or cancel image editing, then try again.',
   dlg_delta_width: 0,
   dlg_delta_height: 0
 });

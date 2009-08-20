@@ -1,3 +1,25 @@
+2009-08-20:
+===========
+
+- Added a new option to the TinyMCE plugin: syncViewportSize. This allows you to 
+enable/disable the PaintWeb image viewport size synchronization between TinyMCE 
+and PaintWeb.
+
+- Now the TinyMCE plugin properly handles form submission while the user is 
+editing an image. If the image has changes, then form submission is cancelled.  
+The user is informed that the form submission is cancelled because the image 
+changes are not saved.
+
+Thanks to Dan Poltawski for this suggestion!
+
+- Added a new option to the TinyMCE plugin: onSubmitUnsaved. This allows you to 
+provide an event handler function which is invoked *only* when the user attempts 
+to perform form submission while editing an image which has unsaved changes.  
+Using this option you can provide custom user feedback for when the form 
+submission "fails" due to the aforementioned reasons. Your event handler is 
+passed three paramaters: the DOM event object (form submit), a reference to the 
+TinyMCE editor instance, and a reference to the PaintWeb instance.
+
 2009-08-19:
 ===========
 

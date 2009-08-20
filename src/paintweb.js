@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-04 19:46:19 +0300 $
+ * $Date: 2009-08-20 17:51:19 +0300 $
  */
 
 /**
@@ -169,7 +169,7 @@ function PaintWeb (win, doc) {
   this.win = win;
 
   /**
-   * Holds image information: width and height.
+   * Holds image information: width, height, zoom and more.
    *
    * @type Object
    */
@@ -205,7 +205,15 @@ function PaintWeb (win, doc) {
      * @type Number
      * @default 1
      */
-    canvasScale: 1
+    canvasScale: 1,
+
+    /**
+     * Tells if the current image has been modified since the initial load.
+     *
+     * @type Boolean
+     * @default false
+     */
+    modified: false
   };
 
   /**
@@ -1003,6 +1011,7 @@ function PaintWeb (win, doc) {
 
     // The initial blank state of the image
     this.historyAdd();
+    this.image.modified = false;
 
     // The global keyboard events handler implements everything needed for 
     // switching between tools and for accessing any other functionality of the 
@@ -1015,7 +1024,8 @@ function PaintWeb (win, doc) {
     this.updateCanvasScaling();
     this.win.addEventListener('resize', this.updateCanvasScaling, false);
 
-    this.events.add('configChange', this.configChangeHandler);
+    this.events.add('configChange',    this.configChangeHandler);
+    this.events.add('imageSaveResult', this.imageSaveResultHandler);
 
     this.initialized = PaintWeb.INIT_DONE;
 
@@ -1889,6 +1899,8 @@ function PaintWeb (win, doc) {
     }
     history.pos = history.states.length;
 
+    this.image.modified = true;
+
     this.events.dispatch(new appEvent.historyUpdate(history.pos, prevPos, 
           history.pos));
 
@@ -2453,6 +2465,7 @@ function PaintWeb (win, doc) {
     }
 
     this.historyAdd();
+    image.modified = false;
 
     return result;
   };
@@ -2587,6 +2600,23 @@ function PaintWeb (win, doc) {
     _self.events.dispatch(new appEvent.imageSaveResult(true));
 
     return true;
+  };
+
+  /**
+   * The <code>imageSaveResult</code> application event handler. This method 
+   * PaintWeb-related stuff: for example, the {@link PaintWeb.image.modified} 
+   * flag is turned to false.
+   *
+   * @private
+   *
+   * @param {pwlib.appEvent.imageSaveResult} ev The application event object.
+   *
+   * @see {PaintWeb#imageSave} The method which allows you to save the image.
+   */
+  this.imageSaveResultHandler = function (ev) {
+    if (ev.successful) {
+      _self.image.modified = false;
+    }
   };
 
   /**

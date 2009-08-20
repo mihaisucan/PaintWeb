@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-13 20:19:48 +0300 $
+ * $Date: 2009-08-20 19:16:32 +0300 $
  */
 
 .paintweb_placeholder {
@@ -1040,16 +1040,20 @@
 
 .paintweb_tinymce_status {
   background: #ffffc5;
-  border: 1px solid #9e9e9e;
   border-bottom: 0;
+  border: 1px solid #9e9e9e;
   color: #000;
   display: block !important;
-  font: 14px/2.3em sans-serif;
+  font: 14px sans-serif;
   min-width: 535px;
   position: relative
 }
 
-.paintweb_tinymce_status span { padding: 0 6px }
+.paintweb_tinymce_status span {
+  display: block;
+  margin-right: 9em;
+  padding: 8px
+}
 
 .paintweb_tinymce_save, .paintweb_tinymce_cancel {
   cursor: pointer;
@@ -1058,7 +1062,6 @@
 }
 
 .paintweb_tinymce_cancel { right: 5px }
-
 .paintweb_tinymce_save { right: 6em }
 
 /* vim:set fo=wan1croql tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix: */
