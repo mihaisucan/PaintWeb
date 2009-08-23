@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-08-13 20:22:44 +0300 $
+  // $Date: 2009-08-23 16:28:45 +0300 $
 
   /**
    * The list of available languages. This associated language IDs to their 
@@ -645,7 +645,7 @@
 
     // Miscellaneous commands.
     "X":  { "command": "swapFillStroke" },
-    "F1": { "command": "about" },
+    "F1": { "command": "about" }
   },
 
   /**

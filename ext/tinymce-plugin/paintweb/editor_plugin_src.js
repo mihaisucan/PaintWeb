@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-20 20:03:26 +0300 $
+ * $Date: 2009-08-23 16:30:16 +0300 $
  */
 
 /**
@@ -951,10 +951,7 @@ tinymce.create('tinymce.plugins.paintweb', {
     // The image is not saved, thus we prevent form submission.
     ev.preventDefault();
 
-    if (typeof paintwebConfig.tinymce.onSubmitUnsaved === 'function') {
-      paintwebConfig.tinymce.onSubmitUnsaved(ev, ed, paintwebInstance);
-
-    } else {
+    if (pluginBar) {
       var str = ed.getLang('paintweb.submitUnsaved',
             'The image is not saved! You cannot submit the form. Please save ' +
             'the image changes, or cancel image editing, then try again.');
@@ -970,6 +967,10 @@ tinymce.create('tinymce.plugins.paintweb', {
       pluginBar.tabIndex = 5;
       pluginBar.focus();
       pluginBar.tabIndex = -1;
+    }
+
+    if (typeof paintwebConfig.tinymce.onSubmitUnsaved === 'function') {
+      paintwebConfig.tinymce.onSubmitUnsaved(ev, ed, paintwebInstance);
     }
   },
 

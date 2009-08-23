@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-08-13 19:04:48 +0300 $
+  // $Date: 2009-08-23 16:53:28 +0300 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -244,7 +244,8 @@
     "xhrRequestFailed": "The image save request failed.",
     "jsonParseFailed": "Parsing the JSON result from the server failed!",
     "imageSaveFailed": "The image save operation failed.",
-    "urlMismatch": "Image address mismatch!\nThe current image is {url}.\nThe server replied a successful save for {urlServer}."
+    "urlMismatch": "Image address mismatch!\nThe current image is {url}.\nThe server replied a successful save for {urlServer}.",
+    "errorSubmitUnsaved": "This image is not saved!"
   },
   "moodleServer": {
     "permissionDenied": "Permission denied.",

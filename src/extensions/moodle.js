@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-12 17:51:51 +0300 $
+ * $Date: 2009-08-23 17:36:33 +0300 $
  */
 
 /**
@@ -42,7 +42,8 @@ pwlib.extensions.moodle = function (app) {
       gui           = app.gui,
       lang          = app.lang.moodle,
       moodleServer  = config.moodleServer,
-      tinymceEditor = null;
+      tinymceEditor = null,
+      qfErrorShown  = false;
 
   // Holds information related to Moodle.
   var moodleInfo = {
@@ -71,7 +72,8 @@ pwlib.extensions.moodle = function (app) {
   };
 
   /**
-   * The <code>extensionRegister</code> event handler.
+   * The <code>extensionRegister</code> event handler. Setup event listeners, 
+   * determine Moodle version, and more.
    *
    * @returns {Boolean} True if the extension initialized successfully, or false 
    * if not.
@@ -89,7 +91,44 @@ pwlib.extensions.moodle = function (app) {
       }
     }
 
+    if (moodleInfo.release >= 2 && typeof window.qf_errorHandler === 'function' 
+        && config.tinymce && !config.tinymce.onSubmitUnsaved) {
+      config.tinymce.onSubmitUnsaved = this.onSubmitUnsaved;
+    }
+
     return true;
+  };
+
+  /**
+   * The <code>submit</code> event handler for the form to which the PaintWeb 
+   * instance is attached to. This method is invoked by the TinyMCE plugin when 
+   * the form is submitted while the user edits an image with unsaved changes.
+   * @private
+   */
+  this.onSubmitUnsaved = function () {
+    var tmce           = config.tinymceEditor,
+        textarea       = tmce ? tmce.getElement() : null,
+        guiPlaceholder = config.guiPlaceholder,
+        prevSibling    = guiPlaceholder.previousSibling;
+
+    if (tmce && textarea && window.qf_errorHandler) {
+      try {
+        qf_errorHandler(textarea, "\n - " + lang.errorSubmitUnsaved);
+      } catch (err) {
+        return;
+      }
+
+      qfErrorShown = true;
+
+      // Due to the styling of the error shown by Moodle, PaintWeb must have 
+      // clear:right.
+      if (prevSibling && prevSibling.className && 
+          prevSibling.className.indexOf('paintweb_tinymce_status') !== -1) {
+        prevSibling.style.clear = 'right';
+      } else {
+        guiPlaceholder.style.clear = 'right';
+      }
+    }
   };
 
   /**
@@ -226,6 +265,8 @@ pwlib.extensions.moodle = function (app) {
       elem.style.display = 'none';
     }
 
+    qfErrorShown = false;
+
     // For Moodle 2.0 we must determine the draft item ID in order to properly 
     // perform the image save operation into the current draft area.
     if (moodleInfo.release < 2) {
@@ -240,15 +281,24 @@ pwlib.extensions.moodle = function (app) {
         textarea = tmce ? tmce.getElement() : null,
         frm      = textarea ? textarea.form : null;
 
-    if (!textarea || !textarea.name || !frm) {
+    if (!tmce || !textarea || !textarea.name || !frm) {
       return;
     }
 
-    var tname = textarea.name.replace(/\[text\]$/, ''),
-        draftitemid = tname ? frm.elements.namedItem(tname + '[itemid]') : null;
+    var fieldname = textarea.name.replace(/\[text\]$/, '');
+    if (!fieldname) {
+      return;
+    }
+
+    var draftitemid = frm.elements.namedItem(fieldname + '[itemid]'),
+        format = frm.elements.namedItem(fieldname + '[format]');
 
     if (draftitemid) {
       moodleInfo.draftitemid = draftitemid.value;
+    }
+
+    if (format) {
+      format.style.display = 'none';
     }
   };
 
@@ -259,11 +309,49 @@ pwlib.extensions.moodle = function (app) {
    * @private
    */
   this.guiHide = function () {
-    var pNode = config.guiPlaceholder.parentNode,
+    var guiPlaceholder = config.guiPlaceholder,
+        prevSibling = guiPlaceholder.previousSibling;
+        pNode = guiPlaceholder.parentNode,
         elem = pNode.getElementsByClassName(moodleInfo.textareaButtons)[0];
 
     if (elem) {
       elem.style.display = '';
+    }
+
+    if (moodleInfo.release < 2) {
+      return;
+    }
+
+    var tmce     = config.tinymceEditor,
+        textarea = tmce ? tmce.getElement() : null,
+        frm      = textarea ? textarea.form : null;
+
+    if (!tmce || !textarea || !textarea.name || !frm) {
+      return;
+    }
+
+    if (qfErrorShown) {
+      if (window.qf_errorHandler) {
+        qf_errorHandler(textarea, '');
+      }
+
+      if (prevSibling && prevSibling.className && 
+          prevSibling.className.indexOf('paintweb_tinymce_status') !== -1) {
+        prevSibling.style.clear = '';
+      } else {
+        guiPlaceholder.style.clear = '';
+      }
+    }
+
+    var fieldname = textarea.name.replace(/\[text\]$/, '');
+    if (!fieldname) {
+      return;
+    }
+
+    var format = frm.elements.namedItem(fieldname + '[format]');
+
+    if (format) {
+      format.style.display = '';
     }
   };
 };

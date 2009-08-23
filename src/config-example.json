@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-08-13 19:23:55 +0300 $
+  // $Date: 2009-08-22 12:05:52 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -641,7 +641,7 @@
 
     // Miscellaneous commands.
     "X":  { "command": "swapFillStroke" },
-    "F1": { "command": "about" },
+    "F1": { "command": "about" }
   }
 
   // vim:set spell spl=en fo=wan1croql tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix ft=javascript:

@@ -1,3 +1,16 @@
+2009-08-23:
+===========
+
+- Fixed the config JSON files. Now PaintWeb loads in Safari 4, once again.  
+Thanks to Dan Poltawski for his bug report and his time for testing.
+
+- The Moodle extension now displays a quickform validation error when the user 
+tries to submit a form while editing an image with unsaved changes, as suggested 
+by Martin Langhoff.
+
+- The Moodle extension now hides the textarea[format] selection drop-down while 
+PaintWeb is visible.
+
 2009-08-20:
 ===========
 
