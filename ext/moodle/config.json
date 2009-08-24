@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-08-23 16:28:45 +0300 $
+  // $Date: 2009-08-24 21:08:14 +0300 $
 
   /**
    * The list of available languages. This associated language IDs to their 
@@ -244,8 +244,8 @@
   "toolDefault": "line",
 
   /**
-   * Tool drawing delay. Some tools delay their drawing operations for 
-   * performance reasons.
+   * Tool drawing delay (milliseconds). Some tools delay their drawing 
+   * operations for performance reasons.
    *
    * @type Number
    * @default 80

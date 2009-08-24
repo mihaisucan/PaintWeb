@@ -1,3 +1,17 @@
+2009-08-24:
+===========
+
+- Fixed the simple demo to "work" in MSIE. That is: it should nicely tell the 
+user that PaintWeb does not work. Before this update, the scripts had JS 
+"errors".
+
+- Improved the Bézier curve. When only two points were available, the line drawn 
+didn't use the correct color.
+
+- Fixed an image save bug. At times it did "err", because the first argument of 
+the imageSave() method is a DOM event object instead of a string when invoked as 
+a command from the toolbar.
+
 2009-08-23:
 ===========
 

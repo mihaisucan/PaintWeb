@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-20 17:51:19 +0300 $
+ * $Date: 2009-08-24 19:22:53 +0300 $
  */
 
 /**
@@ -1140,15 +1140,14 @@ function PaintWeb (win, doc) {
    * dispatched.
    */
   this.updateCanvasScaling = function () {
-    var res            = _self.resolution,
-        cs             = win.getComputedStyle(res.elem, null),
-        image          = _self.image;
-        bufferStyle    = _self.buffer.canvas.style,
-        layerStyle     = _self.layer.canvas.style,
-        scaleNew       = 1;
-
-    var width  = parseInt(cs.width),
-        height = parseInt(cs.height);
+    var res         = _self.resolution,
+        cs          = win.getComputedStyle(res.elem, null),
+        image       = _self.image;
+        bufferStyle = _self.buffer.canvas.style,
+        layerStyle  = _self.layer.canvas.style,
+        scaleNew    = 1,
+        width       = parseInt(cs.width),
+        height      = parseInt(cs.height);
 
     if (pwlib.browser.opera) {
       // Opera zoom level detection.
@@ -2533,7 +2532,7 @@ function PaintWeb (win, doc) {
       : 'image/png', 'gif' : 'image/gif'};
 
     // Detect the MIME type of the image currently loaded.
-    if (!type) {
+    if (typeof type !== 'string' || !type) {
       if (imageLoad && imageLoad.src && imageLoad.src.substr(0, 5) !== 'data:') {
         src = imageLoad.src;
         pos = src.indexOf('?');

@@ -7,7 +7,7 @@
     title="Marius and Mihai Şucan, ROBO Design">
 
     <!-- $URL: http://code.google.com/p/paintweb $
-         $Date: 2009-07-21 19:51:44 +0300 $ -->
+         $Date: 2009-08-24 14:14:53 +0300 $ -->
   </head>
   <body>
     <h1>PaintWeb simple demo</h1>
@@ -26,7 +26,7 @@
       href="http://moodle.org/mod/forum/discuss.php?d=126528">post it over at 
       Moodle</a>!</p>
 
-    <!--[if IE]>
+    <!--[if lte IE 8]>
     <p>Please note that this application does not work in Internet Explorer. Any 
     other modern browser should work fine. Try <a 
       href="http://www.google.com/chrome">Chrome</a>, <a 
@@ -91,7 +91,13 @@
   pw.config.configFile     = 'config-example.json';
   loadp.appendChild(document.createTextNode('Loading, please wait...'));
 
-  btn.addEventListener('click', pwStart, false);
+  if (btn.addEventListener) {
+    btn.addEventListener('click', pwStart, false);
+  } else if (btn.attachEvent) {
+    btn.attachEvent('onclick', pwStart);
+  } else {
+    btn.onclick = pwStart;
+  }
 })();
     --></script>
   </body>

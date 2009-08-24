@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-07-01 18:43:53 +0300 $
+ * $Date: 2009-08-24 13:18:05 +0300 $
  */
 
 /**
@@ -86,7 +86,7 @@ pwlib.tools.bcurve = function (app) {
       timer = null;
     }
 
-    if (points.length) {
+    if (points.length > 0) {
       context.clearRect(0, 0, image.width, image.height);
     }
 
@@ -102,7 +102,7 @@ pwlib.tools.bcurve = function (app) {
    * @param {Event} ev The DOM Event object.
    */
   this.mousedown = function (ev) {
-    if (points.length == 0) {
+    if (points.length === 0) {
       gui.statusShow('bcurveSnapping');
       points.push([mouse.x, mouse.y]);
     }
@@ -141,19 +141,17 @@ pwlib.tools.bcurve = function (app) {
 
     // Add the temporary point while the mouse button is down.
     if (mouse.buttonDown) {
-      if (shiftKey && n == 1) {
+      if (shiftKey && n === 1) {
         snapXY(points[0][0], points[0][1]);
       }
       points.push([mouse.x, mouse.y]);
       n++;
     }
 
-    var p0          = points[0],
-        p1          = points[1],
-        p2          = points[2],
-        p3          = points[3] || points[2],
-        lineWidth   = context.lineWidth,
-        strokeStyle = context.strokeStyle;
+    var p0 = points[0],
+        p1 = points[1],
+        p2 = points[2],
+        p3 = points[3] || points[2];
 
     if (mouse.buttonDown) {
       points.pop();
@@ -167,17 +165,26 @@ pwlib.tools.bcurve = function (app) {
     }
 
     // Draw the main line
-    if (n == 2) {
+    if (n === 2) {
       context.beginPath();
       context.moveTo(p0[0], p0[1]+2);
       context.lineTo(p1[0], p1[1]+2);
-      context.lineWidth = 1;
-      context.strokeStyle = '#000000';
+
+      if (config.shapeType === 'fill') {
+        var lineWidth   = context.lineWidth,
+            strokeStyle = context.strokeStyle;
+
+        context.lineWidth   = 1;
+        context.strokeStyle = context.fillStyle;
+      }
+
       context.stroke();
       context.closePath();
 
-      context.lineWidth = lineWidth;
-      context.strokeStyle = strokeStyle;
+      if (config.shapeType === 'fill') {
+        context.lineWidth   = lineWidth;
+        context.strokeStyle = strokeStyle;
+      }
 
       needsRedraw = false;
       return;
@@ -192,11 +199,11 @@ pwlib.tools.bcurve = function (app) {
       p3[0], p3[1],
       p1[0], p1[1]);
 
-    if (config.shapeType != 'stroke') {
+    if (config.shapeType !== 'stroke') {
       context.fill();
     }
 
-    if (config.shapeType != 'fill') {
+    if (config.shapeType !== 'fill') {
       context.stroke();
     }
 
@@ -216,7 +223,7 @@ pwlib.tools.bcurve = function (app) {
 
     // Allow click+mousemove+click, not only mousedown+mousemove+mouseup.
     // Do this only for the start point.
-    if (n == 1 && mouse.x == points[0][0] && mouse.y == points[0][1]) {
+    if (n === 1 && mouse.x === points[0][0] && mouse.y === points[0][1]) {
       mouse.buttonDown = true;
       return true;
     }
@@ -226,7 +233,7 @@ pwlib.tools.bcurve = function (app) {
       timer = null;
     }
 
-    if (n == 1 && ev.shiftKey) {
+    if (n === 1 && ev.shiftKey) {
       snapXY(points[0][0], points[0][1]);
     }
 
@@ -242,9 +249,9 @@ pwlib.tools.bcurve = function (app) {
     shiftKey = ev.shiftKey;
     _self.draw();
 
-    if (n == 2 || n == 3) {
+    if (n === 2 || n === 3) {
       gui.statusShow('bcurveControlPoint' + (n-1));
-    } else if (n == 4) {
+    } else if (n === 4) {
       gui.statusShow('bcurveActive');
       app.layerUpdate();
       points = [];
@@ -263,7 +270,7 @@ pwlib.tools.bcurve = function (app) {
    * if not.
    */
   this.keydown = function (ev) {
-    if (!points.length || ev.kid_ != 'Escape') {
+    if (!points.length || ev.kid_ !== 'Escape') {
       return false;
     }
 

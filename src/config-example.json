@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-08-22 12:05:52 +0300 $
+  // $Date: 2009-08-24 20:54:41 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -241,8 +241,8 @@
   "toolDefault": "line",
 
   /**
-   * Tool drawing delay. Some tools delay their drawing operations for 
-   * performance reasons.
+   * Tool drawing delay (milliseconds). Some tools delay their drawing 
+   * operations for performance reasons.
    *
    * @type Number
    * @default 80

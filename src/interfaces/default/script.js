@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-13 20:20:10 +0300 $
+ * $Date: 2009-08-24 20:28:00 +0300 $
  */
 
 /**
@@ -946,14 +946,15 @@ pwlib.gui = function (app) {
 
     // Make PaintWeb visible.
     var placeholder = config.guiPlaceholder,
-        placeholderStyle = placeholder.style,
-        cs = win.getComputedStyle(placeholder, null);
+        placeholderStyle = placeholder.style;
 
     // We do not reset the display property. We leave this for the stylesheet.
     placeholderStyle.height = '';
     placeholderStyle.overflow = '';
     placeholderStyle.position = '';
     placeholderStyle.visibility = '';
+
+    var cs = win.getComputedStyle(placeholder, null);
 
     // Do not allow the static positioning for the PaintWeb placeholder.  
     // Usually, the GUI requires absolute/relative positioning.
