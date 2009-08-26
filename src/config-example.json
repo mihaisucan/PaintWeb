@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-08-24 20:54:41 +0300 $
+  // $Date: 2009-08-26 15:11:18 +0300 $
   // TODO: try jsdoc-toolkit on this json (!)
 
   /**
@@ -150,6 +150,19 @@
    * @default "rgba(0,0,255,1)"
    */
   "strokeStyle": "rgba(0,0,255,1)",
+
+  /**
+   * Enable checkers background. This tells the user interface to render 
+   * checkers in the image background. These are visible only when parts of 
+   * the image being edited are transparent.
+   *
+   * <p>If the device you are running PaintWeb on has limited resources, 
+   * disabling the checkers background should improve the drawing performance.
+   *
+   * @type Boolean
+   * @default true
+   */
+  "checkersBackground": true,
 
   /**
    * GUI placeholder element. This element will hold all the PaintWeb interface 

@@ -1,3 +1,13 @@
+2009-08-26:
+===========
+
+- Fixed a performance regression on the OLPC XO. The new checkers background 
+used for making transparency obvious ... also causes a performance decrease. The 
+solution is to disable the background image on the OLPC XO.
+
+- Added a new configuration option to allow enabling/disabling of the checkers 
+background image.
+
 2009-08-24:
 ===========
 

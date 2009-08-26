@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-24 19:22:53 +0300 $
+ * $Date: 2009-08-26 14:40:20 +0300 $
  */
 
 /**
@@ -552,13 +552,6 @@ function PaintWeb (win, doc) {
 
     // Create the custom application events object.
     _self.events = new pwlib.appEvents(_self);
-
-    // Add the init event handler.
-    if (typeof temp_.onInit === 'function') {
-      _self.events.add('appInit', temp_.onInit);
-      delete temp_.onInit;
-    }
-
     _self.configLoad();
   };
 
@@ -590,10 +583,14 @@ function PaintWeb (win, doc) {
 
       ev = new appEvent.appInit(this.initialized, msg);
       this.events.dispatch(ev);
+    }
 
-    } else if (typeof temp_.onInit === 'function') {
-      // fake an event dispatch.
-      ev = {type: 'appInit', state: this.initialized, errorMessage: msg};
+    if (typeof temp_.onInit === 'function') {
+      if (!ev) {
+        // fake an event dispatch.
+        ev = {type: 'appInit', state: this.initialized, errorMessage: msg};
+      }
+
       temp_.onInit.call(this, ev);
     }
 
@@ -1026,6 +1023,12 @@ function PaintWeb (win, doc) {
 
     this.events.add('configChange',    this.configChangeHandler);
     this.events.add('imageSaveResult', this.imageSaveResultHandler);
+
+    // Add the init event handler.
+    if (typeof temp_.onInit === 'function') {
+      _self.events.add('appInit', temp_.onInit);
+      delete temp_.onInit;
+    }
 
     this.initialized = PaintWeb.INIT_DONE;
 

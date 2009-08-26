@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-24 20:28:00 +0300 $
+ * $Date: 2009-08-26 14:53:49 +0300 $
  */
 
 /**
@@ -313,17 +313,17 @@ pwlib.gui = function (app) {
     }
 
     // Add application-wide event listeners.
-    app.events.add('canvasSizeChange',   this.canvasSizeChange);
-    app.events.add('commandRegister',    this.commandRegister);
-    app.events.add('commandUnregister',  this.commandUnregister);
-    app.events.add('configChange',       this.configChangeHandler);
-    app.events.add('imageSizeChange',    this.imageSizeChange);
-    app.events.add('imageZoom',          this.imageZoom);
-    app.events.add('appInit',            this.appInit);
-    app.events.add('shadowAllow',        this.shadowAllow);
-    app.events.add('toolActivate',       this.toolActivate);
-    app.events.add('toolRegister',       this.toolRegister);
-    app.events.add('toolUnregister',     this.toolUnregister);
+    app.events.add('canvasSizeChange',  this.canvasSizeChange);
+    app.events.add('commandRegister',   this.commandRegister);
+    app.events.add('commandUnregister', this.commandUnregister);
+    app.events.add('configChange',      this.configChangeHandler);
+    app.events.add('imageSizeChange',   this.imageSizeChange);
+    app.events.add('imageZoom',         this.imageZoom);
+    app.events.add('appInit',           this.appInit);
+    app.events.add('shadowAllow',       this.shadowAllow);
+    app.events.add('toolActivate',      this.toolActivate);
+    app.events.add('toolRegister',      this.toolRegister);
+    app.events.add('toolUnregister',    this.toolUnregister);
 
     // Make sure the historyUndo and historyRedo command elements are 
     // synchronized with the application history state.
@@ -363,6 +363,9 @@ pwlib.gui = function (app) {
 
     containerStyle.width  = layerStyle.width;
     containerStyle.height = layerStyle.height;
+    if (!config.checkersBackground || pwlib.browser.olpcxo) {
+      containerStyle.backgroundImage = 'none';
+    }
 
     canvasContainer.appendChild(layerCanvas);
     canvasContainer.appendChild(bufferCanvas);
