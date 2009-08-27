@@ -1,3 +1,9 @@
+2009-08-27:
+===========
+
+- Fixed a Text tool drawing bug which affected Gecko-based browsers. See 
+https://bugzilla.mozilla.org/show_bug.cgi?id=478445
+
 2009-08-26:
 ===========
 

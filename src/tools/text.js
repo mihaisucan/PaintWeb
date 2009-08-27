@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-06-22 22:31:49 +0300 $
+ * $Date: 2009-08-27 20:30:01 +0300 $
  */
 
 /**
@@ -446,7 +446,9 @@ pwlib.tools.text = function (app) {
     }
 
     if (app.config.shapeType != 'fill') {
+      context.beginPath();
       context.strokeText(inputString.value, mouse.x, mouse.y);
+      context.closePath();
     }
 
     needsRedraw = false;
