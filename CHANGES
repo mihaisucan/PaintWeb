@@ -1,3 +1,13 @@
+2009-09-10:
+===========
+
+- Made some improvements to the TinyMCE plugin, with regards to the overlay 
+button.
+- Worked around a problem which caused the overlay button to no longer show up 
+in Opera 10 final. The Opera bug is related to losing image selection, due to 
+the use of queryCommandState, DOM changes, and mouse events. See Opera bug 
+DSK-265135 and TC: http://www.robodesign.ro/coding/0064/
+
 2009-08-27:
 ===========
 

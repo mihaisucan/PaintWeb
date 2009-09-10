@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-23 16:30:16 +0300 $
+ * $Date: 2009-09-10 20:53:06 +0300 $
  */
 
 /**
@@ -594,14 +594,21 @@ function paintwebEditCommand () {
     return;
   }
 
-  var n = this.selection.getNode();
+  var n = this.selection.getNode(),
+      tag = n.nodeName.toLowerCase();
+
+  if (tag !== 'img' && overlayButton && overlayButton.parentNode && 
+      overlayButton._targetImage) {
+    n = overlayButton._targetImage;
+    tag = n.nodeName.toLowerCase();
+  }
 
   targetEditor    = this;
   targetContainer = this.getContainer();
   targetImage     = n;
 
   // If PaintWeb won't start, then we create a new image.
-  if (!paintwebEditStart() && n.nodeName.toLowerCase() !== 'img') {
+  if (!paintwebEditStart() && tag !== 'img') {
     this.windowManager.open(
       {
         file:   pluginUrl + '/newimage.html',
@@ -673,13 +680,22 @@ function overlayButtonCleanup (ed) {
     return;
   }
 
-  var iframe = ed.getDoc();
+  var iframe, elems, pNode;
+
+  if (overlayButton) {
+    if (overlayButton.parentNode) {
+      pNode = overlayButton.parentNode;
+      pNode.removeChild(overlayButton);
+    }
+    overlayButton._targetImage = null;
+  }
+
+  iframe = ed.getDoc();
   if (!iframe || !iframe.getElementsByClassName) {
     return;
   }
 
-  var elems = iframe.getElementsByClassName(overlayButton.className),
-      pNode;
+  elems = iframe.getElementsByClassName(overlayButton.className);
 
   for (var i = 0; i < elems.length; i++) {
     pNode = elems[i].parentNode;
@@ -701,6 +717,8 @@ tinymce.create('tinymce.plugins.paintweb', {
    * @param {String} url Absolute URL to where the plugin is located.
    */
   init: function (ed, url) {
+    var t = this;
+
     pluginUrl = url;
 
     // Register the command so that it can be invoked by using 
@@ -715,8 +733,10 @@ tinymce.create('tinymce.plugins.paintweb', {
     });
 
     // Add a node change handler which enables the PaintWeb button in the UI 
-    // when an image is selected.
-    ed.onNodeChange.add(this.edNodeChange);
+    // when an image is selected. This method should only be invoked for the 
+    // keyup and click events.
+    ed.onKeyUp.add(this.edNodeChange);
+    ed.onClick.add(this.edNodeChange);
 
     var config = ed.getParam('paintweb_config') || {};
     if (!config.tinymce) {
@@ -735,11 +755,19 @@ tinymce.create('tinymce.plugins.paintweb', {
 
     // Create the overlay button element if the configuration allows so.
     if (config.tinymce.overlayButton) {
-      ed.onClick.add(this.edClick);
-      ed.onPreProcess.add(this.edPreProcess);
-      ed.onBeforeGetContent.add(this.edPreProcess);
-      ed.onRemove.add(this.edPreProcess);
-      ed.onInit.add(overlayButtonCleanup);
+      // Make sure the button doesn't show up in the article.
+      ed.onPreProcess.add(overlayButtonCleanup);
+      ed.onBeforeGetContent.add(overlayButtonCleanup);
+      ed.onRemove.add(overlayButtonCleanup);
+
+      ed.onInit.add(function () {
+        // Cleanup after initialization. Firefox remembers the content between 
+        // page reloads.
+        overlayButtonCleanup(ed);
+
+        ed.onKeyDown.addToTop(overlayButtonCleanup);
+        ed.onMouseDown.addToTop(t.overlayButtonMouseDown);
+      });
 
       overlayButton = tinymce.DOM.create('input', {
           'type':  'button',
@@ -788,39 +816,22 @@ tinymce.create('tinymce.plugins.paintweb', {
   },
 
   /**
-   * The <code>preProcess</code> and <code>beforeGetContent</code> event 
-   * handler. This method removes the PaintWeb overlay button.
-   *
-   * @param {tinymce.Editor} ed The editor instance that the plugin is 
-   * initialized in.
-   */
-  edPreProcess: function (ed) {
-    // Remove the overlay button.
-    if (overlayButton && overlayButton.parentNode) {
-      overlayButton._targetImage = null;
-
-      pNode = overlayButton.parentNode;
-      pNode.removeChild(overlayButton);
-    }
-
-    overlayButtonCleanup(ed);
-  },
-
-  /**
-   * The <code>nodeChange</code> event handler for the TinyMCE editor. This 
-   * method provides visual feedback for editable image elements.
+   * The <code>keyup</code> and <code>click</code> event handler for the TinyMCE 
+   * editor. This method provides visual feedback for editable image elements.
    *
    * @private
    *
    * @param {tinymce.Editor} ed The editor instance that the plugin is 
    * initialized in.
-   * @param {tinymce.ControlManager} cm The control manager.
-   * @param {Node} n The DOM node for which the event is fired.
+   * @param {Event} ev The DOM Event object.
    */
-  edNodeChange: function (ed, cm, n) {
+  edNodeChange: function (ed, ev) {
+    var cm = ed.controlManager,
+        n = ed.selection.getNode();
+
     // Do not do anything inside the overlay button.
-    if (overlayButton && overlayButton._targetImage && n && n.className === 
-        overlayButton.className) {
+    if (!n || overlayButton && overlayButton._targetImage && n && n.className 
+        === overlayButton.className) {
       return;
     }
 
@@ -837,24 +848,6 @@ tinymce.create('tinymce.plugins.paintweb', {
 
     if (!overlayButton) {
       return;
-    }
-
-    // Remove the overlay button.
-    if (overlayButton.parentNode) {
-      overlayButton._targetImage = null;
-
-      pNode = overlayButton.parentNode;
-      pNode.removeChild(overlayButton);
-    }
-
-    if (n.nextSibling && n.nextSibling.className === overlayButton.className) {
-      pNode = n.parentNode;
-      pNode.removeChild(n.nextSibling);
-    }
-
-    if (n.className === overlayButton.className) {
-      pNode = n.parentNode;
-      pNode.removeChild(n);
     }
 
     if (!disabled) {
@@ -886,13 +879,13 @@ tinymce.create('tinymce.plugins.paintweb', {
   },
 
   /**
-   * The <code>click</code> event handler for the editor. This method starts 
+   * The <code>mousedown</code> event handler for the editor. This method starts 
    * PaintWeb when the user clicks the "Edit" overlay button.
    *
    * @param {tinymce.Editor} ed The TinyMCE editor instance.
    * @param {Event} ev The DOM Event object.
    */
-  edClick: function (ed, ev) {
+  overlayButtonMouseDown: function (ed, ev) {
     // If the user clicked the Edit overlay button, then we consider the user 
     // wants to start PaintWeb.
     if (!targetImage && overlayButton && ev.target && ev.target.className === 
@@ -902,6 +895,10 @@ tinymce.create('tinymce.plugins.paintweb', {
       targetImage = overlayButton._targetImage;
 
       paintwebEditStart();
+
+    } else if (ev.target && ev.target.nodeName.toLowerCase() !== 'img') {
+      // ... otherwise make sure the document is clean.
+      overlayButtonCleanup(ed);
     }
   },
 
