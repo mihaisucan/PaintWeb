@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-09-10 20:53:06 +0300 $
+ * $Date: 2009-09-11 18:20:27 +0300 $
  */
 
 /**
@@ -95,15 +95,17 @@ if (!window.XMLHttpRequest || !window.getComputedStyle ||
   return;
 }
 
+var isOpera, isWebkit, isGecko;
+
 // Image data URLs are considered external resources when they are drawn in 
 // a Canvas element. This happens only in Gecko 1.9.0 or older (Firefox 3.0) and  
 // in Webkit (Chrome/Safari). This is a problem because PaintWeb cannot save the 
 // image once such data URL is loaded.
 var dataURLfilterNeeded = (function () {
- var ua       = navigator.userAgent.toLowerCase(),
-     isOpera  = window.opera || /\b(opera|presto)\b/.test(ua),
-     isWebkit = !isOpera && /\b(applewebkit|webkit)\b/.test(ua),
-     isGecko  = !isOpera && !isWebkit && /\bgecko\b/.test(ua);
+  var ua   = navigator.userAgent.toLowerCase();
+  isOpera  = window.opera || /\b(opera|presto)\b/.test(ua);
+  isWebkit = !isOpera && /\b(applewebkit|webkit)\b/.test(ua);
+  isGecko  = !isOpera && !isWebkit && /\bgecko\b/.test(ua);
 
   if (isWebkit) {
     return true;
@@ -733,10 +735,15 @@ tinymce.create('tinymce.plugins.paintweb', {
     });
 
     // Add a node change handler which enables the PaintWeb button in the UI 
-    // when an image is selected. This method should only be invoked for the 
-    // keyup and click events.
-    ed.onKeyUp.add(this.edNodeChange);
-    ed.onClick.add(this.edNodeChange);
+    // when an image is selected.
+    if (isOpera) {
+      // In Opera, due to bug DSK-265135, we only listen for the keyup and 
+      // mouseup events.
+      ed.onKeyUp.add(this.edNodeChange);
+      ed.onMouseUp.add(this.edNodeChange);
+    } else {
+      ed.onNodeChange.add(this.edNodeChange);
+    }
 
     var config = ed.getParam('paintweb_config') || {};
     if (!config.tinymce) {
@@ -816,16 +823,15 @@ tinymce.create('tinymce.plugins.paintweb', {
   },
 
   /**
-   * The <code>keyup</code> and <code>click</code> event handler for the TinyMCE 
-   * editor. This method provides visual feedback for editable image elements.
+   * The <code>nodeChange</code> event handler for the TinyMCE editor. This 
+   * method provides visual feedback for editable image elements.
    *
    * @private
    *
    * @param {tinymce.Editor} ed The editor instance that the plugin is 
    * initialized in.
-   * @param {Event} ev The DOM Event object.
    */
-  edNodeChange: function (ed, ev) {
+  edNodeChange: function (ed) {
     var cm = ed.controlManager,
         n = ed.selection.getNode();
 

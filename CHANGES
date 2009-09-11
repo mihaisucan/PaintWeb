@@ -1,3 +1,10 @@
+2009-09-11:
+===========
+
+- Another fix for the overlay button in the TinyMCE plugin. This time, the fix 
+is for Webkit. Yesterday's change did include a regression in Webkit-based 
+browsers: the overlay button was not showing up at all.
+
 2009-09-10:
 ===========
 
