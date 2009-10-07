@@ -1,3 +1,9 @@
+2009-10-07:
+===========
+
+- Using $CFG->libdir in Moodle integration code, as suggested by Martin 
+Langhoff. Thanks!
+
 2009-09-11:
 ===========
 

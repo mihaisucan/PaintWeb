@@ -18,7 +18,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-19 19:06:45 +0300 $
+ * $Date: 2009-10-07 15:54:52 +0300 $
  */
 
 // This script performs asynchronous image save in PaintWeb. This is used by the 
@@ -41,8 +41,8 @@
 //   values are missing, then new values will be determined.
 
 require_once('../../../../config.php');
-require_once('../../../../lib/filelib.php');
-require_once('../../../../repository/lib.php');
+require_once($CFG->libdir . '/filelib.php');
+require_once($CFG->dirroot . '/repository/lib.php');
 
 /**
  * Send the JSON object result to PaintWeb.
