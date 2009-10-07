@@ -3,6 +3,8 @@
 
 - Using $CFG->libdir in Moodle integration code, as suggested by Martin 
 Langhoff. Thanks!
+- Fixed the PaintWeb icon in the TinyMCE plugin. Thanks to Mauno Korpelainen for 
+his suggestion!
 
 2009-09-11:
 ===========
