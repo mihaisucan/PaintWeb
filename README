@@ -1,7 +1,7 @@
 Copyright (C) 2008, 2009 Mihai Şucan
 
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-08-14 12:15:41 +0300 $
+$Date: 2009-10-10 20:37:32 +0300 $
 
 PaintWeb is a Web application which allows users to draw inside the Web browser 
 making use of new Web technologies.
@@ -12,43 +12,55 @@ PaintWeb build.
 
 Requirements:
 
-- A Web browser which implements the HTML 5 <canvas> 2D context API.
-Known to work are: Opera 9.5+, Firefox 3+, Safari 3.1+, Konqueror 4.1+.
-Each Web browser has its minor quirks.
+  A Web browser which implements the HTML 5 <canvas> 2D context API.
+  Known to work are: Opera 9.5+, Firefox 3+, Safari 3.1+, Konqueror 4.1+.
+  Each Web browser has its minor quirks.
 
-Internet Explorer does not support Canvas. This application does not work in 
-this Web browser.
+  Internet Explorer does not support Canvas. This application does not work in 
+  this Web browser.
 
 
-You can use PaintWeb inside Moodle, or you may integrate PaintWeb into your 
-project via TinyMCE. The "ext" folder holds a TinyMCE plugin which integrates 
-PaintWeb into TinyMCE. Please check the documentation for further details:
+Usage:
 
-http://code.google.com/p/paintweb
+  You can use PaintWeb inside Moodle, or you may integrate PaintWeb into your 
+  project via TinyMCE. The "ext" folder holds a TinyMCE plugin which integrates 
+  PaintWeb into TinyMCE. Please check the documentation for further details:
+
+  http://code.google.com/p/paintweb
+
+Installation:
+
+  If you want to learn how to repackage PaintWeb yourself, please see the 
+  INSTALL file.
 
 Files and folders in this package:
 
-build/   - holds the packaged PaintWeb build.
-CHANGES  - holds a chronologically ordered list of changes.
-COPYING  - the GPLv3 license.
-demos/   - holds usage demos with PaintWeb.
-docs/    - holds project documentation.
-ext/     - holds code for integrating PaintWeb into external projects. For
-           example, there's code for Moodle and TinyMCE integration.
-Makefile - the Makefile script which drives the PaintWeb packaging process.
-README   - this file
-scripts/ - holds scripts used for PaintWeb packaging.
-src/     - holds the PaintWeb source code.
-tests/   - holds various tests made during the development of PaintWeb.
+  build/   - holds the packaged PaintWeb build.
+  CHANGES  - holds a chronologically ordered list of changes.
+  config-default.mk - the default Makefile configuration.
+  COPYING  - the GPLv3 license.
+  demos/   - holds usage demos with PaintWeb.
+  docs/    - holds project documentation.
+  ext/     - holds code for integrating PaintWeb into external projects. For
+             example, there's code for Moodle and TinyMCE integration.
+  INSTALL  - PaintWeb packaging instructions.
+  Makefile - the Makefile script which drives the PaintWeb packaging process.
+  README   - this file
+  scripts/ - holds scripts used for PaintWeb packaging.
+  src/     - holds the PaintWeb source code.
+  tests/   - holds various tests made during the development of PaintWeb.
 
 Get in contact:
 
-- You can contact me via email at mihai.sucan@gmail.com or via my site 
-www.robodesign.ro. Any feedback is always welcome.
-- I am always looking for volunteers to help me with coding - there's lots of 
-work to do. We can collaborate via Gtalk, Yahoo, IRC, ICQ and anyhow you like.
-- On IRC I'm online everyday on irc.freenode.net. Just /query ROBOd - my 
-nickname.
+  - You can ask questions about the project in the public mailing list of the 
+  project. You can post your message by sending an email to 
+  paintweb@googlegroups.com.
+  - You can contact me via email at mihai.sucan@gmail.com or via my site 
+  www.robodesign.ro/mihai. Any feedback is always welcome.
+  - I am always looking for volunteers to help me with coding - there's lots of 
+  work to do. We can collaborate via Gtalk, Yahoo, IRC, ICQ and anyhow you like.
+  - On IRC I'm online everyday on irc.freenode.net. Just /query ROBOd - my 
+  nickname.
 
 Thank you!
 

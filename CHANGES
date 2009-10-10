@@ -1,3 +1,20 @@
+2009-10-10:
+===========
+
+- Fixed issue #33 by adding a configuration file for the Makefile. Invoke make 
+config.
+- Added config-default.mk. Invoking make config adds config-local.mk which 
+overwrites any variables from the default config.
+- Updated the INSTALL file to include instructions on how to build PaintWeb.
+- Made it easier to build PaintWeb by having only a single file to edit paths: 
+the config-local.mk file. Until now you had to edit files in the scripts/ 
+folder.
+- Removed the make moodle target.
+- Added the make moodle19 and moodle20 targets, as requested by the Moodle 
+developers. The Moodle 2.0 package does not include 1.9-only scripts and 
+vice-versa.
+- Updated the README.
+
 2009-10-07:
 ===========
 

@@ -1,14 +1,98 @@
-Copyright (C) 2008 Mihai Şucan
+Copyright (C) 2008, 2009 Mihai Şucan
 
 $URL: http://code.google.com/p/paintweb $
-$Date: 2009-07-06 20:29:16 +0300 $
+$Date: 2009-10-10 20:33:25 +0300 $
 
 
 You don't need to install this Web application. Just open a demo from the demos 
 folder in your Web browser. For documentation please check the API reference and 
 the wiki pages published at http://code.google.com/p/paintweb.
 
+Repackaging PaintWeb
+====================
+
+Important folders:
+
+  - src/ - holds the source code spread across multiple files.
+  - build/ - holds the packaged build.
+  - scripts/ - holds scripts used for packaging.
+
+If you make changes to files in the src/ folder you may want to repackage 
+PaintWeb - regenerate the build folder.
+
+Prerequisites
+-------------
+
+  - PHP 5+
+
+  - Makefile support. Usually, you get this really easily and quickly on any 
+  Linux distribution. Tested with Ubuntu.
+
+  - Java VM.
+
+  - YUI Compressor. This is used for compressing JavaScript and CSS files. Get 
+  it from:
+
+      http://developer.yahoo.com/yui/compressor/
+
+  - jsdoc-toolkit. This is used for generating the API reference documentation 
+  based on the source code. Get it from:
+
+      http://jsdoctoolkit.org/
+
+Make sure you unpack jsdoc-toolkit and yuicompressor and you have both scripts 
+working fine with your Java VM.
+
+Run the following command in your PaintWeb folder:
+  make config
+
+Now you have config-local.mk. Open it and make sure:
+
+  - BIN_PHP points to your PHP binary.
+  - FOLDER_YUIC points to your YUI Compressor unpacked folder.
+  - FOLDER_JSDOCT points to your jsdoc-toolkit unpacked folder.
+
+Now you are ready!
+
+
+Run make
+--------
+
+To generate the build folder run:
+  make
+
+You will have build/paintweb.src.js for debugging purposes.
+
+To generate the API reference documentation run:
+  make docs
+
+To get an archived PaintWeb package as a release simply run:
+  make release
+
+That will give you a file like paintweb-0.9.tar.bz2. The version number is 
+determined automatically.
+
+You can also make a snapshot of PaintWeb:
+  make snapshot
+
+Snapshots have the build date included. For example 
+paintweb-0.9-20091010.tar.bz2.
+
+If you want to make a custom build of PaintWeb for Moodle 1.9 or Moodle 2.0 then 
+run:
+  make moodle19
+  or
+  make moodle20
+
+This will make sure that the Moodle extension for PaintWeb is included in the 
+package.
+
+To generate a tags file from the PaintWeb source code run:
+  make tags
+
+That's about all. Enjoy!
+
+
 -- 
 vim:set spell spl=en fenc=utf-8 ff=unix: 
-
 

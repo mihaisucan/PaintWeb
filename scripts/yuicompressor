@@ -18,7 +18,7 @@
 # along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
 # 
 # $URL: http://code.google.com/p/paintweb $
-# $Date: 2009-07-01 22:03:22 +0300 $
+# $Date: 2009-10-10 20:02:39 +0300 $
 
 # This script allows quicker access to the YUICompressor tool.
 # Make sure you get the latest YUICompressor from 
@@ -29,24 +29,27 @@ shopt -s nullglob
 MY_PWD="$PWD"
 
 # Update this value to point to your yuicompressor folder.
-YUIC_FOLDER="${HOME}/src/yuicompressor"
-
-if [[ ! -d "$YUIC_FOLDER" ]]
+if [[ -z "$FOLDER_YUIC" ]]
 then
-	echo "The yuicompressor folder does not exist: $YUIC_FOLDER"
+	FOLDER_YUIC="${HOME}/src/yuicompressor"
+fi
+
+if [[ ! -d "$FOLDER_YUIC" ]]
+then
+	echo "The yuicompressor folder does not exist: $FOLDER_YUIC"
 	exit 1
 fi
 
-if [[ ! -d "${YUIC_FOLDER}/build" ]]
+if [[ ! -d "${FOLDER_YUIC}/build" ]]
 then
-	echo "The yuicompressor/build folder does not exist: ${YUIC_FOLDER}/build"
+	echo "The yuicompressor build folder does not exist: ${FOLDER_YUIC}/build"
 	exit 1
 fi
 
-cd "${YUIC_FOLDER}/build"
-YUIC_BIN=(*.jar)
+cd "${FOLDER_YUIC}/build"
+BIN_YUIC=(*.jar)
 
-if [[ -z "$YUIC_BIN" || ! -f "$YUIC_BIN" ]]
+if [[ -z "$BIN_YUIC" || ! -f "$BIN_YUIC" ]]
 then
 	echo "The yuicompressor.jar file was not found!"
 	exit 1
@@ -54,7 +57,7 @@ fi
 
 cd "$MY_PWD"
 
-java -jar "${YUIC_FOLDER}/build/${YUIC_BIN}" $@
+java -jar "${FOLDER_YUIC}/build/${BIN_YUIC}" $@
 
 # vim:set spell spl=en fo=wan1croql tw=80 ts=2 sw=2 sts=0 sta noet ai cin fenc=utf-8 ff=unix:
 

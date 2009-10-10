@@ -18,56 +18,10 @@
 # along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
 # 
 # $URL: http://code.google.com/p/paintweb $
-# $Date: 2009-08-12 12:52:24 +0300 $
+# $Date: 2009-10-10 20:31:02 +0300 $
 
-
-#### Config:start #####################################################
-# You can make changes below
-
-# The tools you want to have packaged
-TOOLS=selection hand rectangle ellipse polygon line text bcurve insertimg pencil cpicker eraser
-
-# The extensions you want
-EXTENSIONS=colormixer mousekeys
-
-# The interface you want packaged
-INTERFACE=default
-
-# The PHP binary for running PHP scripts
-BIN_PHP=php
-
-# The JSON encoder script
-BIN_JSON=$(BIN_PHP) scripts/json_encode.php
-
-# The XHTML minifier script
-BIN_XHTML=$(BIN_PHP) scripts/xhtml_minify.php
-
-# The compressor used for CSS files
-BIN_CSS=scripts/yuicompressor
-
-# The CSS images inliner script
-BIN_CSS_IMAGES=$(BIN_PHP) scripts/css_images.php
-
-# The compressor used for JavaScript files
-BIN_JS=scripts/yuicompressor
-
-# The jsdoc script
-BIN_JSDOC=scripts/jsdoc
-
-# Folders
-FOLDER_BUILD=build
-FOLDER_SRC=src
-FOLDER_INCLUDES=includes
-FOLDER_TOOLS=tools
-FOLDER_EXTENSIONS=extensions
-FOLDER_INTERFACES=interfaces
-FOLDER_LANG=lang
-FOLDER_COLORS=colors
-FOLDER_DOCS_API=docs/api-ref
-FOLDER_TINYMCE_PLUGIN=ext/tinymce-plugin/paintweb
-
-# Changes below this line are not recommended
-#### Config:end #######################################################
+include config-default.mk
+-include config-local.mk
 
 # This holds the absolute path to the parent of the current working directory.  
 # Given /home/robod/src/paintweb this variable will hold /home/robod/src/.
@@ -171,7 +125,7 @@ $(FOLDER_BUILD)/$(FILE_CONFIG): $(FOLDER_SRC)/$(FILE_CONFIG)
 $(FOLDER_TINYMCE_PLUGIN)/editor_plugin.js: $(FOLDER_TINYMCE_PLUGIN)/editor_plugin_src.js
 	$(BIN_JS) $^ > $@
 
-.PHONY : docs release snapshot package tags moodle
+.PHONY : docs release snapshot package tags moodle moodle20 moodle19 config
 docs:
 	$(BIN_JSDOC) $(FOLDER_SRC) $(FOLDER_DOCS_API)
 
@@ -183,21 +137,33 @@ snapshot: package
 
 # Create the PaintWeb package.
 package:
-	tar --exclude=".*" --exclude="*~" --exclude="*bak" --exclude="*bz2" --exclude="tags" \
+	tar --exclude=".*" --exclude="*~" --exclude="*bak" --exclude="*bz2" --exclude="tags" --exclude="config-local.mk" \
 		-C $(FOLDER_PARENT) -cjvf /tmp/paintweb.tar.bz2 $(FOLDER_SELF)
 
 # Generate the tags file for the project.
 tags:
 	ctags -R $(FOLDER_SRC) --JavaScript-kinds=fcm --fields=afiklmnsSt
 
-# Generate a custom Moodle build.
-moodle: EXTENSIONS=colormixer moodle
-moodle: all
-	tar --exclude=".*" --exclude="*~" --exclude="*bak" --exclude="*bz2" --exclude="tags" \
+# Generate a custom Moodle 1.9 build.
+moodle19: EXTENSIONS=colormixer moodle
+moodle19: all
+	tar --exclude=".*" --exclude="*~" --exclude="*bak" --exclude="*bz2" --exclude="tags" --exclude="config-local.mk" \
 		--exclude="paintweb/docs" --exclude="paintweb/demos" --exclude="paintweb/tests" --exclude="paintweb/scripts" \
+		--exclude="ext/moodle/*20.php" \
 		-C $(FOLDER_PARENT) -cjvf /tmp/paintweb.tar.bz2 $(FOLDER_SELF)
-	mv /tmp/paintweb.tar.bz2 ./paintweb-$(BUILD_VERSION)-$(BUILD_DATE)-moodle.tar.bz2
+	mv /tmp/paintweb.tar.bz2 ./paintweb-$(BUILD_VERSION)-$(BUILD_DATE)-moodle19.tar.bz2
 
+# Generate a custom Moodle 2.0 build.
+moodle20: EXTENSIONS=colormixer moodle
+moodle20: all
+	tar --exclude=".*" --exclude="*~" --exclude="*bak" --exclude="*bz2" --exclude="tags" --exclude="config-local.mk" \
+		--exclude="paintweb/docs" --exclude="paintweb/demos" --exclude="paintweb/tests" --exclude="paintweb/scripts" \
+		--exclude="ext/moodle/*19.php" \
+		-C $(FOLDER_PARENT) -cjvf /tmp/paintweb.tar.bz2 $(FOLDER_SELF)
+	mv /tmp/paintweb.tar.bz2 ./paintweb-$(BUILD_VERSION)-$(BUILD_DATE)-moodle20.tar.bz2
+
+config:
+	cp config-default.mk config-local.mk
 
 # vim:set spell spl=en fo=wan1croql tw=80 ts=2 sw=2 sts=0 sta noet ai cin fenc=utf-8 ff=unix:
 
