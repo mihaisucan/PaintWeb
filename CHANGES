@@ -1,3 +1,9 @@
+2009-10-29:
+===========
+
+- Work on Moodle 1.9 integration. Made improvements to the Moodle extension for 
+PaintWeb and fixed the imagesave19.php script.
+
 2009-10-10:
 ===========
 

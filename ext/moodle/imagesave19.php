@@ -18,7 +18,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-11 14:29:15 +0300 $
+ * $Date: 2009-10-29 14:39:45 +0200 $
  */
 
 // This script performs asynchronous image save in PaintWeb. This is used by the 
@@ -70,7 +70,7 @@ if ($CFG->paintwebDisallowImageUpdates) {
 }
 
 // The PaintWeb image viewer file serve script.
-$pwproxy = dirname(__FILE__) . '/imageview.php';
+$pwproxy = dirname(__FILE__) . '/imageview19.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     die('illegal request');

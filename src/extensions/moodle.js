@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-23 17:36:33 +0300 $
+ * $Date: 2009-10-29 19:05:49 +0200 $
  */
 
 /**
@@ -91,8 +91,8 @@ pwlib.extensions.moodle = function (app) {
       }
     }
 
-    if (moodleInfo.release >= 2 && typeof window.qf_errorHandler === 'function' 
-        && config.tinymce && !config.tinymce.onSubmitUnsaved) {
+    if (typeof window.qf_errorHandler === 'function' && config.tinymce && 
+        !config.tinymce.onSubmitUnsaved) {
       config.tinymce.onSubmitUnsaved = this.onSubmitUnsaved;
     }
 
@@ -259,10 +259,12 @@ pwlib.extensions.moodle = function (app) {
    */
   this.guiShow = function () {
     var pNode = config.guiPlaceholder.parentNode,
-        elem  = pNode.getElementsByClassName(moodleInfo.textareaButtons)[0];
+        textareaButtons  
+          = pNode.getElementsByClassName(moodleInfo.textareaButtons)[0];
 
-    if (elem) {
-      elem.style.display = 'none';
+    // These show in Moodle 1.9.
+    if (textareaButtons) {
+      textareaButtons.style.display = 'none';
     }
 
     qfErrorShown = false;
@@ -312,14 +314,12 @@ pwlib.extensions.moodle = function (app) {
     var guiPlaceholder = config.guiPlaceholder,
         prevSibling = guiPlaceholder.previousSibling;
         pNode = guiPlaceholder.parentNode,
-        elem = pNode.getElementsByClassName(moodleInfo.textareaButtons)[0];
+        textareaButtons 
+          = pNode.getElementsByClassName(moodleInfo.textareaButtons)[0];
 
-    if (elem) {
-      elem.style.display = '';
-    }
-
-    if (moodleInfo.release < 2) {
-      return;
+    // These show in Moodle 1.9.
+    if (textareaButtons) {
+      textareaButtons.style.display = '';
     }
 
     var tmce     = config.tinymceEditor,
@@ -343,15 +343,18 @@ pwlib.extensions.moodle = function (app) {
       }
     }
 
-    var fieldname = textarea.name.replace(/\[text\]$/, '');
-    if (!fieldname) {
-      return;
-    }
+    // The format input element only shows in Moodle 2.0.
+    if (moodleInfo.release >= 2) {
+      var fieldname = textarea.name.replace(/\[text\]$/, '');
+      if (!fieldname) {
+        return;
+      }
 
-    var format = frm.elements.namedItem(fieldname + '[format]');
+      var format = frm.elements.namedItem(fieldname + '[format]');
 
-    if (format) {
-      format.style.display = '';
+      if (format) {
+        format.style.display = '';
+      }
     }
   };
 };
