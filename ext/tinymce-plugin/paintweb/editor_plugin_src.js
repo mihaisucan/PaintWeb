@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-09-11 18:20:27 +0300 $
+ * $Date: 2009-11-04 20:18:05 +0200 $
  */
 
 /**
@@ -669,35 +669,72 @@ function checkEditableImage (n) {
 };
 
 /**
- * The <code>init</code> and <code>preProcess</code> event handler for the 
- * TinyMCE editor instance.  This makes sure that the iframe DOM document does 
- * not contain any PaintWeb overlay button.  Firefox remembers the overlay 
- * button after a page refresh.
+ * Add the overlay button to an image element node.
+ *
+ * @param {tinymce.Editor} ed The TinyMCE editor instance.
+ * @param {Element} n The image element node you want to add to the overlay 
+ * button.
+ */
+function overlayButtonAdd (ed, n) {
+  if (!overlayButton || !ed || !n) {
+    return;
+  }
+
+  var offsetTop  = 5,
+      offsetLeft = 5,
+      sibling    = null,
+      pNode;
+
+  // Try to avoid adding the overlay button inside an anchor.
+  if (n.parentNode.nodeName.toLowerCase() === 'a') {
+    pNode   = n.parentNode.parentNode;
+    sibling = n.parentNode.nextSibling;
+  } else {
+    pNode   = n.parentNode;
+    sibling = n.nextSibling;
+  }
+
+  overlayButton._targetImage = n;
+
+  ed.dom.setStyles(overlayButton, {
+     'top':  (n.offsetTop  + offsetTop)  + 'px',
+     'left': (n.offsetLeft + offsetLeft) + 'px'});
+
+  overlayButton.value = ed.getLang('paintweb.overlayButton', 'Edit');
+  pNode.insertBefore(overlayButton, sibling);
+};
+
+/**
+ * Clear the document of the TinyMCE editor instance of any possible PaintWeb 
+ * overlay button remnant. This makes sure that the iframe DOM document does not 
+ * contain any PaintWeb overlay button. Firefox remembers the overlay button 
+ * after a page refresh.
  *
  * @param {tinymce.Editor} ed The editor instance that the plugin is 
  * initialized in.
  */
 function overlayButtonCleanup (ed) {
-  if (!ed || !ed.getDoc) {
+  if (!overlayButton || !ed || !ed.getDoc) {
     return;
   }
 
-  var iframe, elems, pNode;
+  var root, elems, pNode;
 
   if (overlayButton) {
     if (overlayButton.parentNode) {
       pNode = overlayButton.parentNode;
       pNode.removeChild(overlayButton);
     }
+
     overlayButton._targetImage = null;
   }
 
-  iframe = ed.getDoc();
-  if (!iframe || !iframe.getElementsByClassName) {
+  root = ed.getDoc();
+  if (!root || !root.getElementsByClassName) {
     return;
   }
 
-  elems = iframe.getElementsByClassName(overlayButton.className);
+  elems = root.getElementsByClassName(overlayButton.className);
 
   for (var i = 0; i < elems.length; i++) {
     pNode = elems[i].parentNode;
@@ -763,17 +800,15 @@ tinymce.create('tinymce.plugins.paintweb', {
     // Create the overlay button element if the configuration allows so.
     if (config.tinymce.overlayButton) {
       // Make sure the button doesn't show up in the article.
-      ed.onPreProcess.add(overlayButtonCleanup);
       ed.onBeforeGetContent.add(overlayButtonCleanup);
-      ed.onRemove.add(overlayButtonCleanup);
 
-      ed.onInit.add(function () {
+      ed.onInit.add(function (ed) {
         // Cleanup after initialization. Firefox remembers the content between 
         // page reloads.
         overlayButtonCleanup(ed);
 
-        ed.onKeyDown.addToTop(overlayButtonCleanup);
-        ed.onMouseDown.addToTop(t.overlayButtonMouseDown);
+        ed.onKeyDown.addToTop(t.overlayButtonEvent);
+        ed.onMouseDown.addToTop(t.overlayButtonEvent);
       });
 
       overlayButton = tinymce.DOM.create('input', {
@@ -841,8 +876,7 @@ tinymce.create('tinymce.plugins.paintweb', {
       return;
     }
 
-    var disabled = !checkEditableImage(n),
-        pNode = null;
+    var disabled = !checkEditableImage(n);
 
     if (n.nodeName.toLowerCase() === 'img' && disabled) {
       cm.setDisabled('paintwebEdit', true);
@@ -857,52 +891,34 @@ tinymce.create('tinymce.plugins.paintweb', {
     }
 
     if (!disabled) {
-      var offsetTop  = 5,
-          offsetLeft = 5,
-          sibling    = null;
-
-      // Try to avoid adding the overlay button inside an anchor.
-      if (n.parentNode.nodeName.toLowerCase() === 'a') {
-        pNode   = n.parentNode.parentNode;
-        sibling = n.parentNode.nextSibling;
-      } else {
-        pNode   = n.parentNode;
-        sibling = n.nextSibling;
-      }
-
-      // Add the overlay button.
-      overlayButton._targetImage = n;
-
-      ed.dom.setStyles(overlayButton, {
-         'top':  (n.offsetTop  + offsetTop)  + 'px',
-         'left': (n.offsetLeft + offsetLeft) + 'px'});
-
-      overlayButton.value = ed.getLang('paintweb.overlayButton', 'Edit');
-      pNode.insertBefore(overlayButton, sibling);
+      overlayButtonAdd(ed, n);
     } else if (overlayButton._targetImage) {
       overlayButton._targetImage = null;
     }
   },
 
   /**
-   * The <code>mousedown</code> event handler for the editor. This method starts 
-   * PaintWeb when the user clicks the "Edit" overlay button.
+   * The <code>mousedown</code> and <code>keydown</code> event handler for the 
+   * editor. This method starts PaintWeb when the user clicks the "Edit" overlay 
+   * button, or cleans the document of any overlay button element.
    *
    * @param {tinymce.Editor} ed The TinyMCE editor instance.
    * @param {Event} ev The DOM Event object.
    */
-  overlayButtonMouseDown: function (ed, ev) {
+  overlayButtonEvent: function (ed, ev) {
+    var n = ev.type === 'mousedown' ? ev.target : ed.selection.getNode();
+
     // If the user clicked the Edit overlay button, then we consider the user 
     // wants to start PaintWeb.
-    if (!targetImage && overlayButton && ev.target && ev.target.className === 
-        overlayButton.className && overlayButton._targetImage) {
+    if (!targetImage && ev.type === 'mousedown' && overlayButton && n && 
+        n.className === overlayButton.className && overlayButton._targetImage) {
       targetEditor = ed;
       targetContainer = ed.getContainer();
       targetImage = overlayButton._targetImage;
 
       paintwebEditStart();
 
-    } else if (ev.target && ev.target.nodeName.toLowerCase() !== 'img') {
+    } else if (n && n.nodeName.toLowerCase() !== 'img') {
       // ... otherwise make sure the document is clean.
       overlayButtonCleanup(ed);
     }
@@ -1004,8 +1020,8 @@ tinymce.create('tinymce.plugins.paintweb', {
    */
   getInfo: function () {
     return {
-      longname: 'PaintWeb - online painting application',
-      author:   'Mihai Şucan',
+      longname:  'PaintWeb - online painting application',
+      author:    'Mihai Şucan',
       authorurl: 'http://www.robodesign.ro/mihai',
       infourl:   'http://code.google.com/p/paintweb',
       version:   '0.9'
