@@ -18,7 +18,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-10-07 15:54:52 +0300 $
+ * $Date: 2009-11-06 15:44:21 +0200 $
  */
 
 // This script performs asynchronous image save in PaintWeb. This is used by the 
@@ -39,6 +39,10 @@
 //   - contextid and draftitemid: both are used when saving the new image file 
 //   inside the user_draft file area of Moodle 2.0. If the draftitemid/contextid 
 //   values are missing, then new values will be determined.
+//
+// The image is saved only if the user is logged-in, and only if the file type 
+// is known (that is, PNG or JPEG). The image is saved using the new File API in 
+// the user file drafts area.
 
 require_once('../../../../config.php');
 require_once($CFG->libdir . '/filelib.php');
@@ -113,10 +117,9 @@ if (empty($imgdataurl)) {
 
 $mimetype = 'text/plain';
 $base64data = '';
-
 $regex = '/^data:([^;,]+);base64,(.+)$/';
-
 $matches = array();
+
 if (preg_match($regex, $imgdataurl, $matches)) {
     $mimetype   = $matches[1];
     $base64data = $matches[2];
@@ -133,7 +136,6 @@ if (empty($base64data) || !isset($imgallowedtypes[$mimetype])) {
 
 $imgdata = base64_decode($base64data);
 $base64data = null;
-
 $filename = 'paintweb_' . sha1($imgdata) . '.' . $imgallowedtypes[$mimetype];
 
 // Save the file using the new File API.
