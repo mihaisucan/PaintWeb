@@ -3,7 +3,7 @@
 
 - Implemented the new Color Bucket tool. This fixes issue #2 :)
 - Updated the default PaintWeb configuration to include the new color bucket 
-tool.
+tool. Updated the Moodle configuration file as well.
 - Updated the default Makefile configuration to include the new color bucket 
 tool.
 - Fixed a bug in the interface script - it caused failure when registering tools 

@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-08-26 15:11:05 +0300 $
+  // $Date: 2009-11-08 20:39:21 +0200 $
 
   /**
    * The list of available languages. This associated language IDs to their 
@@ -237,7 +237,7 @@
    * Holds the list of drawing tools you want to load.
    * @type Array
    */
-  "tools": ["selection", "hand", "rectangle", "ellipse", "polygon", "line", "text", "bcurve", "insertimg", "pencil", "cpicker", "eraser"],
+  "tools": ["bcurve", "cbucket", "cpicker", "ellipse", "eraser", "hand", "insertimg", "line", "pencil", "polygon", "rectangle", "selection", "text"],
 
   /**
    * Tools folder.
@@ -645,6 +645,7 @@
     // Use "toolActivate": "id" to activate the tool with the given ID.
     "C": { "toolActivate": "cpicker" },
     "E": { "toolActivate": "ellipse" },
+    "F": { "toolActivate": "cbucket" },
     "G": { "toolActivate": "polygon" },
     "H": { "toolActivate": "hand" },
     "I": { "toolActivate": "insertimg" },
