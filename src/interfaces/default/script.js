@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-26 14:53:49 +0300 $
+ * $Date: 2009-11-07 18:13:21 +0200 $
  */
 
 /**
@@ -1283,7 +1283,11 @@ pwlib.gui = function (app) {
     anchor.href = '#';
     anchor.appendChild(doc.createTextNode(anchor.title));
 
-    elem.replaceChild(anchor, elem.firstChild);
+    if (elem.firstChild) {
+      elem.replaceChild(anchor, elem.firstChild);
+    } else {
+      elem.appendChild(anchor);
+    }
 
     anchor.addEventListener('click',     _self.toolClick,      false);
     anchor.addEventListener('mouseover', _self.item_mouseover, false);

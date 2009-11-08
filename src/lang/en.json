@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-08-23 16:53:28 +0300 $
+  // $Date: 2009-11-08 19:50:19 +0200 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -26,7 +26,8 @@
   "missingViewportResizer": "Error: the interface markup does not have the image viewport resize handle.",
   "missingCanvasResizer": "Error: the interface markup does not have the Canvas resize handle.",
   "missingCanvasContainer": "Error: the interface markup does not have the Canvas container.",
-  "errorCpickerUnsupported": "Error: your browser does not implement the get/putImageData method! The color picker cannot be used.",
+  "errorCpickerUnsupported": "Error: your browser does not implement the get/putImageData methods! The color picker tool cannot be used.",
+  "errorCbucketUnsupported": "Error: your browser does not implement the get/putImageData methods! The color bucket tool cannot be used.",
   "errorClipboardUnsupported": "Error: your browser does not support get/putImageData! Clipboard operations like cut/copy/paste cannot be used.",
   "errorTextUnsupported": "Error: your browser does not implement the Canvas Text API! The text tool cannot be used.",
   "errorInsertimg": "The image could not be inserted. Maybe the address does not point to an image.",
@@ -84,6 +85,7 @@
   },
 
   "tools": {
+    "cbucket": "Color bucket",
     "cpicker": "Color picker",
     "bcurve": "Bézier curve",
     "hand": "Viewport drag",
@@ -206,6 +208,7 @@
   },
 
   "status": {
+    "cbucketActive": "Click to start flood filling with the current fill color. Right click to use the stroke color for filling.",
     "cpickerNormal": "Click to change the fill color, or Shift+Click to change the stroke color.",
     "cpicker_fillStyle": "Click to pick the fill color.",
     "cpicker_strokeStyle": "Click to pick the stroke color.",

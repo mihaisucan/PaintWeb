@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-20 19:16:32 +0300 $
+ * $Date: 2009-11-08 13:15:04 +0200 $
  */
 
 .paintweb_placeholder {
@@ -151,7 +151,7 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  width: 384px;
+  width: 416px;
 }
 
 /* .clearfix */
@@ -722,7 +722,7 @@
   background: url("images/toolbar-colors.png") no-repeat;
   font-size: 0.9em;
   height: 67px;
-  left: 395px;
+  left: 427px;
   position: absolute;
   top: 0;
   width: 69px
@@ -983,6 +983,8 @@
 }
 
 .paintweb_cmd_about a { background-image: url('icons/paintweb.png') }
+
+.paintweb_tool_cbucket a { background-image: url('icons/cbucket.png') }
 
 .paintweb_tool_cpicker a { background-image: url('icons/cpicker.png') }
 

@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-08-26 14:40:20 +0300 $
+ * $Date: 2009-11-08 16:53:20 +0200 $
  */
 
 /**
@@ -1184,6 +1184,12 @@ function PaintWeb (win, doc) {
           appUnitsPerDevPixel  = appUnitsPerCSSPixel / devPixelsPerCSSPixel; // 42.9850746278...
 
       scaleNew = appUnitsPerCSSPixel / MathFloor(appUnitsPerDevPixel); // 1.4285714285...
+
+      // New in Gecko 1.9.2.
+      if ('mozImageSmoothingEnabled' in layerStyle) {
+        layerStyle.mozImageSmoothingEnabled 
+          = bufferStyle.mozImageSmoothingEnabled = false;
+      }
     }
 
     if (scaleNew === res.scale) {
@@ -2566,8 +2572,8 @@ function PaintWeb (win, doc) {
     }
 
     try {
-      // WTF: canvas.toDataURL('image/jpeg', quality) fails in Gecko. It works 
-      // when you do not provide the quality argument.
+      // canvas.toDataURL('image/jpeg', quality) fails in Gecko due to security 
+      // concerns, uh-oh.
       if (type === 'image/jpeg' && !pwlib.browser.gecko) {
         idata = canvas.toDataURL(type, cfg.jpegSaveQuality);
       } else {

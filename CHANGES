@@ -1,3 +1,18 @@
+2009-11-08:
+===========
+
+- Implemented the new Color Bucket tool. This fixes issue #2 :)
+- Updated the default PaintWeb configuration to include the new color bucket 
+tool.
+- Updated the default Makefile configuration to include the new color bucket 
+tool.
+- Fixed a bug in the interface script - it caused failure when registering tools 
+which were not in the interface layout.
+- Using the new mozImageSmoothingEnabled added in Gecko 1.9.2 for the Canvas 2D 
+context. This disables the smooth scaling of the Canvas element on the OLPC XO.
+- Updated the English localization file to include the new strings for the color 
+bucket tool.
+
 2009-11-06:
 ===========
 

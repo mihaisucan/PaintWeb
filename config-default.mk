@@ -18,10 +18,10 @@
 # along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
 # 
 # $URL: http://code.google.com/p/paintweb $
-# $Date: 2009-10-10 20:04:50 +0300 $
+# $Date: 2009-11-07 14:31:42 +0200 $
 
 # The tools you want to have packaged
-TOOLS=selection hand rectangle ellipse polygon line text bcurve insertimg pencil cpicker eraser
+TOOLS=bcurve cbucket cpicker ellipse eraser hand insertimg line pencil polygon rectangle selection text
 
 # The extensions you want.
 EXTENSIONS=colormixer mousekeys
