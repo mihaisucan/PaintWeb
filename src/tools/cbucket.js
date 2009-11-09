@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-11-08 20:20:22 +0200 $
+ * $Date: 2009-11-09 22:31:42 +0200 $
  */
 
 /**
@@ -35,32 +35,26 @@
  * @param {PaintWeb} app Reference to the main paint application object.
  */
 pwlib.tools.cbucket = function (app) {
-  var _self    = this,
-      config   = app.config,
-      layer    = app.layer.context,
-      buffer   = app.buffer.context,
-      image    = app.image,
-      mouse    = app.mouse,
-      layerOp  = null,
-      bufferOp = null;
+  var _self   = this,
+      config  = app.config,
+      layer   = app.layer.context,
+      buffer  = app.buffer.context,
+      iwidth  = app.image.width,
+      iheight = app.image.height,
+      mouse   = app.mouse;
 
   var stackMax = 10000; // maximum depth of stack
   var lines = []; // stack of lines
-  var pixelNew, pixelNewStr;
-
-  // Opera provides a custom 2D context for Canvas, which includes better-suited 
-  // methods: getPixel(), putPixel() and lockCanvasUpdates(). These help the 
-  // tool work faster.
-  if (pwlib.browser.opera) {
-    layerOp  = app.layer.canvas.getContext('opera-2dgame');
-    bufferOp = app.buffer.canvas.getContext('opera-2dgame');
-  }
+  var pixelNew, layerpix;
 
   /**
    * The <code>preActivate</code> event handler. This method checks if the 
    * browser implements the <code>getImageData()</code> and 
    * <code>putImageData()</code> context methods.  If not, the color bucket tool 
    * cannot be used.
+   *
+   * @returns {Boolean} True if the drawing tool can be activated, or false 
+   * otherwise.
    */
   this.preActivate = function () {
     // The latest versions of all browsers which implement Canvas, also 
@@ -95,6 +89,8 @@ pwlib.tools.cbucket = function (app) {
    * method performs the flood fill operation.
    *
    * @param {Event} ev The DOM Event object.
+   *
+   * @returns {Boolean} True if the image was modified, or false otherwise.
    */
   this.click = this.contextmenu = function (ev) {
     // Allow the user to right-click or hold down the Shift key to use the 
@@ -108,34 +104,38 @@ pwlib.tools.cbucket = function (app) {
       buffer.fillRect(0, 0, 1, 1);
     }
 
-    if (bufferOp && 'getPixel' in bufferOp) {
-      pixelNew = bufferOp.getPixel(0, 0);
-      pixelNewStr = pixelNew;
-    } else {
-      pixelNew = buffer.getImageData(0, 0, 1, 1);
-      pixelNewStr = pixelNew.data[0] + ';' +
-                    pixelNew.data[1] + ';' +
-                    pixelNew.data[2] + ';' +
-                    pixelNew.data[3];
-    }
+    // Instead of parsing the fillStyle ...
+    pixelNew = buffer.getImageData(0, 0, 1, 1);
+    pixelNew = [pixelNew.data[0], pixelNew.data[1], pixelNew.data[2], 
+             pixelNew.data[3]];
 
     buffer.clearRect(0, 0, 1, 1);
 
-    if (layerOp && 'lockCanvasUpdates' in layerOp) {
-      layerOp.lockCanvasUpdates(true);
+    var pixelOld = layer.getImageData(mouse.x, mouse.y, 1, 1).data;
+    pixelOld = pixelOld[0] + ';' + pixelOld[1] + ';' + pixelOld[2] + ';' 
+      + pixelOld[3];
+
+    if (pixelOld === pixelNew.join(';')) {
+      return false;
     }
 
-    var res = fill(mouse.x, mouse.y);
+    // We will work with image data. The only other way would be to invoke 
+    // get/putImageData() for each and every pixel. That way works fine in 
+    // Webkit and Opera, but it's awfully slow within Gecko.
+    // By working with the entire image data at once performance is acceptable 
+    // on Gecko, better on Webkit, and a bit slower in Opera. All in all, better 
+    // than to "fail" miserably with Gecko. Too bad this approach uses a lot 
+    // more memory - might not be an acceptable compromise in the future.
+    var idata = layer.getImageData(0, 0, iwidth, iheight);
+    layerpix = idata.data;
 
-    if (layerOp && 'lockCanvasUpdates' in layerOp && 'updateCanvas' in layerOp) 
-    {
-      layerOp.lockCanvasUpdates(false);
-      layerOp.updateCanvas();
-    }
+    fill(mouse.x, mouse.y, pixelOld);
 
-    if (res) {
-      app.historyAdd();
-    }
+    layer.putImageData(idata, 0, 0);
+    layerpix = null;
+    idata = null;
+
+    app.historyAdd();
 
     return true;
   };
@@ -148,18 +148,10 @@ pwlib.tools.cbucket = function (app) {
    *
    * @param {Number} x The x coordinate for the starting point.
    * @param {Number} y The y coordinate for the starting point.
-   *
-   * @returns {Boolean} True if the image was filled, or false otherwise.
+   * @param {String} pixelOld The old pixel value.
    */
-  function fill (x, y) {
-    var start, x1, x2, dy, pixelOld, tmp;
-
-    // Read pixel value at seed point.
-    pixelOld = pixelRead(x, y);
-    if (pixelOld === pixelNewStr || x < 0 || x > image.width || y < 0 ||
-        y > image.height) {
-      return false;
-    }
+  var fill = function (x, y, pixelOld) {
+    var start, x1, x2, dy, tmp;
 
     pushLine(y, x, x, 1);      // needed in some cases
     pushLine(y + 1, x, x, -1); // seed segment (popped 1st)
@@ -174,7 +166,6 @@ pwlib.tools.cbucket = function (app) {
 
       // segment of scan line y-dy for x1 <= x <= x2 was previously filled, now 
       // explore adjacent pixels in scan line y
-      x = x1;
       for (x = x1; x >= 0 && pixelRead(x, y) === pixelOld; x--) {
         pixelWrite(x, y);
       }
@@ -196,7 +187,7 @@ pwlib.tools.cbucket = function (app) {
       }
 
       do {
-        for (; x < image.width && pixelRead(x,y) === pixelOld; x++) {
+        for (; x < iwidth && pixelRead(x,y) === pixelOld; x++) {
           pixelWrite(x, y);
         }
 
@@ -210,35 +201,25 @@ pwlib.tools.cbucket = function (app) {
 
       } while (x <= x2);
     }
-
-    return true;
   };
 
   var pushLine = function (y, xl, xr, dy) {
-    if (lines.length < stackMax && (y+dy) >= 0 && (y+dy) <= image.height) {
-      lines.push([y, xl, xr, dy]);
-    }
-  };
-
-  // Pixel read and write methods. In Opera we use their proprietary methods.
-  if (layerOp && 'getPixel' in layerOp && 'setPixel' in layerOp) {
-    var pixelRead = function (x, y) {
-        return layerOp.getPixel(x, y);
-      },
-      pixelWrite = function (x, y) {
-        layerOp.setPixel(x, y, pixelNew);
-      };
-
-  } else {
-    var pixelRead = function (x, y) {
-        var p = layer.getImageData(x, y, 1, 1).data;
-        // uh oh, stringify...
-        return p[0] + ';' + p[1] + ';' + p[2] + ';' + p[3];
-      },
-      pixelWrite = function (x, y) {
-        layer.putImageData(pixelNew, x, y);
-      };
-  }
+      if (lines.length < stackMax && (y+dy) >= 0 && (y+dy) <= iheight) {
+        lines.push([y, xl, xr, dy]);
+      }
+    },
+    pixelRead = function (x, y) {
+      var r = 4 * (x-1 + iwidth * (y-1));
+      return layerpix[r] + ';' + layerpix[r+1] + ';' + layerpix[r+2] + ';' 
+        + layerpix[r+3];
+    },
+    pixelWrite = function (x, y) {
+      var r = 4 * (x-1 + iwidth * (y-1));
+      layerpix[r]   = pixelNew[0];
+      layerpix[r+1] = pixelNew[1];
+      layerpix[r+2] = pixelNew[2];
+      layerpix[r+3] = pixelNew[3];
+    };
 };
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:

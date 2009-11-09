@@ -1,3 +1,10 @@
+2009-11-09:
+===========
+
+- Changed a bit the way the new Color Bucket tool works. The getImageData() 
+  method is very slow on Gecko. Now flood fill runs good enough on Gecko as 
+  well.
+
 2009-11-08:
 ===========
 
