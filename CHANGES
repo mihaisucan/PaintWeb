@@ -1,3 +1,10 @@
+2009-11-10:
+===========
+
+- Another change for the Color Bucket tool. Now the getImageData() method is 
+invoked for each line. This is a compromise between lots of memory usage and 
+performance.
+
 2009-11-09:
 ===========
 

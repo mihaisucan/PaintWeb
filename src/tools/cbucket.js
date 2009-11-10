@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-11-09 22:31:42 +0200 $
+ * $Date: 2009-11-10 15:50:24 +0200 $
  */
 
 /**
@@ -119,21 +119,7 @@ pwlib.tools.cbucket = function (app) {
       return false;
     }
 
-    // We will work with image data. The only other way would be to invoke 
-    // get/putImageData() for each and every pixel. That way works fine in 
-    // Webkit and Opera, but it's awfully slow within Gecko.
-    // By working with the entire image data at once performance is acceptable 
-    // on Gecko, better on Webkit, and a bit slower in Opera. All in all, better 
-    // than to "fail" miserably with Gecko. Too bad this approach uses a lot 
-    // more memory - might not be an acceptable compromise in the future.
-    var idata = layer.getImageData(0, 0, iwidth, iheight);
-    layerpix = idata.data;
-
     fill(mouse.x, mouse.y, pixelOld);
-
-    layer.putImageData(idata, 0, 0);
-    layerpix = null;
-    idata = null;
 
     app.historyAdd();
 
@@ -151,7 +137,7 @@ pwlib.tools.cbucket = function (app) {
    * @param {String} pixelOld The old pixel value.
    */
   var fill = function (x, y, pixelOld) {
-    var start, x1, x2, dy, tmp;
+    var start, x1, x2, dy, tmp, idata;
 
     pushLine(y, x, x, 1);      // needed in some cases
     pushLine(y + 1, x, x, -1); // seed segment (popped 1st)
@@ -164,16 +150,21 @@ pwlib.tools.cbucket = function (app) {
       x1 = tmp[1];
       x2 = tmp[2];
 
+      layerpix = null;
+      idata = layer.getImageData(0, y, iwidth, 1);
+      layerpix = idata.data;
+
       // segment of scan line y-dy for x1 <= x <= x2 was previously filled, now 
       // explore adjacent pixels in scan line y
-      for (x = x1; x >= 0 && pixelRead(x, y) === pixelOld; x--) {
-        pixelWrite(x, y);
+      for (x = x1; x >= 0 && pixelRead(x) === pixelOld; x--) {
+        pixelWrite(x);
       }
 
       if (x >= x1) {
-        for (x++; x <= x2 && pixelRead(x, y) !== pixelOld; x++);
+        for (x++; x <= x2 && pixelRead(x) !== pixelOld; x++);
         start = x;
         if (x > x2) {
+          layer.putImageData(idata, 0, y);
           continue;
         }
 
@@ -187,8 +178,8 @@ pwlib.tools.cbucket = function (app) {
       }
 
       do {
-        for (; x < iwidth && pixelRead(x,y) === pixelOld; x++) {
-          pixelWrite(x, y);
+        for (; x < iwidth && pixelRead(x) === pixelOld; x++) {
+          pixelWrite(x);
         }
 
         pushLine(y, start, x - 1, dy);
@@ -196,25 +187,30 @@ pwlib.tools.cbucket = function (app) {
           pushLine(y, x2 + 1, x - 1, -dy);  // leak on right?
         }
 
-        for (x++; x <= x2 && pixelRead(x, y) !== pixelOld; x++);
+        for (x++; x <= x2 && pixelRead(x) !== pixelOld; x++);
         start = x;
 
       } while (x <= x2);
+
+      layer.putImageData(idata, 0, y);
     }
+
+    layerpix = null;
+    idata = null;
   };
 
   var pushLine = function (y, xl, xr, dy) {
-      if (lines.length < stackMax && (y+dy) >= 0 && (y+dy) <= iheight) {
+      if (lines.length < stackMax && (y+dy) >= 0 && (y+dy) < iheight) {
         lines.push([y, xl, xr, dy]);
       }
     },
-    pixelRead = function (x, y) {
-      var r = 4 * (x-1 + iwidth * (y-1));
+    pixelRead = function (x) {
+      var r = 4 * x;
       return layerpix[r] + ';' + layerpix[r+1] + ';' + layerpix[r+2] + ';' 
         + layerpix[r+3];
     },
-    pixelWrite = function (x, y) {
-      var r = 4 * (x-1 + iwidth * (y-1));
+    pixelWrite = function (x) {
+      var r = 4 * x;
       layerpix[r]   = pixelNew[0];
       layerpix[r+1] = pixelNew[1];
       layerpix[r+2] = pixelNew[2];
