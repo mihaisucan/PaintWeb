@@ -1,5 +1,5 @@
 {
-  // $Date: 2009-11-08 19:50:19 +0200 $
+  // $Date: 2009-11-16 18:13:48 +0200 $
 
   "errorInitBufferCanvas": "Error: adding the new buffer canvas element failed.",
   "errorInitContext": "Error while initializing the canvas context.",
@@ -256,7 +256,9 @@
     "proxyNotFound": "Could not find the PaintWeb image file proxy script.",
     "malformedDataUrl": "The data URL is malformed.",
     "failedMkdir": "Failed to create the PaintWeb images folder inside the Moodle data folder.",
-    "saveFailed": "Saving the image failed."
+    "saveFailed": "Saving the image failed.",
+    "backingupImages": "Backing-up images saved with PaintWeb...",
+    "backupFailed": "An error occurred while copying images saved by PaintWeb."
   }
 
   // vim:set spell spl=en fo=wan1croql tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix ft=javascript:

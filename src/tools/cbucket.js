@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-11-10 15:50:24 +0200 $
+ * $Date: 2009-11-10 20:12:34 +0200 $
  */
 
 /**
@@ -92,7 +92,7 @@ pwlib.tools.cbucket = function (app) {
    *
    * @returns {Boolean} True if the image was modified, or false otherwise.
    */
-  this.click = this.contextmenu = function (ev) {
+  this.click = function (ev) {
     // Allow the user to right-click or hold down the Shift key to use the 
     // border color for filling the image.
     if (ev.type === 'contextmenu' || ev.button === 2 || ev.shiftKey) {
@@ -125,6 +125,7 @@ pwlib.tools.cbucket = function (app) {
 
     return true;
   };
+  this.contextmenu = this.click;
 
   /**
    * Fill the image with the current fill color, starting from the <var>x</var> 
@@ -200,22 +201,24 @@ pwlib.tools.cbucket = function (app) {
   };
 
   var pushLine = function (y, xl, xr, dy) {
-      if (lines.length < stackMax && (y+dy) >= 0 && (y+dy) < iheight) {
-        lines.push([y, xl, xr, dy]);
-      }
-    },
-    pixelRead = function (x) {
-      var r = 4 * x;
-      return layerpix[r] + ';' + layerpix[r+1] + ';' + layerpix[r+2] + ';' 
-        + layerpix[r+3];
-    },
-    pixelWrite = function (x) {
-      var r = 4 * x;
-      layerpix[r]   = pixelNew[0];
-      layerpix[r+1] = pixelNew[1];
-      layerpix[r+2] = pixelNew[2];
-      layerpix[r+3] = pixelNew[3];
-    };
+    if (lines.length < stackMax && (y+dy) >= 0 && (y+dy) < iheight) {
+      lines.push([y, xl, xr, dy]);
+    }
+  };
+
+  var pixelRead = function (x) {
+    var r = 4 * x;
+    return layerpix[r] + ';' + layerpix[r+1] + ';' + layerpix[r+2] + ';' 
+      + layerpix[r+3];
+  };
+
+  var pixelWrite = function (x) {
+    var r = 4 * x;
+    layerpix[r]   = pixelNew[0];
+    layerpix[r+1] = pixelNew[1];
+    layerpix[r+2] = pixelNew[2];
+    layerpix[r+3] = pixelNew[3];
+  };
 };
 
 // vim:set spell spl=en fo=wan1croqlt tw=80 ts=2 sw=2 sts=2 sta et ai cin fenc=utf-8 ff=unix:
