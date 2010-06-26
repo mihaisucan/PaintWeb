@@ -1,3 +1,40 @@
+2010-06-26:
+===========
+
+- Implemented support for Microsoft Internet Explorer 9, technical preview 3.
+- Made the code to not rely on the existence of the global Node object.
+- Made the code to not rely on the expression evaluation:
+  if (window.getComputedStyle)
+  because MSIE 9 reports that as false (window.getComputedStyle is null), even 
+  if it does actually implement support for the method. This is similar to how 
+  document.all is hidden in Opera.
+- Made the code to not rely on the successful execution of elem.focus(). MSIE 9 
+shows an error when code tries to focus an invisible element.
+- MSIE 9 does not properly parse the user interface markup when it is loaded 
+using the XMLHttpRequest. This broke the PaintWeb initialization when it loaded 
+from the source code, without being packaged. I worked around the issue by using 
+the xhr.responseText, instead of the responseXML result.
+- Fixed a bug in the pwlib.isSameHost() method which prevented it from working 
+properly in MSIE 9.
+
+Known issues:
+- MSIE 9 does not yet implement the globalCompositeOperation property, which 
+makes the Color mixer visualisation look weird.
+- Changing elem.style.width/height causes the Canvas element to be cleared, 
+  which is entirely wrong. This breaks:
+  - The PaintWeb.imageCrop() method that is used by the image resize handle (the 
+      bottom right corner). I was able to fix this by reordering the code.
+  - The PaintWeb.updateCanvasScaling() method. This issue cannot be worked 
+  around and it causes PaintWeb to display a transparent image on load.
+  - The PaintWeb.imageLoad() method. This issue cannot be worked around - at the 
+  moment - and it causes for any image loaded by PaintWeb to disappear ... erm, 
+  in the same method execution. Effectively, you cannot see the image you loaded 
+  into PaintWeb.
+  - The PaintWeb.imageZoomTo() method. This issue cannot be worked around. Image 
+  zoom relies on having the Canvas element scaled up with CSS.
+
+All in all, thank you Microsoft!
+
 2009-11-16:
 ===========
 

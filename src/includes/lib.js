@@ -1,8 +1,23 @@
 /*
- * © 2009 ROBO Design
- * http://www.robodesign.ro
+ * Copyright (C) 2008, 2009, 2010 Mihai Şucan
  *
- * $Date: 2009-08-13 18:47:20 +0300 $
+ * This file is part of PaintWeb.
+ *
+ * PaintWeb is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * PaintWeb is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * $URL: http://code.google.com/p/paintweb $
+ * $Date: 2010-06-26 20:35:34 +0300 $
  */
 
 /**
@@ -233,7 +248,8 @@ pwlib.xhrLoad = function (url, handler, method, send, headers) {
  * <p>Note that data URIs always return true.
  *
  * @param {String} url The URL you want to check.
- * @param {String} host The host you want in the URL.
+ * @param {String} host The host you want in the URL. The host name can include 
+ * the port definition as well.
  *
  * @returns {Boolean} True if the <var>url</var> points to a resource from the 
  * <var>host</var> given, or false otherwise.
@@ -260,7 +276,11 @@ pwlib.isSameHost = function (url, host) {
     urlHost = urlHost.substr(0, pos);
   }
 
-  if (urlHost !== host) {
+  // remove default port (80)
+  urlHost = urlHost.replace(/:80$/, '');
+  host = host.replace(/:80$/, '');
+
+  if (!urlHost || !host || urlHost !== host) {
     return false;
   }
 

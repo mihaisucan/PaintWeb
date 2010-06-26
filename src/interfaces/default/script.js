@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008, 2009 Mihai Şucan
+ * Copyright (C) 2008, 2009, 2010 Mihai Şucan
  *
  * This file is part of PaintWeb.
  *
@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-11-07 18:13:21 +0200 $
+ * $Date: 2010-06-26 21:47:30 +0300 $
  */
 
 /**
@@ -206,6 +206,7 @@ pwlib.gui = function (app) {
     // much.
     var placeholder = config.guiPlaceholder,
         placeholderStyle = placeholder.style;
+
 
     placeholderStyle.display = 'none';
     placeholderStyle.height = '1px';
@@ -403,7 +404,7 @@ pwlib.gui = function (app) {
   this.initImportDoc = function (markup) {
     // I could use some XPath here, but for the sake of compatibility I don't.
     var destElem = config.guiPlaceholder,
-        elType = Node.ELEMENT_NODE,
+        elType = app.ELEMENT_NODE,
         elem, root, nodes, n, tag, isInput;
 
     if (typeof markup === 'string') {
@@ -423,7 +424,7 @@ pwlib.gui = function (app) {
     // PaintWeb instance.
     for (var i = 0; i < n; i++) {
       elem = nodes[i];
-      if (elem.nodeType !== elType) {
+      if (elem.nodeType !== elType || !elem.tagName) {
         continue;
       }
       tag = elem.tagName.toLowerCase();
@@ -447,6 +448,7 @@ pwlib.gui = function (app) {
 
     // Import all the nodes.
     n = root.childNodes.length;
+
     for (var i = 0; i < n; i++) {
       destElem.appendChild(doc.importNode(root.childNodes[i], true));
     }
@@ -499,7 +501,7 @@ pwlib.gui = function (app) {
    */
   this.initParseMarkup = function () {
     var nodes = config.guiPlaceholder.getElementsByTagName('*'),
-        elType = Node.ELEMENT_NODE,
+        elType = app.ELEMENT_NODE,
         elem, tag, isInput, tool, tabPanel, floatingPanel, cmd, id, cfgAttr, 
         colorInput;
 
@@ -672,7 +674,7 @@ pwlib.gui = function (app) {
     var elem, anchor, val,
         className = ' ' + this.classPrefix + 'configActive';
         nodes = input.getElementsByTagName('*'),
-        elType = Node.ELEMENT_NODE;
+        elType = app.ELEMENT_NODE;
 
     for (var i = 0; i < nodes.length; i++) {
       elem = nodes[i];
@@ -965,7 +967,9 @@ pwlib.gui = function (app) {
       placeholderStyle.position = 'relative';
     }
 
-    placeholder.focus();
+    try {
+      placeholder.focus();
+    } catch (err) { }
 
     app.events.dispatch(new appEvent.guiShow());
   };
@@ -1028,7 +1032,9 @@ pwlib.gui = function (app) {
   this.viewportResizeEnd = function (ev) {
     _self.elems.viewport.style.width = '';
     _self.resizeTo(ev.width + 'px', ev.height + 'px');
-    config.guiPlaceholder.focus();
+    try {
+      config.guiPlaceholder.focus();
+    } catch (err) { }
   };
 
   /**
@@ -1144,7 +1150,9 @@ pwlib.gui = function (app) {
         lineWidthLabel = null;
 
     tabActive.className += ' ' + _self.classPrefix + 'toolActive';
-    tabActive.firstChild.focus();
+    try {
+      tabActive.firstChild.focus();
+    } catch (err) { }
 
     if ((ev.id + 'Active') in lang.status) {
       _self.statusShow(ev.id + 'Active');
@@ -1344,7 +1352,10 @@ pwlib.gui = function (app) {
       app.commands[cmd].call(this, ev);
     }
     ev.preventDefault();
-    this.focus();
+
+    try {
+      this.focus();
+    } catch (err) { }
   };
 
   /**
@@ -1807,7 +1818,9 @@ pwlib.gui = function (app) {
       placeholder.className += ' ' + className;
     }
 
-    placeholder.focus();
+    try {
+      placeholder.focus();
+    } catch (err) { }
 
     app.events.dispatch(new appEvent.guiShow());
   };
@@ -2137,7 +2150,9 @@ pwlib.guiFloatingPanel = function (gui, container) {
    */
   function ev_minimize (ev) {
     ev.preventDefault();
-    this.focus();
+    try {
+      this.focus();
+    } catch (err) { }
 
     var classMinimized = ' ' + gui.classPrefix + 'floatingPanel_minimized';
 
@@ -2183,7 +2198,9 @@ pwlib.guiFloatingPanel = function (gui, container) {
   function ev_close (ev) {
     ev.preventDefault();
     _self.hide();
-    guiPlaceholder.focus();
+    try {
+      guiPlaceholder.focus();
+    } catch (err) { }
   };
 
   /**
@@ -2268,7 +2285,10 @@ pwlib.guiFloatingPanel = function (gui, container) {
     doc.removeEventListener('mousemove', ev_mousemove, false);
     doc.removeEventListener('mouseup',   ev_mouseup,   false);
 
-    guiPlaceholder.focus();
+    try {
+      guiPlaceholder.focus();
+    } catch (err) { }
+
     _self.events.dispatch(new appEvent.guiFloatingPanelStateChange(_self.state));
   };
 
@@ -2776,7 +2796,7 @@ pwlib.guiTabPanel = function (gui, panel) {
         tabButton = null,
         tabDefault = _self.container.getAttribute('data-pwTabDefault') || null,
         childNodes = _self.container.childNodes,
-        type = Node.ELEMENT_NODE,
+        type = gui.app.ELEMENT_NODE,
         elem = null,
         tabId = null,
         anchor = null;
@@ -2889,8 +2909,11 @@ pwlib.guiTabPanel = function (gui, panel) {
     tabButton = this.tabs[tabId].button;
     tabButton.className = gui.classPrefix + 'tabActive';
     tabButton.style.display = ''; // make sure the tab is not hidden
-    tabButton.firstChild.focus();
     this.tabId = tabId;
+
+    try {
+      tabButton.firstChild.focus();
+    } catch (err) { }
 
     return true;
   };
