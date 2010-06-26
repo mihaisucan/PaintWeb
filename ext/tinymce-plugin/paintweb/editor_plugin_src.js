@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Mihai Şucan
+ * Copyright (C) 2009, 2010 Mihai Şucan
  *
  * This file is part of PaintWeb.
  *
@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-11-04 20:18:05 +0200 $
+ * $Date: 2010-06-26 22:10:30 +0300 $
  */
 
 /**
@@ -90,9 +90,18 @@ if (!window.tinymce) {
 }
 
 // Basic functionality used by PaintWeb.
-if (!window.XMLHttpRequest || !window.getComputedStyle || 
-  !document.createElement('canvas').getContext) {
+if (!window.XMLHttpRequest || !document.createElement('canvas').getContext) {
   return;
+}
+
+if (!window.getComputedStyle) {
+  try {
+    if (!window.getComputedStyle(document.createElement('div'), null)) {
+      return;
+    }
+  } catch (err) {
+    return;
+  }
 }
 
 var isOpera, isWebkit, isGecko;

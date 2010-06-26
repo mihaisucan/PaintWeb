@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2010-06-26 21:44:56 +0300 $
+ * $Date: 2010-06-26 22:10:14 +0300 $
  */
 
 /**
@@ -501,7 +501,10 @@ function PaintWeb (win, doc) {
     // Basic functionality used within the Web application.
     if (!window.getComputedStyle) {
       try {
-        win.getComputedStyle(doc.createElement('div'), null);
+        if (!win.getComputedStyle(doc.createElement('div'), null)) {
+          this.initError(lang.noComputedStyle);
+          return false;
+        }
       } catch (err) {
         this.initError(lang.noComputedStyle);
         return false;
