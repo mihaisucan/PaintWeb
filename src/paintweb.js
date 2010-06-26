@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008, 2009 Mihai Şucan
+ * Copyright (C) 2008, 2009, 2010 Mihai Şucan
  *
  * This file is part of PaintWeb.
  *
@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2009-11-08 16:53:20 +0200 $
+ * $Date: 2010-06-26 21:44:56 +0300 $
  */
 
 /**
@@ -432,6 +432,14 @@ function PaintWeb (win, doc) {
       lang      = this.lang;
 
   /**
+   * Element node type constant.
+   *
+   * @constant
+   * @type Number
+   */
+  this.ELEMENT_NODE = window.Node ? Node.ELEMENT_NODE : 1;
+
+  /**
    * PaintWeb pre-initialization code. This runs when the PaintWeb instance is 
    * constructed.
    * @private
@@ -492,8 +500,12 @@ function PaintWeb (win, doc) {
 
     // Basic functionality used within the Web application.
     if (!window.getComputedStyle) {
-      this.initError(lang.noComputedStyle);
-      return false;
+      try {
+        win.getComputedStyle(doc.createElement('div'), null);
+      } catch (err) {
+        this.initError(lang.noComputedStyle);
+        return false;
+      }
     }
 
     if (!window.XMLHttpRequest) {
@@ -507,14 +519,14 @@ function PaintWeb (win, doc) {
     }
 
     if (typeof this.config.guiPlaceholder !== 'object' || 
-        this.config.guiPlaceholder.nodeType !== Node.ELEMENT_NODE) {
+        this.config.guiPlaceholder.nodeType !== this.ELEMENT_NODE) {
       this.initError(lang.guiPlaceholderWrong);
       return false;
     }
 
     // Silently ignore any wrong value for the config.imageLoad property.
     if (typeof this.config.imageLoad !== 'object' || 
-        this.config.imageLoad.nodeType !== Node.ELEMENT_NODE) {
+        this.config.imageLoad.nodeType !== this.ELEMENT_NODE) {
       this.config.imageLoad = null;
     }
 
@@ -814,12 +826,22 @@ function PaintWeb (win, doc) {
       return;
     }
 
-    if ((xhr.status !== 304 && xhr.status !== 200) || !xhr.responseXML) {
+    if (xhr.status !== 304 && xhr.status !== 200) {
       _self.initError(lang.failedMarkupLoad);
       return;
     }
 
-    if (_self.gui.init(xhr.responseXML)) {
+    var param;
+    if (xhr.responseXML && xhr.responseXML.documentElement) {
+      param = xhr.responseXML;
+    } else if (xhr.responseText) {
+      param = xhr.responseText;
+    } else {
+      _self.initError(lang.failedMarkupLoad);
+      return;
+    }
+
+    if (_self.gui.init(param)) {
       _self.initTools();
     } else {
       _self.initError(lang.errorInitGUI);
@@ -1203,6 +1225,8 @@ function PaintWeb (win, doc) {
 
     image.canvasScale = styleWidth / image.width;
 
+    // FIXME: MSIE 9 clears the Canvas element when you change the 
+    // elem.style.width/height... *argh*
     bufferStyle.width  = layerStyle.width  = styleWidth  + 'px';
     bufferStyle.height = layerStyle.height = styleHeight + 'px';
 
@@ -1453,8 +1477,8 @@ function PaintWeb (win, doc) {
     if (target.value === '' || target.value === null) {
       val = !isNaN(min) ? min : 0;
     } else {
-      val = target.value.replace(/[,.]+/g, '.').replace(/[^0-9.\-]/g, '');
-      val = parseFloat(val);
+      val = parseFloat(target.value.replace(/[,.]+/g, '.').
+                                    replace(/[^0-9.\-]/g, ''));
     }
 
     // If target is not a number, then set the old value, or the minimum value. If all fails, set 0.
@@ -1616,6 +1640,8 @@ function PaintWeb (win, doc) {
 
     image.canvasScale = styleWidth / image.width;
 
+    // FIXME: MSIE 9 clears the Canvas element when you change the 
+    // elem.style.width/height... *argh*
     bufferStyle.width  = layerStyle.width  = styleWidth  + 'px';
     bufferStyle.height = layerStyle.height = styleHeight + 'px';
 
@@ -1685,18 +1711,16 @@ function PaintWeb (win, doc) {
       return true;
     }
 
-    var scaledWidth  = cropWidth  * image.canvasScale,
-        scaledHeight = cropHeight * image.canvasScale;
-
-    bufferCanvas.style.width  = layerCanvas.style.width  = scaledWidth  + 'px';
-    bufferCanvas.style.height = layerCanvas.style.height = scaledHeight + 'px';
-
-    // The canvas state is reset once the dimensions change.
-    var state      = this.stateSave(layerContext),
-        dataWidth  = MathMin(image.width,  cropWidth),
-        dataHeight = MathMin(image.height, cropHeight),
-        sumX       = cropX + dataWidth,
-        sumY       = cropY + dataHeight;
+    var layerData    = null,
+        bufferData   = null,
+        layerState   = this.stateSave(layerContext),
+        bufferState  = this.stateSave(bufferContext),
+        scaledWidth  = cropWidth  * image.canvasScale,
+        scaledHeight = cropHeight * image.canvasScale,
+        dataWidth    = MathMin(image.width,  cropWidth),
+        dataHeight   = MathMin(image.height, cropHeight),
+        sumX         = cropX + dataWidth,
+        sumY         = cropY + dataHeight;
 
     if (sumX > image.width) {
       dataWidth -= sumX - image.width;
@@ -1705,47 +1729,47 @@ function PaintWeb (win, doc) {
       dataHeight -= sumY - image.height;
     }
 
-    // The image is cleared once the dimensions change. We need to restore the image.
-    var idata = null;
-
     if (layerContext.getImageData) {
       // TODO: handle "out of memory" errors.
       try {
-        idata = layerContext.getImageData(cropX, cropY, dataWidth, dataHeight);
-      } catch (err) {
-        // do not continue if we can't store the image in memory.
-        return false;
-      }
+        layerData = layerContext.getImageData(cropX, cropY, dataWidth, 
+            dataHeight);
+      } catch (err) { }
     }
+
+    if (bufferContext.getImageData) {
+      try {
+        bufferData = bufferContext.getImageData(cropX, cropY, dataWidth, 
+            dataHeight);
+      } catch (err) { }
+    }
+
+    bufferCanvas.style.width  = layerCanvas.style.width  = scaledWidth  + 'px';
+    bufferCanvas.style.height = layerCanvas.style.height = scaledHeight + 'px';
 
     layerCanvas.width  = cropWidth;
     layerCanvas.height = cropHeight;
 
-    if (idata && layerContext.putImageData) {
-      layerContext.putImageData(idata, 0, 0);
+    if (layerData && layerContext.putImageData) {
+      layerContext.putImageData(layerData, 0, 0);
     }
 
-    this.stateRestore(layerContext, state);
+    this.stateRestore(layerContext, layerState);
     state = this.stateSave(bufferContext);
-
-    idata = null;
-    if (bufferContext.getImageData) {
-      try {
-        idata = bufferContext.getImageData(cropX, cropY, dataWidth, dataHeight);
-      } catch (err) { }
-    }
 
     bufferCanvas.width  = cropWidth;
     bufferCanvas.height = cropHeight;
 
-    if (idata && bufferContext.putImageData) {
-      bufferContext.putImageData(idata, 0, 0);
+    if (bufferData && bufferContext.putImageData) {
+      bufferContext.putImageData(bufferData, 0, 0);
     }
 
-    this.stateRestore(bufferContext, state);
+    this.stateRestore(bufferContext, bufferState);
 
     image.width  = cropWidth;
     image.height = cropHeight;
+
+    bufferState = layerState = layerData = bufferData = null;
 
     this.events.dispatch(new appEvent.imageSizeChange(cropWidth, cropHeight));
     this.events.dispatch(new appEvent.canvasSizeChange(scaledWidth, 
@@ -2430,7 +2454,7 @@ function PaintWeb (win, doc) {
    */
   this.imageLoad = function (importImage) {
     if (!importImage || !importImage.width || !importImage.height || 
-        importImage.nodeType !== Node.ELEMENT_NODE || 
+        importImage.nodeType !== this.ELEMENT_NODE || 
         !pwlib.isSameHost(importImage.src, win.location.host)) {
       return false;
     }
@@ -2461,6 +2485,8 @@ function PaintWeb (win, doc) {
     if (result) {
       image.width  = importImage.width;
       image.height = importImage.height;
+      // FIXME: MSIE 9 clears the Canvas element when you change the 
+      // elem.style.width/height... *argh*
       bufferStyle.width  = layerStyle.width  = styleWidth  + 'px';
       bufferStyle.height = layerStyle.height = styleHeight + 'px';
       _self.config.imageLoad = importImage;
