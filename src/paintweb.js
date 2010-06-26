@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2010-06-26 22:10:14 +0300 $
+ * $Date: 2010-06-26 22:44:23 +0300 $
  */
 
 /**
@@ -2476,6 +2476,8 @@ function PaintWeb (win, doc) {
 
     bufferCanvas.width  = layerCanvas.width  = importImage.width;
     bufferCanvas.height = layerCanvas.height = importImage.height;
+    bufferStyle.width  = layerStyle.width  = styleWidth  + 'px';
+    bufferStyle.height = layerStyle.height = styleHeight + 'px';
 
     try {
       layerContext.drawImage(importImage, 0, 0);
@@ -2483,15 +2485,15 @@ function PaintWeb (win, doc) {
       result = false;
       bufferCanvas.width  = layerCanvas.width  = image.width;
       bufferCanvas.height = layerCanvas.height = image.height;
+      styleWidth  = image.width  * image.canvasScale;
+      styleHeight = image.height * image.canvasScale;
+      bufferStyle.width  = layerStyle.width  = styleWidth  + 'px';
+      bufferStyle.height = layerStyle.height = styleHeight + 'px';
     }
 
     if (result) {
       image.width  = importImage.width;
       image.height = importImage.height;
-      // FIXME: MSIE 9 clears the Canvas element when you change the 
-      // elem.style.width/height... *argh*
-      bufferStyle.width  = layerStyle.width  = styleWidth  + 'px';
-      bufferStyle.height = layerStyle.height = styleHeight + 'px';
       _self.config.imageLoad = importImage;
 
       this.events.dispatch(new appEvent.imageSizeChange(image.width, 
