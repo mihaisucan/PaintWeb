@@ -32,6 +32,7 @@ makes the Color mixer visualisation look weird.
   into PaintWeb.
   - The PaintWeb.imageZoomTo() method. This issue cannot be worked around. Image 
   zoom relies on having the Canvas element scaled up with CSS.
+- TinyMCE 3.2.5 does not work in MSIE 9.
 
 All in all, thank you Microsoft!
 
