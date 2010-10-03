@@ -1,0 +1,1203 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<meta name="generator" content="JsDoc Toolkit" />
+		
+		<title>JsDoc Reference - pwlib.dom.KeyboardEventListener</title>
+
+		<style type="text/css">
+			/* default.css */
+body
+{
+	font: 12px "Lucida Grande", Tahoma, Arial, Helvetica, sans-serif;
+	width: 800px;
+}
+
+.header
+{
+	clear: both;
+	background-color: #ccc;
+	padding: 8px;
+}
+
+h1
+{
+	font-size: 150%;
+	font-weight: bold;
+	padding: 0;
+	margin: 1em 0 0 .3em;
+}
+
+hr
+{
+	border: none 0;
+	border-top: 1px solid #7F8FB1;
+	height: 1px;
+}
+
+pre.code
+{
+	display: block;
+	padding: 8px;
+	border: 1px dashed #ccc;
+}
+
+#index
+{
+	margin-top: 24px;
+	float: left;
+	width: 160px;
+	position: absolute;
+	left: 8px;
+	background-color: #F3F3F3;
+	padding: 8px;
+}
+
+#content
+{
+	margin-left: 190px;
+	width: 600px;
+}
+
+.classList
+{
+	list-style-type: none;
+	padding: 0;
+	margin: 0 0 0 8px;
+	font-family: arial, sans-serif;
+	font-size: 1em;
+	overflow: auto;
+}
+
+.classList li
+{
+	padding: 0;
+	margin: 0 0 8px 0;
+}
+
+.summaryTable { width: 100%; }
+
+h1.classTitle
+{
+	font-size:170%;
+	line-height:130%;
+}
+
+h2 { font-size: 110%; }
+caption, div.sectionTitle
+{
+	background-color: #7F8FB1;
+	color: #fff;
+	font-size:130%;
+	text-align: left;
+	padding: 2px 6px 2px 6px;
+	border: 1px #7F8FB1 solid;
+}
+
+div.sectionTitle { margin-bottom: 8px; }
+.summaryTable thead { display: none; }
+
+.summaryTable td
+{
+	vertical-align: top;
+	padding: 4px;
+	border-bottom: 1px #7F8FB1 solid;
+	border-right: 1px #7F8FB1 solid;
+}
+
+/*col#summaryAttributes {}*/
+.summaryTable td.attributes
+{
+	border-left: 1px #7F8FB1 solid;
+	width: 140px;
+	text-align: right;
+}
+
+td.attributes, .fixedFont
+{
+	line-height: 15px;
+	color: #002EBE;
+	font-family: "Courier New",Courier,monospace;
+	font-size: 13px;
+}
+
+.summaryTable td.nameDescription
+{
+	text-align: left;
+	font-size: 13px;
+	line-height: 15px;
+}
+
+.summaryTable td.nameDescription, .description
+{
+	line-height: 15px;
+	padding: 4px;
+	padding-left: 4px;
+}
+
+.summaryTable { margin-bottom: 8px; }
+
+ul.inheritsList
+{
+	list-style: square;
+	margin-left: 20px;
+	padding-left: 0;
+}
+
+.detailList {
+	margin-left: 20px; 
+	line-height: 15px;
+}
+.detailList dt { margin-left: 20px; }
+
+.detailList .heading
+{
+	font-weight: bold;
+	padding-bottom: 6px;
+	margin-left: 0;
+}
+
+.light, td.attributes, .light a:link, .light a:visited
+{
+	color: #777;
+	font-style: italic;
+}
+
+.fineprint
+{
+	text-align: right;
+	font-size: 10px;
+}
+		</style>
+	</head>
+
+	<body>
+<!-- ============================== header ================================= -->	
+		<!-- begin static/header.html -->
+		<div id="header">
+</div>
+		<!-- end static/header.html -->
+
+<!-- ============================== classes index ============================ -->
+		<div id="index">
+			<!-- begin publish.classesIndex -->
+			<div align="center"><a href="../index.html">Class Index</a>
+| <a href="../files.html">File Index</a></div>
+<hr />
+<h2>Classes</h2>
+<ul class="classList">
+	
+	<li><i><a href="../symbols/_global_.html">_global_</a></i></li>
+	
+	<li><a href="../symbols/PaintWeb.html">PaintWeb</a></li>
+	
+	<li><a href="../symbols/pwlib.html">pwlib</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.html">pwlib.appEvent</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.appDestroy.html">pwlib.appEvent.appDestroy</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.appInit.html">pwlib.appEvent.appInit</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.canvasSizeChange.html">pwlib.appEvent.canvasSizeChange</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.clipboardUpdate.html">pwlib.appEvent.clipboardUpdate</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.commandRegister.html">pwlib.appEvent.commandRegister</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.commandUnregister.html">pwlib.appEvent.commandUnregister</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.configChange.html">pwlib.appEvent.configChange</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.extensionRegister.html">pwlib.appEvent.extensionRegister</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.extensionUnregister.html">pwlib.appEvent.extensionUnregister</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.guiFloatingPanelStateChange.html">pwlib.appEvent.guiFloatingPanelStateChange</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.guiHide.html">pwlib.appEvent.guiHide</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.guiResizeEnd.html">pwlib.appEvent.guiResizeEnd</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.guiResizeMouseMove.html">pwlib.appEvent.guiResizeMouseMove</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.guiResizeStart.html">pwlib.appEvent.guiResizeStart</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.guiShow.html">pwlib.appEvent.guiShow</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.guiTabActivate.html">pwlib.appEvent.guiTabActivate</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.historyUpdate.html">pwlib.appEvent.historyUpdate</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.imageCrop.html">pwlib.appEvent.imageCrop</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.imageSave.html">pwlib.appEvent.imageSave</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.imageSaveResult.html">pwlib.appEvent.imageSaveResult</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.imageSizeChange.html">pwlib.appEvent.imageSizeChange</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.imageZoom.html">pwlib.appEvent.imageZoom</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.selectionChange.html">pwlib.appEvent.selectionChange</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.shadowAllow.html">pwlib.appEvent.shadowAllow</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.toolActivate.html">pwlib.appEvent.toolActivate</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.toolPreactivate.html">pwlib.appEvent.toolPreactivate</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.toolRegister.html">pwlib.appEvent.toolRegister</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.toolUnregister.html">pwlib.appEvent.toolUnregister</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.viewportSizeChange.html">pwlib.appEvent.viewportSizeChange</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvents.html">pwlib.appEvents</a></li>
+	
+	<li><a href="../symbols/pwlib.browser.html">pwlib.browser</a></li>
+	
+	<li><a href="../symbols/pwlib.dom.html">pwlib.dom</a></li>
+	
+	<li><a href="../symbols/pwlib.dom.KeyboardEventListener.html">pwlib.dom.KeyboardEventListener</a></li>
+	
+	<li><a href="../symbols/pwlib.dom.keyCodes.html">pwlib.dom.keyCodes</a></li>
+	
+	<li><a href="../symbols/pwlib.dom.keyCodes_fixes.html">pwlib.dom.keyCodes_fixes</a></li>
+	
+	<li><a href="../symbols/pwlib.dom.keyCodes_Safari2.html">pwlib.dom.keyCodes_Safari2</a></li>
+	
+	<li><a href="../symbols/pwlib.dom.keyNames.html">pwlib.dom.keyNames</a></li>
+	
+	<li><a href="../symbols/pwlib.extensions.html">pwlib.extensions</a></li>
+	
+	<li><a href="../symbols/pwlib.extensions.colormixer.html">pwlib.extensions.colormixer</a></li>
+	
+	<li><a href="../symbols/pwlib.extensions.moodle.html">pwlib.extensions.moodle</a></li>
+	
+	<li><a href="../symbols/pwlib.extensions.mousekeys.html">pwlib.extensions.mousekeys</a></li>
+	
+	<li><a href="../symbols/pwlib.fileCache.html">pwlib.fileCache</a></li>
+	
+	<li><a href="../symbols/pwlib.gui.html">pwlib.gui</a></li>
+	
+	<li><a href="../symbols/pwlib.guiColorInput.html">pwlib.guiColorInput</a></li>
+	
+	<li><a href="../symbols/pwlib.guiFloatingPanel.html">pwlib.guiFloatingPanel</a></li>
+	
+	<li><a href="../symbols/pwlib.guiResizer.html">pwlib.guiResizer</a></li>
+	
+	<li><a href="../symbols/pwlib.guiTabPanel.html">pwlib.guiTabPanel</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.html">pwlib.tools</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.bcurve.html">pwlib.tools.bcurve</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.cbucket.html">pwlib.tools.cbucket</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.cpicker.html">pwlib.tools.cpicker</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.ellipse.html">pwlib.tools.ellipse</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.eraser.html">pwlib.tools.eraser</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.hand.html">pwlib.tools.hand</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.insertimg.html">pwlib.tools.insertimg</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.line.html">pwlib.tools.line</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.pencil.html">pwlib.tools.pencil</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.polygon.html">pwlib.tools.polygon</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.rectangle.html">pwlib.tools.rectangle</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.selection.html">pwlib.tools.selection</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.text.html">pwlib.tools.text</a></li>
+	
+</ul>
+<hr />
+			<!-- end publish.classesIndex -->
+		</div>
+		
+		<div id="content">
+<!-- ============================== class title ============================ -->
+			<h1 class="classTitle">
+				
+				Class pwlib.dom.KeyboardEventListener
+			</h1>
+
+<!-- ============================== class summary ========================== -->			
+			<p class="description">
+				
+			
+				A complete keyboard events cross-browser compatibility layer.
+				
+				
+					<br /><i>Defined in: </i> <a href="../symbols/src/src_includes_lib.js.html">lib.js</a>.
+				
+			</p>
+
+<!-- ============================== constructor summary ==================== -->			
+			
+			<table class="summaryTable" cellspacing="0" summary="A summary of the constructor documented in the class pwlib.dom.KeyboardEventListener.">
+				<caption>Class Summary</caption>
+				<thead>
+					<tr>
+						<th scope="col">Constructor Attributes</th>
+						<th scope="col">Constructor Name and Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="attributes">&nbsp;</td>
+						<td class="nameDescription" >
+							<div class="fixedFont">
+								<b><a href="../symbols/pwlib.dom.KeyboardEventListener.html#constructor">pwlib.dom.KeyboardEventListener</a></b>(elem_, handlers_)
+							</div>
+							<div class="description">A complete keyboard events cross-browser compatibility layer.</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			
+
+<!-- ============================== properties summary ===================== -->
+			
+				
+				
+				<table class="summaryTable" cellspacing="0" summary="A summary of the fields documented in the class pwlib.dom.KeyboardEventListener.">
+					<caption>Field Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Field Attributes</th>
+							<th scope="col">Field Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/pwlib.dom.KeyboardEventListener.html#-char_">char_</a></b>
+								</div>
+								<div class="description">During a keyboard event flow, this holds the current character, starting 
+from the <code>keypress</code> event.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/pwlib.dom.KeyboardEventListener.html#-charCode_">charCode_</a></b>
+								</div>
+								<div class="description">During a keyboard event flow, this holds the current character code, 
+starting from the <code>keypress</code> event.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/pwlib.dom.KeyboardEventListener.html#-key_">key_</a></b>
+								</div>
+								<div class="description">During a keyboard event flow, this holds the current key, starting from the 
+<code>keydown</code> event.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/pwlib.dom.KeyboardEventListener.html#-keyCode_">keyCode_</a></b>
+								</div>
+								<div class="description">During a keyboard event flow, this holds the current key code, starting 
+from the <code>keydown</code> event.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/pwlib.dom.KeyboardEventListener.html#-repeat_">repeat_</a></b>
+								</div>
+								<div class="description">True if the current keyboard event is repeating.</div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+				
+				
+			
+
+<!-- ============================== methods summary ======================== -->
+			
+				
+				
+				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class pwlib.dom.KeyboardEventListener.">
+					<caption>Method Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Method Attributes</th>
+							<th scope="col">Method Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.dom.KeyboardEventListener.html#attach">attach</a></b>()
+								</div>
+								<div class="description">Attach the keyboard event listeners to the current DOM element.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.dom.KeyboardEventListener.html#detach">detach</a></b>()
+								</div>
+								<div class="description">Detach the keyboard event listeners from the current DOM element.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.dom.KeyboardEventListener.html#-dispatch">dispatch</a></b>(type, ev)
+								</div>
+								<div class="description">Dispatch an event.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.dom.KeyboardEventListener.html#-findCharCode">findCharCode</a></b>(ev)
+								</div>
+								<div class="description">Determine the character and the character code for the current DOM Event 
+object.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.dom.KeyboardEventListener.html#-findKeyCode">findKeyCode</a></b>(ev)
+								</div>
+								<div class="description">Determine the key and the key code for the current DOM Event object.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.dom.KeyboardEventListener.html#-firesKeyPress">firesKeyPress</a></b>(ev)
+								</div>
+								<div class="description">Tells if the current Web browser will fire the <code>keypress</code> event 
+for the current <code>keydown</code> event object.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.dom.KeyboardEventListener.html#-isModifierKey">isModifierKey</a></b>(key)
+								</div>
+								<div class="description">Tells if the <var>key</var> is a modifier or not.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.dom.KeyboardEventListener.html#-keydown">keydown</a></b>(ev)
+								</div>
+								<div class="description">The <code>keydown</code> event handler.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.dom.KeyboardEventListener.html#-keypress">keypress</a></b>(ev)
+								</div>
+								<div class="description">The <code>keypress</code> event handler.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.dom.KeyboardEventListener.html#-keyup">keyup</a></b>(ev)
+								</div>
+								<div class="description">The <code>keyup</code> event handler.</div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+				
+				
+			
+<!-- ============================== events summary ======================== -->
+			
+
+<!-- ============================== constructor details ==================== -->		
+			
+			<div class="details"><a name="constructor"> </a>
+				<div class="sectionTitle">
+					Class Detail
+				</div>
+				
+				<div class="fixedFont">
+						<b>pwlib.dom.KeyboardEventListener</b>(elem_, handlers_)
+				</div>
+				
+				<div class="description">
+					A complete keyboard events cross-browser compatibility layer.
+
+<p>Unfortunately, due to the important differences across Web browsers, 
+simply using the available properties in a single keyboard event is not 
+enough to accurately determine the key the user pressed. Thus, one needs to 
+have event handlers for all keyboard-related events <code>keydown</code>, 
+<code>keypress</code> and <code>keyup</code>.
+
+<p>This class provides a complete keyboard event compatibility layer. For any 
+new instance you provide the DOM element you want to listen events for, and 
+the event handlers for any of the three events <code>keydown</code> 
+/ <code>keypress</code> / <code>keyup</code>.
+
+<p>Your event handlers will receive the original DOM Event object, with 
+several new properties defined:
+
+<ul>
+  <li><var>event.keyCode_</var> holds the correct code for event key.
+
+  <li><var>event.key_</var> holds the key the user pressed. It can be either 
+  a key name like "PageDown", "Delete", "Enter", or it is a character like 
+  "A", "1", or "[".
+
+  <li><var>event.charCode_</var> holds the Unicode character decimal code.
+
+  <li><var>event.char_</var> holds the character generated by the event.
+
+  <li><var>event.repeat_</var> is a boolean property telling if the 
+  <code>keypress</code> event is repeated - the user is holding down the key 
+  for a long-enough period of time to generate multiple events.
+</ul>
+
+<p>The character-related properties, <var>charCode_</var> and 
+<var>char_</var> are only available in the <code>keypress</code> and 
+<code>keyup</code> event objects.
+
+<p>This class will ensure that the <code>keypress</code> event is always 
+fired in Webkit and MSIE for all keys, except modifiers. For modifier keys 
+like <kbd>Shift</kbd>, <kbd>Control</kbd>, and <kbd>Alt</kbd>, the 
+<code>keypress</code> event will not be fired, even if the Web browser does 
+it.
+
+<p>Some user agents like Webkit repeat the <code>keydown</code> event while 
+the user holds down a key. This class will ensure that only the 
+<code>keypress</code> event is repeated.
+
+<p>If you want to prevent the default action for an event, you should prevent 
+it on <code>keypress</code>. This class will prevent the default action for 
+<code>keydown</code> if need (in MSIE).
+					
+				</div>
+				
+				
+				
+				<pre class="code"><code>var <var>klogger</var> = function (<var>ev</var>) {
+  console.log(<var>ev</var>.type +
+    ' keyCode_ ' + <var>ev</var>.keyCode_ +
+    ' key_ ' + <var>ev</var>.key_ +
+    ' charCode_ ' + <var>ev</var>.charCode_ +
+    ' char_ ' + <var>ev</var>.char_ +
+    ' repeat_ ' + <var>ev</var>.repeat_);
+};
+
+var <var>kbListener</var> = new pwlib.dom.KeyboardEventListener(window,
+              {keydown: <var>klogger</var>,
+               keypress: <var>klogger</var>,
+               keyup: <var>klogger</var>});</code>
+
+// later when you're done...
+<code><var>kbListener</var>.detach();</code></pre>
+				
+				
+				
+				
+					
+						<dl class="detailList">
+						<dt class="heading">Parameters:</dt>
+						
+							<dt>
+								<span class="light fixedFont">{Element}</span>  <b>elem_</b>
+								
+							</dt>
+								<dd>The DOM Element you want to listen events for.</dd>
+						
+							<dt>
+								<span class="light fixedFont">{Object}</span>  <b>handlers_</b>
+								
+							</dt>
+								<dd>The object holding the list of event handlers 
+associated to the name of each keyboard event you want to listen. To listen 
+for all the three keyboard events use <code>{keydown: <var>fn1</var>, 
+keypress: <var>fn2</var>, keyup: <var>fn3</var>}</code>.</dd>
+						
+						</dl>
+					
+					
+					
+					
+						<dl class="detailList">
+						<dt class="heading">Throws:</dt>
+						
+							<dt>
+								<span class="light fixedFont">{TypeError}</span>  <b></b>
+							</dt>
+								<dd>If the <var>handlers_</var> object does not contain any 
+event handler.</dd>
+						
+						</dl>
+					
+					
+					
+					
+
+			</div>
+			
+
+<!-- ============================== field details ========================== -->		
+			
+				<div class="sectionTitle">
+					Field Detail
+				</div>
+				
+					<a name="-char_"> </a>
+					<div class="fixedFont">&lt;private&gt; &lt;inner&gt; 
+					
+					<span class="light">{String}</span>
+					<b>char_</b>
+					
+					</div>
+					<div class="description">
+						During a keyboard event flow, this holds the current character, starting 
+from the <code>keypress</code> event.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="-charCode_"> </a>
+					<div class="fixedFont">&lt;private&gt; &lt;inner&gt; 
+					
+					<span class="light">{Number}</span>
+					<b>charCode_</b>
+					
+					</div>
+					<div class="description">
+						During a keyboard event flow, this holds the current character code, 
+starting from the <code>keypress</code> event.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="-key_"> </a>
+					<div class="fixedFont">&lt;private&gt; &lt;inner&gt; 
+					
+					<span class="light">{String}</span>
+					<b>key_</b>
+					
+					</div>
+					<div class="description">
+						During a keyboard event flow, this holds the current key, starting from the 
+<code>keydown</code> event.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="-keyCode_"> </a>
+					<div class="fixedFont">&lt;private&gt; &lt;inner&gt; 
+					
+					<span class="light">{Number}</span>
+					<b>keyCode_</b>
+					
+					</div>
+					<div class="description">
+						During a keyboard event flow, this holds the current key code, starting 
+from the <code>keydown</code> event.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="-repeat_"> </a>
+					<div class="fixedFont">&lt;private&gt; &lt;inner&gt; 
+					
+					<span class="light">{Boolean}</span>
+					<b>repeat_</b>
+					
+					</div>
+					<div class="description">
+						True if the current keyboard event is repeating. This happens when the user 
+holds down a key for longer periods of time.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					
+				
+			
+
+<!-- ============================== method details ========================= -->		
+			
+				<div class="sectionTitle">
+					Method Detail
+				</div>
+				
+					<a name="attach"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>attach</b>()
+					
+					</div>
+					<div class="description">
+						Attach the keyboard event listeners to the current DOM element.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="detach"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>detach</b>()
+					
+					</div>
+					<div class="description">
+						Detach the keyboard event listeners from the current DOM element.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="-dispatch"> </a>
+					<div class="fixedFont">&lt;private&gt; &lt;inner&gt; 
+					
+					
+					<b>dispatch</b>(type, ev)
+					
+					</div>
+					<div class="description">
+						Dispatch an event.
+
+<p>This function simply invokes the handler for the event of the given 
+<var>type</var>. The handler receives the <var>ev</var> event.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>type</b>
+									
+								</dt>
+								<dd>The event type to dispatch.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Event}</span> <b>ev</b>
+									
+								</dt>
+								<dd>The DOM Event object to dispatch to the handler.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="-findCharCode"> </a>
+					<div class="fixedFont">&lt;private&gt; &lt;inner&gt; 
+					
+					
+					<b>findCharCode</b>(ev)
+					
+					</div>
+					<div class="description">
+						Determine the character and the character code for the current DOM Event 
+object. This function updates the <var>charCode_</var> and the 
+<var>char_</var> variables to hold the result.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Event}</span> <b>ev</b>
+									
+								</dt>
+								<dd>The DOM Event object.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="-findKeyCode"> </a>
+					<div class="fixedFont">&lt;private&gt; &lt;inner&gt; 
+					
+					
+					<b>findKeyCode</b>(ev)
+					
+					</div>
+					<div class="description">
+						Determine the key and the key code for the current DOM Event object. This 
+function updates the <var>keyCode_</var> and the <var>key_</var> variables 
+to hold the result.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Event}</span> <b>ev</b>
+									
+								</dt>
+								<dd>The DOM Event object.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="-firesKeyPress"> </a>
+					<div class="fixedFont">&lt;private&gt; &lt;inner&gt; 
+					
+					<span class="light">{Boolean}</span>
+					<b>firesKeyPress</b>(ev)
+					
+					</div>
+					<div class="description">
+						Tells if the current Web browser will fire the <code>keypress</code> event 
+for the current <code>keydown</code> event object.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Event}</span> <b>ev</b>
+									
+								</dt>
+								<dd>The DOM Event object.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Boolean}</span> True if the Web browser will fire 
+a <code>keypress</code> event, or false if not.</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="-isModifierKey"> </a>
+					<div class="fixedFont">&lt;private&gt; &lt;inner&gt; 
+					
+					<span class="light">{Boolean}</span>
+					<b>isModifierKey</b>(key)
+					
+					</div>
+					<div class="description">
+						Tells if the <var>key</var> is a modifier or not.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>key</b>
+									
+								</dt>
+								<dd>The key name.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Boolean}</span> True if the <var>key</var> is a modifier, or false if 
+not.</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="-keydown"> </a>
+					<div class="fixedFont">&lt;private&gt; &lt;inner&gt; 
+					
+					
+					<b>keydown</b>(ev)
+					
+					</div>
+					<div class="description">
+						The <code>keydown</code> event handler. This function determines the key 
+pressed by the user, and checks if the <code>keypress</code> event will 
+fire in the current Web browser, or not. If it does not, a synthetic 
+<code>keypress</code> event will be fired.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Event}</span> <b>ev</b>
+									
+								</dt>
+								<dd>The DOM Event object.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="-keypress"> </a>
+					<div class="fixedFont">&lt;private&gt; &lt;inner&gt; 
+					
+					
+					<b>keypress</b>(ev)
+					
+					</div>
+					<div class="description">
+						The <code>keypress</code> event handler. This function determines the 
+character generated by the keyboard event.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Event}</span> <b>ev</b>
+									
+								</dt>
+								<dd>The DOM Event object.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="-keyup"> </a>
+					<div class="fixedFont">&lt;private&gt; &lt;inner&gt; 
+					
+					
+					<b>keyup</b>(ev)
+					
+					</div>
+					<div class="description">
+						The <code>keyup</code> event handler.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Event}</span> <b>ev</b>
+									
+								</dt>
+								<dd>The DOM Event object.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+				
+			
+			
+<!-- ============================== event details ========================= -->		
+			
+			
+			<hr />
+		</div>
+
+		
+<!-- ============================== footer ================================= -->
+		<div class="fineprint" style="clear:both">
+			
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.3.0 on Sat Jun 26 2010 21:57:01 GMT+0300 (EEST)
+		</div>
+	</body>
+</html>
