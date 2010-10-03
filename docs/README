@@ -1,0 +1,16 @@
+Copyright (C) 2009 Mihai Şucan
+
+$URL: http://code.google.com/p/paintweb $
+$Date: 2009-08-14 12:55:49 +0300 $
+
+This folder holds the PaintWeb documentation.
+
+Currently only the API reference is provided. For a lot more documentation 
+please check the project wiki pages at:
+
+http://code.google.com/p/paintweb
+
+
+--
+vim:set spell spl=en fenc=utf-8 ff=unix: 
+

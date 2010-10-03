@@ -1,0 +1,2656 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<meta name="generator" content="JsDoc Toolkit" />
+		
+		<title>JsDoc Reference - pwlib.extensions.colormixer</title>
+
+		<style type="text/css">
+			/* default.css */
+body
+{
+	font: 12px "Lucida Grande", Tahoma, Arial, Helvetica, sans-serif;
+	width: 800px;
+}
+
+.header
+{
+	clear: both;
+	background-color: #ccc;
+	padding: 8px;
+}
+
+h1
+{
+	font-size: 150%;
+	font-weight: bold;
+	padding: 0;
+	margin: 1em 0 0 .3em;
+}
+
+hr
+{
+	border: none 0;
+	border-top: 1px solid #7F8FB1;
+	height: 1px;
+}
+
+pre.code
+{
+	display: block;
+	padding: 8px;
+	border: 1px dashed #ccc;
+}
+
+#index
+{
+	margin-top: 24px;
+	float: left;
+	width: 160px;
+	position: absolute;
+	left: 8px;
+	background-color: #F3F3F3;
+	padding: 8px;
+}
+
+#content
+{
+	margin-left: 190px;
+	width: 600px;
+}
+
+.classList
+{
+	list-style-type: none;
+	padding: 0;
+	margin: 0 0 0 8px;
+	font-family: arial, sans-serif;
+	font-size: 1em;
+	overflow: auto;
+}
+
+.classList li
+{
+	padding: 0;
+	margin: 0 0 8px 0;
+}
+
+.summaryTable { width: 100%; }
+
+h1.classTitle
+{
+	font-size:170%;
+	line-height:130%;
+}
+
+h2 { font-size: 110%; }
+caption, div.sectionTitle
+{
+	background-color: #7F8FB1;
+	color: #fff;
+	font-size:130%;
+	text-align: left;
+	padding: 2px 6px 2px 6px;
+	border: 1px #7F8FB1 solid;
+}
+
+div.sectionTitle { margin-bottom: 8px; }
+.summaryTable thead { display: none; }
+
+.summaryTable td
+{
+	vertical-align: top;
+	padding: 4px;
+	border-bottom: 1px #7F8FB1 solid;
+	border-right: 1px #7F8FB1 solid;
+}
+
+/*col#summaryAttributes {}*/
+.summaryTable td.attributes
+{
+	border-left: 1px #7F8FB1 solid;
+	width: 140px;
+	text-align: right;
+}
+
+td.attributes, .fixedFont
+{
+	line-height: 15px;
+	color: #002EBE;
+	font-family: "Courier New",Courier,monospace;
+	font-size: 13px;
+}
+
+.summaryTable td.nameDescription
+{
+	text-align: left;
+	font-size: 13px;
+	line-height: 15px;
+}
+
+.summaryTable td.nameDescription, .description
+{
+	line-height: 15px;
+	padding: 4px;
+	padding-left: 4px;
+}
+
+.summaryTable { margin-bottom: 8px; }
+
+ul.inheritsList
+{
+	list-style: square;
+	margin-left: 20px;
+	padding-left: 0;
+}
+
+.detailList {
+	margin-left: 20px; 
+	line-height: 15px;
+}
+.detailList dt { margin-left: 20px; }
+
+.detailList .heading
+{
+	font-weight: bold;
+	padding-bottom: 6px;
+	margin-left: 0;
+}
+
+.light, td.attributes, .light a:link, .light a:visited
+{
+	color: #777;
+	font-style: italic;
+}
+
+.fineprint
+{
+	text-align: right;
+	font-size: 10px;
+}
+		</style>
+	</head>
+
+	<body>
+<!-- ============================== header ================================= -->	
+		<!-- begin static/header.html -->
+		<div id="header">
+</div>
+		<!-- end static/header.html -->
+
+<!-- ============================== classes index ============================ -->
+		<div id="index">
+			<!-- begin publish.classesIndex -->
+			<div align="center"><a href="../index.html">Class Index</a>
+| <a href="../files.html">File Index</a></div>
+<hr />
+<h2>Classes</h2>
+<ul class="classList">
+	
+	<li><i><a href="../symbols/_global_.html">_global_</a></i></li>
+	
+	<li><a href="../symbols/PaintWeb.html">PaintWeb</a></li>
+	
+	<li><a href="../symbols/pwlib.html">pwlib</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.html">pwlib.appEvent</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.appDestroy.html">pwlib.appEvent.appDestroy</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.appInit.html">pwlib.appEvent.appInit</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.canvasSizeChange.html">pwlib.appEvent.canvasSizeChange</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.clipboardUpdate.html">pwlib.appEvent.clipboardUpdate</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.commandRegister.html">pwlib.appEvent.commandRegister</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.commandUnregister.html">pwlib.appEvent.commandUnregister</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.configChange.html">pwlib.appEvent.configChange</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.extensionRegister.html">pwlib.appEvent.extensionRegister</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.extensionUnregister.html">pwlib.appEvent.extensionUnregister</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.guiFloatingPanelStateChange.html">pwlib.appEvent.guiFloatingPanelStateChange</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.guiHide.html">pwlib.appEvent.guiHide</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.guiResizeEnd.html">pwlib.appEvent.guiResizeEnd</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.guiResizeMouseMove.html">pwlib.appEvent.guiResizeMouseMove</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.guiResizeStart.html">pwlib.appEvent.guiResizeStart</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.guiShow.html">pwlib.appEvent.guiShow</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.guiTabActivate.html">pwlib.appEvent.guiTabActivate</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.historyUpdate.html">pwlib.appEvent.historyUpdate</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.imageCrop.html">pwlib.appEvent.imageCrop</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.imageSave.html">pwlib.appEvent.imageSave</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.imageSaveResult.html">pwlib.appEvent.imageSaveResult</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.imageSizeChange.html">pwlib.appEvent.imageSizeChange</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.imageZoom.html">pwlib.appEvent.imageZoom</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.selectionChange.html">pwlib.appEvent.selectionChange</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.shadowAllow.html">pwlib.appEvent.shadowAllow</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.toolActivate.html">pwlib.appEvent.toolActivate</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.toolPreactivate.html">pwlib.appEvent.toolPreactivate</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.toolRegister.html">pwlib.appEvent.toolRegister</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.toolUnregister.html">pwlib.appEvent.toolUnregister</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvent.viewportSizeChange.html">pwlib.appEvent.viewportSizeChange</a></li>
+	
+	<li><a href="../symbols/pwlib.appEvents.html">pwlib.appEvents</a></li>
+	
+	<li><a href="../symbols/pwlib.browser.html">pwlib.browser</a></li>
+	
+	<li><a href="../symbols/pwlib.dom.html">pwlib.dom</a></li>
+	
+	<li><a href="../symbols/pwlib.dom.KeyboardEventListener.html">pwlib.dom.KeyboardEventListener</a></li>
+	
+	<li><a href="../symbols/pwlib.dom.keyCodes.html">pwlib.dom.keyCodes</a></li>
+	
+	<li><a href="../symbols/pwlib.dom.keyCodes_fixes.html">pwlib.dom.keyCodes_fixes</a></li>
+	
+	<li><a href="../symbols/pwlib.dom.keyCodes_Safari2.html">pwlib.dom.keyCodes_Safari2</a></li>
+	
+	<li><a href="../symbols/pwlib.dom.keyNames.html">pwlib.dom.keyNames</a></li>
+	
+	<li><a href="../symbols/pwlib.extensions.html">pwlib.extensions</a></li>
+	
+	<li><a href="../symbols/pwlib.extensions.colormixer.html">pwlib.extensions.colormixer</a></li>
+	
+	<li><a href="../symbols/pwlib.extensions.moodle.html">pwlib.extensions.moodle</a></li>
+	
+	<li><a href="../symbols/pwlib.extensions.mousekeys.html">pwlib.extensions.mousekeys</a></li>
+	
+	<li><a href="../symbols/pwlib.fileCache.html">pwlib.fileCache</a></li>
+	
+	<li><a href="../symbols/pwlib.gui.html">pwlib.gui</a></li>
+	
+	<li><a href="../symbols/pwlib.guiColorInput.html">pwlib.guiColorInput</a></li>
+	
+	<li><a href="../symbols/pwlib.guiFloatingPanel.html">pwlib.guiFloatingPanel</a></li>
+	
+	<li><a href="../symbols/pwlib.guiResizer.html">pwlib.guiResizer</a></li>
+	
+	<li><a href="../symbols/pwlib.guiTabPanel.html">pwlib.guiTabPanel</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.html">pwlib.tools</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.bcurve.html">pwlib.tools.bcurve</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.cbucket.html">pwlib.tools.cbucket</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.cpicker.html">pwlib.tools.cpicker</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.ellipse.html">pwlib.tools.ellipse</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.eraser.html">pwlib.tools.eraser</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.hand.html">pwlib.tools.hand</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.insertimg.html">pwlib.tools.insertimg</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.line.html">pwlib.tools.line</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.pencil.html">pwlib.tools.pencil</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.polygon.html">pwlib.tools.polygon</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.rectangle.html">pwlib.tools.rectangle</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.selection.html">pwlib.tools.selection</a></li>
+	
+	<li><a href="../symbols/pwlib.tools.text.html">pwlib.tools.text</a></li>
+	
+</ul>
+<hr />
+			<!-- end publish.classesIndex -->
+		</div>
+		
+		<div id="content">
+<!-- ============================== class title ============================ -->
+			<h1 class="classTitle">
+				
+				Class pwlib.extensions.colormixer
+			</h1>
+
+<!-- ============================== class summary ========================== -->			
+			<p class="description">
+				
+			
+				The Color Mixer extension.
+				
+				
+					<br /><i>Defined in: </i> <a href="../symbols/src/src_extensions_colormixer.js.html">colormixer.js</a>.
+				
+			</p>
+
+<!-- ============================== constructor summary ==================== -->			
+			
+			<table class="summaryTable" cellspacing="0" summary="A summary of the constructor documented in the class pwlib.extensions.colormixer.">
+				<caption>Class Summary</caption>
+				<thead>
+					<tr>
+						<th scope="col">Constructor Attributes</th>
+						<th scope="col">Constructor Name and Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="attributes">&nbsp;</td>
+						<td class="nameDescription" >
+							<div class="fixedFont">
+								<b><a href="../symbols/pwlib.extensions.colormixer.html#constructor">pwlib.extensions.colormixer</a></b>(app)
+							</div>
+							<div class="description"></div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			
+
+<!-- ============================== properties summary ===================== -->
+			
+				
+				
+				<table class="summaryTable" cellspacing="0" summary="A summary of the fields documented in the class pwlib.extensions.colormixer.">
+					<caption>Field Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Field Attributes</th>
+							<th scope="col">Field Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/pwlib.extensions.colormixer.html#abs_max">abs_max</a></b>
+								</div>
+								<div class="description">The "absolute maximum" value is determined based on the min/max values.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/pwlib.extensions.colormixer.html#color">color</a></b>
+								</div>
+								<div class="description">Holds the current color in several formats: RGB, HEX, HSV, CIE Lab, and 
+CMYK.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/pwlib.extensions.colormixer.html#context2d">context2d</a></b>
+								</div>
+								<div class="description">Holds a reference to the 2D context of the color mixer Canvas element.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/pwlib.extensions.colormixer.html#elems">elems</a></b>
+								</div>
+								<div class="description">Holds references to various DOM elements.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/pwlib.extensions.colormixer.html#inputs">inputs</a></b>
+								</div>
+								<div class="description">Holds references to all the DOM input fields, for each color channel.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/pwlib.extensions.colormixer.html#panel">panel</a></b>
+								</div>
+								<div class="description">Reference to the Color Mixer floating panel GUI component object.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/pwlib.extensions.colormixer.html#panelInputs">panelInputs</a></b>
+								</div>
+								<div class="description">Reference to the Color Mixer tab panel GUI component object which holds the 
+inputs.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/pwlib.extensions.colormixer.html#panelSelector">panelSelector</a></b>
+								</div>
+								<div class="description">Reference to the Color Mixer tab panel GUI component object which holds the 
+Canvas used for color space visualisation and the color palettes selector.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/pwlib.extensions.colormixer.html#targetInput">targetInput</a></b>
+								</div>
+								<div class="description">Target input hooks.</div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+				
+				
+			
+
+<!-- ============================== methods summary ======================== -->
+			
+				
+				
+				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class pwlib.extensions.colormixer.">
+					<caption>Method Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Method Attributes</th>
+							<th scope="col">Method Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#calc_m1x3">calc_m1x3</a></b>(a, b)
+								</div>
+								<div class="description">Calculate the product of two matrices.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#calc_m3inv">calc_m3inv</a></b>(m)
+								</div>
+								<div class="description">Calculate the matrix inverse.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#cmyk2rgb">cmyk2rgb</a></b>()
+								</div>
+								<div class="description">Convert CMYK to RGB (internally).</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#cpalette_load">cpalette_load</a></b>(id)
+								</div>
+								<div class="description">Load a color palette.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#cpalette_loaded">cpalette_loaded</a></b>(xhr)
+								</div>
+								<div class="description">The <code>onreadystatechange</code> event handler for the color palette 
+XMLHttpRequest object.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#cpalette_show">cpalette_show</a></b>(colors)
+								</div>
+								<div class="description">Show a color palette.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#draw_chart">draw_chart</a></b>(updated_ckey)
+								</div>
+								<div class="description">Draw the color space visualisation.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#draw_slider">draw_slider</a></b>(updated_ckey)
+								</div>
+								<div class="description">Draw the color slider on the Canvas element.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#ev_canvas">ev_canvas</a></b>(ev)
+								</div>
+								<div class="description">The mouse events handler for the Canvas controls.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#ev_change_ckey_active">ev_change_ckey_active</a></b>()
+								</div>
+								<div class="description">The <code>change</code> event handler for the Color Mixer inputs of 
+type=radio.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#ev_change_cpalette">ev_change_cpalette</a></b>(ev)
+								</div>
+								<div class="description">The <code>change</code> event handler for the color palette input element.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#ev_click_accept">ev_click_accept</a></b>(ev)
+								</div>
+								<div class="description">The <code>click</code> event handler for the Accept button.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#ev_click_cancel">ev_click_cancel</a></b>(ev)
+								</div>
+								<div class="description">The <code>click</code> event handler for the Cancel button.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#ev_click_color">ev_click_color</a></b>(ev)
+								</div>
+								<div class="description">The <code>click</code> event handler for colors in the color palette list.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#ev_click_pickColor">ev_click_pickColor</a></b>(ev)
+								</div>
+								<div class="description">The <code>click</code> event handler for the "Pick color" button.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#ev_click_saveColor">ev_click_saveColor</a></b>(ev)
+								</div>
+								<div class="description">The <code>click</code> event handler for the "Save color" button.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#ev_input_change">ev_input_change</a></b>()
+								</div>
+								<div class="description">The <code>input</code> and <code>change</code> event handler for all the 
+Color Mixer inputs.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#ev_panel_stateChange">ev_panel_stateChange</a></b>(ev)
+								</div>
+								<div class="description">The <code>guiFloatingPanelStateChange</code> event handler for the Color 
+Mixer panel.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#ev_tabActivate">ev_tabActivate</a></b>(ev)
+								</div>
+								<div class="description">The <code>guiTabActivate</code> event handler for the tab panel which holds 
+the color mixer and the color palettes.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#extensionRegister">extensionRegister</a></b>(ev)
+								</div>
+								<div class="description">Register the Color Mixer extension.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#hex2rgb">hex2rgb</a></b>()
+								</div>
+								<div class="description">Convert the hexadecimal representation of color to RGB values (internally).</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#hide">hide</a></b>()
+								</div>
+								<div class="description">Hide the Color Mixer floating panel.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#hsv2rgb">hsv2rgb</a></b>(no_update, hsv)
+								</div>
+								<div class="description">Convert HSV to RGB.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#init_lab">init_lab</a></b>()
+								</div>
+								<div class="description">This function calculates lots of values used by the other CIE Lab-related 
+functions.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#lab2rgb">lab2rgb</a></b>()
+								</div>
+								<div class="description">Convert CIE Lab values to RGB values (internally).</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#lab2xyz">lab2xyz</a></b>(cie_l, cie_a, cie_b)
+								</div>
+								<div class="description">Convert CIE Lab values to XYZ color values.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#rgb2cmyk">rgb2cmyk</a></b>()
+								</div>
+								<div class="description">Convert RGB to CMYK.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#rgb2hex">rgb2hex</a></b>()
+								</div>
+								<div class="description">Convert RGB to hexadecimal representation (internally).</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#rgb2hsv">rgb2hsv</a></b>()
+								</div>
+								<div class="description">Convert RGB to HSV (internally).</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#rgb2lab">rgb2lab</a></b>()
+								</div>
+								<div class="description">Convert RGB to CIE Lab (internally).</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#rgb2xyz">rgb2xyz</a></b>(rgb)
+								</div>
+								<div class="description">Convert RGB values to XYZ color values.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#show">show</a></b>(target, color)
+								</div>
+								<div class="description">Show the Color Mixer.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#update_canvas">update_canvas</a></b>(updated_ckey, force)
+								</div>
+								<div class="description">Update the color space visualisation.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#update_ckey_active">update_ckey_active</a></b>(ckey, only_vars)
+								</div>
+								<div class="description">Update the active color key.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#update_color">update_color</a></b>(ckey)
+								</div>
+								<div class="description">Update the current color.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#update_dimensions">update_dimensions</a></b>()
+								</div>
+								<div class="description">Recalculate the dimensions and coordinates for the slider and for the color 
+space visualisation within the Canvas element.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#update_inputs">update_inputs</a></b>()
+								</div>
+								<div class="description">Update the color inputs.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#update_preview">update_preview</a></b>()
+								</div>
+								<div class="description">Update the color preview.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#xyz2lab">xyz2lab</a></b>(xyz)
+								</div>
+								<div class="description">Convert XYZ color values into CIE Lab values.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/pwlib.extensions.colormixer.html#xyz2rgb">xyz2rgb</a></b>(xyz)
+								</div>
+								<div class="description">Convert XYZ color values to RGB.</div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+				
+				
+			
+<!-- ============================== events summary ======================== -->
+			
+
+<!-- ============================== constructor details ==================== -->		
+			
+			<div class="details"><a name="constructor"> </a>
+				<div class="sectionTitle">
+					Class Detail
+				</div>
+				
+				<div class="fixedFont">
+						<b>pwlib.extensions.colormixer</b>(app)
+				</div>
+				
+				<div class="description">
+					
+					
+				</div>
+				
+				
+				
+				
+					
+						<dl class="detailList">
+						<dt class="heading">Parameters:</dt>
+						
+							<dt>
+								<span class="light fixedFont">{<a href="../symbols/PaintWeb.html">PaintWeb</a>}</span>  <b>app</b>
+								
+							</dt>
+								<dd>Reference to the main paint application object.</dd>
+						
+						</dl>
+					
+					
+					
+					
+					
+					
+					
+
+			</div>
+			
+
+<!-- ============================== field details ========================== -->		
+			
+				<div class="sectionTitle">
+					Field Detail
+				</div>
+				
+					<a name="abs_max"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>abs_max</b>
+					
+					</div>
+					<div class="description">
+						The "absolute maximum" value is determined based on the min/max values.  
+For min -100 and max 100, the abs_max is 200.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="color"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{Object}</span>
+					<b>color</b>
+					
+					</div>
+					<div class="description">
+						Holds the current color in several formats: RGB, HEX, HSV, CIE Lab, and 
+CMYK. Except for 'hex', all the values should be from 0 to 1.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="context2d"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					<span class="light">{CanvasRenderingContext2D}</span>
+					<b>context2d</b>
+					
+					</div>
+					<div class="description">
+						Holds a reference to the 2D context of the color mixer Canvas element. This 
+is where the color chart and the slider are both drawn.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="elems"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					<span class="light">{Object}</span>
+					<b>elems</b>
+					
+					</div>
+					<div class="description">
+						Holds references to various DOM elements.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="inputs"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					<span class="light">{Object}</span>
+					<b>inputs</b>
+					
+					</div>
+					<div class="description">
+						Holds references to all the DOM input fields, for each color channel.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="panel"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					<span class="light">{<a href="../symbols/pwlib.guiFloatingPanel.html">pwlib.guiFloatingPanel</a>}</span>
+					<b>panel</b>
+					
+					</div>
+					<div class="description">
+						Reference to the Color Mixer floating panel GUI component object.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="panelInputs"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					<span class="light">{<a href="../symbols/pwlib.guiTabPanel.html">pwlib.guiTabPanel</a>}</span>
+					<b>panelInputs</b>
+					
+					</div>
+					<div class="description">
+						Reference to the Color Mixer tab panel GUI component object which holds the 
+inputs.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="panelSelector"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					<span class="light">{<a href="../symbols/pwlib.guiTabPanel.html">pwlib.guiTabPanel</a>}</span>
+					<b>panelSelector</b>
+					
+					</div>
+					<div class="description">
+						Reference to the Color Mixer tab panel GUI component object which holds the 
+Canvas used for color space visualisation and the color palettes selector.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="targetInput"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{Object}</span>
+					<b>targetInput</b>
+					
+					</div>
+					<div class="description">
+						Target input hooks. This object must hold two methods:
+
+<ul>
+  <li><code>show()</code> which is invoked by this extension when the Color 
+  Mixer panel shows up on screen.
+
+  <li><code>hide()</code> which is invoked when the Color Mixer panel is 
+  hidden from the screen.
+</ul>
+
+<p>The object must also hold information about the associated configuration 
+property: <var>configProperty</var>, <var>configGroup</var> and 
+<var>configGroupRef</var>.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					
+				
+			
+
+<!-- ============================== method details ========================= -->		
+			
+				<div class="sectionTitle">
+					Method Detail
+				</div>
+				
+					<a name="calc_m1x3"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{Array}</span>
+					<b>calc_m1x3</b>(a, b)
+					
+					</div>
+					<div class="description">
+						Calculate the product of two matrices.
+
+<p>Matrices are one-dimensional arrays of the form <code>[a0, a1, a2, ..., 
+b0, b1, b2, ...]</code> where each element from the matrix is given in 
+order, from the left to the right, row by row from the top to the bottom.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Array}</span> <b>a</b>
+									
+								</dt>
+								<dd>The first matrix must be one row and three columns.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Array}</span> <b>b</b>
+									
+								</dt>
+								<dd>The second matrix must be three rows and three columns.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Array}</span> The matrix product, one row and three columns.</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="calc_m3inv"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					<span class="light">{Array|false}</span>
+					<b>calc_m3inv</b>(m)
+					
+					</div>
+					<div class="description">
+						Calculate the matrix inverse.
+
+<p>Matrices are one-dimensional arrays of the form <code>[a0, a1, a2, ..., 
+b0, b1, b2, ...]</code> where each element from the matrix is given in 
+order, from the left to the right, row by row from the top to the bottom.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Array}</span> <b>m</b>
+									
+								</dt>
+								<dd>The square matrix which must have three rows and three 
+columns.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Array|false}</span> The computed matrix inverse, or false if the matrix 
+determinant was 0 - the given matrix is not invertible.</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="cmyk2rgb"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>cmyk2rgb</b>()
+					
+					</div>
+					<div class="description">
+						Convert CMYK to RGB (internally).
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="cpalette_load"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{Boolean}</span>
+					<b>cpalette_load</b>(id)
+					
+					</div>
+					<div class="description">
+						Load a color palette. Loading is performed asynchronously.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>id</b>
+									
+								</dt>
+								<dd>The color palette ID.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Boolean}</span> True if the load was successful, or false if not.</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="cpalette_loaded"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>cpalette_loaded</b>(xhr)
+					
+					</div>
+					<div class="description">
+						The <code>onreadystatechange</code> event handler for the color palette 
+XMLHttpRequest object.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{XMLHttpRequest}</span> <b>xhr</b>
+									
+								</dt>
+								<dd>The XMLHttpRequest object.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="cpalette_show"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					<span class="light">{Boolean}</span>
+					<b>cpalette_show</b>(colors)
+					
+					</div>
+					<div class="description">
+						Show a color palette. This method adds all the colors in the DOM as 
+individual anchor elements which users can click on.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Array}</span> <b>colors</b>
+									
+								</dt>
+								<dd>The array which holds each color in the palette.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Boolean}</span> True if the operation was successful, or false if not.</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="draw_chart"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>draw_chart</b>(updated_ckey)
+					
+					</div>
+					<div class="description">
+						Draw the color space visualisation.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>updated_ckey</b>
+									
+								</dt>
+								<dd>The color key that was updated. This is used 
+to determine if the Canvas needs to be updated or not.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="draw_slider"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>draw_slider</b>(updated_ckey)
+					
+					</div>
+					<div class="description">
+						Draw the color slider on the Canvas element.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>updated_ckey</b>
+									
+								</dt>
+								<dd>The color key that was updated. This is used 
+to determine if the Canvas needs to be updated or not.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="ev_canvas"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>ev_canvas</b>(ev)
+					
+					</div>
+					<div class="description">
+						The mouse events handler for the Canvas controls. This method determines 
+the region the user is using, and it also updates the color values for the 
+active color key. The Canvas and all the inputs in the color mixer are 
+updated as needed.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Event}</span> <b>ev</b>
+									
+								</dt>
+								<dd>The DOM Event object.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="ev_change_ckey_active"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>ev_change_ckey_active</b>()
+					
+					</div>
+					<div class="description">
+						The <code>change</code> event handler for the Color Mixer inputs of 
+type=radio. This method allows users to change the active color key - used 
+for the color space visualisation.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="ev_change_cpalette"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>ev_change_cpalette</b>(ev)
+					
+					</div>
+					<div class="description">
+						The <code>change</code> event handler for the color palette input element.  
+This loads the color palette the user selected.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Event}</span> <b>ev</b>
+									
+								</dt>
+								<dd>The DOM Event object.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="ev_click_accept"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>ev_click_accept</b>(ev)
+					
+					</div>
+					<div class="description">
+						The <code>click</code> event handler for the Accept button. This method 
+dispatches the <a href="../symbols/pwlib.appEvent.configChange.html">pwlib.appEvent.configChange</a> application event for 
+the configuration property associated to the target input, and hides the 
+Color Mixer floating panel.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Event}</span> <b>ev</b>
+									
+								</dt>
+								<dd>The DOM Event object.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="ev_click_cancel"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>ev_click_cancel</b>(ev)
+					
+					</div>
+					<div class="description">
+						The <code>click</code> event handler for the Cancel button. This method 
+hides the Color Mixer floating panel.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Event}</span> <b>ev</b>
+									
+								</dt>
+								<dd>The DOM Event object.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="ev_click_color"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>ev_click_color</b>(ev)
+					
+					</div>
+					<div class="description">
+						The <code>click</code> event handler for colors in the color palette list.  
+This event handler is also used for the "old color" element. This method 
+updates the color mixer to use the color the user picked.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Event}</span> <b>ev</b>
+									
+								</dt>
+								<dd>The DOM Event object.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="ev_click_pickColor"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>ev_click_pickColor</b>(ev)
+					
+					</div>
+					<div class="description">
+						The <code>click</code> event handler for the "Pick color" button. This 
+method activates the color picker tool.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Event}</span> <b>ev</b>
+									
+								</dt>
+								<dd>The DOM Event object.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="ev_click_saveColor"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>ev_click_saveColor</b>(ev)
+					
+					</div>
+					<div class="description">
+						The <code>click</code> event handler for the "Save color" button. This 
+method adds the current color into the "_saved" color palette.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Event}</span> <b>ev</b>
+									
+								</dt>
+								<dd>The DOM Event object.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="ev_input_change"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>ev_input_change</b>()
+					
+					</div>
+					<div class="description">
+						The <code>input</code> and <code>change</code> event handler for all the 
+Color Mixer inputs.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="ev_panel_stateChange"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>ev_panel_stateChange</b>(ev)
+					
+					</div>
+					<div class="description">
+						The <code>guiFloatingPanelStateChange</code> event handler for the Color 
+Mixer panel. This method ensures the Color Mixer is properly closed.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/pwlib.appEvent.guiFloatingPanelStateChange.html">pwlib.appEvent.guiFloatingPanelStateChange</a>}</span> <b>ev</b>
+									
+								</dt>
+								<dd>The application 
+event object.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="ev_tabActivate"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>ev_tabActivate</b>(ev)
+					
+					</div>
+					<div class="description">
+						The <code>guiTabActivate</code> event handler for the tab panel which holds 
+the color mixer and the color palettes. When switching back to the color 
+mixer, this method updates the Canvas.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/pwlib.appEvent.guiTabActivate.html">pwlib.appEvent.guiTabActivate</a>}</span> <b>ev</b>
+									
+								</dt>
+								<dd>The application event object.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="extensionRegister"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{Boolean}</span>
+					<b>extensionRegister</b>(ev)
+					
+					</div>
+					<div class="description">
+						Register the Color Mixer extension.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>ev</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Boolean}</span> True if the extension can be registered properly, or 
+false if not.</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="hex2rgb"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>hex2rgb</b>()
+					
+					</div>
+					<div class="description">
+						Convert the hexadecimal representation of color to RGB values (internally).
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="hide"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>hide</b>()
+					
+					</div>
+					<div class="description">
+						Hide the Color Mixer floating panel. This method invokes the 
+<code>hide()</code> method provided by the target input.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="hsv2rgb"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					<span class="light">{Array}</span>
+					<b>hsv2rgb</b>(no_update, hsv)
+					
+					</div>
+					<div class="description">
+						Convert HSV to RGB.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Boolean}</span> <b>no_update</b>
+									<i>Optional</i>
+								</dt>
+								<dd>Tells the function to not update the internal 
+RGB color values.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Array}</span> <b>hsv</b>
+									<i>Optional</i>
+								</dt>
+								<dd>The array holding the HSV values you want to convert 
+to RGB. This array must have three elements ordered as: <var>hue</var>, 
+<var>saturation</var> and <var>value</var> - all between 0 and 1. If you do 
+not provide the array, then the internal HSV color values are used.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Array}</span> The RGB values converted from HSV. The array has three 
+elements ordered as: <var>red</var>, <var>green</var> and <var>blue</var> 
+- all with values between 0 and 1.</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="init_lab"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					<span class="light">{Boolean}</span>
+					<b>init_lab</b>()
+					
+					</div>
+					<div class="description">
+						This function calculates lots of values used by the other CIE Lab-related 
+functions.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Boolean}</span> True if the initialization was successful, or false if 
+not.</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="lab2rgb"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>lab2rgb</b>()
+					
+					</div>
+					<div class="description">
+						Convert CIE Lab values to RGB values (internally).
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="lab2xyz"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					<span class="light">{Array}</span>
+					<b>lab2xyz</b>(cie_l, cie_a, cie_b)
+					
+					</div>
+					<div class="description">
+						Convert CIE Lab values to XYZ color values.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>cie_l</b>
+									
+								</dt>
+								<dd>The color lightness value.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>cie_a</b>
+									
+								</dt>
+								<dd>The a* color opponent.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>cie_b</b>
+									
+								</dt>
+								<dd>The b* color opponent.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Array}</span> An array holding the XYZ color values in order: 
+<var>X</var>, <var>Y</var> and <var>Z</var>.</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="rgb2cmyk"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>rgb2cmyk</b>()
+					
+					</div>
+					<div class="description">
+						Convert RGB to CMYK. This uses the current color RGB values and updates the 
+CMYK values accordingly.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="rgb2hex"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>rgb2hex</b>()
+					
+					</div>
+					<div class="description">
+						Convert RGB to hexadecimal representation (internally).
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="rgb2hsv"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>rgb2hsv</b>()
+					
+					</div>
+					<div class="description">
+						Convert RGB to HSV (internally).
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="rgb2lab"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>rgb2lab</b>()
+					
+					</div>
+					<div class="description">
+						Convert RGB to CIE Lab (internally).
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="rgb2xyz"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					<span class="light">{Array}</span>
+					<b>rgb2xyz</b>(rgb)
+					
+					</div>
+					<div class="description">
+						Convert RGB values to XYZ color values.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Array}</span> <b>rgb</b>
+									
+								</dt>
+								<dd>The array holding the RGB values in order: 
+<var>red</var>, <var>green</var> and <var>blue</var>.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Array}</span> An array holding the XYZ color values in order: 
+<var>X</var>, <var>Y</var> and <var>Z</var>.</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="show"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>show</b>(target, color)
+					
+					</div>
+					<div class="description">
+						Show the Color Mixer.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Object}</span> <b>target</b>
+									
+								</dt>
+								<dd>The target input object.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Object}</span> <b>color</b>
+									
+								</dt>
+								<dd>The color you want to set before the Color Mixer is 
+shown. The object must have four properties: <var>red</var>, 
+<var>green</var>, <var>blue</var> and <var>alpha</var>. All the values must 
+be between 0 and 1. This color becomes the "active color" and the "old 
+color".</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd>this.targetInput for more information about the <var>target</var> 
+object.</dd>
+							
+							</dl>
+						
+
+					<hr />
+				
+					<a name="update_canvas"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					<span class="light">{Boolean}</span>
+					<b>update_canvas</b>(updated_ckey, force)
+					
+					</div>
+					<div class="description">
+						Update the color space visualisation. This method updates the color chart 
+and/or the color slider, and the associated controls, each as needed when 
+a color key is updated.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>updated_ckey</b>
+									
+								</dt>
+								<dd>The color key that was updated.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Boolean}</span> <b>force</b>
+									<i>Optional, Default: false</i>
+								</dt>
+								<dd>Tells the function to force an update. The 
+Canvas is not updated when the color mixer panel is not visible.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Boolean}</span> If the operation was successful, or false if not.</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="update_ckey_active"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					<span class="light">{Boolean}</span>
+					<b>update_ckey_active</b>(ckey, only_vars)
+					
+					</div>
+					<div class="description">
+						Update the active color key. This method updates the Canvas accordingly.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>ckey</b>
+									
+								</dt>
+								<dd>The color key you want to be active.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Boolean}</span> <b>only_vars</b>
+									<i>Optional</i>
+								</dt>
+								<dd>Tells if you want only the variables to be 
+updated - no Canvas updates. This is true only during the Color Mixer 
+initialization.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Boolean}</span> True if the operation was successful, or false if not.</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="update_color"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>update_color</b>(ckey)
+					
+					</div>
+					<div class="description">
+						Update the current color. Once a color value is updated, this method is 
+called to keep the rest of the color mixer in sync: for example, when a RGB 
+value is updated, it needs to be converted to HSV, CMYK and all of the 
+other formats. Additionally, this method updates the color preview, the 
+controls on the Canvas and the input values.
+
+<p>You need to call this function whenever you update the color manually.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>ckey</b>
+									
+								</dt>
+								<dd>The color key that was updated.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="update_dimensions"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>update_dimensions</b>()
+					
+					</div>
+					<div class="description">
+						Recalculate the dimensions and coordinates for the slider and for the color 
+space visualisation within the Canvas element.
+
+<p>This method is an event handler for the 
+<a href="../symbols/pwlib.appEvent.canvasSizeChange.html">pwlib.appEvent.canvasSizeChange</a> application event.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="update_inputs"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>update_inputs</b>()
+					
+					</div>
+					<div class="description">
+						Update the color inputs. This method takes the internal color values and 
+shows them in the DOM input elements.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="update_preview"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					
+					<b>update_preview</b>()
+					
+					</div>
+					<div class="description">
+						Update the color preview.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="xyz2lab"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					<span class="light">{Array}</span>
+					<b>xyz2lab</b>(xyz)
+					
+					</div>
+					<div class="description">
+						Convert XYZ color values into CIE Lab values.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Array}</span> <b>xyz</b>
+									
+								</dt>
+								<dd>The array holding the XYZ color values in order: 
+<var>X</var>, <var>Y</var> and <var>Z</var>.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Array}</span> An array holding the CIE Lab values in order: 
+<var>L</var>, <var>a</var> and <var>b</var>.</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="xyz2rgb"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+					
+					<span class="light">{Array}</span>
+					<b>xyz2rgb</b>(xyz)
+					
+					</div>
+					<div class="description">
+						Convert XYZ color values to RGB.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Array}</span> <b>xyz</b>
+									
+								</dt>
+								<dd>The array holding the XYZ color values in order: 
+<var>X</var>, <var>Y</var> and <var>Z</var></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Array}</span> An array holding the RGB values in order: <var>red</var>, 
+<var>green</var> and <var>blue</var>.</dd>
+							
+							</dl>
+						
+						
+						
+
+					
+				
+			
+			
+<!-- ============================== event details ========================= -->		
+			
+			
+			<hr />
+		</div>
+
+		
+<!-- ============================== footer ================================= -->
+		<div class="fineprint" style="clear:both">
+			
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.3.0 on Sat Jun 26 2010 21:57:01 GMT+0300 (EEST)
+		</div>
+	</body>
+</html>
