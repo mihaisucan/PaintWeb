@@ -17,7 +17,7 @@
  * along with PaintWeb.  If not, see <http://www.gnu.org/licenses/>.
  *
  * $URL: http://code.google.com/p/paintweb $
- * $Date: 2010-06-26 22:44:23 +0300 $
+ * $Date: 2011-01-05 14:37:59 $
  */
 
 /**
@@ -2899,7 +2899,7 @@ PaintWeb.baseFolder = '';
 
   for (var i = 0; i < n; i++) {
     src = scripts[i].src;
-    if (!src || !/paintweb(\.dev|\.src)?\.js/.test(src)) {
+    if (!src || !/paintweb(\.dev|\.src|\.dryice)?\.js/.test(src)) {
       continue;
     }
 
