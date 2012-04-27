@@ -902,7 +902,7 @@ function PaintWeb (win, doc) {
       return false;
     }
 
-    if (!pwlib.isSameHost(imageLoad.src, win.location.host)) {
+    if (imageLoad && !pwlib.isSameHost(imageLoad.src, win.location.host)) {
       cfg.imageLoad = imageLoad = null;
       alert(lang.imageLoadDifferentHost);
     }
