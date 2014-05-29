@@ -156,7 +156,8 @@ function paintwebLoad () {
   var config = targetEditor.getParam('paintweb_config'),
       src    = config.tinymce.paintwebFolder + 'paintweb.js';
 
-  tinymce.ScriptLoader.load(src, paintwebLoaded);
+  tinymce.ScriptLoader.add(src);
+  tinymce.ScriptLoader.loadQueue(paintwebLoaded);
 };
 
 /**
